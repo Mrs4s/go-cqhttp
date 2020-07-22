@@ -5,7 +5,6 @@ import (
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/Mrs4s/go-cqhttp/global"
-	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"os"
@@ -258,7 +257,7 @@ func (bot *CQBot) CQGetGroupMessage(messageId int32) MSG {
 	return OK(MSG{
 		"message_id": messageId,
 		"real_id":    msg["message-id"],
-		"sender": gin.H{
+		"sender": MSG{
 			"user_id":  sender.Uin,
 			"nickname": sender.Nickname,
 		},
