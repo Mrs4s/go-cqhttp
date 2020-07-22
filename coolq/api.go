@@ -240,9 +240,9 @@ func (bot *CQBot) CQGetImage(file string) MSG {
 		r := binary.NewReader(b)
 		r.ReadBytes(16)
 		return OK(MSG{
-			"size":      r.ReadInt32(),
-			"filenames": r.ReadString(),
-			"url":       r.ReadString(),
+			"size":     r.ReadInt32(),
+			"filename": r.ReadString(),
+			"url":      r.ReadString(),
 		})
 	}
 	return Failed(100)
