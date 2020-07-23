@@ -4,7 +4,7 @@
 # 兼容性
 #### 接口
 - [x] HTTP API
-- [ ] 反向HTTP POST (开发中)
+- [x] 反向HTTP POST (暂不支持回复)
 - [x] 正向Websocket
 - [ ] 反向Websocket (开发中)
 #### 实现

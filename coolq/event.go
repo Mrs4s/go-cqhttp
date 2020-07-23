@@ -35,7 +35,7 @@ func (bot *CQBot) privateMessageEvent(c *client.QQClient, m *message.PrivateMess
 			"age":      0,
 		},
 	}
-	bot.dispatchEventMessage(fm.ToJson())
+	bot.dispatchEventMessage(fm)
 }
 
 func (bot *CQBot) groupMessageEvent(c *client.QQClient, m *message.GroupMessage) {
@@ -92,7 +92,7 @@ func (bot *CQBot) groupMessageEvent(c *client.QQClient, m *message.GroupMessage)
 		ms["card"] = mem.CardName
 		ms["title"] = mem.SpecialTitle
 	}
-	bot.dispatchEventMessage(gm.ToJson())
+	bot.dispatchEventMessage(gm)
 }
 
 func (bot *CQBot) tempMessageEvent(c *client.QQClient, m *message.TempMessage) {
@@ -117,7 +117,7 @@ func (bot *CQBot) tempMessageEvent(c *client.QQClient, m *message.TempMessage) {
 			"age":      0,
 		},
 	}
-	bot.dispatchEventMessage(tm.ToJson())
+	bot.dispatchEventMessage(tm)
 }
 
 func (bot *CQBot) groupMutedEvent(c *client.QQClient, e *client.GroupMuteEvent) {
@@ -144,7 +144,7 @@ func (bot *CQBot) groupMutedEvent(c *client.QQClient, e *client.GroupMuteEvent) 
 			}
 			return "lift_ban"
 		}(),
-	}.ToJson())
+	})
 }
 
 func (bot *CQBot) groupRecallEvent(c *client.QQClient, e *client.GroupMessageRecalledEvent) {
@@ -161,7 +161,7 @@ func (bot *CQBot) groupRecallEvent(c *client.QQClient, e *client.GroupMessageRec
 		"operator_id": e.OperatorUin,
 		"time":        e.Time,
 		"message_id":  gid,
-	}.ToJson())
+	})
 }
 
 func (bot *CQBot) joinGroupEvent(c *client.QQClient, group *client.GroupInfo) {
@@ -193,7 +193,7 @@ func (bot *CQBot) memberPermissionChangedEvent(c *client.QQClient, e *client.Mem
 		"user_id":     e.Member.Uin,
 		"time":        time.Now().Unix(),
 		"self_id":     c.Uin,
-	}.ToJson())
+	})
 }
 
 func (bot *CQBot) memberJoinEvent(c *client.QQClient, e *client.MemberJoinGroupEvent) {
@@ -222,7 +222,7 @@ func (bot *CQBot) friendRequestEvent(c *client.QQClient, e *client.NewFriendRequ
 		"flag":         flag,
 		"time":         time.Now().Unix(),
 		"self_id":      c.Uin,
-	}.ToJson())
+	})
 }
 
 func (bot *CQBot) groupInvitedEvent(c *client.QQClient, e *client.GroupInvitedRequest) {
@@ -239,7 +239,7 @@ func (bot *CQBot) groupInvitedEvent(c *client.QQClient, e *client.GroupInvitedRe
 		"flag":         flag,
 		"time":         time.Now().Unix(),
 		"self_id":      c.Uin,
-	}.ToJson())
+	})
 }
 
 func (bot *CQBot) groupJoinReqEvent(c *client.QQClient, e *client.UserJoinGroupRequest) {
@@ -256,10 +256,10 @@ func (bot *CQBot) groupJoinReqEvent(c *client.QQClient, e *client.UserJoinGroupR
 		"flag":         flag,
 		"time":         time.Now().Unix(),
 		"self_id":      c.Uin,
-	}.ToJson())
+	})
 }
 
-func (bot *CQBot) groupIncrease(groupCode, operatorUin, userUin int64) string {
+func (bot *CQBot) groupIncrease(groupCode, operatorUin, userUin int64) MSG {
 	return MSG{
 		"post_type":   "notice",
 		"notice_type": "group_increase",
@@ -269,10 +269,10 @@ func (bot *CQBot) groupIncrease(groupCode, operatorUin, userUin int64) string {
 		"sub_type":    "approve",
 		"time":        time.Now().Unix(),
 		"user_id":     userUin,
-	}.ToJson()
+	}
 }
 
-func (bot *CQBot) groupDecrease(groupCode, userUin int64, operator *client.GroupMemberInfo) string {
+func (bot *CQBot) groupDecrease(groupCode, userUin int64, operator *client.GroupMemberInfo) MSG {
 	return MSG{
 		"post_type":   "notice",
 		"notice_type": "group_decrease",
@@ -295,7 +295,7 @@ func (bot *CQBot) groupDecrease(groupCode, userUin int64, operator *client.Group
 		}(),
 		"time":    time.Now().Unix(),
 		"user_id": userUin,
-	}.ToJson()
+	}
 }
 
 func checkImage(e []message.IMessageElement) {

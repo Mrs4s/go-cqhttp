@@ -36,9 +36,10 @@ type CQHttpApiConfig struct {
 }
 
 type GoCQHttpConfig struct {
-	Enabled bool   `json:"enabled"`
-	Host    string `json:"host"`
-	Port    uint16 `json:"port"`
+	Enabled  bool              `json:"enabled"`
+	Host     string            `json:"host"`
+	Port     uint16            `json:"port"`
+	PostUrls map[string]string `json:"post_urls"`
 }
 
 type GoCQWebsocketConfig struct {
@@ -51,9 +52,10 @@ func DefaultConfig() *JsonConfig {
 	return &JsonConfig{
 		EnableDB: true,
 		HttpConfig: &GoCQHttpConfig{
-			Enabled: true,
-			Host:    "0.0.0.0",
-			Port:    5700,
+			Enabled:  true,
+			Host:     "0.0.0.0",
+			Port:     5700,
+			PostUrls: map[string]string{},
 		},
 		WSConfig: &GoCQWebsocketConfig{
 			Enabled: true,

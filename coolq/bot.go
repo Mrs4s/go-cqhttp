@@ -19,7 +19,7 @@ import (
 type CQBot struct {
 	Client *client.QQClient
 
-	events          []func(string)
+	events          []func(MSG)
 	db              *nutsdb.DB
 	friendReqCache  sync.Map
 	invitedReqCache sync.Map
@@ -62,7 +62,7 @@ func NewQQBot(cli *client.QQClient, conf *global.JsonConfig) *CQBot {
 	return bot
 }
 
-func (bot *CQBot) OnEventPush(f func(m string)) {
+func (bot *CQBot) OnEventPush(f func(m MSG)) {
 	bot.events = append(bot.events, f)
 }
 
@@ -157,7 +157,7 @@ func (bot *CQBot) Release() {
 	_ = bot.db.Close()
 }
 
-func (bot *CQBot) dispatchEventMessage(m string) {
+func (bot *CQBot) dispatchEventMessage(m MSG) {
 	for _, f := range bot.events {
 		f(m)
 	}

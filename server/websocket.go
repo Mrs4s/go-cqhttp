@@ -20,6 +20,9 @@ type websocketServer struct {
 	handshake string
 }
 
+type websocketClient struct {
+}
+
 var WebsocketServer = &websocketServer{}
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
@@ -119,12 +122,12 @@ func (s *websocketServer) listenApi(c *websocket.Conn) {
 	}
 }
 
-func (s *websocketServer) onBotPushEvent(m string) {
+func (s *websocketServer) onBotPushEvent(m coolq.MSG) {
 	s.pushLock.Lock()
 	defer s.pushLock.Unlock()
 	pos := 0
 	for _, conn := range s.eventConn {
-		err := conn.WriteMessage(websocket.TextMessage, []byte(m))
+		err := conn.WriteMessage(websocket.TextMessage, []byte(m.ToJson()))
 		if err != nil {
 			_ = conn.Close()
 			s.eventConn = append(s.eventConn[:pos], s.eventConn[pos+1:]...)

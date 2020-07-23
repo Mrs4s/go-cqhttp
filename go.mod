@@ -6,6 +6,7 @@ require (
 	github.com/Mrs4s/MiraiGo v0.0.0-20200721195252-2accd73f8b8e
 	github.com/gin-gonic/gin v1.6.3
 	github.com/gorilla/websocket v1.4.2
+	github.com/guonaihong/gout v0.1.1
 	github.com/lestrrat-go/file-rotatelogs v2.3.0+incompatible
 	github.com/lestrrat-go/strftime v1.0.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect

@@ -53,9 +53,13 @@ func init() {
 		goConf.HttpConfig.Port = conf.Port
 		goConf.WSConfig.Host = conf.WSHost
 		goConf.WSConfig.Port = conf.WSPort
+		if conf.PostUrl != "" {
+			goConf.HttpConfig.PostUrls[conf.PostUrl] = conf.Secret
+		}
 		if err := goConf.Save("config.json"); err != nil {
 			log.Fatalf("保存 config.json 时出现错误: %v", err)
 		}
+		_ = os.Remove("cqhttp.json")
 	}
 }
 
@@ -126,6 +130,9 @@ func main() {
 	b := coolq.NewQQBot(cli, conf)
 	if conf.HttpConfig != nil && conf.HttpConfig.Enabled {
 		server.HttpServer.Run(fmt.Sprintf("%s:%d", conf.HttpConfig.Host, conf.HttpConfig.Port), conf.AccessToken, b)
+		for k, v := range conf.HttpConfig.PostUrls {
+			server.NewClient().Run(k, v, b)
+		}
 	}
 	if conf.WSConfig != nil && conf.WSConfig.Enabled {
 		server.WebsocketServer.Run(fmt.Sprintf("%s:%d", conf.WSConfig.Host, conf.WSConfig.Port), conf.AccessToken, b)

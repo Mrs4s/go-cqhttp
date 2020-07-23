@@ -1,17 +1,28 @@
 package server
 
 import (
+	"crypto/hmac"
+	"crypto/sha1"
+	"encoding/hex"
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/gin-gonic/gin"
+	"github.com/guonaihong/gout"
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type httpServer struct {
 	engine *gin.Engine
 	bot    *coolq.CQBot
+}
+
+type httpClient struct {
+	bot    *coolq.CQBot
+	secret string
+	addr   string
 }
 
 var HttpServer = &httpServer{}
@@ -135,6 +146,37 @@ func (s *httpServer) Run(addr, authToken string, bot *coolq.CQBot) {
 		log.Infof("CQ HTTP 服务器已启动: %v", addr)
 		log.Fatal(s.engine.Run(addr))
 	}()
+}
+
+func NewClient() *httpClient {
+	return &httpClient{}
+}
+
+func (c *httpClient) Run(addr, secret string, bot *coolq.CQBot) {
+	c.bot = bot
+	c.secret = secret
+	c.addr = addr
+	bot.OnEventPush(c.onBotPushEvent)
+	log.Infof("HTTP POST上报器已启动: %v", addr)
+}
+
+func (c *httpClient) onBotPushEvent(m coolq.MSG) {
+	err := gout.POST(c.addr).SetJSON(m).SetHeader(func() gout.H {
+		h := gout.H{
+			"X-Self_ID":     c.bot.Client.Uin,
+			"X-Client-Role": "Universal",
+			"User-Agent":    "CQHttp/4.15.0",
+		}
+		if c.secret != "" {
+			mac := hmac.New(sha1.New, []byte(c.secret))
+			mac.Write([]byte(m.ToJson()))
+			h["X-Signature"] = "sha1=" + hex.EncodeToString(mac.Sum(nil))
+		}
+		return h
+	}()).SetTimeout(time.Second * 5).Do()
+	if err != nil {
+		log.Warnf("上报Event数据到 %v 失败: %v", c.addr, err)
+	}
 }
 
 func (s *httpServer) GetLoginInfo(c *gin.Context) {
