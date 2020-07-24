@@ -6,14 +6,14 @@ import (
 )
 
 type JsonConfig struct {
-	Uin         int64  `json:"uin"`
-	Password    string `json:"password"`
-	EnableDB    bool   `json:"enable_db"`
-	AccessToken string `json:"access_token"`
-	//Reconnect      bool            `json:"reconnect"`
-	//ReconnectDelay int             `json:"reconnect_delay"`
-	HttpConfig *GoCQHttpConfig      `json:"http_config"`
-	WSConfig   *GoCQWebsocketConfig `json:"ws_config"`
+	Uin            int64                `json:"uin"`
+	Password       string               `json:"password"`
+	EnableDB       bool                 `json:"enable_db"`
+	AccessToken    string               `json:"access_token"`
+	Reconnect      bool                 `json:"reconnect"`
+	ReconnectDelay int                  `json:"reconnect_delay"`
+	HttpConfig     *GoCQHttpConfig      `json:"http_config"`
+	WSConfig       *GoCQWebsocketConfig `json:"ws_config"`
 }
 
 type CQHttpApiConfig struct {

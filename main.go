@@ -140,8 +140,27 @@ func main() {
 	log.Info("资源初始化完成, 开始处理信息.")
 	log.Info("アトリは、高性能ですから!")
 	cli.OnDisconnected(func(bot *client.QQClient, e *client.ClientDisconnectedEvent) {
+		if conf.Reconnect {
+			log.Warnf("Bot已离线，将在 %v 秒后尝试重连.", conf.ReconnectDelay)
+			time.Sleep(time.Second * time.Duration(conf.ReconnectDelay))
+			rsp, err := cli.Login()
+			if err != nil {
+				log.Fatalf("重连失败: %v", err)
+			}
+			if !rsp.Success {
+				switch rsp.Error {
+				case client.NeedCaptcha:
+					log.Fatalf("重连失败: 需要验证码. (验证码处理正在开发中)")
+				case client.UnsafeDeviceError:
+					log.Fatalf("重连失败: 设备锁")
+				default:
+					log.Fatalf("重连失败: %v", rsp.ErrorMessage)
+				}
+			}
+			return
+		}
 		b.Release()
-		log.Fatalf("Bot已断线：", e.Message)
+		log.Fatalf("Bot已离线：%v", e.Message)
 	})
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, os.Kill)
