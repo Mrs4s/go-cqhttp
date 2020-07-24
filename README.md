@@ -1,5 +1,6 @@
 # go-cqhttp
 使用 [mirai](https://github.com/mamoe/mirai) 以及 [MiraiGo](https://github.com/Mrs4s/MiraiGo) 开发的cqhttp golang原生实现, 并在[cqhttp原版](https://github.com/richardchien/coolq-http-api)的基础上做了部分修改和拓展.
+文档暂时可查看 `docs` 目录， 目前还在撰写中.
 
 # 兼容性
 #### 接口
@@ -31,7 +32,7 @@
 | /set_group_kick          | [群组T人](https://cqhttp.cc/docs/4.15/#/API?id=set_group_kick-群组踢人) |
 | /set_group_ban           | [群组单人禁言](https://cqhttp.cc/docs/4.15/#/API?id=set_group_ban-群组单人禁言) |
 | /set_group_whole_ban     | [群组全员禁言](https://cqhttp.cc/docs/4.15/#/API?id=set_group_whole_ban-群组全员禁言) |
-| /set_group_name          | 设置群组名(拓展API)                                          |
+| /set_group_name          | 设置群组名(拓展API)                                         |
 | /get_image               | 获取图片信息(拓展API)                                        |
 | /get_group_msg           | 获取群组消息(拓展API)                                        |
 | /can_send_image          | [检查是否可以发送图片](https://cqhttp.cc/docs/4.15/#/API?id=can_send_image-检查是否可以发送图片) |
@@ -49,7 +50,7 @@
 | ------------------------------------------------------------ |
 | [私聊信息](https://cqhttp.cc/docs/4.15/#/Post?id=私聊消息)   |
 | [群消息](https://cqhttp.cc/docs/4.15/#/Post?id=群消息)       |
-| 群消息撤回(拓展Event)                                        |
+| [群消息撤回(拓展Event)](docs/cqhttp.md#群消息撤回)                                        |
 | [群管理员变动](https://cqhttp.cc/docs/4.15/#/Post?id=群管理员变动) |
 | [群成员减少](https://cqhttp.cc/docs/4.15/#/Post?id=群成员减少) |
 | [群成员增加](https://cqhttp.cc/docs/4.15/#/Post?id=群成员增加) |
