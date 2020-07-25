@@ -142,6 +142,8 @@ func (s *httpServer) Run(addr, authToken string, bot *coolq.CQBot) {
 	s.engine.Any("/get_version_info", s.GetVersionInfo)
 	s.engine.Any("/get_version_info_async", s.GetVersionInfo)
 
+	s.engine.Any("/.handle_quick_operation", s.HandleQuickOperation)
+
 	go func() {
 		log.Infof("CQ HTTP 服务器已启动: %v", addr)
 		log.Fatal(s.engine.Run(addr))
@@ -161,7 +163,8 @@ func (c *httpClient) Run(addr, secret string, bot *coolq.CQBot) {
 }
 
 func (c *httpClient) onBotPushEvent(m coolq.MSG) {
-	err := gout.POST(c.addr).SetJSON(m).SetHeader(func() gout.H {
+	var res string
+	err := gout.POST(c.addr).SetJSON(m).BindBody(&res).SetHeader(func() gout.H {
 		h := gout.H{
 			"X-Self_ID":     c.bot.Client.Uin,
 			"X-Client-Role": "Universal",
@@ -176,6 +179,10 @@ func (c *httpClient) onBotPushEvent(m coolq.MSG) {
 	}()).SetTimeout(time.Second * 5).Do()
 	if err != nil {
 		log.Warnf("上报Event数据到 %v 失败: %v", c.addr, err)
+		return
+	}
+	if gjson.Valid(res) {
+		c.bot.CQHandleQuickOperation(gjson.Parse(m.ToJson()), gjson.Parse(res))
 	}
 }
 
@@ -278,8 +285,8 @@ func (s *httpServer) SetGroupKick(c *gin.Context) {
 func (s *httpServer) SetGroupBan(c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	uid, _ := strconv.ParseInt(getParam(c, "user_id"), 10, 64)
-	time, _ := strconv.ParseInt(getParam(c, "duration"), 10, 64)
-	c.JSON(200, s.bot.CQSetGroupBan(gid, uid, uint32(time)))
+	i, _ := strconv.ParseInt(getParam(c, "duration"), 10, 64)
+	c.JSON(200, s.bot.CQSetGroupBan(gid, uid, uint32(i)))
 }
 
 func (s *httpServer) SetWholeBan(c *gin.Context) {
@@ -311,6 +318,17 @@ func (s *httpServer) GetStatus(c *gin.Context) {
 
 func (s *httpServer) GetVersionInfo(c *gin.Context) {
 	c.JSON(200, s.bot.CQGetVersionInfo())
+}
+
+func (s *httpServer) HandleQuickOperation(c *gin.Context) {
+	if c.Request.Method != "POST" {
+		c.AbortWithStatus(404)
+		return
+	}
+	if i, ok := c.Get("json_body"); ok {
+		body := i.(gjson.Result)
+		c.JSON(200, s.bot.CQHandleQuickOperation(body.Get("context"), body.Get("operation")))
+	}
 }
 
 func getParamOrDefault(c *gin.Context, k, def string) string {

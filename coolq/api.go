@@ -1,11 +1,13 @@
 package coolq
 
 import (
+	"fmt"
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/Mrs4s/go-cqhttp/global"
 	log "github.com/sirupsen/logrus"
+	"github.com/tidwall/gjson"
 	"io/ioutil"
 	"os"
 	"path"
@@ -229,6 +231,63 @@ func (bot *CQBot) CQDeleteMessage(messageId int32) MSG {
 		return Failed(100)
 	}
 	bot.Client.RecallGroupMessage(msg["group"].(int64), msg["message-id"].(int32), msg["internal-id"].(int32))
+	return OK(nil)
+}
+
+// https://cqhttp.cc/docs/4.15/#/API?id=-handle_quick_operation-%E5%AF%B9%E4%BA%8B%E4%BB%B6%E6%89%A7%E8%A1%8C%E5%BF%AB%E9%80%9F%E6%93%8D%E4%BD%9C
+// https://github.com/richardchien/coolq-http-api/blob/master/src/cqhttp/plugins/web/http.cpp#L376
+func (bot *CQBot) CQHandleQuickOperation(context, operation gjson.Result) MSG {
+	postType := context.Get("post_type").Str
+	switch postType {
+	case "message":
+		msgType := context.Get("message_type").Str
+		reply := operation.Get("reply").Str
+		if reply != "" {
+			at := true
+			if operation.Get("at_sender").Exists() {
+				at = operation.Get("at_sender").Bool()
+			}
+			if msgType == "group" && at {
+				if at {
+					reply = fmt.Sprintf("[CQ:at,qq=%d]%s", context.Get("user_id").Int(), reply)
+				}
+				bot.CQSendGroupMessage(context.Get("group_id").Int(), reply)
+			}
+			if msgType == "private" {
+				bot.CQSendPrivateMessage(context.Get("user_id").Int(), reply)
+			}
+		}
+		if msgType == "group" {
+			anonymous := context.Get("anonymous")
+			isAnonymous := anonymous.Type == gjson.Null
+			if operation.Get("delete").Bool() {
+				bot.CQDeleteMessage(int32(context.Get("message_id").Int()))
+			}
+			if operation.Get("kick").Bool() && !isAnonymous {
+				bot.CQSetGroupKick(context.Get("group_id").Int(), context.Get("user_id").Int(), "")
+			}
+			if operation.Get("ban").Bool() {
+				var duration uint32 = 30 * 60
+				if operation.Get("ban_duration").Exists() {
+					duration = uint32(operation.Get("ban_duration").Uint())
+				}
+				// unsupported anonymous ban yet
+				if !isAnonymous {
+					bot.CQSetGroupBan(context.Get("group_id").Int(), context.Get("user_id").Int(), duration)
+				}
+			}
+		}
+	case "request":
+		reqType := context.Get("request_type").Str
+		if context.Get("approve").Bool() {
+			if reqType == "friend" {
+				bot.CQProcessFriendRequest(context.Get("flag").Str, true)
+			}
+			if reqType == "group" {
+				bot.CQProcessGroupRequest(context.Get("flag").Str, context.Get("sub_type").Str, true)
+			}
+		}
+	}
 	return OK(nil)
 }
 

@@ -238,4 +238,7 @@ var wsApi = map[string]func(*coolq.CQBot, gjson.Result) string{
 	"get_version_info": func(bot *coolq.CQBot, p gjson.Result) string {
 		return bot.CQGetVersionInfo().ToJson()
 	},
+	".handle_quick_operation": func(bot *coolq.CQBot, p gjson.Result) string {
+		return bot.CQHandleQuickOperation(p.Get("context"), p.Get("operation")).ToJson()
+	},
 }
