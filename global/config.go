@@ -6,14 +6,15 @@ import (
 )
 
 type JsonConfig struct {
-	Uin            int64                `json:"uin"`
-	Password       string               `json:"password"`
-	EnableDB       bool                 `json:"enable_db"`
-	AccessToken    string               `json:"access_token"`
-	Reconnect      bool                 `json:"reconnect"`
-	ReconnectDelay int                  `json:"reconnect_delay"`
-	HttpConfig     *GoCQHttpConfig      `json:"http_config"`
-	WSConfig       *GoCQWebsocketConfig `json:"ws_config"`
+	Uin            int64                         `json:"uin"`
+	Password       string                        `json:"password"`
+	EnableDB       bool                          `json:"enable_db"`
+	AccessToken    string                        `json:"access_token"`
+	ReLogin        bool                          `json:"relogin"`
+	ReLoginDelay   int                           `json:"relogin_delay"`
+	HttpConfig     *GoCQHttpConfig               `json:"http_config"`
+	WSConfig       *GoCQWebsocketConfig          `json:"ws_config"`
+	ReverseServers []*GoCQReverseWebsocketConfig `json:"ws_reverse_servers"`
 }
 
 type CQHttpApiConfig struct {
@@ -48,6 +49,14 @@ type GoCQWebsocketConfig struct {
 	Port    uint16 `json:"port"`
 }
 
+type GoCQReverseWebsocketConfig struct {
+	Enabled                  bool   `json:"enabled"`
+	ReverseUrl               string `json:"reverse_url"`
+	ReverseApiUrl            string `json:"reverse_api_url"`
+	ReverseEventUrl          string `json:"reverse_event_url"`
+	ReverseReconnectInterval uint16 `json:"reverse_reconnect_interval"`
+}
+
 func DefaultConfig() *JsonConfig {
 	return &JsonConfig{
 		EnableDB: true,
@@ -61,6 +70,15 @@ func DefaultConfig() *JsonConfig {
 			Enabled: true,
 			Host:    "0.0.0.0",
 			Port:    6700,
+		},
+		ReverseServers: []*GoCQReverseWebsocketConfig{
+			{
+				Enabled:                  false,
+				ReverseUrl:               "ws://you_websocket_universal.server",
+				ReverseApiUrl:            "ws://you_websocket_api.server",
+				ReverseEventUrl:          "ws://you_websocket_event.server",
+				ReverseReconnectInterval: 3000,
+			},
 		},
 	}
 }

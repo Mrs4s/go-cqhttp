@@ -15,5 +15,6 @@ require (
 	github.com/tidwall/gjson v1.6.0
 	github.com/xujiajun/nutsdb v0.5.0
 	golang.org/x/image v0.0.0-20200618115811-c13761719519
+	golang.org/x/net v0.0.0-20200114155413-6afb5195e5aa
 	golang.org/x/sys v0.0.0-20200625212154-ddb9806d33ae // indirect
 )

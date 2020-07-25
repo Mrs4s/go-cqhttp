@@ -150,7 +150,7 @@ func (s *httpServer) Run(addr, authToken string, bot *coolq.CQBot) {
 	}()
 }
 
-func NewClient() *httpClient {
+func NewHttpClient() *httpClient {
 	return &httpClient{}
 }
 
@@ -166,9 +166,8 @@ func (c *httpClient) onBotPushEvent(m coolq.MSG) {
 	var res string
 	err := gout.POST(c.addr).SetJSON(m).BindBody(&res).SetHeader(func() gout.H {
 		h := gout.H{
-			"X-Self_ID":     c.bot.Client.Uin,
-			"X-Client-Role": "Universal",
-			"User-Agent":    "CQHttp/4.15.0",
+			"X-Self-ID":  c.bot.Client.Uin,
+			"User-Agent": "CQHttp/4.15.0",
 		}
 		if c.secret != "" {
 			mac := hmac.New(sha1.New, []byte(c.secret))

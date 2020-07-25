@@ -131,18 +131,21 @@ func main() {
 	if conf.HttpConfig != nil && conf.HttpConfig.Enabled {
 		server.HttpServer.Run(fmt.Sprintf("%s:%d", conf.HttpConfig.Host, conf.HttpConfig.Port), conf.AccessToken, b)
 		for k, v := range conf.HttpConfig.PostUrls {
-			server.NewClient().Run(k, v, b)
+			server.NewHttpClient().Run(k, v, b)
 		}
 	}
 	if conf.WSConfig != nil && conf.WSConfig.Enabled {
 		server.WebsocketServer.Run(fmt.Sprintf("%s:%d", conf.WSConfig.Host, conf.WSConfig.Port), conf.AccessToken, b)
 	}
+	for _, rc := range conf.ReverseServers {
+		server.NewWebsocketClient(rc, conf.AccessToken, b).Run()
+	}
 	log.Info("资源初始化完成, 开始处理信息.")
 	log.Info("アトリは、高性能ですから!")
 	cli.OnDisconnected(func(bot *client.QQClient, e *client.ClientDisconnectedEvent) {
-		if conf.Reconnect {
-			log.Warnf("Bot已离线，将在 %v 秒后尝试重连.", conf.ReconnectDelay)
-			time.Sleep(time.Second * time.Duration(conf.ReconnectDelay))
+		if conf.ReLogin {
+			log.Warnf("Bot已离线，将在 %v 秒后尝试重连.", conf.ReLoginDelay)
+			time.Sleep(time.Second * time.Duration(conf.ReLoginDelay))
 			rsp, err := cli.Login()
 			if err != nil {
 				log.Fatalf("重连失败: %v", err)

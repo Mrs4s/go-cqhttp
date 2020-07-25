@@ -38,7 +38,7 @@ func NewQQBot(cli *client.QQClient, conf *global.JsonConfig) *CQBot {
 		opt.EntryIdxMode = nutsdb.HintBPTSparseIdxMode
 		db, err := nutsdb.Open(opt)
 		if err != nil {
-			log.Fatalf("打开数据库失败, 如果频繁遇到此问题请关闭数据库功能。")
+			log.Fatalf("打开数据库失败, 如果频繁遇到此问题请清理 data/db 文件夹或关闭数据库功能。")
 		}
 		bot.db = db
 		gob.Register(message.Sender{})

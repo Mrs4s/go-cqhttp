@@ -3,10 +3,13 @@ package server
 import (
 	"fmt"
 	"github.com/Mrs4s/go-cqhttp/coolq"
+	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
+	wsc "golang.org/x/net/websocket"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -21,6 +24,13 @@ type websocketServer struct {
 }
 
 type websocketClient struct {
+	conf  *global.GoCQReverseWebsocketConfig
+	token string
+	bot   *coolq.CQBot
+
+	pushLock      *sync.Mutex
+	universalConn *wsc.Conn
+	eventConn     *wsc.Conn
 }
 
 var WebsocketServer = &websocketServer{}
@@ -44,6 +54,149 @@ func (s *websocketServer) Run(addr, authToken string, b *coolq.CQBot) {
 		log.Infof("CQ Websocket 服务器已启动: %v", addr)
 		log.Fatal(http.ListenAndServe(addr, nil))
 	}()
+}
+
+func NewWebsocketClient(conf *global.GoCQReverseWebsocketConfig, authToken string, b *coolq.CQBot) *websocketClient {
+	return &websocketClient{conf: conf, token: authToken, bot: b, pushLock: new(sync.Mutex)}
+}
+
+func (c *websocketClient) Run() {
+	if !c.conf.Enabled {
+		return
+	}
+	if c.conf.ReverseApiUrl != "" {
+		c.connectApi()
+	}
+	if c.conf.ReverseEventUrl != "" {
+		c.connectEvent()
+	}
+	if c.conf.ReverseUrl != "" {
+		c.connectUniversal()
+	}
+	c.bot.OnEventPush(c.onBotPushEvent)
+}
+
+func (c *websocketClient) connectApi() {
+	log.Infof("开始尝试连接到反向Websocket API服务器: %v", c.conf.ReverseApiUrl)
+	wsConf, err := wsc.NewConfig(c.conf.ReverseApiUrl, c.conf.ReverseApiUrl)
+	if err != nil {
+		log.Warnf("连接到反向Websocket API服务器 %v 时出现致命错误: %v", c.conf.ReverseApiUrl, err)
+		return
+	}
+	wsConf.Header["X-Client-Role"] = []string{"API"}
+	wsConf.Header["X-Self-ID"] = []string{strconv.FormatInt(c.bot.Client.Uin, 10)}
+	wsConf.Header["User-Agent"] = []string{"CQHttp/4.15.0"}
+	if c.token != "" {
+		wsConf.Header["Authorization"] = []string{"Token " + c.token}
+	}
+	conn, err := wsc.DialConfig(wsConf)
+	if err != nil {
+		log.Warnf("连接到反向Websocket API服务器 %v 时出现错误: %v", c.conf.ReverseApiUrl, err)
+		if c.conf.ReverseReconnectInterval != 0 {
+			time.Sleep(time.Millisecond * time.Duration(c.conf.ReverseReconnectInterval))
+			c.connectApi()
+		}
+		return
+	}
+	log.Infof("已连接到反向Websocket API服务器 %v", c.conf.ReverseApiUrl)
+	go c.listenApi(conn, false)
+}
+
+func (c *websocketClient) connectEvent() {
+	log.Infof("开始尝试连接到反向Websocket Event服务器: %v", c.conf.ReverseEventUrl)
+	wsConf, err := wsc.NewConfig(c.conf.ReverseEventUrl, c.conf.ReverseEventUrl)
+	if err != nil {
+		log.Warnf("连接到反向Websocket Event服务器 %v 时出现致命错误: %v", c.conf.ReverseApiUrl, err)
+		return
+	}
+	wsConf.Header["X-Client-Role"] = []string{"Event"}
+	wsConf.Header["X-Self-ID"] = []string{strconv.FormatInt(c.bot.Client.Uin, 10)}
+	wsConf.Header["User-Agent"] = []string{"CQHttp/4.15.0"}
+	if c.token != "" {
+		wsConf.Header["Authorization"] = []string{"Token " + c.token}
+	}
+	conn, err := wsc.DialConfig(wsConf)
+	if err != nil {
+		log.Warnf("连接到反向Websocket API服务器 %v 时出现错误: %v", c.conf.ReverseApiUrl, err)
+		if c.conf.ReverseReconnectInterval != 0 {
+			time.Sleep(time.Millisecond * time.Duration(c.conf.ReverseReconnectInterval))
+			c.connectApi()
+		}
+		return
+	}
+	log.Infof("已连接到反向Websocket Event服务器 %v", c.conf.ReverseEventUrl)
+	c.eventConn = conn
+}
+
+func (c *websocketClient) connectUniversal() {
+	log.Infof("开始尝试连接到反向Websocket Universal服务器: %v", c.conf.ReverseUrl)
+	wsConf, err := wsc.NewConfig(c.conf.ReverseUrl, c.conf.ReverseUrl)
+	if err != nil {
+		log.Warnf("连接到反向Websocket Universal服务器 %v 时出现致命错误: %v", c.conf.ReverseUrl, err)
+		return
+	}
+	wsConf.Header["X-Client-Role"] = []string{"Universal"}
+	wsConf.Header["X-Self-ID"] = []string{strconv.FormatInt(c.bot.Client.Uin, 10)}
+	wsConf.Header["User-Agent"] = []string{"CQHttp/4.15.0"}
+	if c.token != "" {
+		wsConf.Header["Authorization"] = []string{"Token " + c.token}
+	}
+	conn, err := wsc.DialConfig(wsConf)
+	if err != nil {
+		log.Warnf("连接到反向Websocket Universal服务器 %v 时出现错误: %v", c.conf.ReverseUrl, err)
+		if c.conf.ReverseReconnectInterval != 0 {
+			time.Sleep(time.Millisecond * time.Duration(c.conf.ReverseReconnectInterval))
+			c.connectUniversal()
+		}
+		return
+	}
+	go c.listenApi(conn, true)
+	c.universalConn = conn
+}
+
+func (c *websocketClient) listenApi(conn *wsc.Conn, u bool) {
+	defer conn.Close()
+	for {
+		buf := make([]byte, 10240)
+		l, err := conn.Read(buf)
+		if err != nil {
+			break
+		}
+		j := gjson.ParseBytes(buf[:l])
+		t := strings.ReplaceAll(j.Get("action").Str, "_async", "")
+		if f, ok := wsApi[t]; ok {
+			ret := f(c.bot, j.Get("params"))
+			if j.Get("echo").Exists() {
+				ret["echo"] = j.Get("echo").Value()
+			}
+			_, _ = conn.Write([]byte(ret.ToJson()))
+		}
+	}
+	if c.conf.ReverseReconnectInterval != 0 {
+		time.Sleep(time.Millisecond * time.Duration(c.conf.ReverseReconnectInterval))
+		if u {
+			c.connectUniversal()
+			return
+		}
+		c.connectApi()
+	}
+}
+
+func (c *websocketClient) onBotPushEvent(m coolq.MSG) {
+	c.pushLock.Lock()
+	defer c.pushLock.Unlock()
+	if c.eventConn != nil {
+		if _, err := c.eventConn.Write([]byte(m.ToJson())); err != nil {
+			_ = c.eventConn.Close()
+			if c.conf.ReverseReconnectInterval != 0 {
+				time.Sleep(time.Millisecond * time.Duration(c.conf.ReverseReconnectInterval))
+				c.connectEvent()
+			}
+		}
+	}
+	if c.universalConn != nil {
+		_, _ = c.universalConn.Write([]byte(m.ToJson()))
+	}
 }
 
 func (s *websocketServer) event(w http.ResponseWriter, r *http.Request) {
@@ -114,7 +267,7 @@ func (s *websocketServer) listenApi(c *websocket.Conn) {
 		if t == websocket.TextMessage {
 			j := gjson.ParseBytes(payload)
 			t := strings.ReplaceAll(j.Get("action").Str, "_async", "") //TODO: async support
-			log.Infof("API调用: %v", j.Get("action").Str)
+			//log.Infof("API调用: %v", j.Get("action").Str)
 			if f, ok := wsApi[t]; ok {
 				ret := f(s.bot, j.Get("params"))
 				if j.Get("echo").Exists() {

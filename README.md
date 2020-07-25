@@ -9,7 +9,7 @@
 - [x] HTTP API
 - [x] 反向HTTP POST
 - [x] 正向Websocket
-- [ ] 反向Websocket (开发中)
+- [x] 反向Websocket (测试中)
 #### 实现
 <details>
 <summary>已实现API</summary>
