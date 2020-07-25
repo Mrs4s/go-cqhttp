@@ -116,7 +116,11 @@ func (s *websocketServer) listenApi(c *websocket.Conn) {
 			t := strings.ReplaceAll(j.Get("action").Str, "_async", "") //TODO: async support
 			log.Infof("API调用: %v", j.Get("action").Str)
 			if f, ok := wsApi[t]; ok {
-				_ = c.WriteMessage(websocket.TextMessage, []byte(f(s.bot, j.Get("params"))))
+				ret := f(s.bot, j.Get("params"))
+				if j.Get("echo").Exists() {
+					ret["echo"] = j.Get("echo").Value()
+				}
+				_ = c.WriteJSON(ret)
 			}
 		}
 	}
@@ -139,54 +143,54 @@ func (s *websocketServer) onBotPushEvent(m coolq.MSG) {
 	}
 }
 
-var wsApi = map[string]func(*coolq.CQBot, gjson.Result) string{
-	"get_login_info": func(bot *coolq.CQBot, p gjson.Result) string {
-		return bot.CQGetLoginInfo().ToJson()
+var wsApi = map[string]func(*coolq.CQBot, gjson.Result) coolq.MSG{
+	"get_login_info": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
+		return bot.CQGetLoginInfo()
 	},
-	"get_friend_list": func(bot *coolq.CQBot, p gjson.Result) string {
-		return bot.CQGetFriendList().ToJson()
+	"get_friend_list": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
+		return bot.CQGetFriendList()
 	},
-	"get_group_list": func(bot *coolq.CQBot, p gjson.Result) string {
-		return bot.CQGetGroupList().ToJson()
+	"get_group_list": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
+		return bot.CQGetGroupList()
 	},
-	"get_group_info": func(bot *coolq.CQBot, p gjson.Result) string {
-		return bot.CQGetGroupInfo(p.Get("group_id").Int()).ToJson()
+	"get_group_info": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
+		return bot.CQGetGroupInfo(p.Get("group_id").Int())
 	},
-	"get_group_member_list": func(bot *coolq.CQBot, p gjson.Result) string {
-		return bot.CQGetGroupMemberList(p.Get("group_id").Int()).ToJson()
+	"get_group_member_list": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
+		return bot.CQGetGroupMemberList(p.Get("group_id").Int())
 	},
-	"get_group_member_info": func(bot *coolq.CQBot, p gjson.Result) string {
+	"get_group_member_info": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		return bot.CQGetGroupMemberInfo(
 			p.Get("group_id").Int(), p.Get("user_id").Int(),
 			p.Get("no_cache").Bool(),
-		).ToJson()
+		)
 	},
-	"send_msg": func(bot *coolq.CQBot, p gjson.Result) string {
+	"send_msg": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		if p.Get("group_id").Int() != 0 {
-			return bot.CQSendGroupMessage(p.Get("group_id").Int(), p.Get("message").Str).ToJson()
+			return bot.CQSendGroupMessage(p.Get("group_id").Int(), p.Get("message").Str)
 		}
 		if p.Get("user_id").Int() != 0 {
-			return bot.CQSendPrivateMessage(p.Get("user_id").Int(), p.Get("message").Str).ToJson()
+			return bot.CQSendPrivateMessage(p.Get("user_id").Int(), p.Get("message").Str)
 		}
-		return ""
+		return coolq.MSG{}
 	},
-	"send_group_msg": func(bot *coolq.CQBot, p gjson.Result) string {
-		return bot.CQSendGroupMessage(p.Get("group_id").Int(), p.Get("message").Str).ToJson()
+	"send_group_msg": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
+		return bot.CQSendGroupMessage(p.Get("group_id").Int(), p.Get("message").Str)
 	},
-	"send_private_msg": func(bot *coolq.CQBot, p gjson.Result) string {
-		return bot.CQSendPrivateMessage(p.Get("user_id").Int(), p.Get("message").Str).ToJson()
+	"send_private_msg": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
+		return bot.CQSendPrivateMessage(p.Get("user_id").Int(), p.Get("message").Str)
 	},
-	"delete_msg": func(bot *coolq.CQBot, p gjson.Result) string {
-		return bot.CQDeleteMessage(int32(p.Get("message_id").Int())).ToJson()
+	"delete_msg": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
+		return bot.CQDeleteMessage(int32(p.Get("message_id").Int()))
 	},
-	"set_friend_add_request": func(bot *coolq.CQBot, p gjson.Result) string {
+	"set_friend_add_request": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		apr := true
 		if p.Get("approve").Exists() {
 			apr = p.Get("approve").Bool()
 		}
-		return bot.CQProcessFriendRequest(p.Get("flag").Str, apr).ToJson()
+		return bot.CQProcessFriendRequest(p.Get("flag").Str, apr)
 	},
-	"set_group_add_request": func(bot *coolq.CQBot, p gjson.Result) string {
+	"set_group_add_request": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		subType := p.Get("sub_type").Str
 		apr := true
 		if subType == "" {
@@ -195,50 +199,50 @@ var wsApi = map[string]func(*coolq.CQBot, gjson.Result) string{
 		if p.Get("approve").Exists() {
 			apr = p.Get("approve").Bool()
 		}
-		return bot.CQProcessGroupRequest(p.Get("flag").Str, subType, apr).ToJson()
+		return bot.CQProcessGroupRequest(p.Get("flag").Str, subType, apr)
 	},
-	"set_group_card": func(bot *coolq.CQBot, p gjson.Result) string {
-		return bot.CQSetGroupCard(p.Get("group_id").Int(), p.Get("user_id").Int(), p.Get("card").Str).ToJson()
+	"set_group_card": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
+		return bot.CQSetGroupCard(p.Get("group_id").Int(), p.Get("user_id").Int(), p.Get("card").Str)
 	},
-	"set_group_special_title": func(bot *coolq.CQBot, p gjson.Result) string {
-		return bot.CQSetGroupSpecialTitle(p.Get("group_id").Int(), p.Get("user_id").Int(), p.Get("special_title").Str).ToJson()
+	"set_group_special_title": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
+		return bot.CQSetGroupSpecialTitle(p.Get("group_id").Int(), p.Get("user_id").Int(), p.Get("special_title").Str)
 	},
-	"set_group_kick": func(bot *coolq.CQBot, p gjson.Result) string {
-		return bot.CQSetGroupKick(p.Get("group_id").Int(), p.Get("user_id").Int(), p.Get("message").Str).ToJson()
+	"set_group_kick": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
+		return bot.CQSetGroupKick(p.Get("group_id").Int(), p.Get("user_id").Int(), p.Get("message").Str)
 	},
-	"set_group_ban": func(bot *coolq.CQBot, p gjson.Result) string {
-		return bot.CQSetGroupBan(p.Get("group_id").Int(), p.Get("user_id").Int(), uint32(p.Get("duration").Int())).ToJson()
+	"set_group_ban": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
+		return bot.CQSetGroupBan(p.Get("group_id").Int(), p.Get("user_id").Int(), uint32(p.Get("duration").Int()))
 	},
-	"set_group_whole_ban": func(bot *coolq.CQBot, p gjson.Result) string {
+	"set_group_whole_ban": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		return bot.CQSetGroupWholeBan(p.Get("group_id").Int(), func() bool {
 			if p.Get("enable").Exists() {
 				return p.Get("enable").Bool()
 			}
 			return true
-		}()).ToJson()
+		}())
 	},
-	"set_group_name": func(bot *coolq.CQBot, p gjson.Result) string {
-		return bot.CQSetGroupName(p.Get("group_id").Int(), p.Get("name").Str).ToJson()
+	"set_group_name": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
+		return bot.CQSetGroupName(p.Get("group_id").Int(), p.Get("name").Str)
 	},
-	"get_image": func(bot *coolq.CQBot, p gjson.Result) string {
-		return bot.CQGetImage(p.Get("file").Str).ToJson()
+	"get_image": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
+		return bot.CQGetImage(p.Get("file").Str)
 	},
-	"get_group_msg": func(bot *coolq.CQBot, p gjson.Result) string {
-		return bot.CQGetGroupMessage(int32(p.Get("message_id").Int())).ToJson()
+	"get_group_msg": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
+		return bot.CQGetGroupMessage(int32(p.Get("message_id").Int()))
 	},
-	"can_send_image": func(bot *coolq.CQBot, p gjson.Result) string {
-		return bot.CQCanSendImage().ToJson()
+	"can_send_image": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
+		return bot.CQCanSendImage()
 	},
-	"can_send_record": func(bot *coolq.CQBot, p gjson.Result) string {
-		return bot.CQCanSendRecord().ToJson()
+	"can_send_record": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
+		return bot.CQCanSendRecord()
 	},
-	"get_status": func(bot *coolq.CQBot, p gjson.Result) string {
-		return bot.CQGetStatus().ToJson()
+	"get_status": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
+		return bot.CQGetStatus()
 	},
-	"get_version_info": func(bot *coolq.CQBot, p gjson.Result) string {
-		return bot.CQGetVersionInfo().ToJson()
+	"get_version_info": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
+		return bot.CQGetVersionInfo()
 	},
-	".handle_quick_operation": func(bot *coolq.CQBot, p gjson.Result) string {
-		return bot.CQHandleQuickOperation(p.Get("context"), p.Get("operation")).ToJson()
+	".handle_quick_operation": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
+		return bot.CQHandleQuickOperation(p.Get("context"), p.Get("operation"))
 	},
 }
