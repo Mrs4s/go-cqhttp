@@ -20,6 +20,8 @@ go-cqhttp 支持导入CQHTTP的配置文件, 具体步骤为:
 	"password": "",
 	"enable_db": true,
 	"access_token": "",
+	"relogin": false,
+	"relogin_delay": 0,
 	"http_config": {
 		"enabled": true,
 		"host": "0.0.0.0",
@@ -29,16 +31,29 @@ go-cqhttp 支持导入CQHTTP的配置文件, 具体步骤为:
 		"enabled": true,
 		"host": "0.0.0.0",
 		"port": 6700
-	}
+	},
+	"ws_reverse_servers": [
+		{
+			"enabled": false,
+			"reverse_url": "ws://you_websocket_universal.server",
+			"reverse_api_url": "ws://you_websocket_api.server",
+			"reverse_event_url": "ws://you_websocket_event.server",
+			"reverse_reconnect_interval": 3000
+		}
+	]
 }
 ````
 
-| 字段         | 类型   | 说明                                                         |
-| ------------ | ------ | ------------------------------------------------------------ |
-| uin          | int64  | 登录用QQ号                                                   |
-| password     | string | 登录用密码                                                   |
-| enable_db    | bool   | 是否开启内置数据库, 关闭后将无法使用 **回复/撤回** 等上下文相关接口 |
-| access_token | string | 同CQHTTP的 `access_token`  用于身份验证                      |
-| http_config  | object | HTTP API配置                                                 |
-| ws_config    | object | Websocket API 配置                                           |
+| 字段               | 类型     | 说明                                                                |
+| ------------------ | -------- | ------------------------------------------------------------------- |
+| uin                | int64    | 登录用QQ号                                                          |
+| password           | string   | 登录用密码                                                          |
+| enable_db          | bool     | 是否开启内置数据库, 关闭后将无法使用 **回复/撤回** 等上下文相关接口 |
+| access_token       | string   | 同CQHTTP的 `access_token`  用于身份验证                             |
+| relogin            | bool     | 是否自动重新登录                                                    |
+| relogin_delay      | int      | 重登录延时（秒）                                                    |
+| http_config        | object   | HTTP API配置                                                        |
+| ws_config          | object   | Websocket API 配置                                                  |
+| ws_reverse_servers | object[] | 反向 Websocket API 配置                                             |
+
 
