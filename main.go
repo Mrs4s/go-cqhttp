@@ -56,6 +56,13 @@ func init() {
 		if conf.PostUrl != "" {
 			goConf.HttpConfig.PostUrls[conf.PostUrl] = conf.Secret
 		}
+		if conf.UseWsReverse {
+			goConf.ReverseServers[0].Enabled = true
+			goConf.ReverseServers[0].ReverseUrl = conf.WSReverseUrl
+			goConf.ReverseServers[0].ReverseApiUrl = conf.WSReverseApiUrl
+			goConf.ReverseServers[0].ReverseEventUrl = conf.WSReverseEventUrl
+			goConf.ReverseServers[0].ReverseReconnectInterval = conf.WSReverseReconnectInterval
+		}
 		if err := goConf.Save("config.json"); err != nil {
 			log.Fatalf("保存 config.json 时出现错误: %v", err)
 		}

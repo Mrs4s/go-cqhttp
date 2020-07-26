@@ -5,16 +5,26 @@
 测试版可前往 Release 下载
 
 # 兼容性
+
 #### 接口
 - [x] HTTP API
 - [x] 反向HTTP POST
 - [x] 正向Websocket
 - [x] 反向Websocket (测试中)
+
+#### 拓展支持
+- [x] HTTP POST多点上报
+- [x] 反向WS多点连接 
+- [x] 修改群名
+- [x] 消息撤回事件
+- [x] 解析/发送 回复消息
+- [x] 解析合并转发
+
 #### 实现
 <details>
 <summary>已实现API</summary>
 
-##### 注意: 部分API实现与CQHTTP原版略有差异，请参考WIKI
+##### 注意: 部分API实现与CQHTTP原版略有差异，请参考文档
 | API                      | 功能                                                         |
 | ------------------------ | ------------------------------------------------------------ |
 | /get_login_info          | [获取登录号信息](https://cqhttp.cc/docs/4.15/#/API?id=get_login_info-获取登录号信息) |
@@ -47,7 +57,7 @@
 <details>
 <summary>已实现Event</summary>
 
-##### 注意: 部分Event数据与CQHTTP原版略有差异，请参考WIKI
+##### 注意: 部分Event数据与CQHTTP原版略有差异，请参考文档
 | Event                                                        |
 | ------------------------------------------------------------ |
 | [私聊信息](https://cqhttp.cc/docs/4.15/#/Post?id=私聊消息)   |
