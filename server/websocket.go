@@ -380,6 +380,9 @@ var wsApi = map[string]func(*coolq.CQBot, gjson.Result) coolq.MSG{
 	"get_image": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		return bot.CQGetImage(p.Get("file").Str)
 	},
+	"get_forward_msg": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
+		return bot.CQGetForwardMessage(p.Get("message_id").Str)
+	},
 	"get_group_msg": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		return bot.CQGetGroupMessage(int32(p.Get("message_id").Int()))
 	},

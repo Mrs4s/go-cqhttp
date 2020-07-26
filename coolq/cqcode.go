@@ -36,6 +36,8 @@ func ToStringMessage(e []message.IMessageElement, code int64, raw ...bool) (r st
 			r += fmt.Sprintf("[CQ:at,qq=%d]", o.Target)
 		case *message.ReplyElement:
 			r += fmt.Sprintf("[CQ:reply,id=%d]", ToGlobalId(code, o.ReplySeq))
+		case *message.ForwardElement:
+			r += fmt.Sprintf("[CQ:forward,id=%s]", o.ResId)
 		case *message.FaceElement:
 			r += fmt.Sprintf(`[CQ:face,id=%d]`, o.Index)
 		case *message.ImageElement:

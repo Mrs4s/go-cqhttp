@@ -307,6 +307,28 @@ func (bot *CQBot) CQGetImage(file string) MSG {
 	return Failed(100)
 }
 
+func (bot *CQBot) CQGetForwardMessage(resId string) MSG {
+	m := bot.Client.GetForwardMessage(resId)
+	if m == nil {
+		return Failed(100)
+	}
+	var r []MSG
+	for _, n := range m.Nodes {
+		checkImage(n.Message)
+		r = append(r, MSG{
+			"sender": MSG{
+				"user_id": n.SenderId,
+				"nick":    n.SenderName,
+			},
+			"time":    n.Time,
+			"content": ToStringMessage(n.Message, 0, false),
+		})
+	}
+	return OK(MSG{
+		"messages": r,
+	})
+}
+
 func (bot *CQBot) CQGetGroupMessage(messageId int32) MSG {
 	msg := bot.GetGroupMessage(messageId)
 	if msg == nil {

@@ -25,7 +25,8 @@ go-cqhttp 支持导入CQHTTP的配置文件, 具体步骤为:
 	"http_config": {
 		"enabled": true,
 		"host": "0.0.0.0",
-		"port": 5700
+		"port": 5700,
+		"post_urls": []
 	},
 	"ws_config": {
 		"enabled": true,

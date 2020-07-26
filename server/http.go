@@ -127,6 +127,8 @@ func (s *httpServer) Run(addr, authToken string, bot *coolq.CQBot) {
 	s.engine.Any("/get_image", s.GetImage)
 	s.engine.Any("/get_image_async", s.GetImage)
 
+	s.engine.Any("/get_forward_msg", s.GetForwardMessage)
+
 	s.engine.Any("/get_group_msg", s.GetGroupMessage)
 	s.engine.Any("/get_group_msg_async", s.GetGroupMessage)
 
@@ -296,6 +298,11 @@ func (s *httpServer) SetWholeBan(c *gin.Context) {
 func (s *httpServer) SetGroupName(c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	c.JSON(200, s.bot.CQSetGroupName(gid, getParam(c, "name")))
+}
+
+func (s *httpServer) GetForwardMessage(c *gin.Context) {
+	resId := getParam(c, "message_id")
+	c.JSON(200, s.bot.CQGetForwardMessage(resId))
 }
 
 func (s *httpServer) DeleteMessage(c *gin.Context) {
