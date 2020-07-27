@@ -154,7 +154,9 @@ func ToGlobalId(code int64, msgId int32) int32 {
 }
 
 func (bot *CQBot) Release() {
-	_ = bot.db.Close()
+	if bot.db != nil {
+		_ = bot.db.Close()
+	}
 }
 
 func (bot *CQBot) dispatchEventMessage(m MSG) {
