@@ -229,13 +229,21 @@ func (s *httpServer) SendMessage(c *gin.Context) {
 func (s *httpServer) SendPrivateMessage(c *gin.Context) {
 	uid, _ := strconv.ParseInt(getParam(c, "user_id"), 10, 64)
 	msg := getParam(c, "message")
-	c.JSON(200, s.bot.CQSendPrivateMessage(uid, msg))
+	if gjson.Valid(msg) {
+		c.JSON(200, s.bot.CQSendPrivateMessage(uid, gjson.Parse(msg)))
+		return
+	}
+	c.JSON(200, s.bot.CQSendPrivateMessage(uid, gjson.Result{Type: gjson.String, Str: msg}))
 }
 
 func (s *httpServer) SendGroupMessage(c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	msg := getParam(c, "message")
-	c.JSON(200, s.bot.CQSendGroupMessage(gid, msg))
+	if gjson.Valid(msg) {
+		c.JSON(200, s.bot.CQSendGroupMessage(gid, gjson.Parse(msg)))
+		return
+	}
+	c.JSON(200, s.bot.CQSendGroupMessage(gid, gjson.Result{Type: gjson.String, Str: msg}))
 }
 
 func (s *httpServer) GetImage(c *gin.Context) {
@@ -361,6 +369,8 @@ func getParam(c *gin.Context, k string) string {
 					res := obj.(gjson.Result).Get(k)
 					if res.Exists() {
 						switch res.Type {
+						case gjson.JSON:
+							return res.Raw
 						case gjson.String:
 							return res.Str
 						case gjson.Number:

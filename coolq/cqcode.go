@@ -8,6 +8,7 @@ import (
 	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/Mrs4s/go-cqhttp/global"
 	log "github.com/sirupsen/logrus"
+	"github.com/tidwall/gjson"
 	"io/ioutil"
 	"path"
 	"regexp"
@@ -99,6 +100,47 @@ func (bot *CQBot) ConvertStringMessage(m string, group bool) (r []message.IMessa
 	}
 	if si != len(m) {
 		r = append(r, message.NewText(m[si:]))
+	}
+	return
+}
+
+func (bot *CQBot) ConvertArrayMessage(m gjson.Result, group bool) (r []message.IMessageElement) {
+	for _, e := range m.Array() {
+		t := e.Get("type").Str
+		if t == "reply" && group {
+			if len(r) > 0 {
+				if _, ok := r[0].(*message.ReplyElement); ok {
+					log.Warnf("警告: 一条信息只能包含一个 Reply 元素.")
+					continue
+				}
+			}
+			mid, err := strconv.Atoi(e.Get("data").Get("id").Str)
+			if err == nil {
+				org := bot.GetGroupMessage(int32(mid))
+				if org != nil {
+					r = append([]message.IMessageElement{
+						&message.ReplyElement{
+							ReplySeq: org["message-id"].(int32),
+							Sender:   org["sender"].(message.Sender).Uin,
+							Time:     org["time"].(int32),
+							Elements: bot.ConvertStringMessage(org["message"].(string), group),
+						},
+					}, r...)
+					continue
+				}
+			}
+		}
+		d := make(map[string]string)
+		e.Get("data").ForEach(func(key, value gjson.Result) bool {
+			d[key.Str] = value.Str
+			return true
+		})
+		elem, err := bot.ToElement(t, d, group)
+		if err != nil {
+			log.Warnf("转换CQ码到MiraiGo Element时出现错误: %v 将忽略本段CQ码.", err)
+			continue
+		}
+		r = append(r, elem)
 	}
 	return
 }

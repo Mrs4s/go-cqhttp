@@ -164,6 +164,7 @@ func (c *websocketClient) listenApi(conn *wsc.Conn, u bool) {
 		}
 		j := gjson.ParseBytes(buf[:l])
 		t := strings.ReplaceAll(j.Get("action").Str, "_async", "")
+		//log.Infof("调用API: %v p: %v", t, j.Get("params").Raw)
 		if f, ok := wsApi[t]; ok {
 			ret := f(c.bot, j.Get("params"))
 			if j.Get("echo").Exists() {
@@ -320,18 +321,18 @@ var wsApi = map[string]func(*coolq.CQBot, gjson.Result) coolq.MSG{
 	},
 	"send_msg": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		if p.Get("group_id").Int() != 0 {
-			return bot.CQSendGroupMessage(p.Get("group_id").Int(), p.Get("message").Str)
+			return bot.CQSendGroupMessage(p.Get("group_id").Int(), p.Get("message"))
 		}
 		if p.Get("user_id").Int() != 0 {
-			return bot.CQSendPrivateMessage(p.Get("user_id").Int(), p.Get("message").Str)
+			return bot.CQSendPrivateMessage(p.Get("user_id").Int(), p.Get("message"))
 		}
 		return coolq.MSG{}
 	},
 	"send_group_msg": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
-		return bot.CQSendGroupMessage(p.Get("group_id").Int(), p.Get("message").Str)
+		return bot.CQSendGroupMessage(p.Get("group_id").Int(), p.Get("message"))
 	},
 	"send_private_msg": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
-		return bot.CQSendPrivateMessage(p.Get("user_id").Int(), p.Get("message").Str)
+		return bot.CQSendPrivateMessage(p.Get("user_id").Int(), p.Get("message"))
 	},
 	"delete_msg": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		return bot.CQDeleteMessage(int32(p.Get("message_id").Int()))
