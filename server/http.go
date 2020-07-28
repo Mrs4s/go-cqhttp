@@ -286,7 +286,7 @@ func (s *httpServer) SetGroupKick(c *gin.Context) {
 func (s *httpServer) SetGroupBan(c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	uid, _ := strconv.ParseInt(getParam(c, "user_id"), 10, 64)
-	i, _ := strconv.ParseInt(getParam(c, "duration"), 10, 64)
+	i, _ := strconv.ParseInt(getParamOrDefault(c, "duration", "1800"), 10, 64)
 	c.JSON(200, s.bot.CQSetGroupBan(gid, uid, uint32(i)))
 }
 

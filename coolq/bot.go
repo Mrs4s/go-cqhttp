@@ -75,7 +75,7 @@ func (bot *CQBot) GetGroupMessage(mid int32) MSG {
 				return err
 			}
 			buff := new(bytes.Buffer)
-			buff.Write(e.Value)
+			buff.Write(binary.GZipUncompress(e.Value))
 			return gob.NewDecoder(buff).Decode(&m)
 		})
 		if err == nil {
@@ -140,7 +140,7 @@ func (bot *CQBot) InsertGroupMessage(m *message.GroupMessage) int32 {
 		if err := gob.NewEncoder(buf).Encode(val); err != nil {
 			return err
 		}
-		return tx.Put("group-messages", binary.ToBytes(id), buf.Bytes(), 0)
+		return tx.Put("group-messages", binary.ToBytes(id), binary.GZipCompress(buf.Bytes()), 0)
 	})
 	if err != nil {
 		log.Warnf("记录聊天数据时出现错误: %v", err)

@@ -364,7 +364,12 @@ var wsApi = map[string]func(*coolq.CQBot, gjson.Result) coolq.MSG{
 		return bot.CQSetGroupKick(p.Get("group_id").Int(), p.Get("user_id").Int(), p.Get("message").Str)
 	},
 	"set_group_ban": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
-		return bot.CQSetGroupBan(p.Get("group_id").Int(), p.Get("user_id").Int(), uint32(p.Get("duration").Int()))
+		return bot.CQSetGroupBan(p.Get("group_id").Int(), p.Get("user_id").Int(), func() uint32 {
+			if p.Get("duration").Exists() {
+				return uint32(p.Get("duration").Int())
+			}
+			return 1800
+		}())
 	},
 	"set_group_whole_ban": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		return bot.CQSetGroupWholeBan(p.Get("group_id").Int(), func() bool {

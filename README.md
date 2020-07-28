@@ -10,7 +10,7 @@
 - [x] HTTP API
 - [x] 反向HTTP POST
 - [x] 正向Websocket
-- [x] 反向Websocket (测试中)
+- [x] 反向Websocket
 
 #### 拓展支持
 - [x] HTTP POST多点上报
@@ -18,7 +18,7 @@
 - [x] 修改群名
 - [x] 消息撤回事件
 - [x] 解析/发送 回复消息
-- [x] 解析合并转发
+- [x] 解析 合并转发
 
 #### 实现
 <details>
