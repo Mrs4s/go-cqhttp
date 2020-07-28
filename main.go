@@ -115,11 +115,8 @@ func main() {
 				rsp, err = cli.SubmitCaptcha(strings.ReplaceAll(text, "\n", ""), rsp.CaptchaSign)
 				continue
 			case client.UnsafeDeviceError:
-				log.Warnf("账号已开启设备锁，请前往 -> %v <- 验证.", rsp.VerifyUrl)
-				log.Info("按 Enter 继续")
-				_, _ = console.ReadString('\n')
-				rsp, err = cli.Login()
-				continue
+				log.Warnf("账号已开启设备锁，请前往 -> %v <- 验证并重启Bot.", rsp.VerifyUrl)
+				return
 			case client.OtherLoginError, client.UnknownLoginError:
 				log.Fatalf("登录失败: %v", rsp.ErrorMessage)
 			}

@@ -108,8 +108,8 @@ func (bot *CQBot) CQSendGroupMessage(groupId int64, m gjson.Result) MSG {
 		}
 		return OK(MSG{"message_id": mid})
 	}
-	if m.IsArray() {
-		elem := bot.ConvertArrayMessage(m, true)
+	if m.Type == gjson.JSON {
+		elem := bot.ConvertObjectMessage(m, true)
 		mid := bot.SendGroupMessage(groupId, &message.SendingMessage{Elements: elem})
 		if mid == -1 {
 			return Failed(100)
@@ -130,8 +130,8 @@ func (bot *CQBot) CQSendPrivateMessage(userId int64, m gjson.Result) MSG {
 		}
 		return OK(MSG{"message_id": mid})
 	}
-	if m.IsArray() {
-		elem := bot.ConvertArrayMessage(m, true)
+	if m.Type == gjson.JSON {
+		elem := bot.ConvertObjectMessage(m, true)
 		mid := bot.SendPrivateMessage(userId, &message.SendingMessage{Elements: elem})
 		if mid == -1 {
 			return Failed(100)

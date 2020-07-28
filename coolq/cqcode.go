@@ -104,14 +104,14 @@ func (bot *CQBot) ConvertStringMessage(m string, group bool) (r []message.IMessa
 	return
 }
 
-func (bot *CQBot) ConvertArrayMessage(m gjson.Result, group bool) (r []message.IMessageElement) {
-	for _, e := range m.Array() {
+func (bot *CQBot) ConvertObjectMessage(m gjson.Result, group bool) (r []message.IMessageElement) {
+	convertElem := func(e gjson.Result) {
 		t := e.Get("type").Str
 		if t == "reply" && group {
 			if len(r) > 0 {
 				if _, ok := r[0].(*message.ReplyElement); ok {
 					log.Warnf("警告: 一条信息只能包含一个 Reply 元素.")
-					continue
+					return
 				}
 			}
 			mid, err := strconv.Atoi(e.Get("data").Get("id").Str)
@@ -126,7 +126,7 @@ func (bot *CQBot) ConvertArrayMessage(m gjson.Result, group bool) (r []message.I
 							Elements: bot.ConvertStringMessage(org["message"].(string), group),
 						},
 					}, r...)
-					continue
+					return
 				}
 			}
 		}
@@ -138,9 +138,17 @@ func (bot *CQBot) ConvertArrayMessage(m gjson.Result, group bool) (r []message.I
 		elem, err := bot.ToElement(t, d, group)
 		if err != nil {
 			log.Warnf("转换CQ码到MiraiGo Element时出现错误: %v 将忽略本段CQ码.", err)
-			continue
+			return
 		}
 		r = append(r, elem)
+	}
+	if m.IsArray() {
+		for _, e := range m.Array() {
+			convertElem(e)
+		}
+	}
+	if m.IsObject() {
+		convertElem(m)
 	}
 	return
 }
