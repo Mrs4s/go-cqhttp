@@ -13,6 +13,7 @@
 - [x] 反向Websocket
 
 #### 拓展支持
+> 拓展API可前往 [文档](docs/cqhttp.md) 查看
 - [x] HTTP POST多点上报
 - [x] 反向WS多点连接 
 - [x] 修改群名
