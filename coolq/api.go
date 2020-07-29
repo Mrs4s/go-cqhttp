@@ -267,6 +267,7 @@ func (bot *CQBot) CQHandleQuickOperation(context, operation gjson.Result) MSG {
 			if operation.Get("at_sender").Exists() {
 				at = operation.Get("at_sender").Bool()
 			}
+			// TODO: 处理at字段
 			if msgType == "group" && at {
 				bot.CQSendGroupMessage(context.Get("group_id").Int(), reply)
 			}
