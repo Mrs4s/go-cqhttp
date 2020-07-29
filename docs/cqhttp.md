@@ -123,7 +123,9 @@ Type: `node`
 
 ## API
 
-`/set_group_name`  **设置群名**
+### 设置群名
+
+终结点: `/set_group_name`  
 
 **参数** 
 
@@ -132,7 +134,9 @@ Type: `node`
 | group_id | int64  | 群号 |
 | name     | string | 新名 |
 
-`/get_image`  **获取图片信息**
+### 获取图片信息
+
+终结点: `/get_image`  
 
 > 该接口为 CQHTTP 接口修改
 
@@ -150,7 +154,9 @@ Type: `node`
 | `filename` | string | 图片文件原名   |
 | `url`      | string | 图片下载地址   |
 
-`/get_group_msg` **获取群消息**
+### 获取群消息
+
+终结点: `/get_group_msg` 
 
 参数
 
@@ -168,7 +174,9 @@ Type: `node`
 | `time`       | int32   | 发送时间   |
 | `content`    | message | 消息内容   |
 
-`/get_forward_msg` **获取转发消息信息**
+### 获取合并转发内容
+
+终结点: `/get_forward_msg`
 
 参数
 
@@ -176,7 +184,53 @@ Type: `node`
 | ------------ | ------ | ------ |
 | `message_id` | string | 消息id |
 
+响应数据
 
+| 字段       | 类型              | 说明     |
+| ---------- | ----------------- | -------- |
+| `messages` | forward message[] | 消息列表 |
+
+响应示例
+
+````json
+{
+    "data": {
+        "messages": [
+            {
+                "content": "合并转发1",
+                "sender": {
+                    "nick": "发送者A",
+                    "user_id": 10086
+                },
+                "time": 1595694374
+            },
+            {
+                "content": "合并转发2[CQ:image,file=xxxx,url=xxxx]",
+                "sender": {
+                    "nick": "发送者B",
+                    "user_id": 10087
+                },
+                "time": 1595694393
+            }
+        ]
+    },
+    "retcode": 0,
+    "status": "ok"
+}
+````
+
+### 发送合并转发(群)
+
+终结点: `/send_group_forward_msg`
+
+**参数** 
+
+| 字段       | 类型           | 说明                         |
+| ---------- | -------------- | ---------------------------- |
+| `group_id` | int64          | 群号                         |
+| `messages` | forward node[] | 自定义转发消息, 具体看CQCode |
+
+### 
 
 ## 事件
 
