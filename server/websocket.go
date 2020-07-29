@@ -331,6 +331,9 @@ var wsApi = map[string]func(*coolq.CQBot, gjson.Result) coolq.MSG{
 	"send_group_msg": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		return bot.CQSendGroupMessage(p.Get("group_id").Int(), p.Get("message"))
 	},
+	"send_group_forward_msg": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
+		return bot.CQSendGroupForwardMessage(p.Get("group_id").Int(), p.Get("messages"))
+	},
 	"send_private_msg": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		return bot.CQSendPrivateMessage(p.Get("user_id").Int(), p.Get("message"))
 	},

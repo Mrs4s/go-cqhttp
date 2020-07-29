@@ -142,6 +142,9 @@ func (bot *CQBot) ConvertObjectMessage(m gjson.Result, group bool) (r []message.
 		}
 		r = append(r, elem)
 	}
+	if m.Type == gjson.String {
+		return bot.ConvertStringMessage(m.Str, group)
+	}
 	if m.IsArray() {
 		for _, e := range m.Array() {
 			convertElem(e)

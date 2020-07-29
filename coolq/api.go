@@ -12,6 +12,7 @@ import (
 	"path"
 	"runtime"
 	"strconv"
+	"time"
 )
 
 // https://cqhttp.cc/docs/4.15/#/API?id=get_login_info-%E8%8E%B7%E5%8F%96%E7%99%BB%E5%BD%95%E5%8F%B7%E4%BF%A1%E6%81%AF
@@ -115,6 +116,76 @@ func (bot *CQBot) CQSendGroupMessage(groupId int64, m gjson.Result) MSG {
 			return Failed(100)
 		}
 		return OK(MSG{"message_id": mid})
+	}
+	return Failed(100)
+}
+
+func (bot *CQBot) CQSendGroupForwardMessage(groupId int64, m gjson.Result) MSG {
+	if m.Type != gjson.JSON {
+		return Failed(100)
+	}
+	var nodes []*message.ForwardNode
+	ts := time.Now().Add(-time.Minute * 5)
+	hasCustom := func() bool {
+		for _, item := range m.Array() {
+			if item.Get("data.uin").Exists() {
+				return true
+			}
+		}
+		return false
+	}()
+	convert := func(e gjson.Result) {
+		if e.Get("type").Str != "node" {
+			return
+		}
+		ts.Add(time.Second)
+		if e.Get("data.id").Exists() {
+			i, _ := strconv.Atoi(e.Get("data.id").Str)
+			m := bot.GetGroupMessage(int32(i))
+			if m != nil {
+				sender := m["sender"].(message.Sender)
+				nodes = append(nodes, &message.ForwardNode{
+					SenderId:   sender.Uin,
+					SenderName: (&sender).DisplayName(),
+					Time: func() int32 {
+						if hasCustom {
+							return int32(ts.Unix())
+						}
+						return m["time"].(int32)
+					}(),
+					Message: bot.ConvertStringMessage(m["message"].(string), true),
+				})
+				return
+			}
+			log.Warnf("警告: 引用消息 %v 错误或数据库未开启.", e.Get("data.id").Str)
+			return
+		}
+		uin, _ := strconv.ParseInt(e.Get("data.uin").Str, 10, 64)
+		name := e.Get("data.name").Str
+		content := bot.ConvertObjectMessage(e.Get("data.content"), true)
+		if uin != 0 && name != "" && len(content) > 0 {
+			nodes = append(nodes, &message.ForwardNode{
+				SenderId:   uin,
+				SenderName: name,
+				Time:       int32(ts.Unix()),
+				Message:    content,
+			})
+			return
+		}
+		log.Warnf("警告: 非法 Forward node 将跳过")
+	}
+	if m.IsArray() {
+		for _, item := range m.Array() {
+			convert(item)
+		}
+	} else {
+		convert(m)
+	}
+	if len(nodes) > 0 {
+		gm := bot.Client.SendGroupForwardMessage(groupId, &message.ForwardMessage{Nodes: nodes})
+		return OK(MSG{
+			"message_id": ToGlobalId(groupId, gm.Id),
+		})
 	}
 	return Failed(100)
 }
