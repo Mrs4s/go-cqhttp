@@ -1,13 +1,7 @@
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
-github.com/Mrs4s/MiraiGo v0.0.0-20200727124316-9d432df098d9 h1:sgwJQnKKAJF/FCXyGv5HHpE5BcKGnwGyCSmPKTB7/vE=
-github.com/Mrs4s/MiraiGo v0.0.0-20200727124316-9d432df098d9/go.mod h1:M9wh1hjd0rie3+wm27tjPZkYMbD+MBV76CGqp2G7WSU=
-github.com/Mrs4s/MiraiGo v0.0.0-20200728112613-91aa75e8270d h1:Pv8lvODPBb+By7CU1crF0/KrmwIrUb4W/3jTs9WDSN4=
-github.com/Mrs4s/MiraiGo v0.0.0-20200728112613-91aa75e8270d/go.mod h1:M9wh1hjd0rie3+wm27tjPZkYMbD+MBV76CGqp2G7WSU=
-github.com/Mrs4s/MiraiGo v0.0.0-20200729044443-98a77a6cf354 h1:f2Cv15Nir9tcefrvwD0+imVx1RQAw2TQI7LFipPUzrI=
-github.com/Mrs4s/MiraiGo v0.0.0-20200729044443-98a77a6cf354/go.mod h1:M9wh1hjd0rie3+wm27tjPZkYMbD+MBV76CGqp2G7WSU=
-github.com/Mrs4s/MiraiGo v0.0.0-20200730004425-ca4383f56abe h1:6R4osGgsPzDt2TcRAcy/dk2lAcv4iDgMYBfEvrSxTtU=
-github.com/Mrs4s/MiraiGo v0.0.0-20200730004425-ca4383f56abe/go.mod h1:M9wh1hjd0rie3+wm27tjPZkYMbD+MBV76CGqp2G7WSU=
+github.com/Mrs4s/MiraiGo v0.0.0-20200730113850-298c1bb9119f h1:+MW9qbGu9uWJc9vs6m8+8oQLh9nK6RCW2wk3BX7Z14c=
+github.com/Mrs4s/MiraiGo v0.0.0-20200730113850-298c1bb9119f/go.mod h1:M9wh1hjd0rie3+wm27tjPZkYMbD+MBV76CGqp2G7WSU=
 github.com/bwmarrin/snowflake v0.3.0 h1:xm67bEhkKh6ij1790JB83OujPR5CzNe8QuQqAgISZN0=
 github.com/bwmarrin/snowflake v0.3.0/go.mod h1:NdZxfVWX+oR6y2K0o6qAYv6gIOP9rjG0/E9WsDpxqwE=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=

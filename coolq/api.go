@@ -406,8 +406,8 @@ func (bot *CQBot) CQGetForwardMessage(resId string) MSG {
 		checkImage(n.Message)
 		r = append(r, MSG{
 			"sender": MSG{
-				"user_id": n.SenderId,
-				"nick":    n.SenderName,
+				"user_id":  n.SenderId,
+				"nickname": n.SenderName,
 			},
 			"time":    n.Time,
 			"content": ToStringMessage(n.Message, 0, false),
