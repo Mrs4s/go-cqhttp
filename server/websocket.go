@@ -170,7 +170,9 @@ func (c *websocketClient) listenApi(conn *wsc.Conn, u bool) {
 			if j.Get("echo").Exists() {
 				ret["echo"] = j.Get("echo").Value()
 			}
+			c.pushLock.Lock()
 			_, _ = conn.Write([]byte(ret.ToJson()))
+			c.pushLock.Unlock()
 		}
 	}
 	if c.conf.ReverseReconnectInterval != 0 {
@@ -276,7 +278,9 @@ func (s *websocketServer) listenApi(c *websocket.Conn) {
 				if j.Get("echo").Exists() {
 					ret["echo"] = j.Get("echo").Value()
 				}
+				s.pushLock.Lock()
 				_ = c.WriteJSON(ret)
+				s.pushLock.Unlock()
 			}
 		}
 	}
