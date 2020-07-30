@@ -69,6 +69,7 @@
 | [群成员减少](https://cqhttp.cc/docs/4.15/#/Post?id=群成员减少) |
 | [群成员增加](https://cqhttp.cc/docs/4.15/#/Post?id=群成员增加) |
 | [群禁言](https://cqhttp.cc/docs/4.15/#/Post?id=群禁言)       |
+| [群文件上传](https://cqhttp.cc/docs/4.15/#/Post?id=群文件上传)|
 | [加好友请求](https://cqhttp.cc/docs/4.15/#/Post?id=加好友请求) |
 | [加群请求/邀请](https://cqhttp.cc/docs/4.15/#/Post?id=加群请求／邀请) |
 
