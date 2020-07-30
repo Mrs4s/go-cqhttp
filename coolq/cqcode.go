@@ -213,6 +213,8 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 		}
 		t, _ := strconv.ParseInt(qq, 10, 64)
 		return message.NewAt(t), nil
+	case "share":
+		return message.NewUrlShare(d["url"], d["title"], d["content"], d["image"]), nil
 	default:
 		return nil, errors.New("unsupported cq code: " + t)
 	}
