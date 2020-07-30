@@ -85,6 +85,10 @@ func main() {
 	if conf.Uin == 0 || conf.Password == "" {
 		log.Fatal("请修改 config.json 以添加账号密码.")
 	}
+	if conf.Debug {
+		log.SetLevel(log.DebugLevel)
+		log.Warnf("已开启Debug模式.")
+	}
 	if !global.PathExists("device.json") {
 		log.Warn("虚拟设备信息不存在, 将自动生成随机设备，按 Enter 继续.")
 		_, _ = console.ReadString('\n')

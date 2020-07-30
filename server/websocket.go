@@ -164,7 +164,7 @@ func (c *websocketClient) listenApi(conn *wsc.Conn, u bool) {
 		}
 		j := gjson.ParseBytes(buf[:l])
 		t := strings.ReplaceAll(j.Get("action").Str, "_async", "")
-		//log.Infof("调用API: %v p: %v", t, j.Get("params").Raw)
+		log.Debugf("反向WS接收到API调用: %v 参数: %v", t, j.Get("params").Raw)
 		if f, ok := wsApi[t]; ok {
 			ret := f(c.bot, j.Get("params"))
 			if j.Get("echo").Exists() {
@@ -187,6 +187,7 @@ func (c *websocketClient) onBotPushEvent(m coolq.MSG) {
 	c.pushLock.Lock()
 	defer c.pushLock.Unlock()
 	if c.eventConn != nil {
+		log.Debugf("向WS服务器 %v 推送Event: %v", c.eventConn.RemoteAddr().String(), m.ToJson())
 		if _, err := c.eventConn.Write([]byte(m.ToJson())); err != nil {
 			_ = c.eventConn.Close()
 			if c.conf.ReverseReconnectInterval != 0 {
@@ -196,6 +197,7 @@ func (c *websocketClient) onBotPushEvent(m coolq.MSG) {
 		}
 	}
 	if c.universalConn != nil {
+		log.Debugf("向WS服务器 %v 推送Event: %v", c.universalConn.RemoteAddr().String(), m.ToJson())
 		_, _ = c.universalConn.Write([]byte(m.ToJson()))
 	}
 }
@@ -268,7 +270,7 @@ func (s *websocketServer) listenApi(c *websocket.Conn) {
 		if t == websocket.TextMessage {
 			j := gjson.ParseBytes(payload)
 			t := strings.ReplaceAll(j.Get("action").Str, "_async", "") //TODO: async support
-			//log.Infof("API调用: %v", j.Get("action").Str)
+			log.Debugf("WS接收到API调用: %v 参数: %v", t, j.Get("params").Raw)
 			if f, ok := wsApi[t]; ok {
 				ret := f(s.bot, j.Get("params"))
 				if j.Get("echo").Exists() {
@@ -285,6 +287,7 @@ func (s *websocketServer) onBotPushEvent(m coolq.MSG) {
 	defer s.pushLock.Unlock()
 	pos := 0
 	for _, conn := range s.eventConn {
+		log.Debugf("向WS客户端 %v 推送Event: %v", conn.RemoteAddr().String(), m.ToJson())
 		err := conn.WriteMessage(websocket.TextMessage, []byte(m.ToJson()))
 		if err != nil {
 			_ = conn.Close()

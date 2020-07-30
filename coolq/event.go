@@ -40,6 +40,26 @@ func (bot *CQBot) privateMessageEvent(c *client.QQClient, m *message.PrivateMess
 
 func (bot *CQBot) groupMessageEvent(c *client.QQClient, m *message.GroupMessage) {
 	checkImage(m.Elements)
+	for _, elem := range m.Elements {
+		if file, ok := elem.(*message.GroupFileElement); ok {
+			log.Infof("群 %v(%v) 内 %v(%v) 上传了文件: %v", m.GroupName, m.GroupCode, m.Sender.DisplayName(), m.Sender.Uin, file.Name)
+			bot.dispatchEventMessage(MSG{
+				"post_type":   "notice",
+				"notice_type": "group_upload",
+				"group_id":    m.GroupCode,
+				"user_id":     m.Sender.Uin,
+				"file": MSG{
+					"id":    file.Path,
+					"name":  file.Name,
+					"size":  file.Size,
+					"busid": file.Busid,
+				},
+				"self_id": c.Uin,
+				"time":    time.Now().Unix(),
+			})
+			return
+		}
+	}
 	cqm := ToStringMessage(m.Elements, m.GroupCode, true)
 	id := m.Id
 	if bot.db != nil {

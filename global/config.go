@@ -16,6 +16,7 @@ type JsonConfig struct {
 	WSConfig       *GoCQWebsocketConfig          `json:"ws_config"`
 	ReverseServers []*GoCQReverseWebsocketConfig `json:"ws_reverse_servers"`
 	Proxy          string                        `json:"proxy"`
+	Debug          bool                          `json:"debug"`
 }
 
 type CQHttpApiConfig struct {
