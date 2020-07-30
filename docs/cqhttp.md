@@ -199,7 +199,7 @@ Type: `node`
             {
                 "content": "合并转发1",
                 "sender": {
-                    "nick": "发送者A",
+                    "nickname": "发送者A",
                     "user_id": 10086
                 },
                 "time": 1595694374
@@ -207,7 +207,7 @@ Type: `node`
             {
                 "content": "合并转发2[CQ:image,file=xxxx,url=xxxx]",
                 "sender": {
-                    "nick": "发送者B",
+                    "nickname": "发送者B",
                     "user_id": 10087
                 },
                 "time": 1595694393
