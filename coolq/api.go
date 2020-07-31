@@ -273,6 +273,15 @@ func (bot *CQBot) CQSetGroupWholeBan(groupId int64, enable bool) MSG {
 	return Failed(100)
 }
 
+// https://cqhttp.cc/docs/4.15/#/API?id=set_group_leave-%E9%80%80%E5%87%BA%E7%BE%A4%E7%BB%84
+func (bot *CQBot) CQSetGroupLeave(groupId int64) MSG {
+	if g := bot.Client.FindGroup(groupId); g != nil {
+		g.Quit()
+		return OK(nil)
+	}
+	return Failed(100)
+}
+
 // https://cqhttp.cc/docs/4.15/#/API?id=set_friend_add_request-%E5%A4%84%E7%90%86%E5%8A%A0%E5%A5%BD%E5%8F%8B%E8%AF%B7%E6%B1%82
 func (bot *CQBot) CQProcessFriendRequest(flag string, approve bool) MSG {
 	req, ok := bot.friendReqCache.Load(flag)

@@ -46,6 +46,7 @@
 | /set_group_kick          | [群组T人](https://cqhttp.cc/docs/4.15/#/API?id=set_group_kick-群组踢人) |
 | /set_group_ban           | [群组单人禁言](https://cqhttp.cc/docs/4.15/#/API?id=set_group_ban-群组单人禁言) |
 | /set_group_whole_ban     | [群组全员禁言](https://cqhttp.cc/docs/4.15/#/API?id=set_group_whole_ban-群组全员禁言) |
+| /set_group_leave         | [退出群组](https://cqhttp.cc/docs/4.15/#/API?id=set_group_leave-退出群组) |
 | /set_group_name          | 设置群组名(拓展API)                                         |
 | /get_image               | 获取图片信息(拓展API)                                        |
 | /get_group_msg           | 获取群组消息(拓展API)                                        |
