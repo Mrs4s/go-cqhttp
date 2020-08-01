@@ -24,6 +24,19 @@
 
 #### 实现
 <details>
+<summary>已实现CQ码</summary>
+
+- [CQ:image]
+- [CQ:face]
+- [CQ:at]
+- [CQ:share]
+- [CQ:reply]
+- [CQ:forward]
+- [CQ:node]
+
+</details>
+
+<details>
 <summary>已实现API</summary>
 
 ##### 注意: 部分API实现与CQHTTP原版略有差异，请参考文档
