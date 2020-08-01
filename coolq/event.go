@@ -21,7 +21,7 @@ func (bot *CQBot) privateMessageEvent(c *client.QQClient, m *message.PrivateMess
 		"post_type":    "message",
 		"message_type": "private",
 		"sub_type":     "friend",
-		"message_id":   m.Id,
+		"message_id":   ToGlobalId(m.Sender.Uin, m.Id),
 		"user_id":      m.Sender.Uin,
 		"message":      ToStringMessage(m.Elements, 0, false),
 		"raw_message":  cqm,
@@ -179,6 +179,20 @@ func (bot *CQBot) groupRecallEvent(c *client.QQClient, e *client.GroupMessageRec
 		"self_id":     c.Uin,
 		"user_id":     e.AuthorUin,
 		"operator_id": e.OperatorUin,
+		"time":        e.Time,
+		"message_id":  gid,
+	})
+}
+
+func (bot *CQBot) friendRecallEvent(c *client.QQClient, e *client.FriendMessageRecalledEvent) {
+	f := c.FindFriend(e.FriendUin)
+	gid := ToGlobalId(e.FriendUin, e.MessageId)
+	log.Infof("好友 %v(%v) 撤回了消息: %v", f.Nickname, f.Uin, gid)
+	bot.dispatchEventMessage(MSG{
+		"post_type":   "notice",
+		"notice_type": "friend_recall",
+		"self_id":     c.Uin,
+		"user_id":     f.Uin,
 		"time":        e.Time,
 		"message_id":  gid,
 	})
