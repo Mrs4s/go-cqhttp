@@ -18,6 +18,7 @@ import (
 	"os"
 	"os/signal"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -72,7 +73,34 @@ func init() {
 
 func main() {
 	console := bufio.NewReader(os.Stdin)
-	conf := global.Load("config.json")
+	var conf *global.JsonConfig
+	if global.PathExists("config.json") || os.Getenv("UIN") == "" {
+		conf = global.Load("config.json")
+	} else if os.Getenv("UIN") != "" {
+		log.Infof("将从环境变量加载配置.")
+		uin, _ := strconv.ParseInt(os.Getenv("UIN"), 10, 64)
+		pwd := os.Getenv("PASS")
+		post := os.Getenv("HTTP_POST")
+		conf = &global.JsonConfig{
+			Uin:      uin,
+			Password: pwd,
+			HttpConfig: &global.GoCQHttpConfig{
+				Enabled:  true,
+				Host:     "0.0.0.0",
+				Port:     5700,
+				PostUrls: map[string]string{},
+			},
+			WSConfig: &global.GoCQWebsocketConfig{
+				Enabled: true,
+				Host:    "0.0.0.0",
+				Port:    6700,
+			},
+			Debug: os.Getenv("DEBUG") == "true",
+		}
+		if post != "" {
+			conf.HttpConfig.PostUrls[post] = os.Getenv("HTTP_SECRET")
+		}
+	}
 	if conf == nil {
 		err := global.DefaultConfig().Save("config.json")
 		if err != nil {
@@ -80,18 +108,20 @@ func main() {
 			return
 		}
 		log.Infof("默认配置文件已生成, 请编辑 config.json 后重启程序.")
+		time.Sleep(time.Second * 5)
 		return
 	}
 	if conf.Uin == 0 || conf.Password == "" {
-		log.Fatal("请修改 config.json 以添加账号密码.")
+		log.Warnf("请修改 config.json 以添加账号密码.")
+		time.Sleep(time.Second * 5)
+		return
 	}
 	if conf.Debug {
 		log.SetLevel(log.DebugLevel)
 		log.Warnf("已开启Debug模式.")
 	}
 	if !global.PathExists("device.json") {
-		log.Warn("虚拟设备信息不存在, 将自动生成随机设备，按 Enter 继续.")
-		_, _ = console.ReadString('\n')
+		log.Warn("虚拟设备信息不存在, 将自动生成随机设备.")
 		client.GenRandomDevice()
 		_ = ioutil.WriteFile("device.json", client.SystemDeviceInfo.ToJson(), 0777)
 		log.Info("已生成设备信息并保存到 device.json 文件.")
