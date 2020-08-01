@@ -247,3 +247,14 @@ Type: `node`
 | `operator_id` | int64  |                | 操作者id       |
 | `message_id`  | int64  |                | 被撤回的消息id |
 
+#### 好友消息撤回
+
+**上报数据**
+
+| 字段          | 类型   | 可能的值       | 说明           |
+| ------------- | ------ | -------------- | -------------- |
+| `post_type`   | string | `notice`       | 上报类型       |
+| `notice_type` | string | `friend_recall`| 消息类型       |
+| `user_id`     | int64  |                | 好友id        |
+| `message_id`  | int64  |                | 被撤回的消息id |
+

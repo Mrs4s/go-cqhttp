@@ -65,7 +65,8 @@
 | ------------------------------------------------------------ |
 | [私聊信息](https://cqhttp.cc/docs/4.15/#/Post?id=私聊消息)   |
 | [群消息](https://cqhttp.cc/docs/4.15/#/Post?id=群消息)       |
-| [群消息撤回(拓展Event)](docs/cqhttp.md#群消息撤回)                                        |
+| [群消息撤回(拓展Event)](docs/cqhttp.md#群消息撤回)             |
+| [好友消息撤回(拓展Event)](docs/cqhttp.md#好友消息撤回)             |
 | [群管理员变动](https://cqhttp.cc/docs/4.15/#/Post?id=群管理员变动) |
 | [群成员减少](https://cqhttp.cc/docs/4.15/#/Post?id=群成员减少) |
 | [群成员增加](https://cqhttp.cc/docs/4.15/#/Post?id=群成员增加) |
