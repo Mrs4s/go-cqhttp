@@ -157,12 +157,12 @@ func (c *websocketClient) connectUniversal() {
 func (c *websocketClient) listenApi(conn *wsc.Conn, u bool) {
 	defer conn.Close()
 	for {
-		buf := make([]byte, 10240)
-		l, err := conn.Read(buf)
+		var buf []byte
+		err := wsc.Message.Receive(conn, &buf)
 		if err != nil {
 			break
 		}
-		j := gjson.ParseBytes(buf[:l])
+		j := gjson.ParseBytes(buf)
 		t := strings.ReplaceAll(j.Get("action").Str, "_async", "")
 		log.Debugf("反向WS接收到API调用: %v 参数: %v", t, j.Get("params").Raw)
 		if f, ok := wsApi[t]; ok {
