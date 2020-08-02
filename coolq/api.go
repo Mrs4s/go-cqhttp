@@ -362,12 +362,14 @@ func (bot *CQBot) CQHandleQuickOperation(context, operation gjson.Result) MSG {
 		msgType := context.Get("message_type").Str
 		reply := operation.Get("reply")
 		if reply.Exists() {
-			at := true
-			if operation.Get("at_sender").Exists() {
-				at = operation.Get("at_sender").Bool()
-			}
+			/*
+				at := true
+				if operation.Get("at_sender").Exists() {
+					at = operation.Get("at_sender").Bool()
+				}
+			*/
 			// TODO: 处理at字段
-			if msgType == "group" && at {
+			if msgType == "group" {
 				bot.CQSendGroupMessage(context.Get("group_id").Int(), reply)
 			}
 			if msgType == "private" {
