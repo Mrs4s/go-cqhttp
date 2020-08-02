@@ -96,28 +96,36 @@ func (bot *CQBot) CQGetGroupMemberInfo(groupId, userId int64, noCache bool) MSG 
 }
 
 // https://cqhttp.cc/docs/4.15/#/API?id=send_group_msg-%E5%8F%91%E9%80%81%E7%BE%A4%E6%B6%88%E6%81%AF
-func (bot *CQBot) CQSendGroupMessage(groupId int64, m gjson.Result) MSG {
-	if m.Type == gjson.String {
-		str := m.Str
-		if str == "" {
-			return Failed(100)
+func (bot *CQBot) CQSendGroupMessage(groupId int64, i interface{}) MSG {
+	var str string
+	if m, ok := i.(gjson.Result); ok {
+		if m.Type == gjson.JSON {
+			elem := bot.ConvertObjectMessage(m, true)
+			mid := bot.SendGroupMessage(groupId, &message.SendingMessage{Elements: elem})
+			if mid == -1 {
+				return Failed(100)
+			}
+			return OK(MSG{"message_id": mid})
 		}
-		elem := bot.ConvertStringMessage(str, true)
-		mid := bot.SendGroupMessage(groupId, &message.SendingMessage{Elements: elem})
-		if mid == -1 {
-			return Failed(100)
-		}
-		return OK(MSG{"message_id": mid})
+		str = func() string {
+			if m.Str != "" {
+				return m.Str
+			}
+			return m.Raw
+		}()
 	}
-	if m.Type == gjson.JSON {
-		elem := bot.ConvertObjectMessage(m, true)
-		mid := bot.SendGroupMessage(groupId, &message.SendingMessage{Elements: elem})
-		if mid == -1 {
-			return Failed(100)
-		}
-		return OK(MSG{"message_id": mid})
+	if s, ok := i.(string); ok {
+		str = s
 	}
-	return Failed(100)
+	if str == "" {
+		return Failed(100)
+	}
+	elem := bot.ConvertStringMessage(str, true)
+	mid := bot.SendGroupMessage(groupId, &message.SendingMessage{Elements: elem})
+	if mid == -1 {
+		return Failed(100)
+	}
+	return OK(MSG{"message_id": mid})
 }
 
 func (bot *CQBot) CQSendGroupForwardMessage(groupId int64, m gjson.Result) MSG {
@@ -191,25 +199,36 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupId int64, m gjson.Result) MSG {
 }
 
 // https://cqhttp.cc/docs/4.15/#/API?id=send_private_msg-%E5%8F%91%E9%80%81%E7%A7%81%E8%81%8A%E6%B6%88%E6%81%AF
-func (bot *CQBot) CQSendPrivateMessage(userId int64, m gjson.Result) MSG {
-	if m.Type == gjson.String {
-		str := m.Str
-		elem := bot.ConvertStringMessage(str, false)
-		mid := bot.SendPrivateMessage(userId, &message.SendingMessage{Elements: elem})
-		if mid == -1 {
-			return Failed(100)
+func (bot *CQBot) CQSendPrivateMessage(userId int64, i interface{}) MSG {
+	var str string
+	if m, ok := i.(gjson.Result); ok {
+		if m.Type == gjson.JSON {
+			elem := bot.ConvertObjectMessage(m, true)
+			mid := bot.SendPrivateMessage(userId, &message.SendingMessage{Elements: elem})
+			if mid == -1 {
+				return Failed(100)
+			}
+			return OK(MSG{"message_id": mid})
 		}
-		return OK(MSG{"message_id": mid})
+		str = func() string {
+			if m.Str != "" {
+				return m.Str
+			}
+			return m.Raw
+		}()
 	}
-	if m.Type == gjson.JSON {
-		elem := bot.ConvertObjectMessage(m, true)
-		mid := bot.SendPrivateMessage(userId, &message.SendingMessage{Elements: elem})
-		if mid == -1 {
-			return Failed(100)
-		}
-		return OK(MSG{"message_id": mid})
+	if s, ok := i.(string); ok {
+		str = s
 	}
-	return Failed(100)
+	if str == "" {
+		return Failed(100)
+	}
+	elem := bot.ConvertStringMessage(str, false)
+	mid := bot.SendPrivateMessage(userId, &message.SendingMessage{Elements: elem})
+	if mid == -1 {
+		return Failed(100)
+	}
+	return OK(MSG{"message_id": mid})
 }
 
 // https://cqhttp.cc/docs/4.15/#/API?id=set_group_card-%E8%AE%BE%E7%BD%AE%E7%BE%A4%E5%90%8D%E7%89%87%EF%BC%88%E7%BE%A4%E5%A4%87%E6%B3%A8%EF%BC%89

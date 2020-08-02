@@ -93,7 +93,7 @@ func (bot *CQBot) SendGroupMessage(groupId int64, m *message.SendingMessage) int
 		if i, ok := elem.(*message.ImageElement); ok {
 			gm, err := bot.Client.UploadGroupImage(groupId, i.Data)
 			if err != nil {
-				log.Warnf("警告: 群 %v 消息图片上传失败.", groupId)
+				log.Warnf("警告: 群 %v 消息图片上传失败: %v", groupId, err)
 				continue
 			}
 			newElem = append(newElem, gm)

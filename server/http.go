@@ -239,7 +239,7 @@ func (s *httpServer) SendPrivateMessage(c *gin.Context) {
 		c.JSON(200, s.bot.CQSendPrivateMessage(uid, gjson.Parse(msg)))
 		return
 	}
-	c.JSON(200, s.bot.CQSendPrivateMessage(uid, gjson.Result{Type: gjson.String, Str: msg}))
+	c.JSON(200, s.bot.CQSendPrivateMessage(uid, msg))
 }
 
 func (s *httpServer) SendGroupMessage(c *gin.Context) {
@@ -249,7 +249,7 @@ func (s *httpServer) SendGroupMessage(c *gin.Context) {
 		c.JSON(200, s.bot.CQSendGroupMessage(gid, gjson.Parse(msg)))
 		return
 	}
-	c.JSON(200, s.bot.CQSendGroupMessage(gid, gjson.Result{Type: gjson.String, Str: msg}))
+	c.JSON(200, s.bot.CQSendGroupMessage(gid, msg))
 }
 
 func (s *httpServer) SendGroupForwardMessage(c *gin.Context) {
