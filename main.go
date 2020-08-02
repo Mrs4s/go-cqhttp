@@ -12,7 +12,8 @@ import (
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	log "github.com/sirupsen/logrus"
 	easy "github.com/t-tomalak/logrus-easy-formatter"
-	"image/color"
+	asciiart "github.com/yinghau76/go-ascii-art"
+	"image"
 	"io"
 	"io/ioutil"
 	"os"
@@ -141,10 +142,9 @@ func main() {
 		if !rsp.Success {
 			switch rsp.Error {
 			case client.NeedCaptcha:
-				art, _, err := global.Convert(bytes.NewReader(rsp.CaptchaImage), []string{" ", "1", "i", ":", "*", "|", "."}, 1, 1, false, global.Colors["gray"], color.RGBA{})
-				global.Check(err)
-				fmt.Println(art)
-				log.Warn("请输入验证码.")
+				img, _, _ := image.Decode(bytes.NewReader(rsp.CaptchaImage))
+				fmt.Println(asciiart.New("image", img).Art)
+				log.Warn("请输入验证码： (回车提交)")
 				text, _ := console.ReadString('\n')
 				rsp, err = cli.SubmitCaptcha(strings.ReplaceAll(text, "\n", ""), rsp.CaptchaSign)
 				continue

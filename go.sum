@@ -1,7 +1,7 @@
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
-github.com/Mrs4s/MiraiGo v0.0.0-20200802003417-9cd1355853c7 h1:El3V+TFChR7AdfzMa8YqVIc/HX6lp5/4gwgMix9pz7w=
-github.com/Mrs4s/MiraiGo v0.0.0-20200802003417-9cd1355853c7/go.mod h1:M9wh1hjd0rie3+wm27tjPZkYMbD+MBV76CGqp2G7WSU=
+github.com/Mrs4s/MiraiGo v0.0.0-20200802045511-04aad9705bdc h1:mtPgcLy1VNr+nTA7vQibBYpYpFALJ+ChVkUwA8KNKfI=
+github.com/Mrs4s/MiraiGo v0.0.0-20200802045511-04aad9705bdc/go.mod h1:M9wh1hjd0rie3+wm27tjPZkYMbD+MBV76CGqp2G7WSU=
 github.com/bwmarrin/snowflake v0.3.0 h1:xm67bEhkKh6ij1790JB83OujPR5CzNe8QuQqAgISZN0=
 github.com/bwmarrin/snowflake v0.3.0/go.mod h1:NdZxfVWX+oR6y2K0o6qAYv6gIOP9rjG0/E9WsDpxqwE=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
@@ -65,6 +65,8 @@ github.com/mattn/go-isatty v0.0.12 h1:wuysRhFDzyxgEmMf5xjvJ2M9dZoWAXNNr5LSBS7uHX
 github.com/mattn/go-isatty v0.0.12/go.mod h1:cbi8OIDigv2wuxKPP5vlRcQ1OAZbq2CE4Kysco4FUpU=
 github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421/go.mod h1:6dJC0mAP4ikYIbvyc7fijjWJddQyLn8Ig3JB5CqoB9Q=
 github.com/modern-go/reflect2 v0.0.0-20180701023420-4b7aa43c6742/go.mod h1:bx2lNnkwVCuqBIxFjflWJWanXIb3RllmbCylyMrvgv0=
+github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646 h1:zYyBkD/k9seD2A7fsi6Oo2LfFZAehjjQMERAvZLEDnQ=
+github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646/go.mod h1:jpp1/29i3P1S/RLdc7JQKbRpFeM1dOBd8T9ki5s+AY8=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
@@ -97,9 +99,10 @@ github.com/xujiajun/nutsdb v0.5.0 h1:j/jM3Zw7Chg8WK7bAcKR0Xr7Mal47U1oJAMgySfDn9E
 github.com/xujiajun/nutsdb v0.5.0/go.mod h1:owdwN0tW084RxEodABLbO7h4Z2s9WiAjZGZFhRh0/1Q=
 github.com/xujiajun/utils v0.0.0-20190123093513-8bf096c4f53b h1:jKG9OiL4T4xQN3IUrhUpc1tG+HfDXppkgVcrAiiaI/0=
 github.com/xujiajun/utils v0.0.0-20190123093513-8bf096c4f53b/go.mod h1:AZd87GYJlUzl82Yab2kTjx1EyXSQCAfZDhpTo1SQC4k=
+github.com/yinghau76/go-ascii-art v0.0.0-20190517192627-e7f465a30189 h1:4UJw9if55Fu3HOwbfcaQlJ27p3oeJU2JZqoeT3ITJQk=
+github.com/yinghau76/go-ascii-art v0.0.0-20190517192627-e7f465a30189/go.mod h1:rIrm5geMiBhPQkdfUm8gDFi/WiHneOp1i9KjmJqc+9I=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/exp v0.0.0-20190121172915-509febef88a4/go.mod h1:CJ0aWSM057203Lf6IL+f9T1iT9GByDxfZKAQTCR3kQA=
-golang.org/x/image v0.0.0-20200618115811-c13761719519 h1:1e2ufUJNM3lCHEY5jIgac/7UTjd6cgJNdatjPdFWf34=
 golang.org/x/image v0.0.0-20200618115811-c13761719519/go.mod h1:FeLwcggjj3mMvU+oOTbSwawSJRM1uh48EjtB4UJZlP0=
 golang.org/x/lint v0.0.0-20181026193005-c67002cb31c3/go.mod h1:UVdnD1Gm6xHRNCYTkRU2/jEulfH38KcIWyp/GAMgvoE=
 golang.org/x/lint v0.0.0-20190227174305-5b3e6a55c961/go.mod h1:wehouNa3lNwaWXcvxsM5YxQ5yQlVC4a0KAMCusXpPoU=
