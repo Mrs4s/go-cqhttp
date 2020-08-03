@@ -53,6 +53,7 @@ func (bot *CQBot) groupMessageEvent(c *client.QQClient, m *message.GroupMessage)
 					"name":  file.Name,
 					"size":  file.Size,
 					"busid": file.Busid,
+					"url":   c.GetGroupFileUrl(m.GroupCode, file.Path, file.Busid),
 				},
 				"self_id": c.Uin,
 				"time":    time.Now().Unix(),
