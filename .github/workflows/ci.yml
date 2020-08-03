@@ -6,7 +6,6 @@ env:
   BINARY_PREFIX: "go-cqhttp_"
   BINARY_SUFFIX: ""
   PR_PROMPT: "::warning:: Build artifact will not be uploaded due to the workflow is trigged by pull request."
-  IS_PR: ${{ !!github.head_ref }}
   LD_FLAGS: "-w -s"
 
 jobs:
@@ -35,6 +34,7 @@ jobs:
       env:
         GOOS: ${{ matrix.goos }}
         GOARCH: ${{ matrix.goarch }}
+        IS_PR: ${{ !!github.head_ref }}
       run: |
         if [ $GOOS = "windows" ]; then export BINARY_SUFFIX="$BINARY_SUFFIX.exe"; fi
         if $IS_PR ; then echo $PR_PROMPT; fi
@@ -43,7 +43,7 @@ jobs:
     
     - name: Upload artifact
       uses: actions/upload-artifact@v2
-      if: ${{ !env.IS_PR }}
+      if: ${{ !!github.head_ref }}
       with:
         name: ${{ matrix.goos }}_${{ matrix.goarch }}
         path: output/
