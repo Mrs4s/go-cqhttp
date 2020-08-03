@@ -10,8 +10,10 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 	"io/ioutil"
+	"net/url"
 	"path"
 	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
 )
@@ -171,6 +173,20 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 		}
 		if strings.HasPrefix(f, "base64") {
 			b, err := base64.StdEncoding.DecodeString(strings.ReplaceAll(f, "base64://", ""))
+			if err != nil {
+				return nil, err
+			}
+			return message.NewImage(b), nil
+		}
+		if strings.HasPrefix(f, "file") {
+			fu, err := url.Parse(f)
+			if err != nil {
+				return nil, err
+			}
+			if strings.HasPrefix(fu.Path, "/") && runtime.GOOS == `windows` {
+				fu.Path = fu.Path[1:]
+			}
+			b, err := ioutil.ReadFile(fu.Path)
 			if err != nil {
 				return nil, err
 			}
