@@ -136,16 +136,18 @@ func (bot *CQBot) InsertGroupMessage(m *message.GroupMessage) int32 {
 		"message":     ToStringMessage(m.Elements, m.GroupCode, true),
 	}
 	id := ToGlobalId(m.GroupCode, m.Id)
-	err := bot.db.Update(func(tx *nutsdb.Tx) error {
-		buf := new(bytes.Buffer)
-		if err := gob.NewEncoder(buf).Encode(val); err != nil {
-			return err
+	if bot.db != nil {
+		err := bot.db.Update(func(tx *nutsdb.Tx) error {
+			buf := new(bytes.Buffer)
+			if err := gob.NewEncoder(buf).Encode(val); err != nil {
+				return err
+			}
+			return tx.Put("group-messages", binary.ToBytes(id), binary.GZipCompress(buf.Bytes()), 0)
+		})
+		if err != nil {
+			log.Warnf("记录聊天数据时出现错误: %v", err)
+			return -1
 		}
-		return tx.Put("group-messages", binary.ToBytes(id), binary.GZipCompress(buf.Bytes()), 0)
-	})
-	if err != nil {
-		log.Warnf("记录聊天数据时出现错误: %v", err)
-		return -1
 	}
 	return id
 }
