@@ -43,7 +43,7 @@ jobs:
     
     - name: Upload artifact
       uses: actions/upload-artifact@v2
-      if: ${{ !!github.head_ref }}
+      if: ${{ !github.head_ref }}
       with:
         name: ${{ matrix.goos }}_${{ matrix.goarch }}
         path: output/
