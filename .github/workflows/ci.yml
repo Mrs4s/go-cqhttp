@@ -2,6 +2,13 @@ name: CI
 
 on: [push, pull_request]
 
+env:
+  BINARY_PREFIX: "go-cqhttp_"
+  BINARY_SUFFIX: ""
+  PR_PROMPT: "::warning:: Build artifact will not be uploaded due to the workflow is trigged by pull request."
+  IS_PR: ${{ !!github.head_ref }}
+  LD_FLAGS: "-w -s"
+
 jobs:
   build:
     name: Build binary CI
@@ -14,6 +21,7 @@ jobs:
         exclude: 
           - goos: darwin
             goarch: arm
+      fail-fast: true
 
     steps:
     - uses: actions/checkout@v2
@@ -24,7 +32,20 @@ jobs:
         go-version: 1.14
     
     - name: Build binary file
+      env:
+        GOOS: ${{ matrix.goos }}
+        GOARCH: ${{ matrix.goarch }}
       run: |
-        echo ::warning:: Build on ${{ matrix.goos }} - ${{ matrix.goarch }} is not implentmented
+        if [ $GOOS = "windows" ]; then export BINARY_SUFFIX="$BINARY_SUFFIX.exe"; fi
+        if $IS_PR ; then echo $PR_PROMPT; fi
+        export BINARY_NAME="$BINARY_PREFIX$GOOS_$GOARCH$BINARY_SUFFIX"
+        go build -o "output/$BINARY_NAME" -ldflags "$LD_FLAGS" .
+    
+    - name: Upload artifact
+      uses: actions/upload-artifact@v2
+      if: ${{ !env.IS_PR }}
+      with:
+        name: ${{ matrix.goos }}_${{ matrix.goarch }}
+        path: output/
     
     
