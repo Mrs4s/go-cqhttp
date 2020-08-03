@@ -1,0 +1,30 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: Build binary CI
+    runs-on: ubuntu-latest
+    strategy:
+    matrix:
+      # build and publish in parallel: linux/386, linux/amd64, windows/386, windows/amd64, darwin/386, darwin/amd64 
+      goos: [linux, windows, darwin]
+      goarch: ["386", amd64, arm]
+      exclude: 
+        - goos: darwin
+          goarch: arm
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup Go environment
+      uses: actions/setup-go@v2.1.1
+      with:
+        go-version: 1.14
+    
+    - name: Build binary file
+      run: |
+        echo ::warning:: Build on ${{ matrix.goos }} - ${{ matrix.goarch }} is not implentmented
+    
+    
