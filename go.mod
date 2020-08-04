@@ -3,7 +3,7 @@ module github.com/Mrs4s/go-cqhttp
 go 1.14
 
 require (
-	github.com/Mrs4s/MiraiGo v0.0.0-20200803034534-d8ed1a49ff8b
+	github.com/Mrs4s/MiraiGo v0.0.0-20200804064012-e1e00ed0683b
 	github.com/gin-gonic/gin v1.6.3
 	github.com/gorilla/websocket v1.4.2
 	github.com/guonaihong/gout v0.1.1
