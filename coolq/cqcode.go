@@ -197,6 +197,9 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 			if err != nil {
 				return nil, err
 			}
+			if path.Ext(path.Join(global.IMAGE_PATH, f)) != ".image" {
+				return message.NewImage(b), nil
+			}
 			if len(b) < 20 {
 				return nil, errors.New("invalid local file")
 			}
