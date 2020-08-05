@@ -99,7 +99,7 @@ func Load(p string) *JsonConfig {
 }
 
 func (c *JsonConfig) Save(p string) error {
-	data, err := json.Marshal(c)
+	data, err := json.MarshalIndent(c, "", "\t")
 	if err != nil {
 		return err
 	}
