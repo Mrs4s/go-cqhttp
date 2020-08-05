@@ -4,14 +4,15 @@ import (
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/hex"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/gin-gonic/gin"
 	"github.com/guonaihong/gout"
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
-	"strconv"
-	"strings"
-	"time"
 )
 
 type httpServer struct {
@@ -61,12 +62,12 @@ func (s *httpServer) Run(addr, authToken string, bot *coolq.CQBot) {
 					c.AbortWithStatus(401)
 					return
 				}
-			}
-			if c.Query("access_token") != authToken {
+			} else if c.Query("access_token") != authToken {
 				c.AbortWithStatus(401)
 				return
+			} else {
+				c.Next()
 			}
-			c.Next()
 		})
 	}
 
