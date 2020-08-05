@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/Mrs4s/go-cqhttp/global"
 	log "github.com/sirupsen/logrus"
@@ -200,20 +199,7 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 			if len(b) < 20 {
 				return nil, errors.New("invalid local file")
 			}
-			r := binary.NewReader(b)
-			hash := r.ReadBytes(16)
-			if group {
-				rsp, err := bot.Client.QueryGroupImage(1, hash, r.ReadInt32())
-				if err != nil {
-					return nil, err
-				}
-				return rsp, nil
-			}
-			rsp, err := bot.Client.QueryFriendImage(1, hash, r.ReadInt32())
-			if err != nil {
-				return nil, err
-			}
-			return rsp, nil
+			return message.NewImage(b), nil
 		}
 		return nil, errors.New("invalid image")
 	case "face":
