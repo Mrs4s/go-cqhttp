@@ -192,12 +192,13 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 			}
 			return message.NewImage(b), nil
 		}
-		if global.PathExists(path.Join(global.IMAGE_PATH, f)) {
-			b, err := ioutil.ReadFile(path.Join(global.IMAGE_PATH, f))
+		rawPath := path.Join(global.IMAGE_PATH, f)
+		if global.PathExists(rawPath) {
+			b, err := ioutil.ReadFile(rawPath)
 			if err != nil {
 				return nil, err
 			}
-			if path.Ext(path.Join(global.IMAGE_PATH, f)) != ".image" {
+			if path.Ext(rawPath) != ".image" {
 				return message.NewImage(b), nil
 			}
 			if len(b) < 20 {
