@@ -212,9 +212,9 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 					kv := strings.SplitN(line, "=", 2)
 					switch kv[0] {
 					case "md5":
-						hash, _ = hex.DecodeString(kv[1])
+						hash, _ = hex.DecodeString(strings.ReplaceAll(kv[1], "\r", ""))
 					case "size":
-						t, _ := strconv.Atoi(kv[1])
+						t, _ := strconv.Atoi(strings.ReplaceAll(kv[1], "\r", ""))
 						size = int32(t)
 					}
 				}
@@ -222,6 +222,12 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 				r := binary.NewReader(b)
 				hash = r.ReadBytes(16)
 				size = r.ReadInt32()
+			}
+			if size == 0 {
+				return nil, errors.New("img size is 0")
+			}
+			if len(hash) != 16 {
+				return nil, errors.New("invalid hash")
 			}
 			if group {
 				rsp, err := bot.Client.QueryGroupImage(1, hash, size)
