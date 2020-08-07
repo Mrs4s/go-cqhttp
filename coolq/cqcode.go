@@ -199,7 +199,7 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 			if err != nil {
 				return nil, err
 			}
-			if path.Ext(rawPath) != ".image" {
+			if path.Ext(rawPath) != ".image" && path.Ext(rawPath) != ".cqimg" {
 				return message.NewImage(b), nil
 			}
 			if len(b) < 20 {
