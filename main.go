@@ -142,9 +142,10 @@ func main() {
 		if !rsp.Success {
 			switch rsp.Error {
 			case client.NeedCaptcha:
+				ioutil.WriteFile("captcha.jpg", rsp.CaptchaImage, 0644)
 				img, _, _ := image.Decode(bytes.NewReader(rsp.CaptchaImage))
 				fmt.Println(asciiart.New("image", img).Art)
-				log.Warn("请输入验证码： (Enter 提交)")
+				log.Warn("请输入验证码：(图片已保存至 captcha.jpg, 输入后 Enter 提交)")
 				text, _ := console.ReadString('\n')
 				rsp, err = cli.SubmitCaptcha(strings.ReplaceAll(text, "\n", ""), rsp.CaptchaSign)
 				continue
