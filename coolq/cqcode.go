@@ -2,6 +2,7 @@ package coolq
 
 import (
 	"encoding/base64"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"github.com/Mrs4s/MiraiGo/binary"
@@ -204,16 +205,32 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 			if len(b) < 20 {
 				return nil, errors.New("invalid local file")
 			}
-			r := binary.NewReader(b)
-			hash := r.ReadBytes(16)
+			var size int32
+			var hash []byte
+			if path.Ext(rawPath) == ".cqimg" {
+				for _, line := range strings.Split(global.ReadAllText(rawPath), "\n") {
+					kv := strings.SplitN(line, "=", 2)
+					switch kv[0] {
+					case "md5":
+						hash, _ = hex.DecodeString(kv[1])
+					case "size":
+						t, _ := strconv.Atoi(kv[1])
+						size = int32(t)
+					}
+				}
+			} else {
+				r := binary.NewReader(b)
+				hash = r.ReadBytes(16)
+				size = r.ReadInt32()
+			}
 			if group {
-				rsp, err := bot.Client.QueryGroupImage(1, hash, r.ReadInt32())
+				rsp, err := bot.Client.QueryGroupImage(1, hash, size)
 				if err != nil {
 					return nil, err
 				}
 				return rsp, nil
 			}
-			rsp, err := bot.Client.QueryFriendImage(1, hash, r.ReadInt32())
+			rsp, err := bot.Client.QueryFriendImage(1, hash, size)
 			if err != nil {
 				return nil, err
 			}

@@ -184,7 +184,7 @@ func main() {
 	log.Info("アトリは、高性能ですから!")
 	cli.OnDisconnected(func(bot *client.QQClient, e *client.ClientDisconnectedEvent) {
 		if conf.ReLogin {
-			log.Warnf("Bot已离线，将在 %v 秒后尝试重连.", conf.ReLoginDelay)
+			log.Warnf("Bot已离线 (%v)，将在 %v 秒后尝试重连.", e.Message, conf.ReLoginDelay)
 			time.Sleep(time.Second * time.Duration(conf.ReLoginDelay))
 			rsp, err := cli.Login()
 			if err != nil {
