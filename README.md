@@ -27,6 +27,7 @@
 <summary>已实现CQ码</summary>
 
 - [CQ:image]
+- [CQ:record]
 - [CQ:face]
 - [CQ:at]
 - [CQ:share]
