@@ -2,6 +2,8 @@ cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMT
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/Mrs4s/MiraiGo v0.0.0-20200807030850-ed30f7ad5934 h1:LoNjIsnyEQFGP9IchIQ65yHRCfNKSru3BAOguRepkCM=
 github.com/Mrs4s/MiraiGo v0.0.0-20200807030850-ed30f7ad5934/go.mod h1:0je03wji/tSw4bUH4QCF2Z4/EjyNWjSJTyy5tliX6EM=
+github.com/Mrs4s/MiraiGo v0.0.0-20200808003732-2a32e623270d h1:K9jHdcO13mLqQB0xm0/ZlY852FoVQJ/WSDwfdmfhDlU=
+github.com/Mrs4s/MiraiGo v0.0.0-20200808003732-2a32e623270d/go.mod h1:0je03wji/tSw4bUH4QCF2Z4/EjyNWjSJTyy5tliX6EM=
 github.com/bwmarrin/snowflake v0.3.0 h1:xm67bEhkKh6ij1790JB83OujPR5CzNe8QuQqAgISZN0=
 github.com/bwmarrin/snowflake v0.3.0/go.mod h1:NdZxfVWX+oR6y2K0o6qAYv6gIOP9rjG0/E9WsDpxqwE=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=

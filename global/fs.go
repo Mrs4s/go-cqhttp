@@ -31,3 +31,10 @@ func Check(err error) {
 		log.Fatalf("遇到错误: %v", err)
 	}
 }
+
+func IsAMR(b []byte) bool {
+	if len(b) <= 6 {
+		return false
+	}
+	return b[0] == 0x23 && b[1] == 0x21 && b[2] == 0x41 && b[3] == 0x4D && b[4] == 0x52 // amr file header
+}

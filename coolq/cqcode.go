@@ -246,6 +246,44 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 			return rsp, nil
 		}
 		return nil, errors.New("invalid image")
+	case "record":
+		if !group {
+			return nil, errors.New("private voice unsupported now")
+		}
+		f := d["file"]
+		var data []byte
+		if strings.HasPrefix(f, "http") || strings.HasPrefix(f, "https") {
+			b, err := global.GetBytes(f)
+			if err != nil {
+				return nil, err
+			}
+			data = b
+		}
+		if strings.HasPrefix(f, "base64") {
+			b, err := base64.StdEncoding.DecodeString(strings.ReplaceAll(f, "base64://", ""))
+			if err != nil {
+				return nil, err
+			}
+			data = b
+		}
+		if strings.HasPrefix(f, "file") {
+			fu, err := url.Parse(f)
+			if err != nil {
+				return nil, err
+			}
+			if strings.HasPrefix(fu.Path, "/") && runtime.GOOS == `windows` {
+				fu.Path = fu.Path[1:]
+			}
+			b, err := ioutil.ReadFile(fu.Path)
+			if err != nil {
+				return nil, err
+			}
+			data = b
+		}
+		if !global.IsAMR(data) {
+			return nil, errors.New("unsupported voice file format (please use AMR file for now)")
+		}
+		return &message.GroupVoiceElement{Data: data}, nil
 	case "face":
 		id, err := strconv.Atoi(d["id"])
 		if err != nil {

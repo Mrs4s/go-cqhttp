@@ -99,6 +99,15 @@ func (bot *CQBot) SendGroupMessage(groupId int64, m *message.SendingMessage) int
 			newElem = append(newElem, gm)
 			continue
 		}
+		if i, ok := elem.(*message.GroupVoiceElement); ok {
+			gv, err := bot.Client.UploadGroupPtt(groupId, i.Data, int32(len(i.Data)))
+			if err != nil {
+				log.Warnf("警告: 群 %v 消息语音上传失败: %v", groupId, err)
+				continue
+			}
+			newElem = append(newElem, gv)
+			continue
+		}
 		newElem = append(newElem, elem)
 	}
 	m.Elements = newElem
