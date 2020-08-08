@@ -64,14 +64,15 @@ func (c *websocketClient) Run() {
 	if !c.conf.Enabled {
 		return
 	}
-	if c.conf.ReverseApiUrl != "" {
-		c.connectApi()
-	}
-	if c.conf.ReverseEventUrl != "" {
-		c.connectEvent()
-	}
 	if c.conf.ReverseUrl != "" {
 		c.connectUniversal()
+	} else {
+		if c.conf.ReverseApiUrl != "" {
+			c.connectApi()
+		}
+		if c.conf.ReverseEventUrl != "" {
+			c.connectEvent()
+		}
 	}
 	c.bot.OnEventPush(c.onBotPushEvent)
 }
