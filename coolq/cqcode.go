@@ -44,6 +44,8 @@ func ToStringMessage(e []message.IMessageElement, code int64, raw ...bool) (r st
 			r += fmt.Sprintf("[CQ:forward,id=%s]", o.ResId)
 		case *message.FaceElement:
 			r += fmt.Sprintf(`[CQ:face,id=%d]`, o.Index)
+		case *message.VoiceElement:
+			r += fmt.Sprintf(`[CQ:record,file=%s]`, o.Name)
 		case *message.ImageElement:
 			if ur {
 				r += fmt.Sprintf(`[CQ:image,file=%s]`, o.Filename)
@@ -283,7 +285,7 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 		if !global.IsAMR(data) {
 			return nil, errors.New("unsupported voice file format (please use AMR file for now)")
 		}
-		return &message.GroupVoiceElement{Data: data}, nil
+		return &message.VoiceElement{Data: data}, nil
 	case "face":
 		id, err := strconv.Atoi(d["id"])
 		if err != nil {
