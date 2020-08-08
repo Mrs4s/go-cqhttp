@@ -98,7 +98,8 @@ func (bot *CQBot) ConvertStringMessage(m string, group bool) (r []message.IMessa
 		}
 		elem, err := bot.ToElement(t, d, group)
 		if err != nil {
-			log.Warnf("转换CQ码到MiraiGo Element时出现错误: %v 将忽略本段CQ码.", err)
+			log.Warnf("转换CQ码到MiraiGo Element时出现错误: %v 将原样发送.", err)
+			r = append(r, message.NewText(code))
 			continue
 		}
 		r = append(r, elem)
