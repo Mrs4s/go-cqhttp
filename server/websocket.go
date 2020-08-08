@@ -136,6 +136,7 @@ func (c *websocketClient) connectUniversal() {
 		log.Warnf("连接到反向Websocket Universal服务器 %v 时出现致命错误: %v", c.conf.ReverseUrl, err)
 		return
 	}
+	wsConf.Dialer.Timeout = time.Second * 5
 	wsConf.Header["X-Client-Role"] = []string{"Universal"}
 	wsConf.Header["X-Self-ID"] = []string{strconv.FormatInt(c.bot.Client.Uin, 10)}
 	wsConf.Header["User-Agent"] = []string{"CQHttp/4.15.0"}
@@ -191,16 +192,20 @@ func (c *websocketClient) onBotPushEvent(m coolq.MSG) {
 	defer c.pushLock.Unlock()
 	if c.eventConn != nil {
 		log.Debugf("向WS服务器 %v 推送Event: %v", c.eventConn.RemoteAddr().String(), m.ToJson())
+		_ = c.eventConn.SetWriteDeadline(time.Now().Add(time.Second * 3))
 		if _, err := c.eventConn.Write([]byte(m.ToJson())); err != nil {
 			_ = c.eventConn.Close()
 			if c.conf.ReverseReconnectInterval != 0 {
-				time.Sleep(time.Millisecond * time.Duration(c.conf.ReverseReconnectInterval))
-				c.connectEvent()
+				go func() {
+					time.Sleep(time.Millisecond * time.Duration(c.conf.ReverseReconnectInterval))
+					c.connectEvent()
+				}()
 			}
 		}
 	}
 	if c.universalConn != nil {
 		log.Debugf("向WS服务器 %v 推送Event: %v", c.universalConn.RemoteAddr().String(), m.ToJson())
+		_ = c.universalConn.SetWriteDeadline(time.Now().Add(time.Second * 3))
 		_, _ = c.universalConn.Write([]byte(m.ToJson()))
 	}
 }
