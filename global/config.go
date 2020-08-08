@@ -60,7 +60,9 @@ type GoCQReverseWebsocketConfig struct {
 
 func DefaultConfig() *JsonConfig {
 	return &JsonConfig{
-		EnableDB: true,
+		EnableDB:     true,
+		ReLogin:      true,
+		ReLoginDelay: 3,
 		HttpConfig: &GoCQHttpConfig{
 			Enabled:  true,
 			Host:     "0.0.0.0",
