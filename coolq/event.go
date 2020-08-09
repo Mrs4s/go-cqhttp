@@ -261,6 +261,18 @@ func (bot *CQBot) friendRequestEvent(c *client.QQClient, e *client.NewFriendRequ
 	})
 }
 
+func (bot *CQBot) friendAddedEvent(c *client.QQClient, e *client.NewFriendEvent) {
+	log.Infof("添加了新好友: %v(%v)", e.Friend.Nickname, e.Friend.Uin)
+	bot.tempMsgCache.Delete(e.Friend.Uin)
+	bot.dispatchEventMessage(MSG{
+		"post_type":   "notice",
+		"notice_type": "friend_add",
+		"self_id":     c.Uin,
+		"user_id":     e.Friend.Uin,
+		"time":        time.Now().Unix(),
+	})
+}
+
 func (bot *CQBot) groupInvitedEvent(c *client.QQClient, e *client.GroupInvitedRequest) {
 	log.Infof("收到来自群 %v(%v) 内用户 %v(%v) 的加群邀请.", e.GroupName, e.GroupCode, e.InvitorNick, e.InvitorUin)
 	flag := strconv.FormatInt(e.RequestId, 10)
