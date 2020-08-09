@@ -6,16 +6,18 @@ import (
 )
 
 type JsonConfig struct {
-	Uin            int64                         `json:"uin"`
-	Password       string                        `json:"password"`
-	EnableDB       bool                          `json:"enable_db"`
-	AccessToken    string                        `json:"access_token"`
-	ReLogin        bool                          `json:"relogin"`
-	ReLoginDelay   int                           `json:"relogin_delay"`
-	HttpConfig     *GoCQHttpConfig               `json:"http_config"`
-	WSConfig       *GoCQWebsocketConfig          `json:"ws_config"`
-	ReverseServers []*GoCQReverseWebsocketConfig `json:"ws_reverse_servers"`
-	Debug          bool                          `json:"debug"`
+	Uin               int64                         `json:"uin"`
+	Password          string                        `json:"password"`
+	EncryptPassword   bool                          `json:"encrypt_password"`
+	PasswordEncrypted string                        `json:"password_encrypted"`
+	EnableDB          bool                          `json:"enable_db"`
+	AccessToken       string                        `json:"access_token"`
+	ReLogin           bool                          `json:"relogin"`
+	ReLoginDelay      int                           `json:"relogin_delay"`
+	HttpConfig        *GoCQHttpConfig               `json:"http_config"`
+	WSConfig          *GoCQWebsocketConfig          `json:"ws_config"`
+	ReverseServers    []*GoCQReverseWebsocketConfig `json:"ws_reverse_servers"`
+	Debug             bool                          `json:"debug"`
 }
 
 type CQHttpApiConfig struct {

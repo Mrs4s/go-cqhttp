@@ -3,8 +3,11 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"crypto/md5"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
@@ -112,7 +115,7 @@ func main() {
 		time.Sleep(time.Second * 5)
 		return
 	}
-	if conf.Uin == 0 || conf.Password == "" {
+	if conf.Uin == 0 || (conf.Password == "" && conf.PasswordEncrypted == "") {
 		log.Warnf("请修改 config.json 以添加账号密码.")
 		time.Sleep(time.Second * 5)
 		return
@@ -131,6 +134,24 @@ func main() {
 		if err := client.SystemDeviceInfo.ReadJson([]byte(global.ReadAllText("device.json"))); err != nil {
 			log.Fatalf("加载设备信息失败: %v", err)
 		}
+	}
+	if conf.EncryptPassword && conf.PasswordEncrypted == "" {
+		log.Infof("密码加密已启用, 请输入Key对密码进行加密: (Enter 提交)")
+		strKey, _ := console.ReadString('\n')
+		key := md5.Sum([]byte(strKey))
+		if encrypted := EncryptPwd(conf.Password, key[:]); encrypted != "" {
+			conf.Password = ""
+			conf.PasswordEncrypted = encrypted
+			_ = conf.Save("config.json")
+		} else {
+			log.Warnf("加密时出现问题.")
+		}
+	}
+	if conf.PasswordEncrypted != "" {
+		log.Infof("密码加密已启用, 请输入Key对密码进行解密以继续: (Enter 提交)")
+		strKey, _ := console.ReadString('\n')
+		key := md5.Sum([]byte(strKey))
+		conf.Password = DecryptPwd(conf.PasswordEncrypted, key[:])
 	}
 	log.Info("Bot将在5秒后登录并开始信息处理, 按 Ctrl+C 取消.")
 	time.Sleep(time.Second * 5)
@@ -209,4 +230,29 @@ func main() {
 	signal.Notify(c, os.Interrupt, os.Kill)
 	<-c
 	b.Release()
+}
+
+func EncryptPwd(pwd string, key []byte) string {
+	tea := binary.NewTeaCipher(key)
+	if tea == nil {
+		return ""
+	}
+	return base64.StdEncoding.EncodeToString(tea.Encrypt([]byte(pwd)))
+}
+
+func DecryptPwd(ePwd string, key []byte) string {
+	defer func() {
+		if pan := recover(); pan != nil {
+			log.Fatalf("密码解密失败: %v", pan)
+		}
+	}()
+	encrypted, err := base64.StdEncoding.DecodeString(ePwd)
+	if err != nil {
+		panic(err)
+	}
+	tea := binary.NewTeaCipher(key)
+	if tea == nil {
+		panic("密钥错误")
+	}
+	return string(tea.Decrypt(encrypted))
 }
