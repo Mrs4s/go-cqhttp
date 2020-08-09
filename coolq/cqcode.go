@@ -200,6 +200,9 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 		if !global.PathExists(rawPath) && global.PathExists(rawPath+".cqimg") {
 			rawPath += ".cqimg"
 		}
+		if !global.PathExists(rawPath) && d["url"] != "" {
+			return bot.ToElement(t, map[string]string{"file": d["url"]}, group)
+		}
 		if global.PathExists(rawPath) {
 			b, err := ioutil.ReadFile(rawPath)
 			if err != nil {
