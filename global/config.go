@@ -16,6 +16,7 @@ type JsonConfig struct {
 	WSConfig       *GoCQWebsocketConfig          `json:"ws_config"`
 	ReverseServers []*GoCQReverseWebsocketConfig `json:"ws_reverse_servers"`
 	Debug          bool                          `json:"debug"`
+	ShowLogConsole bool                          `json:"show_log_console"`
 }
 
 type CQHttpApiConfig struct {
@@ -60,9 +61,10 @@ type GoCQReverseWebsocketConfig struct {
 
 func DefaultConfig() *JsonConfig {
 	return &JsonConfig{
-		EnableDB:     true,
-		ReLogin:      true,
-		ReLoginDelay: 3,
+		EnableDB:       true,
+		ReLogin:        true,
+		ShowLogConsole: true,
+		ReLoginDelay:   3,
 		HttpConfig: &GoCQHttpConfig{
 			Enabled:  true,
 			Host:     "0.0.0.0",

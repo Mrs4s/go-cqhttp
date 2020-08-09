@@ -47,20 +47,24 @@ func NewQQBot(cli *client.QQClient, conf *global.JsonConfig) *CQBot {
 	} else {
 		log.Warn("警告: 信息数据库已关闭，将无法使用 [回复/撤回] 等功能。")
 	}
-	bot.Client.OnPrivateMessage(bot.privateMessageEvent)
-	bot.Client.OnGroupMessage(bot.groupMessageEvent)
-	bot.Client.OnTempMessage(bot.tempMessageEvent)
-	bot.Client.OnGroupMuted(bot.groupMutedEvent)
-	bot.Client.OnGroupMessageRecalled(bot.groupRecallEvent)
-	bot.Client.OnFriendMessageRecalled(bot.friendRecallEvent)
-	bot.Client.OnJoinGroup(bot.joinGroupEvent)
-	bot.Client.OnLeaveGroup(bot.leaveGroupEvent)
-	bot.Client.OnGroupMemberJoined(bot.memberJoinEvent)
-	bot.Client.OnGroupMemberLeaved(bot.memberLeaveEvent)
-	bot.Client.OnGroupMemberPermissionChanged(bot.memberPermissionChangedEvent)
-	bot.Client.OnNewFriendRequest(bot.friendRequestEvent)
-	bot.Client.OnGroupInvited(bot.groupInvitedEvent)
-	bot.Client.OnUserWantJoinGroup(bot.groupJoinReqEvent)
+
+	if conf.ShowLogConsole {
+		bot.Client.OnPrivateMessage(bot.privateMessageEvent)
+		bot.Client.OnGroupMessage(bot.groupMessageEvent)
+		bot.Client.OnTempMessage(bot.tempMessageEvent)
+		bot.Client.OnGroupMuted(bot.groupMutedEvent)
+		bot.Client.OnGroupMessageRecalled(bot.groupRecallEvent)
+		bot.Client.OnFriendMessageRecalled(bot.friendRecallEvent)
+		bot.Client.OnJoinGroup(bot.joinGroupEvent)
+		bot.Client.OnLeaveGroup(bot.leaveGroupEvent)
+		bot.Client.OnGroupMemberJoined(bot.memberJoinEvent)
+		bot.Client.OnGroupMemberLeaved(bot.memberLeaveEvent)
+		bot.Client.OnGroupMemberPermissionChanged(bot.memberPermissionChangedEvent)
+		bot.Client.OnNewFriendRequest(bot.friendRequestEvent)
+		bot.Client.OnGroupInvited(bot.groupInvitedEvent)
+		bot.Client.OnUserWantJoinGroup(bot.groupJoinReqEvent)
+	}
+
 	return bot
 }
 
