@@ -25,6 +25,7 @@ type CQBot struct {
 	friendReqCache  sync.Map
 	invitedReqCache sync.Map
 	joinReqCache    sync.Map
+	tempMsgCache    sync.Map
 }
 
 type MSG map[string]interface{}
@@ -101,7 +102,7 @@ func (bot *CQBot) SendGroupMessage(groupId int64, m *message.SendingMessage) int
 			continue
 		}
 		if i, ok := elem.(*message.VoiceElement); ok {
-			gv, err := bot.Client.UploadGroupPtt(groupId, i.Data, int32(len(i.Data)))
+			gv, err := bot.Client.UploadGroupPtt(groupId, i.Data)
 			if err != nil {
 				log.Warnf("警告: 群 %v 消息语音上传失败: %v", groupId, err)
 				continue
@@ -122,7 +123,7 @@ func (bot *CQBot) SendPrivateMessage(target int64, m *message.SendingMessage) in
 		if i, ok := elem.(*message.ImageElement); ok {
 			fm, err := bot.Client.UploadPrivateImage(target, i.Data)
 			if err != nil {
-				log.Warnf("警告: 好友 %v 消息图片上传失败.", target)
+				log.Warnf("警告: 私聊 %v 消息图片上传失败.", target)
 				continue
 			}
 			newElem = append(newElem, fm)
@@ -131,8 +132,17 @@ func (bot *CQBot) SendPrivateMessage(target int64, m *message.SendingMessage) in
 		newElem = append(newElem, elem)
 	}
 	m.Elements = newElem
-	ret := bot.Client.SendPrivateMessage(target, m)
-	return ToGlobalId(target, ret.Id)
+	var id int32
+	if bot.Client.FindFriend(target) != nil {
+		id = bot.Client.SendPrivateMessage(target, m).Id
+	} else {
+		if code, ok := bot.tempMsgCache.Load(target); ok {
+			id = bot.Client.SendTempMessage(code.(int64), target, m).Id
+		} else {
+			return -1
+		}
+	}
+	return ToGlobalId(target, id)
 }
 
 func (bot *CQBot) InsertGroupMessage(m *message.GroupMessage) int32 {

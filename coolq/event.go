@@ -119,6 +119,7 @@ func (bot *CQBot) groupMessageEvent(c *client.QQClient, m *message.GroupMessage)
 func (bot *CQBot) tempMessageEvent(c *client.QQClient, m *message.TempMessage) {
 	checkImage(m.Elements)
 	cqm := ToStringMessage(m.Elements, 0, true)
+	bot.tempMsgCache.Store(m.Sender.Uin, m.GroupCode)
 	log.Infof("收到来自群 %v(%v) 内 %v(%v) 的临时会话消息: %v", m.GroupName, m.GroupCode, m.Sender.DisplayName(), m.Sender.Uin, cqm)
 	tm := MSG{
 		"post_type":    "message",
