@@ -477,7 +477,7 @@ func (bot *CQBot) CQCanSendImage() MSG {
 }
 
 func (bot *CQBot) CQCanSendRecord() MSG {
-	return OK(MSG{"yes": false})
+	return OK(MSG{"yes": true})
 }
 
 func (bot *CQBot) CQGetStatus() MSG {
