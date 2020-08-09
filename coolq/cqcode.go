@@ -31,7 +31,7 @@ func ToStringMessage(e []message.IMessageElement, code int64, raw ...bool) (r st
 	for _, elem := range e {
 		switch o := elem.(type) {
 		case *message.TextElement:
-			r += o.Content
+			r += CQCodeEscapeText(o.Content)
 		case *message.AtElement:
 			if o.Target == 0 {
 				r += "[CQ:at,qq=all]"
@@ -63,7 +63,7 @@ func (bot *CQBot) ConvertStringMessage(m string, group bool) (r []message.IMessa
 	for _, idx := range i {
 		if idx[0] > si {
 			text := m[si:idx[0]]
-			r = append(r, message.NewText(text))
+			r = append(r, message.NewText(CQCodeUnescapeText(text)))
 		}
 		code := m[idx[0]:idx[1]]
 		si = idx[1]
@@ -105,7 +105,7 @@ func (bot *CQBot) ConvertStringMessage(m string, group bool) (r []message.IMessa
 		r = append(r, elem)
 	}
 	if si != len(m) {
-		r = append(r, message.NewText(m[si:]))
+		r = append(r, message.NewText(CQCodeUnescapeText(m[si:])))
 	}
 	return
 }
@@ -308,4 +308,20 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 	default:
 		return nil, errors.New("unsupported cq code: " + t)
 	}
+}
+
+func CQCodeEscapeText(raw string) string {
+	ret := raw
+	ret = strings.ReplaceAll(ret, "[", "&#91;")
+	ret = strings.ReplaceAll(ret, "]", "&#93;")
+	ret = strings.ReplaceAll(ret, "&", "&amp;")
+	return ret
+}
+
+func CQCodeUnescapeText(content string) string {
+	ret := content
+	ret = strings.ReplaceAll(ret, "&#91;", "[")
+	ret = strings.ReplaceAll(ret, "&#93;", "]")
+	ret = strings.ReplaceAll(ret, "&amp;", "&")
+	return ret
 }
