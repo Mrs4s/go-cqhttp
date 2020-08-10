@@ -154,7 +154,7 @@ func (bot *CQBot) InsertGroupMessage(m *message.GroupMessage) int32 {
 		"group-name":  m.GroupName,
 		"sender":      m.Sender,
 		"time":        m.Time,
-		"message":     ToFormattedMessage(m.Elements, m.GroupCode, true),
+		"message":     ToStringMessage(m.Elements, m.GroupCode, true),
 	}
 	id := ToGlobalId(m.GroupCode, m.Id)
 	if bot.db != nil {
