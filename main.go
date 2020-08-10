@@ -91,10 +91,11 @@ func main() {
 			Uin:      uin,
 			Password: pwd,
 			HttpConfig: &global.GoCQHttpConfig{
-				Enabled:  true,
-				Host:     "0.0.0.0",
-				Port:     5700,
-				PostUrls: map[string]string{},
+				Enabled:           true,
+				Host:              "0.0.0.0",
+				Port:              5700,
+				PostUrls:          map[string]string{},
+				PostMessageFormat: "string",
 			},
 			WSConfig: &global.GoCQWebsocketConfig{
 				Enabled: true,
@@ -193,6 +194,12 @@ func main() {
 	b := coolq.NewQQBot(cli, conf)
 	if conf.HttpConfig != nil && conf.HttpConfig.Enabled {
 		server.HttpServer.Run(fmt.Sprintf("%s:%d", conf.HttpConfig.Host, conf.HttpConfig.Port), conf.AccessToken, b)
+		if conf.HttpConfig.PostMessageFormat != "string" && conf.HttpConfig.PostMessageFormat != "array" {
+			log.Errorf("http_config.post_message_format 配置错误")
+			return
+		} else {
+			coolq.SetMessageFormat(conf.HttpConfig.PostMessageFormat)
+		}
 		for k, v := range conf.HttpConfig.PostUrls {
 			server.NewHttpClient().Run(k, v, b)
 		}

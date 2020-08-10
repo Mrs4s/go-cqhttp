@@ -23,6 +23,76 @@ var matchReg = regexp.MustCompile(`\[CQ:\w+?.*?]`)
 var typeReg = regexp.MustCompile(`\[CQ:(\w+)`)
 var paramReg = regexp.MustCompile(`,([\w\-.]+?)=([^,\]]+)`)
 
+func ToArrayMessage(e []message.IMessageElement, code int64, raw ...bool) (r []MSG) {
+	ur := false
+	if len(raw) != 0 {
+		ur = raw[0]
+	}
+	for _, elem := range e {
+		m := MSG{}
+		switch o := elem.(type) {
+		case *message.TextElement:
+			m = MSG{
+				"type": "text",
+				"data": map[string]string{"text": CQCodeEscapeText(o.Content)},
+			}
+		case *message.AtElement:
+			if o.Target == 0 {
+				m = MSG{
+					"type": "at",
+					"data": map[string]string{"qq": "all"},
+				}
+			} else {
+				m = MSG{
+					"type": "at",
+					"data": map[string]string{"qq": fmt.Sprint(o.Target)},
+				}
+			}
+		case *message.ReplyElement:
+			m = MSG{
+				"type": "reply",
+				"data": map[string]string{"id": fmt.Sprint(ToGlobalId(code, o.ReplySeq))},
+			}
+		case *message.ForwardElement:
+			m = MSG{
+				"type": "forward",
+				"data": map[string]string{"id": o.ResId},
+			}
+		case *message.FaceElement:
+			m = MSG{
+				"type": "face",
+				"data": map[string]string{"id": fmt.Sprint(o.Index)},
+			}
+		case *message.VoiceElement:
+			if ur {
+				m = MSG{
+					"type": "record",
+					"data": map[string]string{"file": o.Name},
+				}
+			} else {
+				m = MSG{
+					"type": "record",
+					"data": map[string]string{"file": o.Name, "url": o.Url},
+				}
+			}
+		case *message.ImageElement:
+			if ur {
+				m = MSG{
+					"type": "image",
+					"data": map[string]string{"file": o.Filename},
+				}
+			} else {
+				m = MSG{
+					"type": "image",
+					"data": map[string]string{"file": o.Filename, "url": o.Url},
+				}
+			}
+		}
+		r = append(r, m)
+	}
+	return
+}
+
 func ToStringMessage(e []message.IMessageElement, code int64, raw ...bool) (r string) {
 	ur := false
 	if len(raw) != 0 {

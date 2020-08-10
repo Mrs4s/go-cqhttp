@@ -14,6 +14,21 @@ import (
 	"time"
 )
 
+var format = "string"
+
+func SetMessageFormat(f string) {
+	format = f
+}
+
+func ToFormattedMessage(e []message.IMessageElement, code int64, raw ...bool) (r interface{}) {
+	if format == "string" {
+		r = ToStringMessage(e, code, raw...)
+	} else if format == "array" {
+		r = ToArrayMessage(e, code, raw...)
+	}
+	return
+}
+
 func (bot *CQBot) privateMessageEvent(c *client.QQClient, m *message.PrivateMessage) {
 	checkMedia(m.Elements)
 	cqm := ToStringMessage(m.Elements, 0, true)
@@ -24,7 +39,7 @@ func (bot *CQBot) privateMessageEvent(c *client.QQClient, m *message.PrivateMess
 		"sub_type":     "friend",
 		"message_id":   ToGlobalId(m.Sender.Uin, m.Id),
 		"user_id":      m.Sender.Uin,
-		"message":      ToStringMessage(m.Elements, 0, false),
+		"message":      ToFormattedMessage(m.Elements, 0, false),
 		"raw_message":  cqm,
 		"font":         0,
 		"self_id":      c.Uin,
@@ -72,7 +87,7 @@ func (bot *CQBot) groupMessageEvent(c *client.QQClient, m *message.GroupMessage)
 		"anonymous":    nil,
 		"font":         0,
 		"group_id":     m.GroupCode,
-		"message":      ToStringMessage(m.Elements, m.GroupCode, false),
+		"message":      ToFormattedMessage(m.Elements, m.GroupCode, false),
 		"message_id":   id,
 		"message_type": "group",
 		"post_type":    "message",
@@ -128,7 +143,7 @@ func (bot *CQBot) tempMessageEvent(c *client.QQClient, m *message.TempMessage) {
 		"sub_type":     "group",
 		"message_id":   m.Id,
 		"user_id":      m.Sender.Uin,
-		"message":      ToStringMessage(m.Elements, 0, false),
+		"message":      ToFormattedMessage(m.Elements, 0, false),
 		"raw_message":  cqm,
 		"font":         0,
 		"self_id":      c.Uin,
