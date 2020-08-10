@@ -323,9 +323,9 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 
 func CQCodeEscapeText(raw string) string {
 	ret := raw
+	ret = strings.ReplaceAll(ret, "&", "&amp;")
 	ret = strings.ReplaceAll(ret, "[", "&#91;")
 	ret = strings.ReplaceAll(ret, "]", "&#93;")
-	ret = strings.ReplaceAll(ret, "&", "&amp;")
 	return ret
 }
 
