@@ -136,7 +136,6 @@ func (c *websocketClient) connectUniversal() {
 		log.Warnf("连接到反向Websocket Universal服务器 %v 时出现致命错误: %v", c.conf.ReverseUrl, err)
 		return
 	}
-	wsConf.Dialer.Timeout = time.Second * 5
 	wsConf.Header["X-Client-Role"] = []string{"Universal"}
 	wsConf.Header["X-Self-ID"] = []string{strconv.FormatInt(c.bot.Client.Uin, 10)}
 	wsConf.Header["User-Agent"] = []string{"CQHttp/4.15.0"}
