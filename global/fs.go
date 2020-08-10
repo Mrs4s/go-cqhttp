@@ -9,6 +9,8 @@ import (
 
 var IMAGE_PATH = path.Join("data", "images")
 
+var VOICE_PATH = path.Join("data", "voices")
+
 func PathExists(path string) bool {
 	_, err := os.Stat(path)
 	return err == nil || os.IsExist(err)

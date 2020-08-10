@@ -36,12 +36,14 @@ func init() {
 	if err == nil {
 		log.SetOutput(io.MultiWriter(os.Stderr, w))
 	}
-	if !global.PathExists("data") {
-		if err := os.Mkdir("data", 0777); err != nil {
-			log.Fatalf("创建数据文件夹失败: %v", err)
-		}
-		if err := os.Mkdir(path.Join("data", "images"), 0777); err != nil {
+	if !global.PathExists(global.IMAGE_PATH) {
+		if err := os.MkdirAll(global.IMAGE_PATH, 0677); err != nil {
 			log.Fatalf("创建图片缓存文件夹失败: %v", err)
+		}
+	}
+	if !global.PathExists(global.VOICE_PATH) {
+		if err := os.MkdirAll(global.VOICE_PATH, 06777); err != nil {
+			log.Fatalf("创建语音缓存文件夹失败: %v", err)
 		}
 	}
 	if global.PathExists("cqhttp.json") {

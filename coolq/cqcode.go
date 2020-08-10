@@ -45,7 +45,11 @@ func ToStringMessage(e []message.IMessageElement, code int64, raw ...bool) (r st
 		case *message.FaceElement:
 			r += fmt.Sprintf(`[CQ:face,id=%d]`, o.Index)
 		case *message.VoiceElement:
-			r += fmt.Sprintf(`[CQ:record,file=%s]`, o.Name)
+			if ur {
+				r += fmt.Sprintf(`[CQ:record,file=%s]`, o.Name)
+			} else {
+				r += fmt.Sprintf(`[CQ:record,file=%s,url=%s]`, o.Name, o.Url)
+			}
 		case *message.ImageElement:
 			if ur {
 				r += fmt.Sprintf(`[CQ:image,file=%s]`, o.Filename)
@@ -281,6 +285,13 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 				fu.Path = fu.Path[1:]
 			}
 			b, err := ioutil.ReadFile(fu.Path)
+			if err != nil {
+				return nil, err
+			}
+			data = b
+		}
+		if global.PathExists(path.Join(global.VOICE_PATH, f)) {
+			b, err := ioutil.ReadFile(path.Join(global.VOICE_PATH, f))
 			if err != nil {
 				return nil, err
 			}
