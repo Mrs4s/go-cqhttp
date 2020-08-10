@@ -3,8 +3,11 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"crypto/md5"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
@@ -33,12 +36,14 @@ func init() {
 	if err == nil {
 		log.SetOutput(io.MultiWriter(os.Stderr, w))
 	}
-	if !global.PathExists("data") {
-		if err := os.Mkdir("data", 0777); err != nil {
-			log.Fatalf("创建数据文件夹失败: %v", err)
-		}
-		if err := os.Mkdir(path.Join("data", "images"), 0777); err != nil {
+	if !global.PathExists(global.IMAGE_PATH) {
+		if err := os.MkdirAll(global.IMAGE_PATH, 0677); err != nil {
 			log.Fatalf("创建图片缓存文件夹失败: %v", err)
+		}
+	}
+	if !global.PathExists(global.VOICE_PATH) {
+		if err := os.MkdirAll(global.VOICE_PATH, 06777); err != nil {
+			log.Fatalf("创建语音缓存文件夹失败: %v", err)
 		}
 	}
 	if global.PathExists("cqhttp.json") {
@@ -112,7 +117,7 @@ func main() {
 		time.Sleep(time.Second * 5)
 		return
 	}
-	if conf.Uin == 0 || conf.Password == "" {
+	if conf.Uin == 0 || (conf.Password == "" && conf.PasswordEncrypted == "") {
 		log.Warnf("请修改 config.json 以添加账号密码.")
 		time.Sleep(time.Second * 5)
 		return
@@ -132,6 +137,24 @@ func main() {
 			log.Fatalf("加载设备信息失败: %v", err)
 		}
 	}
+	if conf.EncryptPassword && conf.PasswordEncrypted == "" {
+		log.Infof("密码加密已启用, 请输入Key对密码进行加密: (Enter 提交)")
+		strKey, _ := console.ReadString('\n')
+		key := md5.Sum([]byte(strKey))
+		if encrypted := EncryptPwd(conf.Password, key[:]); encrypted != "" {
+			conf.Password = ""
+			conf.PasswordEncrypted = encrypted
+			_ = conf.Save("config.json")
+		} else {
+			log.Warnf("加密时出现问题.")
+		}
+	}
+	if conf.PasswordEncrypted != "" {
+		log.Infof("密码加密已启用, 请输入Key对密码进行解密以继续: (Enter 提交)")
+		strKey, _ := console.ReadString('\n')
+		key := md5.Sum([]byte(strKey))
+		conf.Password = DecryptPwd(conf.PasswordEncrypted, key[:])
+	}
 	log.Info("Bot将在5秒后登录并开始信息处理, 按 Ctrl+C 取消.")
 	time.Sleep(time.Second * 5)
 	log.Info("开始尝试登录并同步消息...")
@@ -144,12 +167,14 @@ func main() {
 			case client.NeedCaptcha:
 				img, _, _ := image.Decode(bytes.NewReader(rsp.CaptchaImage))
 				fmt.Println(asciiart.New("image", img).Art)
-				log.Warn("请输入验证码： (回车提交)")
+				log.Warn("请输入验证码： (Enter 提交)")
 				text, _ := console.ReadString('\n')
 				rsp, err = cli.SubmitCaptcha(strings.ReplaceAll(text, "\n", ""), rsp.CaptchaSign)
 				continue
 			case client.UnsafeDeviceError:
 				log.Warnf("账号已开启设备锁，请前往 -> %v <- 验证并重启Bot.", rsp.VerifyUrl)
+				log.Infof(" 按 Enter 继续....")
+				_, _ = console.ReadString('\n')
 				return
 			case client.OtherLoginError, client.UnknownLoginError:
 				log.Fatalf("登录失败: %v", rsp.ErrorMessage)
@@ -182,7 +207,7 @@ func main() {
 	log.Info("アトリは、高性能ですから!")
 	cli.OnDisconnected(func(bot *client.QQClient, e *client.ClientDisconnectedEvent) {
 		if conf.ReLogin {
-			log.Warnf("Bot已离线，将在 %v 秒后尝试重连.", conf.ReLoginDelay)
+			log.Warnf("Bot已离线 (%v)，将在 %v 秒后尝试重连.", e.Message, conf.ReLoginDelay)
 			time.Sleep(time.Second * time.Duration(conf.ReLoginDelay))
 			rsp, err := cli.Login()
 			if err != nil {
@@ -207,4 +232,29 @@ func main() {
 	signal.Notify(c, os.Interrupt, os.Kill)
 	<-c
 	b.Release()
+}
+
+func EncryptPwd(pwd string, key []byte) string {
+	tea := binary.NewTeaCipher(key)
+	if tea == nil {
+		return ""
+	}
+	return base64.StdEncoding.EncodeToString(tea.Encrypt([]byte(pwd)))
+}
+
+func DecryptPwd(ePwd string, key []byte) string {
+	defer func() {
+		if pan := recover(); pan != nil {
+			log.Fatalf("密码解密失败: %v", pan)
+		}
+	}()
+	encrypted, err := base64.StdEncoding.DecodeString(ePwd)
+	if err != nil {
+		panic(err)
+	}
+	tea := binary.NewTeaCipher(key)
+	if tea == nil {
+		panic("密钥错误")
+	}
+	return string(tea.Decrypt(encrypted))
 }

@@ -121,6 +121,12 @@ func (bot *CQBot) CQSendGroupMessage(groupId int64, i interface{}) MSG {
 		return Failed(100)
 	}
 	elem := bot.ConvertStringMessage(str, true)
+	// fix at display
+	for _, e := range elem {
+		if at, ok := e.(*message.AtElement); ok && at.Target != 0 {
+			at.Display = "@" + bot.Client.FindGroup(groupId).FindMember(at.Target).DisplayName()
+		}
+	}
 	mid := bot.SendGroupMessage(groupId, &message.SendingMessage{Elements: elem})
 	if mid == -1 {
 		return Failed(100)
@@ -433,7 +439,7 @@ func (bot *CQBot) CQGetForwardMessage(resId string) MSG {
 	}
 	var r []MSG
 	for _, n := range m.Nodes {
-		checkImage(n.Message)
+		checkMedia(n.Message)
 		r = append(r, MSG{
 			"sender": MSG{
 				"user_id":  n.SenderId,
@@ -471,7 +477,7 @@ func (bot *CQBot) CQCanSendImage() MSG {
 }
 
 func (bot *CQBot) CQCanSendRecord() MSG {
-	return OK(MSG{"yes": false})
+	return OK(MSG{"yes": true})
 }
 
 func (bot *CQBot) CQGetStatus() MSG {

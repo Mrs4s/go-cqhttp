@@ -64,14 +64,15 @@ func (c *websocketClient) Run() {
 	if !c.conf.Enabled {
 		return
 	}
-	if c.conf.ReverseApiUrl != "" {
-		c.connectApi()
-	}
-	if c.conf.ReverseEventUrl != "" {
-		c.connectEvent()
-	}
 	if c.conf.ReverseUrl != "" {
 		c.connectUniversal()
+	} else {
+		if c.conf.ReverseApiUrl != "" {
+			c.connectApi()
+		}
+		if c.conf.ReverseEventUrl != "" {
+			c.connectEvent()
+		}
 	}
 	c.bot.OnEventPush(c.onBotPushEvent)
 }
@@ -190,16 +191,20 @@ func (c *websocketClient) onBotPushEvent(m coolq.MSG) {
 	defer c.pushLock.Unlock()
 	if c.eventConn != nil {
 		log.Debugf("向WS服务器 %v 推送Event: %v", c.eventConn.RemoteAddr().String(), m.ToJson())
+		_ = c.eventConn.SetWriteDeadline(time.Now().Add(time.Second * 3))
 		if _, err := c.eventConn.Write([]byte(m.ToJson())); err != nil {
 			_ = c.eventConn.Close()
 			if c.conf.ReverseReconnectInterval != 0 {
-				time.Sleep(time.Millisecond * time.Duration(c.conf.ReverseReconnectInterval))
-				c.connectEvent()
+				go func() {
+					time.Sleep(time.Millisecond * time.Duration(c.conf.ReverseReconnectInterval))
+					c.connectEvent()
+				}()
 			}
 		}
 	}
 	if c.universalConn != nil {
 		log.Debugf("向WS服务器 %v 推送Event: %v", c.universalConn.RemoteAddr().String(), m.ToJson())
+		_ = c.universalConn.SetWriteDeadline(time.Now().Add(time.Second * 3))
 		_, _ = c.universalConn.Write([]byte(m.ToJson()))
 	}
 }
