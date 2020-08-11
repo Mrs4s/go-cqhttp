@@ -37,12 +37,12 @@ func init() {
 		log.SetOutput(io.MultiWriter(os.Stderr, w))
 	}
 	if !global.PathExists(global.IMAGE_PATH) {
-		if err := os.MkdirAll(global.IMAGE_PATH, 0677); err != nil {
+		if err := os.MkdirAll(global.IMAGE_PATH, os.ModePerm); err != nil {
 			log.Fatalf("创建图片缓存文件夹失败: %v", err)
 		}
 	}
 	if !global.PathExists(global.VOICE_PATH) {
-		if err := os.MkdirAll(global.VOICE_PATH, 06777); err != nil {
+		if err := os.MkdirAll(global.VOICE_PATH, os.ModePerm); err != nil {
 			log.Fatalf("创建语音缓存文件夹失败: %v", err)
 		}
 	}
@@ -130,7 +130,7 @@ func main() {
 	if !global.PathExists("device.json") {
 		log.Warn("虚拟设备信息不存在, 将自动生成随机设备.")
 		client.GenRandomDevice()
-		_ = ioutil.WriteFile("device.json", client.SystemDeviceInfo.ToJson(), 0777)
+		_ = ioutil.WriteFile("device.json", client.SystemDeviceInfo.ToJson(), os.ModePerm)
 		log.Info("已生成设备信息并保存到 device.json 文件.")
 	} else {
 		log.Info("将使用 device.json 内的设备信息运行Bot.")
@@ -166,7 +166,7 @@ func main() {
 		if !rsp.Success {
 			switch rsp.Error {
 			case client.NeedCaptcha:
-				_ = ioutil.WriteFile("captcha.jpg", rsp.CaptchaImage, 0677)
+				_ = ioutil.WriteFile("captcha.jpg", rsp.CaptchaImage, os.ModePerm)
 				img, _, _ := image.Decode(bytes.NewReader(rsp.CaptchaImage))
 				fmt.Println(asciiart.New("image", img).Art)
 				log.Warn("请输入验证码 (captcha.jpg)： (Enter 提交)")
