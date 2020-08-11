@@ -34,7 +34,7 @@ func ToArrayMessage(e []message.IMessageElement, code int64, raw ...bool) (r []M
 		case *message.TextElement:
 			m = MSG{
 				"type": "text",
-				"data": map[string]string{"text": CQCodeEscapeText(o.Content)},
+				"data": map[string]string{"text": o.Content},
 			}
 		case *message.AtElement:
 			if o.Target == 0 {
