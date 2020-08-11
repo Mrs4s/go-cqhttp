@@ -43,6 +43,7 @@ type GoCQHttpConfig struct {
 	Enabled           bool              `json:"enabled"`
 	Host              string            `json:"host"`
 	Port              uint16            `json:"port"`
+	Timeout           int32             `json:"timeout"`
 	PostUrls          map[string]string `json:"post_urls"`
 	PostMessageFormat string            `json:"post_message_format"`
 }

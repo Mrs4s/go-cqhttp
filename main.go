@@ -201,7 +201,7 @@ func main() {
 			coolq.SetMessageFormat(conf.HttpConfig.PostMessageFormat)
 		}
 		for k, v := range conf.HttpConfig.PostUrls {
-			server.NewHttpClient().Run(k, v, b)
+			server.NewHttpClient().Run(k, v, conf.HttpConfig.Timeout, b)
 		}
 	}
 	if conf.WSConfig != nil && conf.WSConfig.Enabled {

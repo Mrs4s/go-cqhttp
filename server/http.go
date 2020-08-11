@@ -21,9 +21,10 @@ type httpServer struct {
 }
 
 type httpClient struct {
-	bot    *coolq.CQBot
-	secret string
-	addr   string
+	bot     *coolq.CQBot
+	secret  string
+	addr    string
+	timeout int32
 }
 
 var HttpServer = &httpServer{}
@@ -163,10 +164,14 @@ func NewHttpClient() *httpClient {
 	return &httpClient{}
 }
 
-func (c *httpClient) Run(addr, secret string, bot *coolq.CQBot) {
+func (c *httpClient) Run(addr, secret string, timeout int32, bot *coolq.CQBot) {
 	c.bot = bot
 	c.secret = secret
 	c.addr = addr
+	c.timeout = timeout
+	if c.timeout < 5 {
+		c.timeout = 5
+	}
 	bot.OnEventPush(c.onBotPushEvent)
 	log.Infof("HTTP POST上报器已启动: %v", addr)
 }
@@ -184,7 +189,7 @@ func (c *httpClient) onBotPushEvent(m coolq.MSG) {
 			h["X-Signature"] = "sha1=" + hex.EncodeToString(mac.Sum(nil))
 		}
 		return h
-	}()).SetTimeout(time.Second * 5).Do()
+	}()).SetTimeout(time.Second * time.Duration(c.timeout)).Do()
 	if err != nil {
 		log.Warnf("上报Event数据到 %v 失败: %v", c.addr, err)
 		return
