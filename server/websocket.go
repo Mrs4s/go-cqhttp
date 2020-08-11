@@ -172,6 +172,7 @@ func (c *websocketClient) listenApi(conn *wsc.Conn, u bool) {
 				ret["echo"] = j.Get("echo").Value()
 			}
 			c.pushLock.Lock()
+			log.Debugf("准备发送API %v 处理结果: %v", t, ret.ToJson())
 			_, _ = conn.Write([]byte(ret.ToJson()))
 			c.pushLock.Unlock()
 		}
@@ -191,7 +192,6 @@ func (c *websocketClient) onBotPushEvent(m coolq.MSG) {
 	defer c.pushLock.Unlock()
 	if c.eventConn != nil {
 		log.Debugf("向WS服务器 %v 推送Event: %v", c.eventConn.RemoteAddr().String(), m.ToJson())
-		_ = c.eventConn.SetWriteDeadline(time.Now().Add(time.Second * 3))
 		if _, err := c.eventConn.Write([]byte(m.ToJson())); err != nil {
 			_ = c.eventConn.Close()
 			if c.conf.ReverseReconnectInterval != 0 {
@@ -204,7 +204,6 @@ func (c *websocketClient) onBotPushEvent(m coolq.MSG) {
 	}
 	if c.universalConn != nil {
 		log.Debugf("向WS服务器 %v 推送Event: %v", c.universalConn.RemoteAddr().String(), m.ToJson())
-		_ = c.universalConn.SetWriteDeadline(time.Now().Add(time.Second * 3))
 		_, _ = c.universalConn.Write([]byte(m.ToJson()))
 	}
 }
