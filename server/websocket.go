@@ -331,6 +331,12 @@ var wsApi = map[string]func(*coolq.CQBot, gjson.Result) coolq.MSG{
 		)
 	},
 	"send_msg": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
+		if p.Get("message_type").Str == "private" {
+			return bot.CQSendPrivateMessage(p.Get("user_id").Int(), p.Get("message"))
+		}
+		if p.Get("message_type").Str == "group" {
+			return bot.CQSendGroupMessage(p.Get("group_id").Int(), p.Get("message"))
+		}
 		if p.Get("group_id").Int() != 0 {
 			return bot.CQSendGroupMessage(p.Get("group_id").Int(), p.Get("message"))
 		}

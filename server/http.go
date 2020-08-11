@@ -229,6 +229,14 @@ func (s *httpServer) GetGroupMemberInfo(c *gin.Context) {
 }
 
 func (s *httpServer) SendMessage(c *gin.Context) {
+	if getParam(c, "message_type") == "private" {
+		s.SendPrivateMessage(c)
+		return
+	}
+	if getParam(c, "message_type") == "group" {
+		s.SendGroupMessage(c)
+		return
+	}
 	if getParam(c, "group_id") != "" {
 		s.SendGroupMessage(c)
 		return
