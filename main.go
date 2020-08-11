@@ -196,8 +196,8 @@ func main() {
 	if conf.HttpConfig != nil && conf.HttpConfig.Enabled {
 		server.HttpServer.Run(fmt.Sprintf("%s:%d", conf.HttpConfig.Host, conf.HttpConfig.Port), conf.AccessToken, b)
 		if conf.HttpConfig.PostMessageFormat != "string" && conf.HttpConfig.PostMessageFormat != "array" {
-			log.Errorf("http_config.post_message_format 配置错误")
-			return
+			log.Warnf("http_config.post_message_format 配置错误, 将自动使用 string")
+			coolq.SetMessageFormat("string")
 		} else {
 			coolq.SetMessageFormat(conf.HttpConfig.PostMessageFormat)
 		}
