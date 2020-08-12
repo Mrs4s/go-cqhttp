@@ -316,7 +316,7 @@ func (bot *CQBot) groupJoinReqEvent(c *client.QQClient, e *client.UserJoinGroupR
 		"sub_type":     "add",
 		"group_id":     e.GroupCode,
 		"user_id":      e.RequesterUin,
-		"comment":      "",
+		"comment":      e.Message,
 		"flag":         flag,
 		"time":         time.Now().Unix(),
 		"self_id":      c.Uin,
