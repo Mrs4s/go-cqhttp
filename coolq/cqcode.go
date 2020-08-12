@@ -414,7 +414,7 @@ func CQCodeUnescapeText(content string) string {
 }
 
 func CQCodeUnescapeValue(content string) string {
-	ret := CQCodeUnescapeText(content)
-	ret = strings.ReplaceAll(ret, "&#44;", ",")
+	ret := strings.ReplaceAll(content, "&#44;", ",")
+	ret = CQCodeUnescapeText(ret)
 	return ret
 }
