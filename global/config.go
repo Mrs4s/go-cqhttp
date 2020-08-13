@@ -64,15 +64,15 @@ type GoCQReverseWebsocketConfig struct {
 
 func DefaultConfig() *JsonConfig {
 	return &JsonConfig{
-		EnableDB:     true,
-		ReLogin:      true,
-		ReLoginDelay: 3,
+		EnableDB:          true,
+		ReLogin:           true,
+		ReLoginDelay:      3,
+		PostMessageFormat: "string",
 		HttpConfig: &GoCQHttpConfig{
-			Enabled:           true,
-			Host:              "0.0.0.0",
-			Port:              5700,
-			PostUrls:          map[string]string{},
-			PostMessageFormat: "string",
+			Enabled:  true,
+			Host:     "0.0.0.0",
+			Port:     5700,
+			PostUrls: map[string]string{},
 		},
 		WSConfig: &GoCQWebsocketConfig{
 			Enabled: true,
