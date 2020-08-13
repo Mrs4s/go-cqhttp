@@ -28,6 +28,7 @@
 
 - [CQ:image]
 - [CQ:record]
+- [CQ:video]
 - [CQ:face]
 - [CQ:at]
 - [CQ:share]
