@@ -85,7 +85,7 @@ func (bot *CQBot) GetGroupMessage(mid int32) MSG {
 		if err == nil {
 			return m
 		}
-		log.Warnf("获取信息时出现错误: %v", err)
+		log.Warnf("获取信息时出现错误: %v id: %v", err, mid)
 	}
 	return nil
 }

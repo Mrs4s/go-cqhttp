@@ -96,18 +96,18 @@ func main() {
 			Uin:      uin,
 			Password: pwd,
 			HttpConfig: &global.GoCQHttpConfig{
-				Enabled:           true,
-				Host:              "0.0.0.0",
-				Port:              5700,
-				PostUrls:          map[string]string{},
-				PostMessageFormat: "string",
+				Enabled:  true,
+				Host:     "0.0.0.0",
+				Port:     5700,
+				PostUrls: map[string]string{},
 			},
 			WSConfig: &global.GoCQWebsocketConfig{
 				Enabled: true,
 				Host:    "0.0.0.0",
 				Port:    6700,
 			},
-			Debug: os.Getenv("DEBUG") == "true",
+			PostMessageFormat: "string",
+			Debug:             os.Getenv("DEBUG") == "true",
 		}
 		if post != "" {
 			conf.HttpConfig.PostUrls[post] = os.Getenv("HTTP_SECRET")
@@ -200,11 +200,11 @@ func main() {
 	b := coolq.NewQQBot(cli, conf)
 	if conf.HttpConfig != nil && conf.HttpConfig.Enabled {
 		server.HttpServer.Run(fmt.Sprintf("%s:%d", conf.HttpConfig.Host, conf.HttpConfig.Port), conf.AccessToken, b)
-		if conf.HttpConfig.PostMessageFormat != "string" && conf.HttpConfig.PostMessageFormat != "array" {
+		if conf.PostMessageFormat != "string" && conf.PostMessageFormat != "array" {
 			log.Warnf("http_config.post_message_format 配置错误, 将自动使用 string")
 			coolq.SetMessageFormat("string")
 		} else {
-			coolq.SetMessageFormat(conf.HttpConfig.PostMessageFormat)
+			coolq.SetMessageFormat(conf.PostMessageFormat)
 		}
 		for k, v := range conf.HttpConfig.PostUrls {
 			server.NewHttpClient().Run(k, v, conf.HttpConfig.Timeout, b)
