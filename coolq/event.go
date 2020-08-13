@@ -8,6 +8,7 @@ import (
 	"github.com/Mrs4s/go-cqhttp/global"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
+	"os"
 	"path"
 	"strconv"
 	"strings"
@@ -30,7 +31,7 @@ func ToFormattedMessage(e []message.IMessageElement, code int64, raw ...bool) (r
 }
 
 func (bot *CQBot) privateMessageEvent(c *client.QQClient, m *message.PrivateMessage) {
-	checkMedia(m.Elements)
+	bot.checkMedia(m.Elements)
 	cqm := ToStringMessage(m.Elements, 0, true)
 	log.Infof("收到好友 %v(%v) 的消息: %v", m.Sender.DisplayName(), m.Sender.Uin, cqm)
 	fm := MSG{
@@ -55,7 +56,7 @@ func (bot *CQBot) privateMessageEvent(c *client.QQClient, m *message.PrivateMess
 }
 
 func (bot *CQBot) groupMessageEvent(c *client.QQClient, m *message.GroupMessage) {
-	checkMedia(m.Elements)
+	bot.checkMedia(m.Elements)
 	for _, elem := range m.Elements {
 		if file, ok := elem.(*message.GroupFileElement); ok {
 			log.Infof("群 %v(%v) 内 %v(%v) 上传了文件: %v", m.GroupName, m.GroupCode, m.Sender.DisplayName(), m.Sender.Uin, file.Name)
@@ -133,7 +134,7 @@ func (bot *CQBot) groupMessageEvent(c *client.QQClient, m *message.GroupMessage)
 }
 
 func (bot *CQBot) tempMessageEvent(c *client.QQClient, m *message.TempMessage) {
-	checkMedia(m.Elements)
+	bot.checkMedia(m.Elements)
 	cqm := ToStringMessage(m.Elements, 0, true)
 	bot.tempMsgCache.Store(m.Sender.Uin, m.GroupCode)
 	log.Infof("收到来自群 %v(%v) 内 %v(%v) 的临时会话消息: %v", m.GroupName, m.GroupCode, m.Sender.DisplayName(), m.Sender.Uin, cqm)
@@ -362,7 +363,7 @@ func (bot *CQBot) groupDecrease(groupCode, userUin int64, operator *client.Group
 	}
 }
 
-func checkMedia(e []message.IMessageElement) {
+func (bot *CQBot) checkMedia(e []message.IMessageElement) {
 	for _, elem := range e {
 		switch i := elem.(type) {
 		case *message.ImageElement:
@@ -373,7 +374,7 @@ func checkMedia(e []message.IMessageElement) {
 					w.WriteUInt32(uint32(i.Size))
 					w.WriteString(i.Filename)
 					w.WriteString(i.Url)
-				}), 0777)
+				}), os.ModePerm)
 			}
 			i.Filename = filename
 		case *message.VoiceElement:
@@ -385,8 +386,20 @@ func checkMedia(e []message.IMessageElement) {
 					log.Warnf("语音文件 %v 下载失败: %v", i.Name, err)
 					continue
 				}
-				_ = ioutil.WriteFile(path.Join(global.VOICE_PATH, i.Name), b, 0777)
+				_ = ioutil.WriteFile(path.Join(global.VOICE_PATH, i.Name), b, os.ModePerm)
 			}
+		case *message.ShortVideoElement:
+			filename := hex.EncodeToString(i.Md5) + ".video"
+			if !global.PathExists(path.Join(global.VIDEO_PATH, filename)) {
+				_ = ioutil.WriteFile(path.Join(global.VIDEO_PATH, filename), binary.NewWriterF(func(w *binary.Writer) {
+					w.Write(i.Md5)
+					w.WriteUInt32(uint32(i.Size))
+					w.WriteString(i.Name)
+					w.Write(i.Uuid)
+				}), os.ModePerm)
+			}
+			i.Name = filename
+			i.Url = bot.Client.GetShortVideoUrl(i.Uuid, i.Md5)
 		}
 	}
 }

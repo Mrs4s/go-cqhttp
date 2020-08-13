@@ -75,6 +75,18 @@ func ToArrayMessage(e []message.IMessageElement, code int64, raw ...bool) (r []M
 					"data": map[string]string{"file": o.Name, "url": o.Url},
 				}
 			}
+		case *message.ShortVideoElement:
+			if ur {
+				m = MSG{
+					"type": "video",
+					"data": map[string]string{"file": o.Name},
+				}
+			} else {
+				m = MSG{
+					"type": "video",
+					"data": map[string]string{"file": o.Name, "url": o.Url},
+				}
+			}
 		case *message.ImageElement:
 			if ur {
 				m = MSG{
@@ -119,6 +131,12 @@ func ToStringMessage(e []message.IMessageElement, code int64, raw ...bool) (r st
 				r += fmt.Sprintf(`[CQ:record,file=%s]`, o.Name)
 			} else {
 				r += fmt.Sprintf(`[CQ:record,file=%s,url=%s]`, o.Name, CQCodeEscapeValue(o.Url))
+			}
+		case *message.ShortVideoElement:
+			if ur {
+				r += fmt.Sprintf(`[CQ:video,file=%s]`, o.Name)
+			} else {
+				r += fmt.Sprintf(`[CQ:video,file=%s,url=%s]`, o.Name, CQCodeEscapeValue(o.Url))
 			}
 		case *message.ImageElement:
 			if ur {
