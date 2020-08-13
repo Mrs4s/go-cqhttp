@@ -27,7 +27,7 @@ func ReadAllText(path string) string {
 }
 
 func WriteAllText(path, text string) {
-	_ = ioutil.WriteFile(path, []byte(text), 0777)
+	_ = ioutil.WriteFile(path, []byte(text), 0644)
 }
 
 func Check(err error) {
