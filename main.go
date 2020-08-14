@@ -198,14 +198,14 @@ func main() {
 	global.Check(cli.ReloadGroupList())
 	log.Infof("共加载 %v 个群.", len(cli.GroupList))
 	b := coolq.NewQQBot(cli, conf)
+	if conf.PostMessageFormat != "string" && conf.PostMessageFormat != "array" {
+		log.Warnf("post_message_format 配置错误, 将自动使用 string")
+		coolq.SetMessageFormat("string")
+	} else {
+		coolq.SetMessageFormat(conf.PostMessageFormat)
+	}
 	if conf.HttpConfig != nil && conf.HttpConfig.Enabled {
 		server.HttpServer.Run(fmt.Sprintf("%s:%d", conf.HttpConfig.Host, conf.HttpConfig.Port), conf.AccessToken, b)
-		if conf.PostMessageFormat != "string" && conf.PostMessageFormat != "array" {
-			log.Warnf("http_config.post_message_format 配置错误, 将自动使用 string")
-			coolq.SetMessageFormat("string")
-		} else {
-			coolq.SetMessageFormat(conf.PostMessageFormat)
-		}
 		for k, v := range conf.HttpConfig.PostUrls {
 			server.NewHttpClient().Run(k, v, conf.HttpConfig.Timeout, b)
 		}
