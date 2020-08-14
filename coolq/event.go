@@ -8,7 +8,6 @@ import (
 	"github.com/Mrs4s/go-cqhttp/global"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
-	"os"
 	"path"
 	"strconv"
 	"strings"
@@ -374,7 +373,7 @@ func (bot *CQBot) checkMedia(e []message.IMessageElement) {
 					w.WriteUInt32(uint32(i.Size))
 					w.WriteString(i.Filename)
 					w.WriteString(i.Url)
-				}), os.ModePerm)
+				}), 0644)
 			}
 			i.Filename = filename
 		case *message.VoiceElement:
@@ -386,7 +385,7 @@ func (bot *CQBot) checkMedia(e []message.IMessageElement) {
 					log.Warnf("语音文件 %v 下载失败: %v", i.Name, err)
 					continue
 				}
-				_ = ioutil.WriteFile(path.Join(global.VOICE_PATH, i.Name), b, os.ModePerm)
+				_ = ioutil.WriteFile(path.Join(global.VOICE_PATH, i.Name), b, 0644)
 			}
 		case *message.ShortVideoElement:
 			filename := hex.EncodeToString(i.Md5) + ".video"
@@ -396,7 +395,7 @@ func (bot *CQBot) checkMedia(e []message.IMessageElement) {
 					w.WriteUInt32(uint32(i.Size))
 					w.WriteString(i.Name)
 					w.Write(i.Uuid)
-				}), os.ModePerm)
+				}), 0644)
 			}
 			i.Name = filename
 			i.Url = bot.Client.GetShortVideoUrl(i.Uuid, i.Md5)

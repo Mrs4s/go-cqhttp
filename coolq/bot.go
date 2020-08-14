@@ -191,7 +191,7 @@ func (bot *CQBot) dispatchEventMessage(m MSG) {
 			fn(m)
 			end := time.Now()
 			if end.Sub(start) > time.Second*5 {
-				log.Debugf("警告: 事件处理耗时超过 5 秒 (%v秒), 请检查应用是否有堵塞.", end.Sub(start)/time.Second)
+				log.Debugf("警告: 事件处理耗时超过 5 秒 (%v), 请检查应用是否有堵塞.", end.Sub(start))
 			}
 		}()
 	}
