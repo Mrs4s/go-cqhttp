@@ -404,13 +404,13 @@ func (bot *CQBot) CQHandleQuickOperation(context, operation gjson.Result) MSG {
 		}
 	case "request":
 		reqType := context.Get("request_type").Str
-		if operation.Get("approve").Bool(){
-			if reqType == "friend" {
-				bot.CQProcessFriendRequest(context.Get("flag").Str, true)
-			}
-			if reqType == "group" {
-				bot.CQProcessGroupRequest(context.Get("flag").Str, context.Get("sub_type").Str, true)
-			}
+            if operation.Get("approve").Exists() {
+		        if reqType == "friend" {
+        		    bot.CQProcessFriendRequest(context.Get("flag").Str, operation.Get("approve").Bool())
+        	    }
+        	    if reqType == "group" {
+        		    bot.CQProcessGroupRequest(context.Get("flag").Str, context.Get("sub_type").Str, operation.Get("approve").Bool())
+        	    }
 		}
 	}
 	return OK(nil)
