@@ -124,7 +124,13 @@ func (bot *CQBot) CQSendGroupMessage(groupId int64, i interface{}) MSG {
 	// fix at display
 	for _, e := range elem {
 		if at, ok := e.(*message.AtElement); ok && at.Target != 0 {
-			at.Display = "@" + bot.Client.FindGroup(groupId).FindMember(at.Target).DisplayName()
+			at.Display = "@" + func() string {
+				mem := bot.Client.FindGroup(groupId).FindMember(at.Target)
+				if mem != nil {
+					return mem.DisplayName()
+				}
+				return strconv.FormatInt(at.Target, 10)
+			}()
 		}
 	}
 	mid := bot.SendGroupMessage(groupId, &message.SendingMessage{Elements: elem})
