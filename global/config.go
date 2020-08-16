@@ -14,6 +14,7 @@ type JsonConfig struct {
 	AccessToken       string                        `json:"access_token"`
 	ReLogin           bool                          `json:"relogin"`
 	ReLoginDelay      int                           `json:"relogin_delay"`
+	AsyncLoad         bool                          `json:"async_load"`
 	HttpConfig        *GoCQHttpConfig               `json:"http_config"`
 	WSConfig          *GoCQWebsocketConfig          `json:"ws_config"`
 	ReverseServers    []*GoCQReverseWebsocketConfig `json:"ws_reverse_servers"`
