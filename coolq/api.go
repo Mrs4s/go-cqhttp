@@ -394,7 +394,6 @@ func (bot *CQBot) CQHandleQuickOperation(context, operation gjson.Result) MSG {
 				bot.CQSendGroupMessage(context.Get("group_id").Int(), reply, autoEscape)
 			}
 			if msgType == "private" {
-				// TODO: 处理auto_escape
 				bot.CQSendPrivateMessage(context.Get("user_id").Int(), reply, autoEscape)
 			}
 		}
