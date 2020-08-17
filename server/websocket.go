@@ -337,28 +337,29 @@ var wsApi = map[string]func(*coolq.CQBot, gjson.Result) coolq.MSG{
 		)
 	},
 	"send_msg": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
+		autoEscape := global.EnsureBool(p.Get("auto_escape"), false)
 		if p.Get("message_type").Str == "private" {
-			return bot.CQSendPrivateMessage(p.Get("user_id").Int(), p.Get("message"))
+			return bot.CQSendPrivateMessage(p.Get("user_id").Int(), p.Get("message"), autoEscape)
 		}
 		if p.Get("message_type").Str == "group" {
-			return bot.CQSendGroupMessage(p.Get("group_id").Int(), p.Get("message"))
+			return bot.CQSendGroupMessage(p.Get("group_id").Int(), p.Get("message"), autoEscape)
 		}
 		if p.Get("group_id").Int() != 0 {
-			return bot.CQSendGroupMessage(p.Get("group_id").Int(), p.Get("message"))
+			return bot.CQSendGroupMessage(p.Get("group_id").Int(), p.Get("message"), autoEscape)
 		}
 		if p.Get("user_id").Int() != 0 {
-			return bot.CQSendPrivateMessage(p.Get("user_id").Int(), p.Get("message"))
+			return bot.CQSendPrivateMessage(p.Get("user_id").Int(), p.Get("message"), autoEscape)
 		}
 		return coolq.MSG{}
 	},
 	"send_group_msg": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
-		return bot.CQSendGroupMessage(p.Get("group_id").Int(), p.Get("message"))
+		return bot.CQSendGroupMessage(p.Get("group_id").Int(), p.Get("message"), global.EnsureBool(p.Get("auto_escape"), false))
 	},
 	"send_group_forward_msg": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		return bot.CQSendGroupForwardMessage(p.Get("group_id").Int(), p.Get("messages"))
 	},
 	"send_private_msg": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
-		return bot.CQSendPrivateMessage(p.Get("user_id").Int(), p.Get("message"))
+		return bot.CQSendPrivateMessage(p.Get("user_id").Int(), p.Get("message"), global.EnsureBool(p.Get("auto_escape"), false))
 	},
 	"delete_msg": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		return bot.CQDeleteMessage(int32(p.Get("message_id").Int()))

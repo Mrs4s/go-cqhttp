@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
+	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/gin-gonic/gin"
 	"github.com/guonaihong/gout"
 	log "github.com/sirupsen/logrus"
@@ -249,21 +250,23 @@ func (s *httpServer) SendMessage(c *gin.Context) {
 func (s *httpServer) SendPrivateMessage(c *gin.Context) {
 	uid, _ := strconv.ParseInt(getParam(c, "user_id"), 10, 64)
 	msg, t := getParamWithType(c, "message")
+	autoEscape := global.EnsureBool(getParam(c, "auto_escape"), false)
 	if t == gjson.JSON {
-		c.JSON(200, s.bot.CQSendPrivateMessage(uid, gjson.Parse(msg)))
+		c.JSON(200, s.bot.CQSendPrivateMessage(uid, gjson.Parse(msg), autoEscape))
 		return
 	}
-	c.JSON(200, s.bot.CQSendPrivateMessage(uid, msg))
+	c.JSON(200, s.bot.CQSendPrivateMessage(uid, msg, autoEscape))
 }
 
 func (s *httpServer) SendGroupMessage(c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	msg, t := getParamWithType(c, "message")
+	autoEscape := global.EnsureBool(getParam(c, "auto_escape"), false)
 	if t == gjson.JSON {
-		c.JSON(200, s.bot.CQSendGroupMessage(gid, gjson.Parse(msg)))
+		c.JSON(200, s.bot.CQSendGroupMessage(gid, gjson.Parse(msg), autoEscape))
 		return
 	}
-	c.JSON(200, s.bot.CQSendGroupMessage(gid, msg))
+	c.JSON(200, s.bot.CQSendGroupMessage(gid, msg, autoEscape))
 }
 
 func (s *httpServer) SendGroupForwardMessage(c *gin.Context) {
