@@ -98,9 +98,23 @@ func (bot *CQBot) CQGetGroupMemberInfo(groupId, userId int64, noCache bool) MSG 
 // https://cqhttp.cc/docs/4.15/#/API?id=send_group_msg-%E5%8F%91%E9%80%81%E7%BE%A4%E6%B6%88%E6%81%AF
 func (bot *CQBot) CQSendGroupMessage(groupId int64, i interface{}, autoEscape bool) MSG {
 	var str string
+	fixAt := func(elem []message.IMessageElement) {
+		for _, e := range elem {
+			if at, ok := e.(*message.AtElement); ok && at.Target != 0 {
+				at.Display = "@" + func() string {
+					mem := bot.Client.FindGroup(groupId).FindMember(at.Target)
+					if mem != nil {
+						return mem.DisplayName()
+					}
+					return strconv.FormatInt(at.Target, 10)
+				}()
+			}
+		}
+	}
 	if m, ok := i.(gjson.Result); ok {
 		if m.Type == gjson.JSON {
 			elem := bot.ConvertObjectMessage(m, true)
+			fixAt(elem)
 			mid := bot.SendGroupMessage(groupId, &message.SendingMessage{Elements: elem})
 			if mid == -1 {
 				return Failed(100)
@@ -125,18 +139,7 @@ func (bot *CQBot) CQSendGroupMessage(groupId int64, i interface{}, autoEscape bo
 	} else {
 		elem = bot.ConvertStringMessage(str, true)
 	}
-	// fix at display
-	for _, e := range elem {
-		if at, ok := e.(*message.AtElement); ok && at.Target != 0 {
-			at.Display = "@" + func() string {
-				mem := bot.Client.FindGroup(groupId).FindMember(at.Target)
-				if mem != nil {
-					return mem.DisplayName()
-				}
-				return strconv.FormatInt(at.Target, 10)
-			}()
-		}
-	}
+	fixAt(elem)
 	mid := bot.SendGroupMessage(groupId, &message.SendingMessage{Elements: elem})
 	if mid == -1 {
 		return Failed(100)

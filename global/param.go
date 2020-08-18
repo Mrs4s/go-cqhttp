@@ -6,15 +6,15 @@ import (
 )
 
 var trueSet = map[string]struct{}{
-	"true": struct{}{},
-	"yes":  struct{}{},
-	"1":    struct{}{},
+	"true": {},
+	"yes":  {},
+	"1":    {},
 }
 
 var falseSet = map[string]struct{}{
-	"false": struct{}{},
-	"no":    struct{}{},
-	"0":     struct{}{},
+	"false": {},
+	"no":    {},
+	"0":     {},
 }
 
 func EnsureBool(p interface{}, defaultVal bool) bool {
