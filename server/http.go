@@ -209,7 +209,8 @@ func (s *httpServer) GetFriendList(c *gin.Context) {
 }
 
 func (s *httpServer) GetGroupList(c *gin.Context) {
-	c.JSON(200, s.bot.CQGetGroupList())
+	nc := getParamOrDefault(c, "no_cache", "false")
+	c.JSON(200, s.bot.CQGetGroupList(nc == "true"))
 }
 
 func (s *httpServer) GetGroupInfo(c *gin.Context) {

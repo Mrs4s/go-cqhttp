@@ -34,8 +34,11 @@ func (bot *CQBot) CQGetFriendList() MSG {
 }
 
 // https://cqhttp.cc/docs/4.15/#/API?id=get_group_list-%E8%8E%B7%E5%8F%96%E7%BE%A4%E5%88%97%E8%A1%A8
-func (bot *CQBot) CQGetGroupList() MSG {
+func (bot *CQBot) CQGetGroupList(noCache bool) MSG {
 	var gs []MSG
+	if noCache {
+		_ = bot.Client.ReloadGroupList()
+	}
 	for _, g := range bot.Client.GroupList {
 		gs = append(gs, MSG{
 			"group_id":         g.Code,
