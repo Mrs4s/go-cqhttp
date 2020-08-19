@@ -131,7 +131,6 @@ func (bot *CQBot) SendGroupMessage(groupId int64, m *message.SendingMessage) int
 	m.Elements = newElem
 	ret := bot.Client.SendGroupMessage(groupId, m)
 	if ret == nil || ret.Id == -1 {
-		log.Warnf("警告: 群 %v 消息发送失败, 账号可能被风控.", groupId)
 		return -1
 	}
 	return bot.InsertGroupMessage(ret)
