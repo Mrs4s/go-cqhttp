@@ -114,7 +114,7 @@ func (c *websocketClient) connectEvent() {
 		log.Warnf("连接到反向Websocket Event服务器 %v 时出现错误: %v", c.conf.ReverseEventUrl, err)
 		if c.conf.ReverseReconnectInterval != 0 {
 			time.Sleep(time.Millisecond * time.Duration(c.conf.ReverseReconnectInterval))
-			c.connectApi()
+			c.connectEvent()
 		}
 		return
 	}
@@ -180,7 +180,7 @@ func (c *websocketClient) onBotPushEvent(m coolq.MSG) {
 	defer c.pushLock.Unlock()
 	if c.eventConn != nil {
 		log.Debugf("向WS服务器 %v 推送Event: %v", c.eventConn.RemoteAddr().String(), m.ToJson())
-		if err := c.eventConn.WriteJSON(m.ToJson()); err != nil {
+		if err := c.eventConn.WriteJSON(m); err != nil {
 			log.Warnf("向WS服务器 %v 推送Event时出现错误: %v", c.eventConn.RemoteAddr().String(), err)
 			_ = c.eventConn.Close()
 			if c.conf.ReverseReconnectInterval != 0 {

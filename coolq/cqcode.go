@@ -385,7 +385,7 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 			}
 			data = b
 		}
-		if !global.IsAMR(data) {
+		if !global.IsAMRorSILK(data) {
 			return nil, errors.New("unsupported voice file format (please use AMR file for now)")
 		}
 		return &message.VoiceElement{Data: data}, nil

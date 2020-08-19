@@ -13,6 +13,7 @@ var (
 	IMAGE_PATH = path.Join("data", "images")
 	VOICE_PATH = path.Join("data", "voices")
 	VIDEO_PATH = path.Join("data", "videos")
+	CACHE_PATH = path.Join("data", "cache")
 
 	HEADER_AMR  = []byte("#!AMR")
 	HEADER_SILK = []byte("\x02#!SILK_V3")
@@ -41,6 +42,6 @@ func Check(err error) {
 	}
 }
 
-func IsAMR(b []byte) bool {
+func IsAMRorSILK(b []byte) bool {
 	return bytes.HasPrefix(b, HEADER_AMR) || bytes.HasPrefix(b, HEADER_SILK)
 }
