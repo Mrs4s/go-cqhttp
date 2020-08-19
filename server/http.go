@@ -134,12 +134,12 @@ func (s *httpServer) Run(addr, authToken string, bot *coolq.CQBot) {
 	s.engine.Any("/set_group_leave_async", s.SetGroupLeave)
 
 	s.engine.Any("/get_image", s.GetImage)
-	s.engine.Any("/get_image_async", s.GetImage)
 
 	s.engine.Any("/get_forward_msg", s.GetForwardMessage)
 
 	s.engine.Any("/get_group_msg", s.GetGroupMessage)
-	s.engine.Any("/get_group_msg_async", s.GetGroupMessage)
+
+	s.engine.Any("/get_group_honor_info", s.GetGroupHonorInfo)
 
 	s.engine.Any("/can_send_image", s.CanSendImage)
 	s.engine.Any("/can_send_image_async", s.CanSendImage)
@@ -283,6 +283,11 @@ func (s *httpServer) GetImage(c *gin.Context) {
 func (s *httpServer) GetGroupMessage(c *gin.Context) {
 	mid, _ := strconv.ParseInt(getParam(c, "message_id"), 10, 32)
 	c.JSON(200, s.bot.CQGetGroupMessage(int32(mid)))
+}
+
+func (s *httpServer) GetGroupHonorInfo(c *gin.Context) {
+	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
+	c.JSON(200, s.bot.CQGetGroupHonorInfo(gid, getParam(c, "type")))
 }
 
 func (s *httpServer) ProcessFriendRequest(c *gin.Context) {
