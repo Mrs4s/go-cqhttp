@@ -64,6 +64,19 @@ func NewQQBot(cli *client.QQClient, conf *global.JsonConfig) *CQBot {
 	bot.Client.OnNewFriendAdded(bot.friendAddedEvent)
 	bot.Client.OnGroupInvited(bot.groupInvitedEvent)
 	bot.Client.OnUserWantJoinGroup(bot.groupJoinReqEvent)
+	go func() {
+		for {
+			time.Sleep(time.Second * 5)
+			bot.dispatchEventMessage(MSG{
+				"time":            time.Now().Unix(),
+				"self_id":         bot.Client.Uin,
+				"post_type":       "meta_event",
+				"meta_event_type": "heartbeat",
+				"status":          nil,
+				"interval":        5000,
+			})
+		}
+	}()
 	return bot
 }
 
