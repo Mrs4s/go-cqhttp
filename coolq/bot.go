@@ -12,7 +12,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/xujiajun/nutsdb"
 	"hash/crc32"
-	"math/rand"
 	"path"
 	"sync"
 	"time"
@@ -108,7 +107,6 @@ func (bot *CQBot) SendGroupMessage(groupId int64, m *message.SendingMessage) int
 	var newElem []message.IMessageElement
 	for _, elem := range m.Elements {
 		if i, ok := elem.(*message.ImageElement); ok {
-			_, _ = bot.Client.UploadGroupImage(int64(rand.Intn(11451419)), i.Data)
 			gm, err := bot.Client.UploadGroupImage(groupId, i.Data)
 			if err != nil {
 				log.Warnf("警告: 群 %v 消息图片上传失败: %v", groupId, err)
