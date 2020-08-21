@@ -314,6 +314,8 @@ func (c *websocketConn) handleRequest(bot *coolq.CQBot, payload []byte) {
 }
 
 func (s *websocketServer) onBotPushEvent(m coolq.MSG) {
+	s.eventConnMutex.Lock()
+	s.eventConnMutex.Unlock()
 	pos := 0
 	for _, conn := range s.eventConn {
 		log.Debugf("向WS客户端 %v 推送Event: %v", conn.RemoteAddr().String(), m.ToJson())

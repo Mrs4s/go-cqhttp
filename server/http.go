@@ -4,6 +4,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/hex"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -157,7 +158,13 @@ func (s *httpServer) Run(addr, authToken string, bot *coolq.CQBot) {
 
 	go func() {
 		log.Infof("CQ HTTP 服务器已启动: %v", addr)
-		log.Fatal(s.engine.Run(addr))
+		err := s.engine.Run(addr)
+		if err != nil {
+			log.Error(err)
+			log.Infof("请检查端口是否被占用.")
+			time.Sleep(time.Second * 5)
+			os.Exit(1)
+		}
 	}()
 }
 
