@@ -157,14 +157,16 @@ func (c *websocketClient) listenApi(conn *websocket.Conn, u bool) {
 		t := strings.ReplaceAll(j.Get("action").Str, "_async", "")
 		log.Debugf("反向WS接收到API调用: %v 参数: %v", t, j.Get("params").Raw)
 		if f, ok := wsApi[t]; ok {
-			ret := f(c.bot, j.Get("params"))
-			if j.Get("echo").Exists() {
-				ret["echo"] = j.Get("echo").Value()
-			}
-			c.pushLock.Lock()
-			log.Debugf("准备发送API %v 处理结果: %v", t, ret.ToJson())
-			_ = conn.WriteJSON(ret)
-			c.pushLock.Unlock()
+			go func() {
+				ret := f(c.bot, j.Get("params"))
+				if j.Get("echo").Exists() {
+					ret["echo"] = j.Get("echo").Value()
+				}
+				c.pushLock.Lock()
+				log.Debugf("准备发送API %v 处理结果: %v", t, ret.ToJson())
+				_ = conn.WriteJSON(ret)
+				c.pushLock.Unlock()
+			}()
 		}
 	}
 	if c.conf.ReverseReconnectInterval != 0 {
@@ -276,13 +278,15 @@ func (s *websocketServer) listenApi(c *websocket.Conn) {
 			t := strings.ReplaceAll(j.Get("action").Str, "_async", "") //TODO: async support
 			log.Debugf("WS接收到API调用: %v 参数: %v", t, j.Get("params").Raw)
 			if f, ok := wsApi[t]; ok {
-				ret := f(s.bot, j.Get("params"))
-				if j.Get("echo").Exists() {
-					ret["echo"] = j.Get("echo").Value()
-				}
-				s.pushLock.Lock()
-				_ = c.WriteJSON(ret)
-				s.pushLock.Unlock()
+				go func() {
+					ret := f(s.bot, j.Get("params"))
+					if j.Get("echo").Exists() {
+						ret["echo"] = j.Get("echo").Value()
+					}
+					s.pushLock.Lock()
+					_ = c.WriteJSON(ret)
+					s.pushLock.Unlock()
+				}()
 			}
 		}
 	}

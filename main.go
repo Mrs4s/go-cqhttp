@@ -200,7 +200,7 @@ func main() {
 	global.Check(cli.ReloadFriendList())
 	log.Infof("共加载 %v 个好友.", len(cli.FriendList))
 	log.Infof("开始加载群列表...")
-	global.Check(cli.ReloadGroupList(conf.AsyncLoad))
+	global.Check(cli.ReloadGroupList())
 	log.Infof("共加载 %v 个群.", len(cli.GroupList))
 	b := coolq.NewQQBot(cli, conf)
 	if conf.PostMessageFormat != "string" && conf.PostMessageFormat != "array" {
