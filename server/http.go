@@ -304,7 +304,7 @@ func (s *httpServer) ProcessGroupRequest(c *gin.Context) {
 		subType = getParam(c, "type")
 	}
 	approve := getParamOrDefault(c, "approve", "true")
-	c.JSON(200, s.bot.CQProcessGroupRequest(flag, subType, approve == "true"))
+	c.JSON(200, s.bot.CQProcessGroupRequest(flag, subType, getParam(c, "reason"), approve == "true"))
 }
 
 func (s *httpServer) SetGroupCard(c *gin.Context) {

@@ -3,7 +3,7 @@ module github.com/Mrs4s/go-cqhttp
 go 1.14
 
 require (
-	github.com/Mrs4s/MiraiGo v0.0.0-20200819185537-8d1e5fb04c17
+	github.com/Mrs4s/MiraiGo v0.0.0-20200821111822-80481f0022d5
 	github.com/gin-gonic/gin v1.6.3
 	github.com/gorilla/websocket v1.4.2
 	github.com/guonaihong/gout v0.1.1
@@ -15,6 +15,5 @@ require (
 	github.com/tidwall/gjson v1.6.0
 	github.com/xujiajun/nutsdb v0.5.0
 	github.com/yinghau76/go-ascii-art v0.0.0-20190517192627-e7f465a30189
-	golang.org/x/net v0.0.0-20200114155413-6afb5195e5aa
 	golang.org/x/sys v0.0.0-20200625212154-ddb9806d33ae // indirect
 )

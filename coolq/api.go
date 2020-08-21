@@ -342,7 +342,7 @@ func (bot *CQBot) CQProcessFriendRequest(flag string, approve bool) MSG {
 }
 
 // https://cqhttp.cc/docs/4.15/#/API?id=set_group_add_request-%E5%A4%84%E7%90%86%E5%8A%A0%E7%BE%A4%E8%AF%B7%E6%B1%82%EF%BC%8F%E9%82%80%E8%AF%B7
-func (bot *CQBot) CQProcessGroupRequest(flag, subType string, approve bool) MSG {
+func (bot *CQBot) CQProcessGroupRequest(flag, subType, reason string, approve bool) MSG {
 	if subType == "add" {
 		req, ok := bot.joinReqCache.Load(flag)
 		if !ok {
@@ -352,7 +352,7 @@ func (bot *CQBot) CQProcessGroupRequest(flag, subType string, approve bool) MSG 
 		if approve {
 			req.(*client.UserJoinGroupRequest).Accept()
 		} else {
-			req.(*client.UserJoinGroupRequest).Reject()
+			req.(*client.UserJoinGroupRequest).Reject(false, reason)
 		}
 		return OK(nil)
 	}
@@ -362,7 +362,7 @@ func (bot *CQBot) CQProcessGroupRequest(flag, subType string, approve bool) MSG 
 		if approve {
 			req.(*client.GroupInvitedRequest).Accept()
 		} else {
-			req.(*client.GroupInvitedRequest).Reject()
+			req.(*client.GroupInvitedRequest).Reject(false, reason)
 		}
 		return OK(nil)
 	}
@@ -485,7 +485,7 @@ func (bot *CQBot) CQHandleQuickOperation(context, operation gjson.Result) MSG {
 				bot.CQProcessFriendRequest(context.Get("flag").Str, operation.Get("approve").Bool())
 			}
 			if reqType == "group" {
-				bot.CQProcessGroupRequest(context.Get("flag").Str, context.Get("sub_type").Str, operation.Get("approve").Bool())
+				bot.CQProcessGroupRequest(context.Get("flag").Str, context.Get("sub_type").Str, context.Get("reason").Str, operation.Get("approve").Bool())
 			}
 		}
 	}

@@ -372,7 +372,7 @@ var wsApi = map[string]func(*coolq.CQBot, gjson.Result) coolq.MSG{
 		if p.Get("approve").Exists() {
 			apr = p.Get("approve").Bool()
 		}
-		return bot.CQProcessGroupRequest(p.Get("flag").Str, subType, apr)
+		return bot.CQProcessGroupRequest(p.Get("flag").Str, subType, p.Get("reason").Str, apr)
 	},
 	"set_group_card": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		return bot.CQSetGroupCard(p.Get("group_id").Int(), p.Get("user_id").Int(), p.Get("card").Str)
