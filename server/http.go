@@ -404,12 +404,12 @@ func getParamWithType(c *gin.Context, k string) (string, gjson.Type) {
 	}
 	if c.Request.Method == "POST" {
 		if h := c.Request.Header.Get("Content-Type"); h != "" {
-			if h == "application/x-www-form-urlencoded" {
+			if strings.Contains(h, "application/x-www-form-urlencoded") {
 				if p, ok := c.GetPostForm(k); ok {
 					return p, gjson.Null
 				}
 			}
-			if h == "application/json" {
+			if strings.Contains(h, "application/json") {
 				if obj, ok := c.Get("json_body"); ok {
 					res := obj.(gjson.Result).Get(k)
 					if res.Exists() {

@@ -137,6 +137,7 @@ func (bot *CQBot) CQSendGroupMessage(groupId int64, i interface{}, autoEscape bo
 		str = s
 	}
 	if str == "" {
+		log.Warnf("群消息发送失败: 信息为空. MSG: %v", i)
 		return Failed(100)
 	}
 	var elem []message.IMessageElement
