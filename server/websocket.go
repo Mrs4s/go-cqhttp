@@ -176,6 +176,7 @@ func (c *websocketClient) onBotPushEvent(m coolq.MSG) {
 		log.Debugf("向WS服务器 %v 推送Event: %v", c.eventConn.RemoteAddr().String(), m.ToJson())
 		c.eventConn.Lock()
 		defer c.eventConn.Unlock()
+		_ = c.eventConn.SetWriteDeadline(time.Now().Add(time.Second * 15))
 		if err := c.eventConn.WriteJSON(m); err != nil {
 			log.Warnf("向WS服务器 %v 推送Event时出现错误: %v", c.eventConn.RemoteAddr().String(), err)
 			_ = c.eventConn.Close()
@@ -191,6 +192,7 @@ func (c *websocketClient) onBotPushEvent(m coolq.MSG) {
 		log.Debugf("向WS服务器 %v 推送Event: %v", c.universalConn.RemoteAddr().String(), m.ToJson())
 		c.universalConn.Lock()
 		defer c.universalConn.Unlock()
+		_ = c.universalConn.SetWriteDeadline(time.Now().Add(time.Second * 15))
 		if err := c.universalConn.WriteJSON(m); err != nil {
 			log.Warnf("向WS服务器 %v 推送Event时出现错误: %v", c.universalConn.RemoteAddr().String(), err)
 			_ = c.universalConn.Close()
