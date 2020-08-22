@@ -172,7 +172,6 @@ func (c *websocketClient) listenApi(conn *websocketConn, u bool) {
 }
 
 func (c *websocketClient) onBotPushEvent(m coolq.MSG) {
-	log.Infof(m.ToJson())
 	payload := gjson.Parse(m.ToJson())
 	filter := global.GetFilter()
 	if filter != nil && (*filter).Eval(payload) == false {
