@@ -324,14 +324,14 @@ func (c *websocketConn) handleRequest(bot *coolq.CQBot, payload []byte) {
 func (s *websocketServer) onBotPushEvent(m coolq.MSG) {
 	s.eventConnMutex.Lock()
 	defer s.eventConnMutex.Unlock()
-	for i, l := 0, len(s.eventConn); i<l; i++ {
+	for i, l := 0, len(s.eventConn); i < l; i++ {
 		conn := s.eventConn[i]
 		log.Debugf("向WS客户端 %v 推送Event: %v", conn.RemoteAddr().String(), m.ToJson())
 		if err := conn.WriteMessage(websocket.TextMessage, []byte(m.ToJson())); err != nil {
 			_ = conn.Close()
-			next := i +1
+			next := i + 1
 			if next >= l {
-				next = l -1
+				next = l - 1
 			}
 			s.eventConn[i], s.eventConn[next] = s.eventConn[next], s.eventConn[i]
 			s.eventConn = append(s.eventConn[:next], s.eventConn[next+1:]...)
