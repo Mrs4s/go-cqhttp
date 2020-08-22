@@ -4,6 +4,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/hex"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -157,7 +158,13 @@ func (s *httpServer) Run(addr, authToken string, bot *coolq.CQBot) {
 
 	go func() {
 		log.Infof("CQ HTTP 服务器已启动: %v", addr)
-		log.Fatal(s.engine.Run(addr))
+		err := s.engine.Run(addr)
+		if err != nil {
+			log.Error(err)
+			log.Infof("请检查端口是否被占用.")
+			time.Sleep(time.Second * 5)
+			os.Exit(1)
+		}
 	}()
 }
 
@@ -304,7 +311,7 @@ func (s *httpServer) ProcessGroupRequest(c *gin.Context) {
 		subType = getParam(c, "type")
 	}
 	approve := getParamOrDefault(c, "approve", "true")
-	c.JSON(200, s.bot.CQProcessGroupRequest(flag, subType, approve == "true"))
+	c.JSON(200, s.bot.CQProcessGroupRequest(flag, subType, getParam(c, "reason"), approve == "true"))
 }
 
 func (s *httpServer) SetGroupCard(c *gin.Context) {
@@ -404,12 +411,12 @@ func getParamWithType(c *gin.Context, k string) (string, gjson.Type) {
 	}
 	if c.Request.Method == "POST" {
 		if h := c.Request.Header.Get("Content-Type"); h != "" {
-			if h == "application/x-www-form-urlencoded" {
+			if strings.Contains(h, "application/x-www-form-urlencoded") {
 				if p, ok := c.GetPostForm(k); ok {
 					return p, gjson.Null
 				}
 			}
-			if h == "application/json" {
+			if strings.Contains(h, "application/json") {
 				if obj, ok := c.Get("json_body"); ok {
 					res := obj.(gjson.Result).Get(k)
 					if res.Exists() {

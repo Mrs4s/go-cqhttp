@@ -1,19 +1,22 @@
 package coolq
 
 import (
-	"github.com/Mrs4s/MiraiGo/binary"
-	"github.com/Mrs4s/MiraiGo/client"
-	"github.com/Mrs4s/MiraiGo/message"
-	"github.com/Mrs4s/go-cqhttp/global"
-	log "github.com/sirupsen/logrus"
-	"github.com/tidwall/gjson"
 	"io/ioutil"
 	"os"
 	"path"
 	"runtime"
 	"strconv"
 	"time"
+
+	"github.com/Mrs4s/MiraiGo/binary"
+	"github.com/Mrs4s/MiraiGo/client"
+	"github.com/Mrs4s/MiraiGo/message"
+	"github.com/Mrs4s/go-cqhttp/global"
+	log "github.com/sirupsen/logrus"
+	"github.com/tidwall/gjson"
 )
+
+var version = "unknown"
 
 // https://cqhttp.cc/docs/4.15/#/API?id=get_login_info-%E8%8E%B7%E5%8F%96%E7%99%BB%E5%BD%95%E5%8F%B7%E4%BF%A1%E6%81%AF
 func (bot *CQBot) CQGetLoginInfo() MSG {
@@ -134,6 +137,7 @@ func (bot *CQBot) CQSendGroupMessage(groupId int64, i interface{}, autoEscape bo
 		str = s
 	}
 	if str == "" {
+		log.Warnf("群消息发送失败: 信息为空. MSG: %v", i)
 		return Failed(100)
 	}
 	var elem []message.IMessageElement
@@ -342,7 +346,7 @@ func (bot *CQBot) CQProcessFriendRequest(flag string, approve bool) MSG {
 }
 
 // https://cqhttp.cc/docs/4.15/#/API?id=set_group_add_request-%E5%A4%84%E7%90%86%E5%8A%A0%E7%BE%A4%E8%AF%B7%E6%B1%82%EF%BC%8F%E9%82%80%E8%AF%B7
-func (bot *CQBot) CQProcessGroupRequest(flag, subType string, approve bool) MSG {
+func (bot *CQBot) CQProcessGroupRequest(flag, subType, reason string, approve bool) MSG {
 	if subType == "add" {
 		req, ok := bot.joinReqCache.Load(flag)
 		if !ok {
@@ -352,7 +356,7 @@ func (bot *CQBot) CQProcessGroupRequest(flag, subType string, approve bool) MSG 
 		if approve {
 			req.(*client.UserJoinGroupRequest).Accept()
 		} else {
-			req.(*client.UserJoinGroupRequest).Reject()
+			req.(*client.UserJoinGroupRequest).Reject(false, reason)
 		}
 		return OK(nil)
 	}
@@ -362,7 +366,7 @@ func (bot *CQBot) CQProcessGroupRequest(flag, subType string, approve bool) MSG 
 		if approve {
 			req.(*client.GroupInvitedRequest).Accept()
 		} else {
-			req.(*client.GroupInvitedRequest).Reject()
+			req.(*client.GroupInvitedRequest).Reject(false, reason)
 		}
 		return OK(nil)
 	}
@@ -485,7 +489,7 @@ func (bot *CQBot) CQHandleQuickOperation(context, operation gjson.Result) MSG {
 				bot.CQProcessFriendRequest(context.Get("flag").Str, operation.Get("approve").Bool())
 			}
 			if reqType == "group" {
-				bot.CQProcessGroupRequest(context.Get("flag").Str, context.Get("sub_type").Str, operation.Get("approve").Bool())
+				bot.CQProcessGroupRequest(context.Get("flag").Str, context.Get("sub_type").Str, context.Get("reason").Str, operation.Get("approve").Bool())
 			}
 		}
 	}
@@ -578,6 +582,7 @@ func (bot *CQBot) CQGetVersionInfo() MSG {
 		"plugin_build_configuration": "release",
 		"runtime_version":            runtime.Version(),
 		"runtime_os":                 runtime.GOOS,
+		"version":                    version,
 	})
 }
 
