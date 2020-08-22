@@ -180,33 +180,31 @@ func (c *websocketClient) onBotPushEvent(m coolq.MSG) {
 	}
 	if c.eventConn != nil {
 		log.Debugf("向WS服务器 %v 推送Event: %v", c.eventConn.RemoteAddr().String(), m.ToJson())
-		c.eventConn.Lock()
-		defer c.eventConn.Unlock()
+		conn := c.eventConn
+		conn.Lock()
+		defer conn.Unlock()
 		_ = c.eventConn.SetWriteDeadline(time.Now().Add(time.Second * 15))
 		if err := c.eventConn.WriteJSON(m); err != nil {
 			log.Warnf("向WS服务器 %v 推送Event时出现错误: %v", c.eventConn.RemoteAddr().String(), err)
 			_ = c.eventConn.Close()
 			if c.conf.ReverseReconnectInterval != 0 {
-				go func() {
-					time.Sleep(time.Millisecond * time.Duration(c.conf.ReverseReconnectInterval))
-					c.connectEvent()
-				}()
+				time.Sleep(time.Millisecond * time.Duration(c.conf.ReverseReconnectInterval))
+				c.connectEvent()
 			}
 		}
 	}
 	if c.universalConn != nil {
 		log.Debugf("向WS服务器 %v 推送Event: %v", c.universalConn.RemoteAddr().String(), m.ToJson())
-		c.universalConn.Lock()
-		defer c.universalConn.Unlock()
+		conn := c.universalConn
+		conn.Lock()
+		defer conn.Unlock()
 		_ = c.universalConn.SetWriteDeadline(time.Now().Add(time.Second * 15))
 		if err := c.universalConn.WriteJSON(m); err != nil {
 			log.Warnf("向WS服务器 %v 推送Event时出现错误: %v", c.universalConn.RemoteAddr().String(), err)
 			_ = c.universalConn.Close()
 			if c.conf.ReverseReconnectInterval != 0 {
-				go func() {
-					time.Sleep(time.Millisecond * time.Duration(c.conf.ReverseReconnectInterval))
-					c.connectUniversal()
-				}()
+				time.Sleep(time.Millisecond * time.Duration(c.conf.ReverseReconnectInterval))
+				c.connectUniversal()
 			}
 		}
 	}
@@ -324,18 +322,21 @@ func (c *websocketConn) handleRequest(bot *coolq.CQBot, payload []byte) {
 func (s *websocketServer) onBotPushEvent(m coolq.MSG) {
 	s.eventConnMutex.Lock()
 	defer s.eventConnMutex.Unlock()
-	pos := 0
-	for _, conn := range s.eventConn {
+	for i, l := 0, len(s.eventConn); i < l; i++ {
+		conn := s.eventConn[i]
 		log.Debugf("向WS客户端 %v 推送Event: %v", conn.RemoteAddr().String(), m.ToJson())
-		err := conn.WriteMessage(websocket.TextMessage, []byte(m.ToJson()))
-		if err != nil {
+		if err := conn.WriteMessage(websocket.TextMessage, []byte(m.ToJson())); err != nil {
 			_ = conn.Close()
-			s.eventConn = append(s.eventConn[:pos], s.eventConn[pos+1:]...)
-			if pos > 0 {
-				pos++
+			next := i + 1
+			if next >= l {
+				next = l - 1
 			}
+			s.eventConn[i], s.eventConn[next] = s.eventConn[next], s.eventConn[i]
+			s.eventConn = append(s.eventConn[:next], s.eventConn[next+1:]...)
+			i--
+			l--
+			conn = nil
 		}
-		pos++
 	}
 }
 
