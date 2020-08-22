@@ -111,6 +111,15 @@ func ToStringMessage(e []message.IMessageElement, code int64, raw ...bool) (r st
 	if len(raw) != 0 {
 		ur = raw[0]
 	}
+	// 方便
+	m := &message.SendingMessage{Elements: e}
+	reply := m.FirstOrNil(func(e message.IMessageElement) bool {
+		_, ok := e.(*message.ReplyElement)
+		return ok
+	})
+	if reply != nil {
+		r += fmt.Sprintf("[CQ:reply,id=%d]", ToGlobalId(code, reply.(*message.ReplyElement).ReplySeq))
+	}
 	for _, elem := range e {
 		switch o := elem.(type) {
 		case *message.TextElement:
@@ -121,8 +130,6 @@ func ToStringMessage(e []message.IMessageElement, code int64, raw ...bool) (r st
 				continue
 			}
 			r += fmt.Sprintf("[CQ:at,qq=%d]", o.Target)
-		case *message.ReplyElement:
-			r += fmt.Sprintf("[CQ:reply,id=%d]", ToGlobalId(code, o.ReplySeq))
 		case *message.ForwardElement:
 			r += fmt.Sprintf("[CQ:forward,id=%s]", o.ResId)
 		case *message.FaceElement:
