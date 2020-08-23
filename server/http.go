@@ -155,6 +155,10 @@ func (s *httpServer) Run(addr, authToken string, bot *coolq.CQBot) {
 	s.engine.Any("/get_version_info_async", s.GetVersionInfo)
 
 	s.engine.Any("/.handle_quick_operation", s.HandleQuickOperation)
+	s.engine.Any("/send_private_msg_xml", s.Send_private_msg_xml)
+	s.engine.Any("/send_private_msg_xml_async", s.Send_private_msg_xml)
+	s.engine.Any("/send_group_msg_xml", s.SendGroupMessage_xml)
+	s.engine.Any("/send_group_msg_xml_async", s.SendGroupMessage_xml)
 
 	go func() {
 		log.Infof("CQ HTTP 服务器已启动: %v", addr)
@@ -400,6 +404,7 @@ func getParamOrDefault(c *gin.Context, k, def string) string {
 	return def
 }
 
+
 func getParam(c *gin.Context, k string) string {
 	p, _ := getParamWithType(c, k)
 	return p
@@ -438,4 +443,24 @@ func getParamWithType(c *gin.Context, k string) (string, gjson.Type) {
 		}
 	}
 	return "", gjson.Null
+}
+func (s *httpServer) Send_private_msg_xml(c *gin.Context) {
+	uid, _ := strconv.ParseInt(getParam(c, "user_id"), 10, 64)
+	msg, t := getParamWithType(c, "message")
+	resId, _ := strconv.ParseInt(getParam(c, "serviceid"), 10, 64)
+	if t == gjson.JSON {
+		c.JSON(200, s.bot.Send_private_msg_xml(uid, gjson.Parse(msg), resId))
+		return
+	}
+	c.JSON(200, s.bot.Send_private_msg_xml(uid, msg, resId))
+}
+func (s *httpServer) SendGroupMessage_xml(c *gin.Context) {
+	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
+	msg, t := getParamWithType(c, "message")
+	resId, _ := strconv.ParseInt(getParam(c, "serviceid"), 10, 64)
+	if t == gjson.JSON {
+		c.JSON(200, s.bot.CQSendGroupMessage_XML(gid, gjson.Parse(msg), resId))
+		return
+	}
+	c.JSON(200, s.bot.CQSendGroupMessage_XML(gid, msg, resId))
 }
