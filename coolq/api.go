@@ -503,11 +503,19 @@ func (bot *CQBot) CQGetImage(file string) MSG {
 	if b, err := ioutil.ReadFile(path.Join(global.IMAGE_PATH, file)); err == nil {
 		r := binary.NewReader(b)
 		r.ReadBytes(16)
-		return OK(MSG{
+		msg := MSG{
 			"size":     r.ReadInt32(),
 			"filename": r.ReadString(),
 			"url":      r.ReadString(),
-		})
+		}
+		local := path.Join(global.CACHE_PATH, file+"."+path.Ext(msg["filename"].(string)))
+		if !global.PathExists(local) {
+			if data, err := global.GetBytes(msg["url"].(string)); err == nil {
+				_ = ioutil.WriteFile(local, data, 0644)
+			}
+		}
+		msg["file"] = local
+		return OK(msg)
 	}
 	return Failed(100)
 }
