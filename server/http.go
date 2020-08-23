@@ -41,7 +41,7 @@ func (s *httpServer) Run(addr, authToken string, bot *coolq.CQBot) {
 			c.Status(404)
 			return
 		}
-		if c.Request.Method == "POST" && c.Request.Header.Get("Content-Type") == "application/json" {
+		if c.Request.Method == "POST" && strings.Contains(c.Request.Header.Get("Content-Type"), "application/json") {
 			d, err := c.GetRawData()
 			if err != nil {
 				log.Warnf("获取请求 %v 的Body时出现错误: %v", c.Request.RequestURI, err)
