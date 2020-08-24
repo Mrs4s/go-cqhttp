@@ -329,6 +329,7 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 			}
 			var size int32
 			var hash []byte
+			var url string
 			if path.Ext(rawPath) == ".cqimg" {
 				for _, line := range strings.Split(global.ReadAllText(rawPath), "\n") {
 					kv := strings.SplitN(line, "=", 2)
@@ -344,8 +345,13 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 				r := binary.NewReader(b)
 				hash = r.ReadBytes(16)
 				size = r.ReadInt32()
+				r.ReadString()
+				url = r.ReadString()
 			}
 			if size == 0 {
+				if url != "" {
+					return bot.ToElement(t, map[string]string{"file": url}, group)
+				}
 				return nil, errors.New("img size is 0")
 			}
 			if len(hash) != 16 {
