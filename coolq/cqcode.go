@@ -468,8 +468,8 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 		template := CQCodeEscapeValue(d["data"])
 		//println(template)
 		i, _ := strconv.ParseInt(resId, 10, 64)
-		msg :=global.NewXmlMsg(template,i)
-		return msg,nil
+		msg := global.NewXmlMsg(template, i)
+		return msg, nil
 	default:
 		return nil, errors.New("unsupported cq code: " + t)
 	}

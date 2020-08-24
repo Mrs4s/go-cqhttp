@@ -171,6 +171,16 @@ func main() {
 	time.Sleep(time.Second * 5)
 	log.Info("开始尝试登录并同步消息...")
 	cli := client.NewClient(conf.Uin, conf.Password)
+	cli.OnLog(func(c *client.QQClient, e *client.LogEvent) {
+		switch e.Type {
+		case "INFO":
+			log.Info("Protocol -> " + e.Message)
+		case "ERROR":
+			log.Error("Protocol -> " + e.Message)
+		case "DEBUG":
+			log.Debug("Protocol -> " + e.Message)
+		}
+	})
 	rsp, err := cli.Login()
 	for {
 		global.Check(err)
