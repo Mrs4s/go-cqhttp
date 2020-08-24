@@ -119,6 +119,51 @@ Type: `node`
 ]
 ````
 
+### xml支持
+
+Type: `xml`
+
+范围: **发送**
+
+参数:
+
+| 参数名 | 类型   | 说明                                                         |
+| ------ | ------ | ------------------------------------------------------------ |
+| data     | string | xml内容，xml中的value部分，记得实体化处理|
+| resid     | int32 | 可以不填|
+
+示例: `[CQ:xml,data=xxxx]`
+
+####一些xml样例
+####ps:重要：xml中的value部分，记得html实体化处理后，再打加入到cq码中
+#### qq音乐
+```xml
+<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="2" templateID="1" action="web" brief="&#91;分享&#93; 十年" sourceMsgId="0" url="https://i.y.qq.com/v8/playsong.html?_wv=1&amp;songid=4830342&amp;souce=qqshare&amp;source=qqshare&amp;ADTAG=qqshare" flag="0" adverSign="0" multiMsgFlag="0" ><item layout="2"><audio cover="http://imgcache.qq.com/music/photo/album_500/26/500_albumpic_89526_0.jpg" src="http://ws.stream.qqmusic.qq.com/C400003mAan70zUy5O.m4a?guid=1535153710&amp;vkey=D5315B8C0603653592AD4879A8A3742177F59D582A7A86546E24DD7F282C3ACF81526C76E293E57EA1E42CF19881C561275D919233333ADE&amp;uin=&amp;fromtag=3" /><title>十年</title><summary>陈奕迅</summary></item><source name="QQ音乐" icon="https://i.gtimg.cn/open/app_icon/01/07/98/56/1101079856_100_m.png" url="http://web.p.qq.com/qqmpmobile/aio/app.html?id=1101079856" action="app"  a_actionData="com.tencent.qqmusic" i_actionData="tencent1101079856://" appid="1101079856" /></msg>
+```
+#### 网易音乐
+```xml
+<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="2" templateID="1" action="web" brief="&#91;分享&#93; 十年" sourceMsgId="0" url="http://music.163.com/m/song/409650368" flag="0" adverSign="0" multiMsgFlag="0" ><item layout="2"><audio cover="http://p2.music.126.net/g-Qgb9ibk9Wp_0HWra0xQQ==/16636710440565853.jpg?param=90y90" src="https://music.163.com/song/media/outer/url?id=409650368.mp3" /><title>十年</title><summary>黄梦之</summary></item><source name="网易云音乐" icon="https://pic.rmb.bdstatic.com/911423bee2bef937975b29b265d737b3.png" url="http://web.p.qq.com/qqmpmobile/aio/app.html?id=1101079856" action="app" a_actionData="com.netease.cloudmusic" i_actionData="tencent100495085://" appid="100495085" /></msg>
+```
+
+#### 卡片消息1
+```xml
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<msg serviceID="1">
+<item><title>生死8秒！女司机高速急刹，他一个操作救下一车性命</title></item>
+<source name="官方认证消息" icon="https://qzs.qq.com/ac/qzone_v5/client/auth_icon.png" action="" appid="-1" />
+</msg>
+```
+
+#### 卡片消息2
+```xml
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<msg serviceID="1">
+<item layout="4">
+<title>test title</title>
+<picture cover="http://url.cn/5CEwIUy"/>
+</item>
+</msg>
+```
 
 
 ## API
