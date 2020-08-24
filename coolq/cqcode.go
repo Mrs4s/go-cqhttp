@@ -196,22 +196,6 @@ func (bot *CQBot) ConvertStringMessage(m string, group bool) (r []message.IMessa
 				}
 			}
 		}
-		if(t == "xml"){
-			//xml需要实体化，发送的时候不能转回去
-			x := make(map[string]string)
-			//循环遍历Map
-			for _, p := range ps {
-				x[p[1]] = p[2]
-			}
-			resId := x["resid"]
-			template := x["data"]
-			println(template)
-			i, _ := strconv.ParseInt(resId, 10, 64)
-			msg :=global.NewXmlMsg(template,i)
-			r=append(r,msg)
-			continue
-		}
-
 		elem, err := bot.ToElement(t, d, group)
 		if err != nil {
 			log.Warnf("转换CQ码到MiraiGo Element时出现错误: %v 将原样发送.", err)
@@ -251,16 +235,6 @@ func (bot *CQBot) ConvertObjectMessage(m gjson.Result, group bool) (r []message.
 					return
 				}
 			}
-		}
-		if t =="xml"{
-			//xml需要实体化，发送的时候不能转回去
-			resId := e.Get("data").Get("resid").Str
-			template := e.Get("data").Get("data").Str
-			println(template)
-			i, _ := strconv.ParseInt(resId, 10, 64)
-			msg :=global.NewXmlMsg(template,i)
-			r=append(r,msg)
-			return
 		}
 		d := make(map[string]string)
 		e.Get("data").ForEach(func(key, value gjson.Result) bool {
@@ -483,6 +457,13 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 			}, nil
 		}
 		return nil, errors.New("unsupported music type: " + d["type"])
+	case "xml":
+		resId := d["resid"]
+		template := CQCodeEscapeValue(d["data"])
+		println(template)
+		i, _ := strconv.ParseInt(resId, 10, 64)
+		msg :=global.NewXmlMsg(template,i)
+		return msg,nil
 	default:
 		return nil, errors.New("unsupported cq code: " + t)
 	}
