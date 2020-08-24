@@ -460,7 +460,7 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 	case "xml":
 		resId := d["resid"]
 		template := CQCodeEscapeValue(d["data"])
-		println(template)
+		//println(template)
 		i, _ := strconv.ParseInt(resId, 10, 64)
 		msg :=global.NewXmlMsg(template,i)
 		return msg,nil
