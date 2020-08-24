@@ -10,6 +10,7 @@ import (
 	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/Mrs4s/go-cqhttp/global"
 	log "github.com/sirupsen/logrus"
+	"github.com/tidwall/gjson"
 	"github.com/xujiajun/nutsdb"
 	"hash/crc32"
 	"path"
@@ -208,6 +209,12 @@ func (bot *CQBot) Release() {
 }
 
 func (bot *CQBot) dispatchEventMessage(m MSG) {
+	payload := gjson.Parse(m.ToJson())
+	filter := global.GetFilter()
+	if filter != nil && (*filter).Eval(payload) == false {
+		log.Debug("Event filtered!")
+		return
+	}
 	for _, f := range bot.events {
 		fn := f
 		go func() {
