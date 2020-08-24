@@ -172,12 +172,6 @@ func (c *websocketClient) listenApi(conn *websocketConn, u bool) {
 }
 
 func (c *websocketClient) onBotPushEvent(m coolq.MSG) {
-	payload := gjson.Parse(m.ToJson())
-	filter := global.GetFilter()
-	if filter != nil && (*filter).Eval(payload) == false {
-		log.Debug("Event filtered!")
-		return
-	}
 	if c.eventConn != nil {
 		log.Debugf("向WS服务器 %v 推送Event: %v", c.eventConn.RemoteAddr().String(), m.ToJson())
 		conn := c.eventConn
