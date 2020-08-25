@@ -31,6 +31,8 @@ type CQBot struct {
 
 type MSG map[string]interface{}
 
+var ForceFragmented = false
+
 func NewQQBot(cli *client.QQClient, conf *global.JsonConfig) *CQBot {
 	bot := &CQBot{
 		Client: cli,
@@ -128,7 +130,7 @@ func (bot *CQBot) SendGroupMessage(groupId int64, m *message.SendingMessage) int
 		newElem = append(newElem, elem)
 	}
 	m.Elements = newElem
-	ret := bot.Client.SendGroupMessage(groupId, m)
+	ret := bot.Client.SendGroupMessage(groupId, m, ForceFragmented)
 	if ret == nil || ret.Id == -1 {
 		log.Warnf("群消息发送失败: 账号可能被风控.")
 		return -1

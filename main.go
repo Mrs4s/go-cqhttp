@@ -220,6 +220,8 @@ func main() {
 	} else {
 		coolq.SetMessageFormat(conf.PostMessageFormat)
 	}
+	coolq.IgnoreInvalidCQCode = conf.IgnoreInvalidCQCode
+	coolq.ForceFragmented = conf.ForceFragmented
 	if conf.HttpConfig != nil && conf.HttpConfig.Enabled {
 		server.HttpServer.Run(fmt.Sprintf("%s:%d", conf.HttpConfig.Host, conf.HttpConfig.Port), conf.AccessToken, b)
 		for k, v := range conf.HttpConfig.PostUrls {
