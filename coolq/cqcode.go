@@ -6,11 +6,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/Mrs4s/MiraiGo/binary"
-	"github.com/Mrs4s/MiraiGo/message"
-	"github.com/Mrs4s/go-cqhttp/global"
-	log "github.com/sirupsen/logrus"
-	"github.com/tidwall/gjson"
 	"io/ioutil"
 	"net/url"
 	"path"
@@ -18,6 +13,12 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+
+	"github.com/Mrs4s/MiraiGo/binary"
+	"github.com/Mrs4s/MiraiGo/message"
+	"github.com/Mrs4s/go-cqhttp/global"
+	log "github.com/sirupsen/logrus"
+	"github.com/tidwall/gjson"
 )
 
 var matchReg = regexp.MustCompile(`\[CQ:\w+?.*?]`)
@@ -447,6 +448,27 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 			}
 			xml := fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="2" templateID="1" action="web" brief="[分享] %s" sourceMsgId="0" url="https://i.y.qq.com/v8/playsong.html?_wv=1&songid=%s&souce=qqshare&source=qqshare&ADTAG=qqshare" flag="0" adverSign="0" multiMsgFlag="0"><item layout="2"><audio cover="http://imgcache.qq.com/music/photo/album_500/%s/500_albumpic_%s_0.jpg" src="%s" /><title>%s</title><summary>%s</summary></item><source name="QQ音乐" icon="https://i.gtimg.cn/open/app_icon/01/07/98/56/1101079856_100_m.png" url="http://web.p.qq.com/qqmpmobile/aio/app.html?id=1101079856" action="app" a_actionData="com.tencent.qqmusic" i_actionData="tencent1101079856://" appid="1101079856" /></msg>`,
 				name, d["id"], aid[:len(aid)-2], aid, name, "", info.Get("track_info.singer.name").Str)
+			return &message.ServiceElement{
+				Id:      60,
+				Content: xml,
+				SubType: "music",
+			}, nil
+		}
+		if d["type"] == "163" {
+			info, err := global.NeteaseMusicSongInfo(d["id"])
+			if err != nil {
+				return nil, err
+			}
+			if !info.Exists() {
+				return nil, errors.New("song not found")
+			}
+			name := info.Get("name").Str
+			artistName := ""
+			if info.Get("artists.0").Exists() {
+				artistName = info.Get("artists.0.name").Str
+			}
+			xml := fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="2" templateID="1" action="web" brief="[分享] %s" sourceMsgId="0" url="http://music.163.com/m/song/%s" flag="0" adverSign="0" multiMsgFlag="0"><item layout="2"><audio cover="%s?param=90y90" src="https://music.163.com/song/media/outer/url?id=%s.mp3" /><title>%s</title><summary>%s</summary></item><source name="网易云音乐" icon="https://pic.rmb.bdstatic.com/911423bee2bef937975b29b265d737b3.png" url="http://web.p.qq.com/qqmpmobile/aio/app.html?id=1101079856" action="app" a_actionData="com.netease.cloudmusic" i_actionData="tencent100495085://" appid="100495085" /></msg>`,
+				name, d["id"], info.Get("album.picUrl").Str, d["id"], name, artistName)
 			return &message.ServiceElement{
 				Id:      60,
 				Content: xml,
