@@ -67,6 +67,7 @@ go-cqhttp 支持导入CQHTTP的配置文件, 具体步骤为:
 | http_config          | object   | HTTP API配置                                                        |
 | ws_config            | object   | Websocket API 配置                                                  |
 | ws_reverse_servers   | object[] | 反向 Websocket API 配置                                             |
+| log_level            | string   | 指定日志收集级别，将收集的日志单独存放到固定文件中，便于查看日志线索 当前支持 warn,error|
 
 > 注: 开启密码加密后程序将在每次启动时要求输入解密密钥, 密钥错误会导致登录时提示密码错误.
 > 解密后密码将储存在内存中，用于自动重连等功能. 所以此加密并不能防止内存读取.

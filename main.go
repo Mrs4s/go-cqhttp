@@ -13,6 +13,7 @@ import (
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/server"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
+	"github.com/rifflock/lfshook"
 	log "github.com/sirupsen/logrus"
 	easy "github.com/t-tomalak/logrus-easy-formatter"
 	asciiart "github.com/yinghau76/go-ascii-art"
@@ -133,6 +134,46 @@ func main() {
 		time.Sleep(time.Second * 5)
 		return
 	}
+
+	// log classified by level
+	// Collect all records up to the specified level (default level: warn)
+	logLevel := conf.LogLevel
+	if logLevel != "" {
+		date := time.Now().Format("2006-01-02")
+		var logPathMap lfshook.PathMap
+		switch conf.LogLevel {
+		case "warn":
+			logPathMap = lfshook.PathMap{
+				log.WarnLevel: path.Join("logs", date+"-warn.log"),
+				log.ErrorLevel: path.Join("logs", date+"-warn.log"),
+				log.FatalLevel: path.Join("logs", date+"-warn.log"),
+				log.PanicLevel: path.Join("logs", date+"-warn.log"),
+			}
+		case "error":
+			logPathMap = lfshook.PathMap{
+				log.ErrorLevel: path.Join("logs", date+"-error.log"),
+				log.FatalLevel: path.Join("logs", date+"-error.log"),
+				log.PanicLevel: path.Join("logs", date+"-error.log"),
+			}
+		default:
+			logPathMap = lfshook.PathMap{
+				log.WarnLevel: path.Join("logs", date+"-warn.log"),
+				log.ErrorLevel: path.Join("logs", date+"-warn.log"),
+				log.FatalLevel: path.Join("logs", date+"-warn.log"),
+				log.PanicLevel: path.Join("logs", date+"-warn.log"),
+			}
+		}
+
+		log.AddHook(lfshook.NewHook(
+			logPathMap,
+			&easy.Formatter{
+				TimestampFormat: "2006-01-02 15:04:05",
+				LogFormat:       "[%time%] [%lvl%]: %msg% \n",
+			},
+		))
+	}
+
+	log.Info("当前版本:", coolq.Version)
 	if conf.Debug {
 		log.SetLevel(log.DebugLevel)
 		log.Warnf("已开启Debug模式.")
