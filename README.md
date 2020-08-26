@@ -28,6 +28,7 @@
 
 - [CQ:image]
 - [CQ:record]
+- [CQ:video]
 - [CQ:face]
 - [CQ:at]
 - [CQ:share]
@@ -90,6 +91,16 @@
 | [加群请求/邀请](https://cqhttp.cc/docs/4.15/#/Post?id=加群请求／邀请) |
 
 </details>
+
+# 关于ISSUE
+
+以下ISSUE会被直接关闭
+- 提交BUG不使用Template
+- 询问已知问题
+- 提问找不到重点
+- 重复提问
+
+> 请注意, 开发者并没有义务回复您的问题. 您应该具备基本的提问技巧。
 
 # 性能
 

@@ -17,6 +17,8 @@ jobs:
             
     steps:
       - uses: actions/checkout@v2
+      - name: Set RELEASE_VERSION env
+        run: echo ::set-env name=RELEASE_VERSION::${GITHUB_REF:10}
       - uses: wangyoucao577/go-release-action@master
         env:
           CGO_ENABLED: 0
@@ -24,4 +26,5 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           goos: ${{ matrix.goos }}
           goarch: ${{ matrix.goarch }}
-          ldflags: "-w -s" 
+          ldflags: -w -s -X "github.com/Mrs4s/go-cqhttp/coolq.version=${{ env.RELEASE_VERSION }}"
+          

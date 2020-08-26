@@ -4,11 +4,13 @@ import (
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/hex"
+	"os"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
+	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/gin-gonic/gin"
 	"github.com/guonaihong/gout"
 	log "github.com/sirupsen/logrus"
@@ -21,9 +23,10 @@ type httpServer struct {
 }
 
 type httpClient struct {
-	bot    *coolq.CQBot
-	secret string
-	addr   string
+	bot     *coolq.CQBot
+	secret  string
+	addr    string
+	timeout int32
 }
 
 var HttpServer = &httpServer{}
@@ -38,7 +41,7 @@ func (s *httpServer) Run(addr, authToken string, bot *coolq.CQBot) {
 			c.Status(404)
 			return
 		}
-		if c.Request.Method == "POST" && c.Request.Header.Get("Content-Type") == "application/json" {
+		if c.Request.Method == "POST" && strings.Contains(c.Request.Header.Get("Content-Type"), "application/json") {
 			d, err := c.GetRawData()
 			if err != nil {
 				log.Warnf("获取请求 %v 的Body时出现错误: %v", c.Request.RequestURI, err)
@@ -132,12 +135,12 @@ func (s *httpServer) Run(addr, authToken string, bot *coolq.CQBot) {
 	s.engine.Any("/set_group_leave_async", s.SetGroupLeave)
 
 	s.engine.Any("/get_image", s.GetImage)
-	s.engine.Any("/get_image_async", s.GetImage)
 
 	s.engine.Any("/get_forward_msg", s.GetForwardMessage)
 
 	s.engine.Any("/get_group_msg", s.GetGroupMessage)
-	s.engine.Any("/get_group_msg_async", s.GetGroupMessage)
+
+	s.engine.Any("/get_group_honor_info", s.GetGroupHonorInfo)
 
 	s.engine.Any("/can_send_image", s.CanSendImage)
 	s.engine.Any("/can_send_image_async", s.CanSendImage)
@@ -155,7 +158,13 @@ func (s *httpServer) Run(addr, authToken string, bot *coolq.CQBot) {
 
 	go func() {
 		log.Infof("CQ HTTP 服务器已启动: %v", addr)
-		log.Fatal(s.engine.Run(addr))
+		err := s.engine.Run(addr)
+		if err != nil {
+			log.Error(err)
+			log.Infof("请检查端口是否被占用.")
+			time.Sleep(time.Second * 5)
+			os.Exit(1)
+		}
 	}()
 }
 
@@ -163,10 +172,14 @@ func NewHttpClient() *httpClient {
 	return &httpClient{}
 }
 
-func (c *httpClient) Run(addr, secret string, bot *coolq.CQBot) {
+func (c *httpClient) Run(addr, secret string, timeout int32, bot *coolq.CQBot) {
 	c.bot = bot
 	c.secret = secret
 	c.addr = addr
+	c.timeout = timeout
+	if c.timeout < 5 {
+		c.timeout = 5
+	}
 	bot.OnEventPush(c.onBotPushEvent)
 	log.Infof("HTTP POST上报器已启动: %v", addr)
 }
@@ -184,7 +197,7 @@ func (c *httpClient) onBotPushEvent(m coolq.MSG) {
 			h["X-Signature"] = "sha1=" + hex.EncodeToString(mac.Sum(nil))
 		}
 		return h
-	}()).SetTimeout(time.Second * 5).Do()
+	}()).SetTimeout(time.Second * time.Duration(c.timeout)).Do()
 	if err != nil {
 		log.Warnf("上报Event数据到 %v 失败: %v", c.addr, err)
 		return
@@ -203,7 +216,8 @@ func (s *httpServer) GetFriendList(c *gin.Context) {
 }
 
 func (s *httpServer) GetGroupList(c *gin.Context) {
-	c.JSON(200, s.bot.CQGetGroupList())
+	nc := getParamOrDefault(c, "no_cache", "false")
+	c.JSON(200, s.bot.CQGetGroupList(nc == "true"))
 }
 
 func (s *httpServer) GetGroupInfo(c *gin.Context) {
@@ -224,6 +238,14 @@ func (s *httpServer) GetGroupMemberInfo(c *gin.Context) {
 }
 
 func (s *httpServer) SendMessage(c *gin.Context) {
+	if getParam(c, "message_type") == "private" {
+		s.SendPrivateMessage(c)
+		return
+	}
+	if getParam(c, "message_type") == "group" {
+		s.SendGroupMessage(c)
+		return
+	}
 	if getParam(c, "group_id") != "" {
 		s.SendGroupMessage(c)
 		return
@@ -235,22 +257,24 @@ func (s *httpServer) SendMessage(c *gin.Context) {
 
 func (s *httpServer) SendPrivateMessage(c *gin.Context) {
 	uid, _ := strconv.ParseInt(getParam(c, "user_id"), 10, 64)
-	msg := getParam(c, "message")
-	if gjson.Valid(msg) {
-		c.JSON(200, s.bot.CQSendPrivateMessage(uid, gjson.Parse(msg)))
+	msg, t := getParamWithType(c, "message")
+	autoEscape := global.EnsureBool(getParam(c, "auto_escape"), false)
+	if t == gjson.JSON {
+		c.JSON(200, s.bot.CQSendPrivateMessage(uid, gjson.Parse(msg), autoEscape))
 		return
 	}
-	c.JSON(200, s.bot.CQSendPrivateMessage(uid, msg))
+	c.JSON(200, s.bot.CQSendPrivateMessage(uid, msg, autoEscape))
 }
 
 func (s *httpServer) SendGroupMessage(c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
-	msg := getParam(c, "message")
-	if gjson.Valid(msg) {
-		c.JSON(200, s.bot.CQSendGroupMessage(gid, gjson.Parse(msg)))
+	msg, t := getParamWithType(c, "message")
+	autoEscape := global.EnsureBool(getParam(c, "auto_escape"), false)
+	if t == gjson.JSON {
+		c.JSON(200, s.bot.CQSendGroupMessage(gid, gjson.Parse(msg), autoEscape))
 		return
 	}
-	c.JSON(200, s.bot.CQSendGroupMessage(gid, msg))
+	c.JSON(200, s.bot.CQSendGroupMessage(gid, msg, autoEscape))
 }
 
 func (s *httpServer) SendGroupForwardMessage(c *gin.Context) {
@@ -269,6 +293,11 @@ func (s *httpServer) GetGroupMessage(c *gin.Context) {
 	c.JSON(200, s.bot.CQGetGroupMessage(int32(mid)))
 }
 
+func (s *httpServer) GetGroupHonorInfo(c *gin.Context) {
+	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
+	c.JSON(200, s.bot.CQGetGroupHonorInfo(gid, getParam(c, "type")))
+}
+
 func (s *httpServer) ProcessFriendRequest(c *gin.Context) {
 	flag := getParam(c, "flag")
 	approve := getParamOrDefault(c, "approve", "true")
@@ -282,7 +311,7 @@ func (s *httpServer) ProcessGroupRequest(c *gin.Context) {
 		subType = getParam(c, "type")
 	}
 	approve := getParamOrDefault(c, "approve", "true")
-	c.JSON(200, s.bot.CQProcessGroupRequest(flag, subType, approve == "true"))
+	c.JSON(200, s.bot.CQProcessGroupRequest(flag, subType, getParam(c, "reason"), approve == "true"))
 }
 
 func (s *httpServer) SetGroupCard(c *gin.Context) {
@@ -371,37 +400,43 @@ func getParamOrDefault(c *gin.Context, k, def string) string {
 	return def
 }
 
+
 func getParam(c *gin.Context, k string) string {
+	p, _ := getParamWithType(c, k)
+	return p
+}
+
+func getParamWithType(c *gin.Context, k string) (string, gjson.Type) {
 	if q := c.Query(k); q != "" {
-		return q
+		return q, gjson.Null
 	}
 	if c.Request.Method == "POST" {
 		if h := c.Request.Header.Get("Content-Type"); h != "" {
-			if h == "application/x-www-form-urlencoded" {
+			if strings.Contains(h, "application/x-www-form-urlencoded") {
 				if p, ok := c.GetPostForm(k); ok {
-					return p
+					return p, gjson.Null
 				}
 			}
-			if h == "application/json" {
+			if strings.Contains(h, "application/json") {
 				if obj, ok := c.Get("json_body"); ok {
 					res := obj.(gjson.Result).Get(k)
 					if res.Exists() {
 						switch res.Type {
 						case gjson.JSON:
-							return res.Raw
+							return res.Raw, gjson.JSON
 						case gjson.String:
-							return res.Str
+							return res.Str, gjson.String
 						case gjson.Number:
-							return strconv.FormatInt(res.Int(), 10) // 似乎没有需要接受 float 类型的api
+							return strconv.FormatInt(res.Int(), 10), gjson.Number // 似乎没有需要接受 float 类型的api
 						case gjson.True:
-							return "true"
+							return "true", gjson.True
 						case gjson.False:
-							return "false"
+							return "false", gjson.False
 						}
 					}
 				}
 			}
 		}
 	}
-	return ""
+	return "", gjson.Null
 }

@@ -14,8 +14,23 @@ import (
 	"time"
 )
 
+var format = "string"
+
+func SetMessageFormat(f string) {
+	format = f
+}
+
+func ToFormattedMessage(e []message.IMessageElement, code int64, raw ...bool) (r interface{}) {
+	if format == "string" {
+		r = ToStringMessage(e, code, raw...)
+	} else if format == "array" {
+		r = ToArrayMessage(e, code, raw...)
+	}
+	return
+}
+
 func (bot *CQBot) privateMessageEvent(c *client.QQClient, m *message.PrivateMessage) {
-	checkMedia(m.Elements)
+	bot.checkMedia(m.Elements)
 	cqm := ToStringMessage(m.Elements, 0, true)
 	log.Infof("收到好友 %v(%v) 的消息: %v", m.Sender.DisplayName(), m.Sender.Uin, cqm)
 	fm := MSG{
@@ -24,7 +39,7 @@ func (bot *CQBot) privateMessageEvent(c *client.QQClient, m *message.PrivateMess
 		"sub_type":     "friend",
 		"message_id":   ToGlobalId(m.Sender.Uin, m.Id),
 		"user_id":      m.Sender.Uin,
-		"message":      ToStringMessage(m.Elements, 0, false),
+		"message":      ToFormattedMessage(m.Elements, 0, false),
 		"raw_message":  cqm,
 		"font":         0,
 		"self_id":      c.Uin,
@@ -40,7 +55,7 @@ func (bot *CQBot) privateMessageEvent(c *client.QQClient, m *message.PrivateMess
 }
 
 func (bot *CQBot) groupMessageEvent(c *client.QQClient, m *message.GroupMessage) {
-	checkMedia(m.Elements)
+	bot.checkMedia(m.Elements)
 	for _, elem := range m.Elements {
 		if file, ok := elem.(*message.GroupFileElement); ok {
 			log.Infof("群 %v(%v) 内 %v(%v) 上传了文件: %v", m.GroupName, m.GroupCode, m.Sender.DisplayName(), m.Sender.Uin, file.Name)
@@ -72,7 +87,7 @@ func (bot *CQBot) groupMessageEvent(c *client.QQClient, m *message.GroupMessage)
 		"anonymous":    nil,
 		"font":         0,
 		"group_id":     m.GroupCode,
-		"message":      ToStringMessage(m.Elements, m.GroupCode, false),
+		"message":      ToFormattedMessage(m.Elements, m.GroupCode, false),
 		"message_id":   id,
 		"message_type": "group",
 		"post_type":    "message",
@@ -118,7 +133,7 @@ func (bot *CQBot) groupMessageEvent(c *client.QQClient, m *message.GroupMessage)
 }
 
 func (bot *CQBot) tempMessageEvent(c *client.QQClient, m *message.TempMessage) {
-	checkMedia(m.Elements)
+	bot.checkMedia(m.Elements)
 	cqm := ToStringMessage(m.Elements, 0, true)
 	bot.tempMsgCache.Store(m.Sender.Uin, m.GroupCode)
 	log.Infof("收到来自群 %v(%v) 内 %v(%v) 的临时会话消息: %v", m.GroupName, m.GroupCode, m.Sender.DisplayName(), m.Sender.Uin, cqm)
@@ -128,7 +143,7 @@ func (bot *CQBot) tempMessageEvent(c *client.QQClient, m *message.TempMessage) {
 		"sub_type":     "group",
 		"message_id":   m.Id,
 		"user_id":      m.Sender.Uin,
-		"message":      ToStringMessage(m.Elements, 0, false),
+		"message":      ToFormattedMessage(m.Elements, 0, false),
 		"raw_message":  cqm,
 		"font":         0,
 		"self_id":      c.Uin,
@@ -301,7 +316,7 @@ func (bot *CQBot) groupJoinReqEvent(c *client.QQClient, e *client.UserJoinGroupR
 		"sub_type":     "add",
 		"group_id":     e.GroupCode,
 		"user_id":      e.RequesterUin,
-		"comment":      "",
+		"comment":      e.Message,
 		"flag":         flag,
 		"time":         time.Now().Unix(),
 		"self_id":      c.Uin,
@@ -347,7 +362,7 @@ func (bot *CQBot) groupDecrease(groupCode, userUin int64, operator *client.Group
 	}
 }
 
-func checkMedia(e []message.IMessageElement) {
+func (bot *CQBot) checkMedia(e []message.IMessageElement) {
 	for _, elem := range e {
 		switch i := elem.(type) {
 		case *message.ImageElement:
@@ -358,7 +373,7 @@ func checkMedia(e []message.IMessageElement) {
 					w.WriteUInt32(uint32(i.Size))
 					w.WriteString(i.Filename)
 					w.WriteString(i.Url)
-				}), 0777)
+				}), 0644)
 			}
 			i.Filename = filename
 		case *message.VoiceElement:
@@ -370,8 +385,20 @@ func checkMedia(e []message.IMessageElement) {
 					log.Warnf("语音文件 %v 下载失败: %v", i.Name, err)
 					continue
 				}
-				_ = ioutil.WriteFile(path.Join(global.VOICE_PATH, i.Name), b, 0777)
+				_ = ioutil.WriteFile(path.Join(global.VOICE_PATH, i.Name), b, 0644)
 			}
+		case *message.ShortVideoElement:
+			filename := hex.EncodeToString(i.Md5) + ".video"
+			if !global.PathExists(path.Join(global.VIDEO_PATH, filename)) {
+				_ = ioutil.WriteFile(path.Join(global.VIDEO_PATH, filename), binary.NewWriterF(func(w *binary.Writer) {
+					w.Write(i.Md5)
+					w.WriteUInt32(uint32(i.Size))
+					w.WriteString(i.Name)
+					w.Write(i.Uuid)
+				}), 0644)
+			}
+			i.Name = filename
+			i.Url = bot.Client.GetShortVideoUrl(i.Uuid, i.Md5)
 		}
 	}
 }

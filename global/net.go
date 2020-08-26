@@ -3,9 +3,14 @@ package global
 import (
 	"bytes"
 	"compress/gzip"
+	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
+
+	"github.com/Mrs4s/MiraiGo/message"
+	"github.com/tidwall/gjson"
 )
 
 func GetBytes(url string) ([]byte, error) {
@@ -31,4 +36,36 @@ func GetBytes(url string) ([]byte, error) {
 		return unCom, err
 	}
 	return body, nil
+}
+
+func QQMusicSongInfo(id string) (gjson.Result, error) {
+	d, err := GetBytes(`https://u.y.qq.com/cgi-bin/musicu.fcg?format=json&inCharset=utf8&outCharset=utf-8&notice=0&platform=yqq.json&needNewCode=0&data={%22comm%22:{%22ct%22:24,%22cv%22:0},%22songinfo%22:{%22method%22:%22get_song_detail_yqq%22,%22param%22:{%22song_type%22:0,%22song_mid%22:%22%22,%22song_id%22:` + id + `},%22module%22:%22music.pf_song_detail_svr%22}}`)
+	if err != nil {
+		return gjson.Result{}, err
+	}
+	return gjson.ParseBytes(d).Get("songinfo.data"), nil
+}
+
+func NeteaseMusicSongInfo(id string) (gjson.Result, error) {
+	d, err := GetBytes(fmt.Sprintf("http://music.163.com/api/song/detail/?id=%s&ids=%%5B%s%%5D", id, id))
+	if err != nil {
+		return gjson.Result{}, err
+	}
+	return gjson.ParseBytes(d).Get("songs.0"), nil
+}
+
+func NewXmlMsg(template string, ResId int64) *message.ServiceElement {
+	var serviceid string
+	if ResId == 0 {
+		serviceid = "2" //默认值2
+	} else {
+		serviceid = strconv.FormatInt(ResId, 10)
+	}
+	//println(serviceid)
+	return &message.ServiceElement{
+		Id:      int32(ResId),
+		Content: template,
+		ResId:   serviceid,
+		SubType: "xml",
+	}
 }
