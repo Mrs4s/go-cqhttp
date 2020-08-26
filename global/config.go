@@ -6,19 +6,21 @@ import (
 )
 
 type JsonConfig struct {
-	Uin               int64                         `json:"uin"`
-	Password          string                        `json:"password"`
-	EncryptPassword   bool                          `json:"encrypt_password"`
-	PasswordEncrypted string                        `json:"password_encrypted"`
-	EnableDB          bool                          `json:"enable_db"`
-	AccessToken       string                        `json:"access_token"`
-	ReLogin           bool                          `json:"relogin"`
-	ReLoginDelay      int                           `json:"relogin_delay"`
-	HttpConfig        *GoCQHttpConfig               `json:"http_config"`
-	WSConfig          *GoCQWebsocketConfig          `json:"ws_config"`
-	ReverseServers    []*GoCQReverseWebsocketConfig `json:"ws_reverse_servers"`
-	PostMessageFormat string                        `json:"post_message_format"`
-	Debug             bool                          `json:"debug"`
+	Uin                 int64                         `json:"uin"`
+	Password            string                        `json:"password"`
+	EncryptPassword     bool                          `json:"encrypt_password"`
+	PasswordEncrypted   string                        `json:"password_encrypted"`
+	EnableDB            bool                          `json:"enable_db"`
+	AccessToken         string                        `json:"access_token"`
+	ReLogin             bool                          `json:"relogin"`
+	ReLoginDelay        int                           `json:"relogin_delay"`
+	IgnoreInvalidCQCode bool                          `json:"ignore_invalid_cqcode"`
+	ForceFragmented     bool                          `json:"force_fragmented"`
+	HttpConfig          *GoCQHttpConfig               `json:"http_config"`
+	WSConfig            *GoCQWebsocketConfig          `json:"ws_config"`
+	ReverseServers      []*GoCQReverseWebsocketConfig `json:"ws_reverse_servers"`
+	PostMessageFormat   string                        `json:"post_message_format"`
+	Debug               bool                          `json:"debug"`
 }
 
 type CQHttpApiConfig struct {
@@ -68,6 +70,7 @@ func DefaultConfig() *JsonConfig {
 		ReLogin:           true,
 		ReLoginDelay:      3,
 		PostMessageFormat: "string",
+		ForceFragmented:   true,
 		HttpConfig: &GoCQHttpConfig{
 			Enabled:  true,
 			Host:     "0.0.0.0",

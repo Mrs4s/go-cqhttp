@@ -25,6 +25,8 @@ var matchReg = regexp.MustCompile(`\[CQ:\w+?.*?]`)
 var typeReg = regexp.MustCompile(`\[CQ:(\w+)`)
 var paramReg = regexp.MustCompile(`,([\w\-.]+?)=([^,\]]+)`)
 
+var IgnoreInvalidCQCode = false
+
 func ToArrayMessage(e []message.IMessageElement, code int64, raw ...bool) (r []MSG) {
 	ur := false
 	if len(raw) != 0 {
@@ -199,8 +201,12 @@ func (bot *CQBot) ConvertStringMessage(m string, group bool) (r []message.IMessa
 		}
 		elem, err := bot.ToElement(t, d, group)
 		if err != nil {
-			log.Warnf("转换CQ码到MiraiGo Element时出现错误: %v 将原样发送.", err)
-			r = append(r, message.NewText(code))
+			if !IgnoreInvalidCQCode {
+				log.Warnf("转换CQ码 %v 到MiraiGo Element时出现错误: %v 将原样发送.", code, err)
+				r = append(r, message.NewText(code))
+			} else {
+				log.Warnf("转换CQ码 %v 到MiraiGo Element时出现错误: %v 将忽略.", code, err)
+			}
 			continue
 		}
 		r = append(r, elem)
