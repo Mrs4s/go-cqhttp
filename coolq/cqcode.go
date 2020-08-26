@@ -473,7 +473,7 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 			if info.Get("artists.0").Exists() {
 				artistName = info.Get("artists.0.name").Str
 			}
-			xml := fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="2" templateID="1" action="web" brief="[分享] %s" sourceMsgId="0" url="http://music.163.com/m/song/%s" flag="0" adverSign="0" multiMsgFlag="0"><item layout="2"><audio cover="%s?param=90y90" src="https://music.163.com/song/media/outer/url?id=%s.mp3" /><title>%s</title><summary>%s</summary></item><source name="网易云音乐" icon="https://pic.rmb.bdstatic.com/911423bee2bef937975b29b265d737b3.png" url="http://web.p.qq.com/qqmpmobile/aio/app.html?id=1101079856" action="app" a_actionData="com.netease.cloudmusic" i_actionData="tencent100495085://" appid="100495085" /></msg>`,
+			xml := fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="2" templateID="1" action="web" brief="[分享] %s" sourceMsgId="0" url="http://music.163.com/m/song/%s" flag="0" adverSign="0" multiMsgFlag="0"><item layout="2"><audio cover="%s?param=90y90" src="https://music.163.com/song/media/outer/url?id=%s.mp3" /><title>%s</title><summary>%s</summary></item><source name="网易云音乐" icon="https://pic.rmb.bdstatic.com/911423bee2bef937975b29b265d737b3.png" url="http://web.p.qq.com/qqmpmobile/aio/app.html?id=100495085" action="app" a_actionData="com.netease.cloudmusic" i_actionData="tencent100495085://" appid="100495085" /></msg>`,
 				name, d["id"], info.Get("album.picUrl").Str, d["id"], name, artistName)
 			return &message.ServiceElement{
 				Id:      60,
