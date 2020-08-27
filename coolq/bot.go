@@ -25,7 +25,6 @@ type CQBot struct {
 
 	events            []func(MSG)
 	db                *nutsdb.DB
-	heartbeatInterval uint16
 	friendReqCache    sync.Map
 	invitedReqCache   sync.Map
 	joinReqCache      sync.Map
