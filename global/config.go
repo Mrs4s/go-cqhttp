@@ -2,6 +2,8 @@ package global
 
 import (
 	"encoding/json"
+	"time"
+
 	log "github.com/sirupsen/logrus"
 )
 
@@ -16,6 +18,7 @@ type JsonConfig struct {
 	ReLoginDelay        int                           `json:"relogin_delay"`
 	IgnoreInvalidCQCode bool                          `json:"ignore_invalid_cqcode"`
 	ForceFragmented     bool                          `json:"force_fragmented"`
+	HeartbeatInterval   time.Duration                 `json:"heartbeat_interval"`
 	HttpConfig          *GoCQHttpConfig               `json:"http_config"`
 	WSConfig            *GoCQWebsocketConfig          `json:"ws_config"`
 	ReverseServers      []*GoCQReverseWebsocketConfig `json:"ws_reverse_servers"`

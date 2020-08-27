@@ -5,28 +5,30 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
-	"github.com/Mrs4s/MiraiGo/binary"
-	"github.com/Mrs4s/MiraiGo/client"
-	"github.com/Mrs4s/MiraiGo/message"
-	"github.com/Mrs4s/go-cqhttp/global"
-	log "github.com/sirupsen/logrus"
-	"github.com/tidwall/gjson"
-	"github.com/xujiajun/nutsdb"
 	"hash/crc32"
 	"path"
 	"sync"
 	"time"
+
+	"github.com/Mrs4s/MiraiGo/binary"
+	"github.com/Mrs4s/MiraiGo/client"
+	"github.com/Mrs4s/MiraiGo/message"
+	"github.com/Mrs4s/go-cqhttp/global"
+
+	log "github.com/sirupsen/logrus"
+	"github.com/tidwall/gjson"
+	"github.com/xujiajun/nutsdb"
 )
 
 type CQBot struct {
 	Client *client.QQClient
 
-	events          []func(MSG)
-	db              *nutsdb.DB
-	friendReqCache  sync.Map
-	invitedReqCache sync.Map
-	joinReqCache    sync.Map
-	tempMsgCache    sync.Map
+	events            []func(MSG)
+	db                *nutsdb.DB
+	friendReqCache    sync.Map
+	invitedReqCache   sync.Map
+	joinReqCache      sync.Map
+	tempMsgCache      sync.Map
 }
 
 type MSG map[string]interface{}
@@ -67,15 +69,20 @@ func NewQQBot(cli *client.QQClient, conf *global.JsonConfig) *CQBot {
 	bot.Client.OnGroupInvited(bot.groupInvitedEvent)
 	bot.Client.OnUserWantJoinGroup(bot.groupJoinReqEvent)
 	go func() {
+		i := conf.HeartbeatInterval
+		if i < 1 {
+			log.Warn("警告: 心跳功能已关闭，若非预期，请检查配置文件。")
+			return
+		}
 		for {
-			time.Sleep(time.Second * 5)
+			time.Sleep(time.Second * i)
 			bot.dispatchEventMessage(MSG{
 				"time":            time.Now().Unix(),
 				"self_id":         bot.Client.Uin,
 				"post_type":       "meta_event",
 				"meta_event_type": "heartbeat",
 				"status":          nil,
-				"interval":        5000,
+				"interval":        1000 * i,
 			})
 		}
 	}()
