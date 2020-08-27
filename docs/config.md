@@ -56,18 +56,18 @@ go-cqhttp 支持导入CQHTTP的配置文件, 具体步骤为:
 | ------------------ | -------- | ------------------------------------------------------------------- |
 | uin                  | int64    | 登录用QQ号                                                          |
 | password             | string   | 登录用密码                                                          |
-| encrypt_password     | bool     | 是否对密码进行加密.                                                  |
+| encrypt_password     | bool     | 是否对密码进行加密.                                                   |
 | password_encrypted   | string   | 加密后的密码(请勿修改)                                                |
-| enable_db            | bool     | 是否开启内置数据库, 关闭后将无法使用 **回复/撤回** 等上下文相关接口      |
-| access_token         | string   | 同CQHTTP的 `access_token`  用于身份验证                             |
-| relogin              | bool     | 是否自动重新登录                                                    |
-| relogin_delay        | int      | 重登录延时（秒）                                                    |
-| post_message_format  | string   | 上报信息类型                                                       |
-| ignore_invalid_cqcode| bool     | 是否忽略错误的CQ码                                                  |
+| enable_db            | bool     | 是否开启内置数据库, 关闭后将无法使用 **回复/撤回** 等上下文相关接口          |
+| access_token         | string   | 同CQHTTP的 `access_token`  用于身份验证                              |
+| relogin              | bool     | 是否自动重新登录                                                     |
+| relogin_delay        | int      | 重登录延时（秒）                                                     |
+| post_message_format  | string   | 上报信息类型                                                        |
+| ignore_invalid_cqcode| bool     | 是否忽略错误的CQ码                                                   |
 | force_fragmented     | bool     | 是否强制分片发送群长消息                                              |
-| heartbeat_interval   | int64    | 心跳间隔时间，单位秒，若0则关闭心跳
-| http_config          | object   | HTTP API配置                                                        |
-| ws_config            | object   | Websocket API 配置                                                  |
+| heartbeat_interval   | int64    | 心跳间隔时间，单位秒，若0则关闭心跳                                     |
+| http_config          | object   | HTTP API配置                                                       |
+| ws_config            | object   | Websocket API 配置                                                 |
 | ws_reverse_servers   | object[] | 反向 Websocket API 配置                                             |
 | log_level            | string   | 指定日志收集级别，将收集的日志单独存放到固定文件中，便于查看日志线索 当前支持 warn,error|
 
