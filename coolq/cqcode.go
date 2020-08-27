@@ -367,12 +367,18 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 			if group {
 				rsp, err := bot.Client.QueryGroupImage(1, hash, size)
 				if err != nil {
+					if url != "" {
+						return bot.ToElement(t, map[string]string{"file": url}, group)
+					}
 					return nil, err
 				}
 				return rsp, nil
 			}
 			rsp, err := bot.Client.QueryFriendImage(1, hash, size)
 			if err != nil {
+				if url != "" {
+					return bot.ToElement(t, map[string]string{"file": url}, group)
+				}
 				return nil, err
 			}
 			return rsp, nil
