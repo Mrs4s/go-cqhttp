@@ -23,12 +23,13 @@ import (
 type CQBot struct {
 	Client *client.QQClient
 
-	events            []func(MSG)
-	db                *nutsdb.DB
-	friendReqCache    sync.Map
-	invitedReqCache   sync.Map
-	joinReqCache      sync.Map
-	tempMsgCache      sync.Map
+	events          []func(MSG)
+	db              *nutsdb.DB
+	friendReqCache  sync.Map
+	invitedReqCache sync.Map
+	joinReqCache    sync.Map
+	tempMsgCache    sync.Map
+	oneWayMsgCache  sync.Map
 }
 
 type MSG map[string]interface{}
@@ -166,12 +167,15 @@ func (bot *CQBot) SendPrivateMessage(target int64, m *message.SendingMessage) in
 		if msg != nil {
 			id = msg.Id
 		}
-	} else {
-		if code, ok := bot.tempMsgCache.Load(target); ok {
-			msg := bot.Client.SendTempMessage(code.(int64), target, m)
-			if msg != nil {
-				id = msg.Id
-			}
+	} else if code, ok := bot.tempMsgCache.Load(target); ok {
+		msg := bot.Client.SendTempMessage(code.(int64), target, m)
+		if msg != nil {
+			id = msg.Id
+		}
+	} else if _, ok := bot.oneWayMsgCache.Load(target); ok {
+		msg := bot.Client.SendPrivateMessage(target, m)
+		if msg != nil {
+			id = msg.Id
 		}
 	}
 	if id == -1 {
