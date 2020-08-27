@@ -27,6 +27,7 @@ go-cqhttp 支持导入CQHTTP的配置文件, 具体步骤为:
 	"post_message_format": "string",
 	"ignore_invalid_cqcode": false,
 	"force_fragmented": true,
+    "heartbeat_interval": 5,
 	"http_config": {
 		"enabled": true,
 		"host": "0.0.0.0",
@@ -64,6 +65,7 @@ go-cqhttp 支持导入CQHTTP的配置文件, 具体步骤为:
 | post_message_format  | string   | 上报信息类型                                                       |
 | ignore_invalid_cqcode| bool     | 是否忽略错误的CQ码                                                  |
 | force_fragmented     | bool     | 是否强制分片发送群长消息                                              |
+| heartbeat_interval   | int64    | 心跳间隔时间，单位秒，若0则关闭心跳
 | http_config          | object   | HTTP API配置                                                        |
 | ws_config            | object   | Websocket API 配置                                                  |
 | ws_reverse_servers   | object[] | 反向 Websocket API 配置                                             |
@@ -74,3 +76,5 @@ go-cqhttp 支持导入CQHTTP的配置文件, 具体步骤为:
 > 解密密钥在使用完成后并不会留存在内存中, 所以可用相对简单的字符串作为密钥
 
 > 注2: 分片发送为原酷Q发送长消息的老方案, 发送速度更优/兼容性更好。关闭后将优先使用新方案, 能发送更长的消息, 但发送速度更慢，在部分老客户端将无法解析.
+
+> 注3：关闭心跳服务可能引起断线，请谨慎关闭
