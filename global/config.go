@@ -8,14 +8,17 @@ import (
 )
 
 type JsonConfig struct {
-	Uin                 int64                         `json:"uin"`
-	Password            string                        `json:"password"`
-	EncryptPassword     bool                          `json:"encrypt_password"`
-	PasswordEncrypted   string                        `json:"password_encrypted"`
-	EnableDB            bool                          `json:"enable_db"`
-	AccessToken         string                        `json:"access_token"`
-	ReLogin             bool                          `json:"relogin"`
-	ReLoginDelay        int                           `json:"relogin_delay"`
+	Uin               int64  `json:"uin"`
+	Password          string `json:"password"`
+	EncryptPassword   bool   `json:"encrypt_password"`
+	PasswordEncrypted string `json:"password_encrypted"`
+	EnableDB          bool   `json:"enable_db"`
+	AccessToken       string `json:"access_token"`
+	ReLogin           struct {
+		Enabled         bool `json:"enabled"`
+		ReLoginDelay    int  `json:"relogin_delay"`
+		MaxReloginTimes uint `json:"max_relogin_times"`
+	} `json:"relogin"`
 	IgnoreInvalidCQCode bool                          `json:"ignore_invalid_cqcode"`
 	ForceFragmented     bool                          `json:"force_fragmented"`
 	HeartbeatInterval   time.Duration                 `json:"heartbeat_interval"`
@@ -70,9 +73,16 @@ type GoCQReverseWebsocketConfig struct {
 
 func DefaultConfig() *JsonConfig {
 	return &JsonConfig{
-		EnableDB:          true,
-		ReLogin:           true,
-		ReLoginDelay:      3,
+		EnableDB: true,
+		ReLogin: struct {
+			Enabled         bool `json:"enabled"`
+			ReLoginDelay    int  `json:"relogin_delay"`
+			MaxReloginTimes uint `json:"max_relogin_times"`
+		}{
+			Enabled:         true,
+			ReLoginDelay:    3,
+			MaxReloginTimes: 0,
+		},
 		PostMessageFormat: "string",
 		ForceFragmented:   true,
 		HttpConfig: &GoCQHttpConfig{

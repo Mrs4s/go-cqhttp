@@ -22,8 +22,11 @@ go-cqhttp 支持导入CQHTTP的配置文件, 具体步骤为:
 	"password_encrypted": "",
 	"enable_db": true,
 	"access_token": "",
-	"relogin": false,
-	"relogin_delay": 0,
+    "relogin": {
+        "enabled": true,
+        "relogin_delay": 3,
+        "max_relogin_times": 0
+    },
 	"post_message_format": "string",
 	"ignore_invalid_cqcode": false,
 	"force_fragmented": true,
@@ -62,6 +65,7 @@ go-cqhttp 支持导入CQHTTP的配置文件, 具体步骤为:
 | access_token         | string   | 同CQHTTP的 `access_token`  用于身份验证                              |
 | relogin              | bool     | 是否自动重新登录                                                     |
 | relogin_delay        | int      | 重登录延时（秒）                                                     |
+| max_relogin_times    | uint     | 最大重登录次数，若0则不设置上限                                        |
 | post_message_format  | string   | 上报信息类型                                                        |
 | ignore_invalid_cqcode| bool     | 是否忽略错误的CQ码                                                   |
 | force_fragmented     | bool     | 是否强制分片发送群长消息                                              |
