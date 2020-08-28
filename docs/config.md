@@ -30,7 +30,7 @@ go-cqhttp 支持导入CQHTTP的配置文件, 具体步骤为:
 	"post_message_format": "string",
 	"ignore_invalid_cqcode": false,
 	"force_fragmented": true,
-    "heartbeat_interval": 5,
+	"heartbeat_interval": 5,
 	"http_config": {
 		"enabled": true,
 		"host": "0.0.0.0",
