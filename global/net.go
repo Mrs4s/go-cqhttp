@@ -59,3 +59,12 @@ func NewXmlMsg(template string,ResId int64) *message.ServiceElement{
 		SubType: "xml",
 	}
 }
+
+func NewJsonMsg(template string) *message.ServiceElement{
+	return &message.ServiceElement{
+		Id:      1,
+		Content: template,
+		ResId:   "1",
+		SubType: "json",
+	}
+}

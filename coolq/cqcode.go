@@ -470,6 +470,9 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 		i, _ := strconv.ParseInt(resId, 10, 64)
 		msg := global.NewXmlMsg(template, i)
 		return msg, nil
+	case "json":
+		msg := global.NewJsonMsg(d["data"])
+		return msg, nil
 	default:
 		return nil, errors.New("unsupported cq code: " + t)
 	}
