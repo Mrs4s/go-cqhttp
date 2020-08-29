@@ -206,7 +206,7 @@ func (c *websocketClient) onBotPushEvent(m coolq.MSG) {
 
 func (s *websocketServer) event(w http.ResponseWriter, r *http.Request) {
 	if s.token != "" {
-		if r.URL.Query().Get("access_token") != s.token {
+		if auth := r.URL.Query().Get("access_token"); auth != s.token && auth != "" {
 			log.Warnf("已拒绝 %v 的 Websocket 请求: Token错误", r.RemoteAddr)
 			w.WriteHeader(401)
 			return
@@ -216,6 +216,10 @@ func (s *websocketServer) event(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(401)
 				return
 			}
+		} else {
+			log.Warnf("已拒绝 %v 的 Websocket 请求: 空Token", r.RemoteAddr)
+			w.WriteHeader(401)
+			return
 		}
 	}
 	c, err := upgrader.Upgrade(w, r, nil)
@@ -241,7 +245,7 @@ func (s *websocketServer) event(w http.ResponseWriter, r *http.Request) {
 
 func (s *websocketServer) api(w http.ResponseWriter, r *http.Request) {
 	if s.token != "" {
-		if r.URL.Query().Get("access_token") != s.token {
+		if auth := r.URL.Query().Get("access_token"); auth != s.token && auth != "" {
 			log.Warnf("已拒绝 %v 的 Websocket 请求: Token错误", r.RemoteAddr)
 			w.WriteHeader(401)
 			return
@@ -251,6 +255,10 @@ func (s *websocketServer) api(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(401)
 				return
 			}
+		} else {
+			log.Warnf("已拒绝 %v 的 Websocket 请求: 空Token", r.RemoteAddr)
+			w.WriteHeader(401)
+			return
 		}
 	}
 	c, err := upgrader.Upgrade(w, r, nil)
@@ -265,7 +273,7 @@ func (s *websocketServer) api(w http.ResponseWriter, r *http.Request) {
 
 func (s *websocketServer) any(w http.ResponseWriter, r *http.Request) {
 	if s.token != "" {
-		if r.URL.Query().Get("access_token") != s.token {
+		if auth := r.URL.Query().Get("access_token"); auth != s.token && auth != "" {
 			log.Warnf("已拒绝 %v 的 Websocket 请求: Token错误", r.RemoteAddr)
 			w.WriteHeader(401)
 			return
@@ -275,6 +283,10 @@ func (s *websocketServer) any(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(401)
 				return
 			}
+		} else {
+			log.Warnf("已拒绝 %v 的 Websocket 请求: 空Token", r.RemoteAddr)
+			w.WriteHeader(401)
+			return
 		}
 	}
 	c, err := upgrader.Upgrade(w, r, nil)
