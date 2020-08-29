@@ -16,7 +16,7 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-var version = "unknown"
+var Version = "unknown"
 
 // https://cqhttp.cc/docs/4.15/#/API?id=get_login_info-%E8%8E%B7%E5%8F%96%E7%99%BB%E5%BD%95%E5%8F%B7%E4%BF%A1%E6%81%AF
 func (bot *CQBot) CQGetLoginInfo() MSG {
@@ -590,7 +590,7 @@ func (bot *CQBot) CQGetVersionInfo() MSG {
 		"plugin_build_configuration": "release",
 		"runtime_version":            runtime.Version(),
 		"runtime_os":                 runtime.GOOS,
-		"version":                    version,
+		"version":                    Version,
 	})
 }
 

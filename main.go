@@ -7,15 +7,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/Mrs4s/MiraiGo/binary"
-	"github.com/Mrs4s/MiraiGo/client"
-	"github.com/Mrs4s/go-cqhttp/coolq"
-	"github.com/Mrs4s/go-cqhttp/global"
-	"github.com/Mrs4s/go-cqhttp/server"
-	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
-	log "github.com/sirupsen/logrus"
-	easy "github.com/t-tomalak/logrus-easy-formatter"
-	asciiart "github.com/yinghau76/go-ascii-art"
 	"image"
 	"io"
 	"io/ioutil"
@@ -25,6 +16,18 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Mrs4s/MiraiGo/binary"
+	"github.com/Mrs4s/MiraiGo/client"
+	"github.com/Mrs4s/go-cqhttp/coolq"
+	"github.com/Mrs4s/go-cqhttp/global"
+	"github.com/Mrs4s/go-cqhttp/server"
+
+	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
+	"github.com/rifflock/lfshook"
+	log "github.com/sirupsen/logrus"
+	easy "github.com/t-tomalak/logrus-easy-formatter"
+	asciiart "github.com/yinghau76/go-ascii-art"
 )
 
 func init() {
@@ -133,6 +136,46 @@ func main() {
 		time.Sleep(time.Second * 5)
 		return
 	}
+
+	// log classified by level
+	// Collect all records up to the specified level (default level: warn)
+	logLevel := conf.LogLevel
+	if logLevel != "" {
+		date := time.Now().Format("2006-01-02")
+		var logPathMap lfshook.PathMap
+		switch conf.LogLevel {
+		case "warn":
+			logPathMap = lfshook.PathMap{
+				log.WarnLevel:  path.Join("logs", date+"-warn.log"),
+				log.ErrorLevel: path.Join("logs", date+"-warn.log"),
+				log.FatalLevel: path.Join("logs", date+"-warn.log"),
+				log.PanicLevel: path.Join("logs", date+"-warn.log"),
+			}
+		case "error":
+			logPathMap = lfshook.PathMap{
+				log.ErrorLevel: path.Join("logs", date+"-error.log"),
+				log.FatalLevel: path.Join("logs", date+"-error.log"),
+				log.PanicLevel: path.Join("logs", date+"-error.log"),
+			}
+		default:
+			logPathMap = lfshook.PathMap{
+				log.WarnLevel:  path.Join("logs", date+"-warn.log"),
+				log.ErrorLevel: path.Join("logs", date+"-warn.log"),
+				log.FatalLevel: path.Join("logs", date+"-warn.log"),
+				log.PanicLevel: path.Join("logs", date+"-warn.log"),
+			}
+		}
+
+		log.AddHook(lfshook.NewHook(
+			logPathMap,
+			&easy.Formatter{
+				TimestampFormat: "2006-01-02 15:04:05",
+				LogFormat:       "[%time%] [%lvl%]: %msg% \n",
+			},
+		))
+	}
+
+	log.Info("当前版本:", coolq.Version)
 	if conf.Debug {
 		log.SetLevel(log.DebugLevel)
 		log.Warnf("已开启Debug模式.")
@@ -220,6 +263,8 @@ func main() {
 	} else {
 		coolq.SetMessageFormat(conf.PostMessageFormat)
 	}
+	coolq.IgnoreInvalidCQCode = conf.IgnoreInvalidCQCode
+	coolq.ForceFragmented = conf.ForceFragmented
 	if conf.HttpConfig != nil && conf.HttpConfig.Enabled {
 		server.HttpServer.Run(fmt.Sprintf("%s:%d", conf.HttpConfig.Host, conf.HttpConfig.Port), conf.AccessToken, b)
 		for k, v := range conf.HttpConfig.PostUrls {
@@ -235,24 +280,39 @@ func main() {
 	log.Info("资源初始化完成, 开始处理信息.")
 	log.Info("アトリは、高性能ですから!")
 	cli.OnDisconnected(func(bot *client.QQClient, e *client.ClientDisconnectedEvent) {
-		if conf.ReLogin {
-			log.Warnf("Bot已离线 (%v)，将在 %v 秒后尝试重连.", e.Message, conf.ReLoginDelay)
-			time.Sleep(time.Second * time.Duration(conf.ReLoginDelay))
-			rsp, err := cli.Login()
-			if err != nil {
-				log.Fatalf("重连失败: %v", err)
-			}
-			if !rsp.Success {
-				switch rsp.Error {
-				case client.NeedCaptcha:
-					log.Fatalf("重连失败: 需要验证码. (验证码处理正在开发中)")
-				case client.UnsafeDeviceError:
-					log.Fatalf("重连失败: 设备锁")
-				default:
-					log.Fatalf("重连失败: %v", rsp.ErrorMessage)
+		if conf.ReLogin.Enabled {
+			var times uint = 1
+			for {
+
+				if conf.ReLogin.MaxReloginTimes == 0 {
+				} else if times > conf.ReLogin.MaxReloginTimes {
+					break
 				}
+				log.Warnf("Bot已离线 (%v)，将在 %v 秒后尝试重连. 重连次数：%v",
+					e.Message, conf.ReLogin.ReLoginDelay, times)
+				times++
+				time.Sleep(time.Second * time.Duration(conf.ReLogin.ReLoginDelay))
+				rsp, err := cli.Login()
+				if err != nil {
+					log.Errorf("重连失败: %v", err)
+					continue
+				}
+				if !rsp.Success {
+					switch rsp.Error {
+					case client.NeedCaptcha:
+						log.Fatalf("重连失败: 需要验证码. (验证码处理正在开发中)")
+					case client.UnsafeDeviceError:
+						log.Fatalf("重连失败: 设备锁")
+					default:
+						log.Errorf("重连失败: %v", rsp.ErrorMessage)
+						continue
+					}
+				}
+				log.Info("重连成功")
+				return
+
 			}
-			return
+			log.Fatal("重连失败: 重连次数达到设置的上限值")
 		}
 		b.Release()
 		log.Fatalf("Bot已离线：%v", e.Message)
