@@ -3,10 +3,14 @@ package global
 import (
 	"bytes"
 	"compress/gzip"
-	"github.com/tidwall/gjson"
+	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
+
+	"github.com/Mrs4s/MiraiGo/message"
+	"github.com/tidwall/gjson"
 )
 
 func GetBytes(url string) ([]byte, error) {
@@ -40,4 +44,28 @@ func QQMusicSongInfo(id string) (gjson.Result, error) {
 		return gjson.Result{}, err
 	}
 	return gjson.ParseBytes(d).Get("songinfo.data"), nil
+}
+
+func NeteaseMusicSongInfo(id string) (gjson.Result, error) {
+	d, err := GetBytes(fmt.Sprintf("http://music.163.com/api/song/detail/?id=%s&ids=%%5B%s%%5D", id, id))
+	if err != nil {
+		return gjson.Result{}, err
+	}
+	return gjson.ParseBytes(d).Get("songs.0"), nil
+}
+
+func NewXmlMsg(template string, ResId int64) *message.ServiceElement {
+	var serviceid string
+	if ResId == 0 {
+		serviceid = "2" //默认值2
+	} else {
+		serviceid = strconv.FormatInt(ResId, 10)
+	}
+	//println(serviceid)
+	return &message.ServiceElement{
+		Id:      int32(ResId),
+		Content: template,
+		ResId:   serviceid,
+		SubType: "xml",
+	}
 }

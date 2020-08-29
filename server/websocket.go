@@ -319,6 +319,7 @@ func (s *websocketServer) onBotPushEvent(m coolq.MSG) {
 	for i, l := 0, len(s.eventConn); i < l; i++ {
 		conn := s.eventConn[i]
 		log.Debugf("向WS客户端 %v 推送Event: %v", conn.RemoteAddr().String(), m.ToJson())
+		conn.Lock()
 		if err := conn.WriteMessage(websocket.TextMessage, []byte(m.ToJson())); err != nil {
 			_ = conn.Close()
 			next := i + 1
@@ -330,7 +331,9 @@ func (s *websocketServer) onBotPushEvent(m coolq.MSG) {
 			i--
 			l--
 			conn = nil
+			continue
 		}
+		conn.Unlock()
 	}
 }
 
