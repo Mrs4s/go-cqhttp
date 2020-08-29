@@ -44,12 +44,12 @@ func QQMusicSongInfo(id string) (gjson.Result, error) {
 	return gjson.ParseBytes(d).Get("songinfo.data"), nil
 }
 
-func NewXmlMsg(template string,ResId int64) *message.ServiceElement{
+func NewXmlMsg(template string, ResId int64) *message.ServiceElement {
 	var serviceid string
-	if ResId == 0{
-		serviceid ="2" //默认值2
-	}else{
-		serviceid = strconv.FormatInt(ResId,10)
+	if ResId == 0 {
+		serviceid = "2" //默认值2
+	} else {
+		serviceid = strconv.FormatInt(ResId, 10)
 	}
 	//println(serviceid)
 	return &message.ServiceElement{
@@ -60,7 +60,7 @@ func NewXmlMsg(template string,ResId int64) *message.ServiceElement{
 	}
 }
 
-func NewJsonMsg(template string) *message.ServiceElement{
+func NewJsonMsg(template string) *message.ServiceElement {
 	return &message.ServiceElement{
 		Id:      1,
 		Content: template,
