@@ -210,14 +210,14 @@ func (s *websocketServer) event(w http.ResponseWriter, r *http.Request) {
 			log.Warnf("已拒绝 %v 的 Websocket 请求: Token错误", r.RemoteAddr)
 			w.WriteHeader(401)
 			return
-		} else if auth := r.Header.Get("Authorization"); auth != "" {
-			if strings.SplitN(auth, " ", 2)[1] != s.token {
+		} else if auth := strings.SplitN(r.Header.Get("Authorization"), " ", 2); len(auth) == 2 {
+			if auth[1] != s.token {
 				log.Warnf("已拒绝 %v 的 Websocket 请求: Token错误", r.RemoteAddr)
 				w.WriteHeader(401)
 				return
 			}
 		} else {
-			log.Warnf("已拒绝 %v 的 Websocket 请求: 空Token", r.RemoteAddr)
+			log.Warnf("已拒绝 %v 的 Websocket 请求: 空Token或传入格式错误", r.RemoteAddr)
 			w.WriteHeader(401)
 			return
 		}
@@ -249,14 +249,14 @@ func (s *websocketServer) api(w http.ResponseWriter, r *http.Request) {
 			log.Warnf("已拒绝 %v 的 Websocket 请求: Token错误", r.RemoteAddr)
 			w.WriteHeader(401)
 			return
-		} else if auth := r.Header.Get("Authorization"); auth != "" {
-			if strings.SplitN(auth, " ", 2)[1] != s.token {
+		} else if auth := strings.SplitN(r.Header.Get("Authorization"), " ", 2); len(auth) == 2 {
+			if auth[1] != s.token {
 				log.Warnf("已拒绝 %v 的 Websocket 请求: Token错误", r.RemoteAddr)
 				w.WriteHeader(401)
 				return
 			}
 		} else {
-			log.Warnf("已拒绝 %v 的 Websocket 请求: 空Token", r.RemoteAddr)
+			log.Warnf("已拒绝 %v 的 Websocket 请求: 空Token或传入格式错误", r.RemoteAddr)
 			w.WriteHeader(401)
 			return
 		}
@@ -277,14 +277,14 @@ func (s *websocketServer) any(w http.ResponseWriter, r *http.Request) {
 			log.Warnf("已拒绝 %v 的 Websocket 请求: Token错误", r.RemoteAddr)
 			w.WriteHeader(401)
 			return
-		} else if auth := r.Header.Get("Authorization"); auth != "" {
-			if strings.SplitN(auth, " ", 2)[1] != s.token {
+		} else if auth := strings.SplitN(r.Header.Get("Authorization"), " ", 2); len(auth) == 2 {
+			if auth[1] != s.token {
 				log.Warnf("已拒绝 %v 的 Websocket 请求: Token错误", r.RemoteAddr)
 				w.WriteHeader(401)
 				return
 			}
 		} else {
-			log.Warnf("已拒绝 %v 的 Websocket 请求: 空Token", r.RemoteAddr)
+			log.Warnf("已拒绝 %v 的 Websocket 请求: 空Token或传入格式错误", r.RemoteAddr)
 			w.WriteHeader(401)
 			return
 		}
