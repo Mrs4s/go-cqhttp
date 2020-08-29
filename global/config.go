@@ -2,6 +2,8 @@ package global
 
 import (
 	"encoding/json"
+	"os"
+	"strconv"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -117,6 +119,8 @@ func Load(p string) *JsonConfig {
 	err := json.Unmarshal([]byte(ReadAllText(p)), &c)
 	if err != nil {
 		log.Warnf("尝试加载配置文件 %v 时出现错误: %v", p, err)
+		log.Infoln("原文件已备份")
+		os.Rename(p, p+".backup"+strconv.FormatInt(time.Now().Unix(), 10))
 		return nil
 	}
 	return &c
