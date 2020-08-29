@@ -206,7 +206,7 @@ func (c *websocketClient) onBotPushEvent(m coolq.MSG) {
 
 func (s *websocketServer) event(w http.ResponseWriter, r *http.Request) {
 	if s.token != "" {
-		if r.URL.Query().Get("access_token") != s.token && strings.SplitN(r.Header.Get("Authorization"), " ", 2)[1] != s.token {
+		if r.URL.Query().Get("access_token") != s.token || strings.SplitN(r.Header.Get("Authorization"), " ", 2)[1] != s.token {
 			log.Warnf("已拒绝 %v 的 Websocket 请求: Token错误", r.RemoteAddr)
 			w.WriteHeader(401)
 			return
@@ -235,7 +235,7 @@ func (s *websocketServer) event(w http.ResponseWriter, r *http.Request) {
 
 func (s *websocketServer) api(w http.ResponseWriter, r *http.Request) {
 	if s.token != "" {
-		if r.URL.Query().Get("access_token") != s.token && strings.SplitN(r.Header.Get("Authorization"), " ", 2)[1] != s.token {
+		if r.URL.Query().Get("access_token") != s.token || strings.SplitN(r.Header.Get("Authorization"), " ", 2)[1] != s.token {
 			log.Warnf("已拒绝 %v 的 Websocket 请求: Token错误", r.RemoteAddr)
 			w.WriteHeader(401)
 			return
@@ -253,7 +253,7 @@ func (s *websocketServer) api(w http.ResponseWriter, r *http.Request) {
 
 func (s *websocketServer) any(w http.ResponseWriter, r *http.Request) {
 	if s.token != "" {
-		if r.URL.Query().Get("access_token") != s.token && strings.SplitN(r.Header.Get("Authorization"), " ", 2)[1] != s.token {
+		if r.URL.Query().Get("access_token") != s.token || strings.SplitN(r.Header.Get("Authorization"), " ", 2)[1] != s.token {
 			log.Warnf("已拒绝 %v 的 Websocket 请求: Token错误", r.RemoteAddr)
 			w.WriteHeader(401)
 			return
