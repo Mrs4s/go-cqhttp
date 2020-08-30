@@ -502,10 +502,11 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 		template := CQCodeEscapeValue(d["data"])
 		//println(template)
 		i, _ := strconv.ParseInt(resId, 10, 64)
-		msg := global.NewXmlMsg(template, i)
+		msg := message.NewXmlMsg(template, i)
 		return msg, nil
 	case "json":
-		msg := global.NewJsonMsg(d["data"])
+		log.Warnf("json msg=%s", d["data"])
+		msg := message.NewJsonMsg(CQCodeUnescapeValue(d["data"]))
 		return msg, nil
 	default:
 		return nil, errors.New("unsupported cq code: " + t)
