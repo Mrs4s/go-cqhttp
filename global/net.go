@@ -4,11 +4,9 @@ import (
 	"bytes"
 	"compress/gzip"
 	"fmt"
-	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/tidwall/gjson"
 	"io/ioutil"
 	"net/http"
-	"strconv"
 	"strings"
 )
 
@@ -53,27 +51,3 @@ func NeteaseMusicSongInfo(id string) (gjson.Result, error) {
 	return gjson.ParseBytes(d).Get("songs.0"), nil
 }
 
-func NewXmlMsg(template string, ResId int64) *message.ServiceElement {
-	var serviceid string
-	if ResId == 0 {
-		serviceid = "2" //默认值2
-	} else {
-		serviceid = strconv.FormatInt(ResId, 10)
-	}
-	//println(serviceid)
-	return &message.ServiceElement{
-		Id:      int32(ResId),
-		Content: template,
-		ResId:   serviceid,
-		SubType: "xml",
-	}
-}
-
-func NewJsonMsg(template string) *message.ServiceElement {
-	return &message.ServiceElement{
-		Id:      1,
-		Content: template,
-		ResId:   "1",
-		SubType: "json",
-	}
-}
