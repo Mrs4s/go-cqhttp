@@ -5,16 +5,19 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
-	"github.com/Mrs4s/MiraiGo/binary"
-	"github.com/Mrs4s/MiraiGo/client"
-	"github.com/Mrs4s/MiraiGo/message"
-	"github.com/Mrs4s/go-cqhttp/global"
-	log "github.com/sirupsen/logrus"
-	"github.com/xujiajun/nutsdb"
 	"hash/crc32"
 	"path"
 	"sync"
 	"time"
+
+	"github.com/Mrs4s/MiraiGo/binary"
+	"github.com/Mrs4s/MiraiGo/client"
+	"github.com/Mrs4s/MiraiGo/message"
+	"github.com/Mrs4s/go-cqhttp/global"
+
+	log "github.com/sirupsen/logrus"
+	"github.com/tidwall/gjson"
+	"github.com/xujiajun/nutsdb"
 )
 
 type CQBot struct {
@@ -26,9 +29,12 @@ type CQBot struct {
 	invitedReqCache sync.Map
 	joinReqCache    sync.Map
 	tempMsgCache    sync.Map
+	oneWayMsgCache  sync.Map
 }
 
 type MSG map[string]interface{}
+
+var ForceFragmented = false
 
 func NewQQBot(cli *client.QQClient, conf *global.JsonConfig) *CQBot {
 	bot := &CQBot{
@@ -64,15 +70,20 @@ func NewQQBot(cli *client.QQClient, conf *global.JsonConfig) *CQBot {
 	bot.Client.OnGroupInvited(bot.groupInvitedEvent)
 	bot.Client.OnUserWantJoinGroup(bot.groupJoinReqEvent)
 	go func() {
+		i := conf.HeartbeatInterval
+		if i < 1 {
+			log.Warn("警告: 心跳功能已关闭，若非预期，请检查配置文件。")
+			return
+		}
 		for {
-			time.Sleep(time.Second * 5)
+			time.Sleep(time.Second * i)
 			bot.dispatchEventMessage(MSG{
 				"time":            time.Now().Unix(),
 				"self_id":         bot.Client.Uin,
 				"post_type":       "meta_event",
 				"meta_event_type": "heartbeat",
 				"status":          nil,
-				"interval":        5000,
+				"interval":        1000 * i,
 			})
 		}
 	}()
@@ -127,7 +138,7 @@ func (bot *CQBot) SendGroupMessage(groupId int64, m *message.SendingMessage) int
 		newElem = append(newElem, elem)
 	}
 	m.Elements = newElem
-	ret := bot.Client.SendGroupMessage(groupId, m)
+	ret := bot.Client.SendGroupMessage(groupId, m, ForceFragmented)
 	if ret == nil || ret.Id == -1 {
 		log.Warnf("群消息发送失败: 账号可能被风控.")
 		return -1
@@ -156,12 +167,15 @@ func (bot *CQBot) SendPrivateMessage(target int64, m *message.SendingMessage) in
 		if msg != nil {
 			id = msg.Id
 		}
-	} else {
-		if code, ok := bot.tempMsgCache.Load(target); ok {
-			msg := bot.Client.SendTempMessage(code.(int64), target, m)
-			if msg != nil {
-				id = msg.Id
-			}
+	} else if code, ok := bot.tempMsgCache.Load(target); ok {
+		msg := bot.Client.SendTempMessage(code.(int64), target, m)
+		if msg != nil {
+			id = msg.Id
+		}
+	} else if _, ok := bot.oneWayMsgCache.Load(target); ok {
+		msg := bot.Client.SendPrivateMessage(target, m)
+		if msg != nil {
+			id = msg.Id
 		}
 	}
 	if id == -1 {
@@ -208,6 +222,12 @@ func (bot *CQBot) Release() {
 }
 
 func (bot *CQBot) dispatchEventMessage(m MSG) {
+	payload := gjson.Parse(m.ToJson())
+	filter := global.GetFilter()
+	if filter != nil && (*filter).Eval(payload) == false {
+		log.Debug("Event filtered!")
+		return
+	}
 	for _, f := range bot.events {
 		fn := f
 		go func() {

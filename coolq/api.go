@@ -16,7 +16,7 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-var version = "unknown"
+var Version = "unknown"
 
 // https://cqhttp.cc/docs/4.15/#/API?id=get_login_info-%E8%8E%B7%E5%8F%96%E7%99%BB%E5%BD%95%E5%8F%B7%E4%BF%A1%E6%81%AF
 func (bot *CQBot) CQGetLoginInfo() MSG {
@@ -489,7 +489,7 @@ func (bot *CQBot) CQHandleQuickOperation(context, operation gjson.Result) MSG {
 				bot.CQProcessFriendRequest(context.Get("flag").Str, operation.Get("approve").Bool())
 			}
 			if reqType == "group" {
-				bot.CQProcessGroupRequest(context.Get("flag").Str, context.Get("sub_type").Str, context.Get("reason").Str, operation.Get("approve").Bool())
+				bot.CQProcessGroupRequest(context.Get("flag").Str, context.Get("sub_type").Str, operation.Get("reason").Str, operation.Get("approve").Bool())
 			}
 		}
 	}
@@ -503,11 +503,19 @@ func (bot *CQBot) CQGetImage(file string) MSG {
 	if b, err := ioutil.ReadFile(path.Join(global.IMAGE_PATH, file)); err == nil {
 		r := binary.NewReader(b)
 		r.ReadBytes(16)
-		return OK(MSG{
+		msg := MSG{
 			"size":     r.ReadInt32(),
 			"filename": r.ReadString(),
 			"url":      r.ReadString(),
-		})
+		}
+		local := path.Join(global.CACHE_PATH, file+"."+path.Ext(msg["filename"].(string)))
+		if !global.PathExists(local) {
+			if data, err := global.GetBytes(msg["url"].(string)); err == nil {
+				_ = ioutil.WriteFile(local, data, 0644)
+			}
+		}
+		msg["file"] = local
+		return OK(msg)
 	}
 	return Failed(100)
 }
@@ -582,7 +590,7 @@ func (bot *CQBot) CQGetVersionInfo() MSG {
 		"plugin_build_configuration": "release",
 		"runtime_version":            runtime.Version(),
 		"runtime_os":                 runtime.GOOS,
-		"version":                    version,
+		"version":                    Version,
 	})
 }
 

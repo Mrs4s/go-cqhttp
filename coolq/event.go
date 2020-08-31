@@ -32,6 +32,9 @@ func ToFormattedMessage(e []message.IMessageElement, code int64, raw ...bool) (r
 func (bot *CQBot) privateMessageEvent(c *client.QQClient, m *message.PrivateMessage) {
 	bot.checkMedia(m.Elements)
 	cqm := ToStringMessage(m.Elements, 0, true)
+	if !m.Sender.IsFriend {
+		bot.oneWayMsgCache.Store(m.Sender.Uin, "")
+	}
 	log.Infof("收到好友 %v(%v) 的消息: %v", m.Sender.DisplayName(), m.Sender.Uin, cqm)
 	fm := MSG{
 		"post_type":    "message",

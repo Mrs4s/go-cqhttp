@@ -6,11 +6,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/Mrs4s/MiraiGo/binary"
-	"github.com/Mrs4s/MiraiGo/message"
-	"github.com/Mrs4s/go-cqhttp/global"
-	log "github.com/sirupsen/logrus"
-	"github.com/tidwall/gjson"
 	"io/ioutil"
 	"net/url"
 	"path"
@@ -18,11 +13,19 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+
+	"github.com/Mrs4s/MiraiGo/binary"
+	"github.com/Mrs4s/MiraiGo/message"
+	"github.com/Mrs4s/go-cqhttp/global"
+	log "github.com/sirupsen/logrus"
+	"github.com/tidwall/gjson"
 )
 
 var matchReg = regexp.MustCompile(`\[CQ:\w+?.*?]`)
 var typeReg = regexp.MustCompile(`\[CQ:(\w+)`)
 var paramReg = regexp.MustCompile(`,([\w\-.]+?)=([^,\]]+)`)
+
+var IgnoreInvalidCQCode = false
 
 func ToArrayMessage(e []message.IMessageElement, code int64, raw ...bool) (r []MSG) {
 	ur := false
@@ -198,8 +201,12 @@ func (bot *CQBot) ConvertStringMessage(m string, group bool) (r []message.IMessa
 		}
 		elem, err := bot.ToElement(t, d, group)
 		if err != nil {
-			log.Warnf("转换CQ码到MiraiGo Element时出现错误: %v 将原样发送.", err)
-			r = append(r, message.NewText(code))
+			if !IgnoreInvalidCQCode {
+				log.Warnf("转换CQ码 %v 到MiraiGo Element时出现错误: %v 将原样发送.", code, err)
+				r = append(r, message.NewText(code))
+			} else {
+				log.Warnf("转换CQ码 %v 到MiraiGo Element时出现错误: %v 将忽略.", code, err)
+			}
 			continue
 		}
 		r = append(r, elem)
@@ -329,6 +336,7 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 			}
 			var size int32
 			var hash []byte
+			var url string
 			if path.Ext(rawPath) == ".cqimg" {
 				for _, line := range strings.Split(global.ReadAllText(rawPath), "\n") {
 					kv := strings.SplitN(line, "=", 2)
@@ -344,8 +352,13 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 				r := binary.NewReader(b)
 				hash = r.ReadBytes(16)
 				size = r.ReadInt32()
+				r.ReadString()
+				url = r.ReadString()
 			}
 			if size == 0 {
+				if url != "" {
+					return bot.ToElement(t, map[string]string{"file": url}, group)
+				}
 				return nil, errors.New("img size is 0")
 			}
 			if len(hash) != 16 {
@@ -354,12 +367,18 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 			if group {
 				rsp, err := bot.Client.QueryGroupImage(1, hash, size)
 				if err != nil {
+					if url != "" {
+						return bot.ToElement(t, map[string]string{"file": url}, group)
+					}
 					return nil, err
 				}
 				return rsp, nil
 			}
 			rsp, err := bot.Client.QueryFriendImage(1, hash, size)
 			if err != nil {
+				if url != "" {
+					return bot.ToElement(t, map[string]string{"file": url}, group)
+				}
 				return nil, err
 			}
 			return rsp, nil
@@ -439,8 +458,29 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 			if len(aid) < 2 {
 				return nil, errors.New("song error")
 			}
-			xml := fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="2" templateID="1" action="web" brief="[分享] %s" sourceMsgId="0" url="https://i.y.qq.com/v8/playsong.html?_wv=1&songid=%s&souce=qqshare&source=qqshare&ADTAG=qqshare" flag="0" adverSign="0" multiMsgFlag="0"><item layout="2"><audio cover="http://imgcache.qq.com/music/photo/album_500/%s/500_albumpic_%s_0.jpg" src="%s" /><title>%s</title><summary>%s</summary></item><source name="QQ音乐" icon="https://i.gtimg.cn/open/app_icon/01/07/98/56/1101079856_100_m.png" url="http://web.p.qq.com/qqmpmobile/aio/app.html?id=1101079856" action="app" a_actionData="com.tencent.qqmusic" i_actionData="tencent1101079856://" appid="1101079856" /></msg>`,
+			xml := fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="2" templateID="1" action="web" brief="[分享] %s" sourceMsgId="0" url="https://i.y.qq.com/v8/playsong.html?_wv=1&amp;songid=%s&amp;souce=qqshare&amp;source=qqshare&amp;ADTAG=qqshare" flag="0" adverSign="0" multiMsgFlag="0"><item layout="2"><audio cover="http://imgcache.qq.com/music/photo/album_500/%s/500_albumpic_%s_0.jpg" src="%s" /><title>%s</title><summary>%s</summary></item><source name="QQ音乐" icon="https://i.gtimg.cn/open/app_icon/01/07/98/56/1101079856_100_m.png" url="http://web.p.qq.com/qqmpmobile/aio/app.html?id=1101079856" action="app" a_actionData="com.tencent.qqmusic" i_actionData="tencent1101079856://" appid="1101079856" /></msg>`,
 				name, d["id"], aid[:len(aid)-2], aid, name, "", info.Get("track_info.singer.name").Str)
+			return &message.ServiceElement{
+				Id:      60,
+				Content: xml,
+				SubType: "music",
+			}, nil
+		}
+		if d["type"] == "163" {
+			info, err := global.NeteaseMusicSongInfo(d["id"])
+			if err != nil {
+				return nil, err
+			}
+			if !info.Exists() {
+				return nil, errors.New("song not found")
+			}
+			name := info.Get("name").Str
+			artistName := ""
+			if info.Get("artists.0").Exists() {
+				artistName = info.Get("artists.0.name").Str
+			}
+			xml := fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="2" templateID="1" action="web" brief="[分享] %s" sourceMsgId="0" url="http://music.163.com/m/song/%s" flag="0" adverSign="0" multiMsgFlag="0"><item layout="2"><audio cover="%s?param=90y90" src="https://music.163.com/song/media/outer/url?id=%s.mp3" /><title>%s</title><summary>%s</summary></item><source name="网易云音乐" icon="https://pic.rmb.bdstatic.com/911423bee2bef937975b29b265d737b3.png" url="http://web.p.qq.com/qqmpmobile/aio/app.html?id=100495085" action="app" a_actionData="com.netease.cloudmusic" i_actionData="tencent100495085://" appid="100495085" /></msg>`,
+				name, d["id"], info.Get("album.picUrl").Str, d["id"], name, artistName)
 			return &message.ServiceElement{
 				Id:      60,
 				Content: xml,
@@ -457,6 +497,13 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 			}, nil
 		}
 		return nil, errors.New("unsupported music type: " + d["type"])
+	case "xml":
+		resId := d["resid"]
+		template := CQCodeEscapeValue(d["data"])
+		//println(template)
+		i, _ := strconv.ParseInt(resId, 10, 64)
+		msg := global.NewXmlMsg(template, i)
+		return msg, nil
 	default:
 		return nil, errors.New("unsupported cq code: " + t)
 	}
