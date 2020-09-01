@@ -5,15 +5,19 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
+	"hash/crc32"
+	"path"
+	"sync"
+	"time"
+
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/Mrs4s/go-cqhttp/global"
+
 	log "github.com/sirupsen/logrus"
+	"github.com/tidwall/gjson"
 	"github.com/xujiajun/nutsdb"
-	"hash/crc32"
-	"path"
-	"sync"
 )
 
 type CQBot struct {
@@ -24,9 +28,13 @@ type CQBot struct {
 	friendReqCache  sync.Map
 	invitedReqCache sync.Map
 	joinReqCache    sync.Map
+	tempMsgCache    sync.Map
+	oneWayMsgCache  sync.Map
 }
 
 type MSG map[string]interface{}
+
+var ForceFragmented = false
 
 func NewQQBot(cli *client.QQClient, conf *global.JsonConfig) *CQBot {
 	bot := &CQBot{
@@ -58,8 +66,27 @@ func NewQQBot(cli *client.QQClient, conf *global.JsonConfig) *CQBot {
 	bot.Client.OnGroupMemberLeaved(bot.memberLeaveEvent)
 	bot.Client.OnGroupMemberPermissionChanged(bot.memberPermissionChangedEvent)
 	bot.Client.OnNewFriendRequest(bot.friendRequestEvent)
+	bot.Client.OnNewFriendAdded(bot.friendAddedEvent)
 	bot.Client.OnGroupInvited(bot.groupInvitedEvent)
 	bot.Client.OnUserWantJoinGroup(bot.groupJoinReqEvent)
+	go func() {
+		i := conf.HeartbeatInterval
+		if i < 1 {
+			log.Warn("警告: 心跳功能已关闭，若非预期，请检查配置文件。")
+			return
+		}
+		for {
+			time.Sleep(time.Second * i)
+			bot.dispatchEventMessage(MSG{
+				"time":            time.Now().Unix(),
+				"self_id":         bot.Client.Uin,
+				"post_type":       "meta_event",
+				"meta_event_type": "heartbeat",
+				"status":          nil,
+				"interval":        1000 * i,
+			})
+		}
+	}()
 	return bot
 }
 
@@ -82,7 +109,7 @@ func (bot *CQBot) GetGroupMessage(mid int32) MSG {
 		if err == nil {
 			return m
 		}
-		log.Warnf("获取信息时出现错误: %v", err)
+		log.Warnf("获取信息时出现错误: %v id: %v", err, mid)
 	}
 	return nil
 }
@@ -99,10 +126,23 @@ func (bot *CQBot) SendGroupMessage(groupId int64, m *message.SendingMessage) int
 			newElem = append(newElem, gm)
 			continue
 		}
+		if i, ok := elem.(*message.VoiceElement); ok {
+			gv, err := bot.Client.UploadGroupPtt(groupId, i.Data)
+			if err != nil {
+				log.Warnf("警告: 群 %v 消息语音上传失败: %v", groupId, err)
+				continue
+			}
+			newElem = append(newElem, gv)
+			continue
+		}
 		newElem = append(newElem, elem)
 	}
 	m.Elements = newElem
-	ret := bot.Client.SendGroupMessage(groupId, m)
+	ret := bot.Client.SendGroupMessage(groupId, m, ForceFragmented)
+	if ret == nil || ret.Id == -1 {
+		log.Warnf("群消息发送失败: 账号可能被风控.")
+		return -1
+	}
 	return bot.InsertGroupMessage(ret)
 }
 
@@ -112,7 +152,7 @@ func (bot *CQBot) SendPrivateMessage(target int64, m *message.SendingMessage) in
 		if i, ok := elem.(*message.ImageElement); ok {
 			fm, err := bot.Client.UploadPrivateImage(target, i.Data)
 			if err != nil {
-				log.Warnf("警告: 好友 %v 消息图片上传失败.", target)
+				log.Warnf("警告: 私聊 %v 消息图片上传失败.", target)
 				continue
 			}
 			newElem = append(newElem, fm)
@@ -121,8 +161,27 @@ func (bot *CQBot) SendPrivateMessage(target int64, m *message.SendingMessage) in
 		newElem = append(newElem, elem)
 	}
 	m.Elements = newElem
-	ret := bot.Client.SendPrivateMessage(target, m)
-	return ToGlobalId(target, ret.Id)
+	var id int32 = -1
+	if bot.Client.FindFriend(target) != nil {
+		msg := bot.Client.SendPrivateMessage(target, m)
+		if msg != nil {
+			id = msg.Id
+		}
+	} else if code, ok := bot.tempMsgCache.Load(target); ok {
+		msg := bot.Client.SendTempMessage(code.(int64), target, m)
+		if msg != nil {
+			id = msg.Id
+		}
+	} else if _, ok := bot.oneWayMsgCache.Load(target); ok {
+		msg := bot.Client.SendPrivateMessage(target, m)
+		if msg != nil {
+			id = msg.Id
+		}
+	}
+	if id == -1 {
+		return -1
+	}
+	return ToGlobalId(target, id)
 }
 
 func (bot *CQBot) InsertGroupMessage(m *message.GroupMessage) int32 {
@@ -163,8 +222,22 @@ func (bot *CQBot) Release() {
 }
 
 func (bot *CQBot) dispatchEventMessage(m MSG) {
+	payload := gjson.Parse(m.ToJson())
+	filter := global.GetFilter()
+	if filter != nil && (*filter).Eval(payload) == false {
+		log.Debug("Event filtered!")
+		return
+	}
 	for _, f := range bot.events {
-		f(m)
+		fn := f
+		go func() {
+			start := time.Now()
+			fn(m)
+			end := time.Now()
+			if end.Sub(start) > time.Second*5 {
+				log.Debugf("警告: 事件处理耗时超过 5 秒 (%v), 请检查应用是否有堵塞.", end.Sub(start))
+			}
+		}()
 	}
 }
 
@@ -173,6 +246,9 @@ func formatGroupName(group *client.GroupInfo) string {
 }
 
 func formatMemberName(mem *client.GroupMemberInfo) string {
+	if mem == nil {
+		return "未知"
+	}
 	return fmt.Sprintf("%s(%d)", mem.DisplayName(), mem.Uin)
 }
 

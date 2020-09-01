@@ -3,16 +3,10 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"crypto/md5"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/Mrs4s/MiraiGo/client"
-	"github.com/Mrs4s/go-cqhttp/coolq"
-	"github.com/Mrs4s/go-cqhttp/global"
-	"github.com/Mrs4s/go-cqhttp/server"
-	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
-	log "github.com/sirupsen/logrus"
-	easy "github.com/t-tomalak/logrus-easy-formatter"
-	asciiart "github.com/yinghau76/go-ascii-art"
 	"image"
 	"io"
 	"io/ioutil"
@@ -22,6 +16,18 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Mrs4s/MiraiGo/binary"
+	"github.com/Mrs4s/MiraiGo/client"
+	"github.com/Mrs4s/go-cqhttp/coolq"
+	"github.com/Mrs4s/go-cqhttp/global"
+	"github.com/Mrs4s/go-cqhttp/server"
+
+	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
+	"github.com/rifflock/lfshook"
+	log "github.com/sirupsen/logrus"
+	easy "github.com/t-tomalak/logrus-easy-formatter"
+	asciiart "github.com/yinghau76/go-ascii-art"
 )
 
 func init() {
@@ -33,12 +39,24 @@ func init() {
 	if err == nil {
 		log.SetOutput(io.MultiWriter(os.Stderr, w))
 	}
-	if !global.PathExists("data") {
-		if err := os.Mkdir("data", 0777); err != nil {
-			log.Fatalf("创建数据文件夹失败: %v", err)
-		}
-		if err := os.Mkdir(path.Join("data", "images"), 0777); err != nil {
+	if !global.PathExists(global.IMAGE_PATH) {
+		if err := os.MkdirAll(global.IMAGE_PATH, 0755); err != nil {
 			log.Fatalf("创建图片缓存文件夹失败: %v", err)
+		}
+	}
+	if !global.PathExists(global.VOICE_PATH) {
+		if err := os.MkdirAll(global.VOICE_PATH, 0755); err != nil {
+			log.Fatalf("创建语音缓存文件夹失败: %v", err)
+		}
+	}
+	if !global.PathExists(global.VIDEO_PATH) {
+		if err := os.MkdirAll(global.VIDEO_PATH, 0755); err != nil {
+			log.Fatalf("创建视频缓存文件夹失败: %v", err)
+		}
+	}
+	if !global.PathExists(global.CACHE_PATH) {
+		if err := os.MkdirAll(global.CACHE_PATH, 0755); err != nil {
+			log.Fatalf("创建发送图片缓存文件夹失败: %v", err)
 		}
 	}
 	if global.PathExists("cqhttp.json") {
@@ -96,7 +114,8 @@ func main() {
 				Host:    "0.0.0.0",
 				Port:    6700,
 			},
-			Debug: os.Getenv("DEBUG") == "true",
+			PostMessageFormat: "string",
+			Debug:             os.Getenv("DEBUG") == "true",
 		}
 		if post != "" {
 			conf.HttpConfig.PostUrls[post] = os.Getenv("HTTP_SECRET")
@@ -112,19 +131,60 @@ func main() {
 		time.Sleep(time.Second * 5)
 		return
 	}
-	if conf.Uin == 0 || conf.Password == "" {
+	if conf.Uin == 0 || (conf.Password == "" && conf.PasswordEncrypted == "") {
 		log.Warnf("请修改 config.json 以添加账号密码.")
 		time.Sleep(time.Second * 5)
 		return
 	}
+
+	// log classified by level
+	// Collect all records up to the specified level (default level: warn)
+	logLevel := conf.LogLevel
+	if logLevel != "" {
+		date := time.Now().Format("2006-01-02")
+		var logPathMap lfshook.PathMap
+		switch conf.LogLevel {
+		case "warn":
+			logPathMap = lfshook.PathMap{
+				log.WarnLevel:  path.Join("logs", date+"-warn.log"),
+				log.ErrorLevel: path.Join("logs", date+"-warn.log"),
+				log.FatalLevel: path.Join("logs", date+"-warn.log"),
+				log.PanicLevel: path.Join("logs", date+"-warn.log"),
+			}
+		case "error":
+			logPathMap = lfshook.PathMap{
+				log.ErrorLevel: path.Join("logs", date+"-error.log"),
+				log.FatalLevel: path.Join("logs", date+"-error.log"),
+				log.PanicLevel: path.Join("logs", date+"-error.log"),
+			}
+		default:
+			logPathMap = lfshook.PathMap{
+				log.WarnLevel:  path.Join("logs", date+"-warn.log"),
+				log.ErrorLevel: path.Join("logs", date+"-warn.log"),
+				log.FatalLevel: path.Join("logs", date+"-warn.log"),
+				log.PanicLevel: path.Join("logs", date+"-warn.log"),
+			}
+		}
+
+		log.AddHook(lfshook.NewHook(
+			logPathMap,
+			&easy.Formatter{
+				TimestampFormat: "2006-01-02 15:04:05",
+				LogFormat:       "[%time%] [%lvl%]: %msg% \n",
+			},
+		))
+	}
+
+	log.Info("当前版本:", coolq.Version)
 	if conf.Debug {
 		log.SetLevel(log.DebugLevel)
 		log.Warnf("已开启Debug模式.")
+		log.Debugf("开发交流群: 192548878")
 	}
 	if !global.PathExists("device.json") {
 		log.Warn("虚拟设备信息不存在, 将自动生成随机设备.")
 		client.GenRandomDevice()
-		_ = ioutil.WriteFile("device.json", client.SystemDeviceInfo.ToJson(), 0777)
+		_ = ioutil.WriteFile("device.json", client.SystemDeviceInfo.ToJson(), 0644)
 		log.Info("已生成设备信息并保存到 device.json 文件.")
 	} else {
 		log.Info("将使用 device.json 内的设备信息运行Bot.")
@@ -132,24 +192,55 @@ func main() {
 			log.Fatalf("加载设备信息失败: %v", err)
 		}
 	}
+	if conf.EncryptPassword && conf.PasswordEncrypted == "" {
+		log.Infof("密码加密已启用, 请输入Key对密码进行加密: (Enter 提交)")
+		strKey, _ := console.ReadString('\n')
+		key := md5.Sum([]byte(strKey))
+		if encrypted := EncryptPwd(conf.Password, key[:]); encrypted != "" {
+			conf.Password = ""
+			conf.PasswordEncrypted = encrypted
+			_ = conf.Save("config.json")
+		} else {
+			log.Warnf("加密时出现问题.")
+		}
+	}
+	if conf.PasswordEncrypted != "" {
+		log.Infof("密码加密已启用, 请输入Key对密码进行解密以继续: (Enter 提交)")
+		strKey, _ := console.ReadString('\n')
+		key := md5.Sum([]byte(strKey))
+		conf.Password = DecryptPwd(conf.PasswordEncrypted, key[:])
+	}
 	log.Info("Bot将在5秒后登录并开始信息处理, 按 Ctrl+C 取消.")
 	time.Sleep(time.Second * 5)
 	log.Info("开始尝试登录并同步消息...")
 	cli := client.NewClient(conf.Uin, conf.Password)
+	cli.OnLog(func(c *client.QQClient, e *client.LogEvent) {
+		switch e.Type {
+		case "INFO":
+			log.Info("Protocol -> " + e.Message)
+		case "ERROR":
+			log.Error("Protocol -> " + e.Message)
+		case "DEBUG":
+			log.Debug("Protocol -> " + e.Message)
+		}
+	})
 	rsp, err := cli.Login()
 	for {
 		global.Check(err)
 		if !rsp.Success {
 			switch rsp.Error {
 			case client.NeedCaptcha:
+				_ = ioutil.WriteFile("captcha.jpg", rsp.CaptchaImage, 0644)
 				img, _, _ := image.Decode(bytes.NewReader(rsp.CaptchaImage))
 				fmt.Println(asciiart.New("image", img).Art)
-				log.Warn("请输入验证码： (回车提交)")
+				log.Warn("请输入验证码 (captcha.jpg)： (Enter 提交)")
 				text, _ := console.ReadString('\n')
 				rsp, err = cli.SubmitCaptcha(strings.ReplaceAll(text, "\n", ""), rsp.CaptchaSign)
 				continue
 			case client.UnsafeDeviceError:
 				log.Warnf("账号已开启设备锁，请前往 -> %v <- 验证并重启Bot.", rsp.VerifyUrl)
+				log.Infof(" 按 Enter 继续....")
+				_, _ = console.ReadString('\n')
 				return
 			case client.OtherLoginError, client.UnknownLoginError:
 				log.Fatalf("登录失败: %v", rsp.ErrorMessage)
@@ -166,10 +257,18 @@ func main() {
 	global.Check(cli.ReloadGroupList())
 	log.Infof("共加载 %v 个群.", len(cli.GroupList))
 	b := coolq.NewQQBot(cli, conf)
+	if conf.PostMessageFormat != "string" && conf.PostMessageFormat != "array" {
+		log.Warnf("post_message_format 配置错误, 将自动使用 string")
+		coolq.SetMessageFormat("string")
+	} else {
+		coolq.SetMessageFormat(conf.PostMessageFormat)
+	}
+	coolq.IgnoreInvalidCQCode = conf.IgnoreInvalidCQCode
+	coolq.ForceFragmented = conf.ForceFragmented
 	if conf.HttpConfig != nil && conf.HttpConfig.Enabled {
 		server.HttpServer.Run(fmt.Sprintf("%s:%d", conf.HttpConfig.Host, conf.HttpConfig.Port), conf.AccessToken, b)
 		for k, v := range conf.HttpConfig.PostUrls {
-			server.NewHttpClient().Run(k, v, b)
+			server.NewHttpClient().Run(k, v, conf.HttpConfig.Timeout, b)
 		}
 	}
 	if conf.WSConfig != nil && conf.WSConfig.Enabled {
@@ -181,24 +280,39 @@ func main() {
 	log.Info("资源初始化完成, 开始处理信息.")
 	log.Info("アトリは、高性能ですから!")
 	cli.OnDisconnected(func(bot *client.QQClient, e *client.ClientDisconnectedEvent) {
-		if conf.ReLogin {
-			log.Warnf("Bot已离线，将在 %v 秒后尝试重连.", conf.ReLoginDelay)
-			time.Sleep(time.Second * time.Duration(conf.ReLoginDelay))
-			rsp, err := cli.Login()
-			if err != nil {
-				log.Fatalf("重连失败: %v", err)
-			}
-			if !rsp.Success {
-				switch rsp.Error {
-				case client.NeedCaptcha:
-					log.Fatalf("重连失败: 需要验证码. (验证码处理正在开发中)")
-				case client.UnsafeDeviceError:
-					log.Fatalf("重连失败: 设备锁")
-				default:
-					log.Fatalf("重连失败: %v", rsp.ErrorMessage)
+		if conf.ReLogin.Enabled {
+			var times uint = 1
+			for {
+
+				if conf.ReLogin.MaxReloginTimes == 0 {
+				} else if times > conf.ReLogin.MaxReloginTimes {
+					break
 				}
+				log.Warnf("Bot已离线 (%v)，将在 %v 秒后尝试重连. 重连次数：%v",
+					e.Message, conf.ReLogin.ReLoginDelay, times)
+				times++
+				time.Sleep(time.Second * time.Duration(conf.ReLogin.ReLoginDelay))
+				rsp, err := cli.Login()
+				if err != nil {
+					log.Errorf("重连失败: %v", err)
+					continue
+				}
+				if !rsp.Success {
+					switch rsp.Error {
+					case client.NeedCaptcha:
+						log.Fatalf("重连失败: 需要验证码. (验证码处理正在开发中)")
+					case client.UnsafeDeviceError:
+						log.Fatalf("重连失败: 设备锁")
+					default:
+						log.Errorf("重连失败: %v", rsp.ErrorMessage)
+						continue
+					}
+				}
+				log.Info("重连成功")
+				return
+
 			}
-			return
+			log.Fatal("重连失败: 重连次数达到设置的上限值")
 		}
 		b.Release()
 		log.Fatalf("Bot已离线：%v", e.Message)
@@ -207,4 +321,29 @@ func main() {
 	signal.Notify(c, os.Interrupt, os.Kill)
 	<-c
 	b.Release()
+}
+
+func EncryptPwd(pwd string, key []byte) string {
+	tea := binary.NewTeaCipher(key)
+	if tea == nil {
+		return ""
+	}
+	return base64.StdEncoding.EncodeToString(tea.Encrypt([]byte(pwd)))
+}
+
+func DecryptPwd(ePwd string, key []byte) string {
+	defer func() {
+		if pan := recover(); pan != nil {
+			log.Fatalf("密码解密失败: %v", pan)
+		}
+	}()
+	encrypted, err := base64.StdEncoding.DecodeString(ePwd)
+	if err != nil {
+		panic(err)
+	}
+	tea := binary.NewTeaCipher(key)
+	if tea == nil {
+		panic("密钥错误")
+	}
+	return string(tea.Decrypt(encrypted))
 }
