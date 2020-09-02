@@ -25,7 +25,7 @@ func (bot *CQBot) CQGetLoginInfo() MSG {
 
 // https://cqhttp.cc/docs/4.15/#/API?id=get_friend_list-%E8%8E%B7%E5%8F%96%E5%A5%BD%E5%8F%8B%E5%88%97%E8%A1%A8
 func (bot *CQBot) CQGetFriendList() MSG {
-	var fs []MSG
+	fs := make([]MSG, 0)
 	for _, f := range bot.Client.FriendList {
 		fs = append(fs, MSG{
 			"nickname": f.Nickname,
@@ -38,7 +38,7 @@ func (bot *CQBot) CQGetFriendList() MSG {
 
 // https://cqhttp.cc/docs/4.15/#/API?id=get_group_list-%E8%8E%B7%E5%8F%96%E7%BE%A4%E5%88%97%E8%A1%A8
 func (bot *CQBot) CQGetGroupList(noCache bool) MSG {
-	var gs []MSG
+	gs := make([]MSG, 0)
 	if noCache {
 		_ = bot.Client.ReloadGroupList()
 	}
@@ -73,7 +73,7 @@ func (bot *CQBot) CQGetGroupMemberList(groupId int64) MSG {
 	if group == nil {
 		return Failed(100)
 	}
-	var members []MSG
+	members := make([]MSG, 0)
 	for _, m := range group.Members {
 		members = append(members, convertGroupMemberInfo(groupId, m))
 	}
@@ -525,7 +525,7 @@ func (bot *CQBot) CQGetForwardMessage(resId string) MSG {
 	if m == nil {
 		return Failed(100)
 	}
-	var r []MSG
+	r := make([]MSG, 0)
 	for _, n := range m.Nodes {
 		bot.checkMedia(n.Message)
 		r = append(r, MSG{
