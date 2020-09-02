@@ -90,6 +90,7 @@ func (bot *CQBot) groupMessageEvent(c *client.QQClient, m *message.GroupMessage)
 		"anonymous":    nil,
 		"font":         0,
 		"group_id":     m.GroupCode,
+		"group_name":   m.GroupName,
 		"message":      ToFormattedMessage(m.Elements, m.GroupCode, false),
 		"message_id":   id,
 		"message_type": "group",
