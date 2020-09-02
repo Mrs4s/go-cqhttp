@@ -465,11 +465,7 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 				return nil, errors.New("song error")
 			}
 			json :=  fmt.Sprintf("{\"app\": \"com.tencent.structmsg\",\"desc\": \"音乐\",\"meta\": {\"music\": {\"desc\": \"来自MiraiGo\",\"jumpUrl\": \"%s\",\"musicUrl\": \"%s\",\"preview\": \"%s\",\"tag\": \"QQ音乐\",\"title\": \"%s\"}},\"prompt\": \"[分享]%s\",\"ver\": \"0.0.0.1\",\"view\": \"music\"}", jumpUrl, purl, preview, name, name)
-<<<<<<< Updated upstream
 			return message.NewJsonMsg(json), nil
-=======
-			return message.NewLightApp(json), nil
->>>>>>> Stashed changes
 		}
 		if d["type"] == "163" {
 			info, err := global.NeteaseMusicSongInfo(d["id"])
