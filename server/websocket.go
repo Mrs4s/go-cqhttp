@@ -123,6 +123,14 @@ func (c *websocketClient) connectEvent() {
 		}
 		return
 	}
+
+	handshake := fmt.Sprintf(`{"meta_event_type":"lifecycle","post_type":"meta_event","self_id":%d,"sub_type":"connect","time":%d}`,
+		c.bot.Client.Uin, time.Now().Unix())
+	err = conn.WriteMessage(websocket.TextMessage, []byte(handshake))
+	if err != nil {
+		log.Warnf("反向Websocket 握手时出现错误: %v", err)
+	}
+
 	log.Infof("已连接到反向Websocket Event服务器 %v", c.conf.ReverseEventUrl)
 	c.eventConn = &websocketConn{Conn: conn}
 }
@@ -146,6 +154,14 @@ func (c *websocketClient) connectUniversal() {
 		}
 		return
 	}
+
+	handshake := fmt.Sprintf(`{"meta_event_type":"lifecycle","post_type":"meta_event","self_id":%d,"sub_type":"connect","time":%d}`,
+		c.bot.Client.Uin, time.Now().Unix())
+	err = conn.WriteMessage(websocket.TextMessage, []byte(handshake))
+	if err != nil {
+		log.Warnf("反向Websocket 握手时出现错误: %v", err)
+	}
+
 	wrappedConn := &websocketConn{Conn: conn}
 	go c.listenApi(wrappedConn, true)
 	c.universalConn = wrappedConn
