@@ -503,11 +503,19 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 		template := CQCodeEscapeValue(d["data"])
 		//println(template)
 		i, _ := strconv.ParseInt(resId, 10, 64)
-		msg := message.NewXmlMsg(template, i)
+		msg := message.NewRichXml(template, i)
 		return msg, nil
 	case "json":
+		resId := d["resid"]
+		i, _ := strconv.ParseInt(resId, 10, 64)
 		log.Warnf("json msg=%s", d["data"])
-		msg := message.NewJsonMsg(CQCodeUnescapeValue(d["data"]))
+		if i == 0 {
+			//默认情况下走小程序通道
+			msg := message.NewLightApp(CQCodeUnescapeValue(d["data"]))
+			return msg, nil
+		}
+		//resid不为0的情况下走富文本通道，后续补全透传service Id，此处暂时不处理 TODO
+		msg := message.NewRichJson(CQCodeUnescapeValue(d["data"]))
 		return msg, nil
 	default:
 		return nil, errors.New("unsupported cq code: " + t)
