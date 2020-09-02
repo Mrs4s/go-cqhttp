@@ -41,7 +41,8 @@ func (s *httpServer) Run(addr, authToken string, bot *coolq.CQBot) {
 			c.Status(404)
 			return
 		}
-		if c.Request.Method == "POST" && strings.Contains(c.Request.Header.Get("Content-Type"), "application/json") {
+		if c.Request.Method == "POST" && contains(strings.Split(c.Request.Header.Get("Content-Type"), ";"), "application/json") {
+
 			d, err := c.GetRawData()
 			if err != nil {
 				log.Warnf("获取请求 %v 的Body时出现错误: %v", c.Request.RequestURI, err)
@@ -54,6 +55,8 @@ func (s *httpServer) Run(addr, authToken string, bot *coolq.CQBot) {
 				return
 			}
 			c.Set("json_body", gjson.ParseBytes(d))
+		} else {
+			log.Warnf("请求出错，是否为POST请求或检查 Content-Type是否为 application/json")
 		}
 		c.Next()
 	})
@@ -182,6 +185,15 @@ func (c *httpClient) Run(addr, secret string, timeout int32, bot *coolq.CQBot) {
 	}
 	bot.OnEventPush(c.onBotPushEvent)
 	log.Infof("HTTP POST上报器已启动: %v", addr)
+}
+
+func contains(array []string, s string) bool {
+	for _, item := range array {
+		if item == s {
+			return true
+		}
+	}
+	return false
 }
 
 func (c *httpClient) onBotPushEvent(m coolq.MSG) {
@@ -399,7 +411,6 @@ func getParamOrDefault(c *gin.Context, k, def string) string {
 	}
 	return def
 }
-
 
 func getParam(c *gin.Context, k string) string {
 	p, _ := getParamWithType(c, k)
