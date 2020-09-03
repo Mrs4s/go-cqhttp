@@ -464,7 +464,11 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 			if len(aid) < 2 {
 				return nil, errors.New("song error")
 			}
-			json := fmt.Sprintf("{\"app\": \"com.tencent.structmsg\",\"desc\": \"音乐\",\"meta\": {\"music\": {\"desc\": \"来自MiraiGo\",\"jumpUrl\": \"%s\",\"musicUrl\": \"%s\",\"preview\": \"%s\",\"tag\": \"QQ音乐\",\"title\": \"%s\"}},\"prompt\": \"[分享]%s\",\"ver\": \"0.0.0.1\",\"view\": \"music\"}", jumpUrl, purl, preview, name, name)
+			content := "来自go-cqhttp"
+			if d["content"] != "" {
+				content = d["content"]
+			}
+			json := fmt.Sprintf("{\"app\": \"com.tencent.structmsg\",\"desc\": \"音乐\",\"meta\": {\"music\": {\"desc\": \"%s\",\"jumpUrl\": \"%s\",\"musicUrl\": \"%s\",\"preview\": \"%s\",\"tag\": \"QQ音乐\",\"title\": \"%s\"}},\"prompt\": \"[分享]%s\",\"ver\": \"0.0.0.1\",\"view\": \"music\"}", content, jumpUrl, purl, preview, name, name)
 			return message.NewLightApp(json), nil
 		}
 		if d["type"] == "163" {
