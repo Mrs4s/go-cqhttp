@@ -71,9 +71,12 @@ func NewQQBot(cli *client.QQClient, conf *global.JsonConfig) *CQBot {
 	bot.Client.OnUserWantJoinGroup(bot.groupJoinReqEvent)
 	go func() {
 		i := conf.HeartbeatInterval
-		if i < 1 {
+		if i < 0 {
 			log.Warn("警告: 心跳功能已关闭，若非预期，请检查配置文件。")
 			return
+		}
+		if i == 0 {
+			i = 5
 		}
 		for {
 			time.Sleep(time.Second * i)
