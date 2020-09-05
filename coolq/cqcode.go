@@ -51,6 +51,11 @@ func ToArrayMessage(e []message.IMessageElement, code int64, raw ...bool) (r []M
 				"type": "text",
 				"data": map[string]string{"text": o.Content},
 			}
+		case *message.LightAppElement:
+			m = MSG{
+				"type": "text",
+				"data": map[string]string{"text": o.Content},
+			}
 		case *message.AtElement:
 			if o.Target == 0 {
 				m = MSG{
@@ -161,6 +166,8 @@ func ToStringMessage(e []message.IMessageElement, code int64, raw ...bool) (r st
 			} else {
 				r += fmt.Sprintf(`[CQ:image,file=%s,url=%s]`, o.Filename, CQCodeEscapeValue(o.Url))
 			}
+		case *message.LightAppElement:
+			r += CQCodeEscapeText(o.Content)
 		}
 	}
 	return
