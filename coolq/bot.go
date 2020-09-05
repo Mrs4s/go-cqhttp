@@ -259,3 +259,4 @@ func (m MSG) ToJson() string {
 	b, _ := json.Marshal(m)
 	return string(b)
 }
+

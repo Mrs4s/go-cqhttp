@@ -173,7 +173,7 @@ func ToStringMessage(e []message.IMessageElement, code int64, raw ...bool) (r st
 	return
 }
 
-func (bot *CQBot) ConvertStringMessage(m string, group bool) (r []message.IMessageElement) {
+func (bot *CQBot) ConvertStringMessage(m string, group bool, uid int64) (r []message.IMessageElement) {
 	i := matchReg.FindAllStringSubmatchIndex(m, -1)
 	si := 0
 	for _, idx := range i {
@@ -205,14 +205,14 @@ func (bot *CQBot) ConvertStringMessage(m string, group bool) (r []message.IMessa
 							ReplySeq: org["message-id"].(int32),
 							Sender:   org["sender"].(message.Sender).Uin,
 							Time:     org["time"].(int32),
-							Elements: bot.ConvertStringMessage(org["message"].(string), group),
+							Elements: bot.ConvertStringMessage(org["message"].(string), group, uid),
 						},
 					}, r...)
 					continue
 				}
 			}
 		}
-		elem, err := bot.ToElement(t, d, group)
+		elem, err := bot.ToElement(t, d, group, uid)
 		if err != nil {
 			if !IgnoreInvalidCQCode {
 				log.Warnf("转换CQ码 %v 到MiraiGo Element时出现错误: %v 将原样发送.", code, err)
@@ -230,7 +230,7 @@ func (bot *CQBot) ConvertStringMessage(m string, group bool) (r []message.IMessa
 	return
 }
 
-func (bot *CQBot) ConvertObjectMessage(m gjson.Result, group bool) (r []message.IMessageElement) {
+func (bot *CQBot) ConvertObjectMessage(m gjson.Result, group bool, uid int64) (r []message.IMessageElement) {
 	convertElem := func(e gjson.Result) {
 		t := e.Get("type").Str
 		if t == "reply" && group {
@@ -249,7 +249,7 @@ func (bot *CQBot) ConvertObjectMessage(m gjson.Result, group bool) (r []message.
 							ReplySeq: org["message-id"].(int32),
 							Sender:   org["sender"].(message.Sender).Uin,
 							Time:     org["time"].(int32),
-							Elements: bot.ConvertStringMessage(org["message"].(string), group),
+							Elements: bot.ConvertStringMessage(org["message"].(string), group, uid),
 						},
 					}, r...)
 					return
@@ -261,7 +261,7 @@ func (bot *CQBot) ConvertObjectMessage(m gjson.Result, group bool) (r []message.
 			d[key.Str] = value.Str
 			return true
 		})
-		elem, err := bot.ToElement(t, d, group)
+		elem, err := bot.ToElement(t, d, group, uid)
 		if err != nil {
 			log.Warnf("转换CQ码到MiraiGo Element时出现错误: %v 将忽略本段CQ码.", err)
 			return
@@ -269,7 +269,7 @@ func (bot *CQBot) ConvertObjectMessage(m gjson.Result, group bool) (r []message.
 		r = append(r, elem)
 	}
 	if m.Type == gjson.String {
-		return bot.ConvertStringMessage(m.Str, group)
+		return bot.ConvertStringMessage(m.Str, group, uid)
 	}
 	if m.IsArray() {
 		for _, e := range m.Array() {
@@ -282,121 +282,12 @@ func (bot *CQBot) ConvertObjectMessage(m gjson.Result, group bool) (r []message.
 	return
 }
 
-func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.IMessageElement, error) {
+func (bot *CQBot) ToElement(t string, d map[string]string, group bool, uid int64) (message.IMessageElement, error) {
 	switch t {
 	case "text":
 		return message.NewText(d["text"]), nil
 	case "image":
-		f := d["file"]
-		if strings.HasPrefix(f, "http") || strings.HasPrefix(f, "https") {
-			cache := d["cache"]
-			if cache == "" {
-				cache = "1"
-			}
-			hash := md5.Sum([]byte(f))
-			cacheFile := path.Join(global.CACHE_PATH, hex.EncodeToString(hash[:])+".cache")
-			if global.PathExists(cacheFile) && cache == "1" {
-				b, err := ioutil.ReadFile(cacheFile)
-				if err == nil {
-					return message.NewImage(b), nil
-				}
-			}
-			b, err := global.GetBytes(f)
-			if err != nil {
-				return nil, err
-			}
-			_ = ioutil.WriteFile(cacheFile, b, 0644)
-			return message.NewImage(b), nil
-		}
-		if strings.HasPrefix(f, "base64") {
-			b, err := base64.StdEncoding.DecodeString(strings.ReplaceAll(f, "base64://", ""))
-			if err != nil {
-				return nil, err
-			}
-			return message.NewImage(b), nil
-		}
-		if strings.HasPrefix(f, "file") {
-			fu, err := url.Parse(f)
-			if err != nil {
-				return nil, err
-			}
-			if strings.HasPrefix(fu.Path, "/") && runtime.GOOS == `windows` {
-				fu.Path = fu.Path[1:]
-			}
-			b, err := ioutil.ReadFile(fu.Path)
-			if err != nil {
-				return nil, err
-			}
-			return message.NewImage(b), nil
-		}
-		rawPath := path.Join(global.IMAGE_PATH, f)
-		if !global.PathExists(rawPath) && global.PathExists(rawPath+".cqimg") {
-			rawPath += ".cqimg"
-		}
-		if !global.PathExists(rawPath) && d["url"] != "" {
-			return bot.ToElement(t, map[string]string{"file": d["url"]}, group)
-		}
-		if global.PathExists(rawPath) {
-			b, err := ioutil.ReadFile(rawPath)
-			if err != nil {
-				return nil, err
-			}
-			if path.Ext(rawPath) != ".image" && path.Ext(rawPath) != ".cqimg" {
-				return message.NewImage(b), nil
-			}
-			if len(b) < 20 {
-				return nil, errors.New("invalid local file")
-			}
-			var size int32
-			var hash []byte
-			var url string
-			if path.Ext(rawPath) == ".cqimg" {
-				for _, line := range strings.Split(global.ReadAllText(rawPath), "\n") {
-					kv := strings.SplitN(line, "=", 2)
-					switch kv[0] {
-					case "md5":
-						hash, _ = hex.DecodeString(strings.ReplaceAll(kv[1], "\r", ""))
-					case "size":
-						t, _ := strconv.Atoi(strings.ReplaceAll(kv[1], "\r", ""))
-						size = int32(t)
-					}
-				}
-			} else {
-				r := binary.NewReader(b)
-				hash = r.ReadBytes(16)
-				size = r.ReadInt32()
-				r.ReadString()
-				url = r.ReadString()
-			}
-			if size == 0 {
-				if url != "" {
-					return bot.ToElement(t, map[string]string{"file": url}, group)
-				}
-				return nil, errors.New("img size is 0")
-			}
-			if len(hash) != 16 {
-				return nil, errors.New("invalid hash")
-			}
-			if group {
-				rsp, err := bot.Client.QueryGroupImage(1, hash, size)
-				if err != nil {
-					if url != "" {
-						return bot.ToElement(t, map[string]string{"file": url}, group)
-					}
-					return nil, err
-				}
-				return rsp, nil
-			}
-			rsp, err := bot.Client.QueryFriendImage(1, hash, size)
-			if err != nil {
-				if url != "" {
-					return bot.ToElement(t, map[string]string{"file": url}, group)
-				}
-				return nil, err
-			}
-			return rsp, nil
-		}
-		return nil, errors.New("invalid image")
+		return bot.makeImageElem(t, d, group, uid)
 	case "record":
 		if !group {
 			return nil, errors.New("private voice unsupported now")
@@ -534,6 +425,11 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 		//resid不为0的情况下走富文本通道，后续补全透传service Id，此处暂时不处理 TODO
 		msg := message.NewRichJson(CQCodeUnescapeValue(d["data"]))
 		return msg, nil
+	case "cardimage":
+		source := d["source"]
+		icon := d["icon"]
+		img, _ := bot.makeImageElem(t, d, group, uid)
+		return bot.SendNewPic(uid, img, source, icon, group)
 	default:
 		return nil, errors.New("unsupported cq code: " + t)
 	}
@@ -565,4 +461,143 @@ func CQCodeUnescapeValue(content string) string {
 	ret := strings.ReplaceAll(content, "&#44;", ",")
 	ret = CQCodeUnescapeText(ret)
 	return ret
+}
+
+// 图片 elem 生成器，单独拎出来，用于公用
+func (bot *CQBot) makeImageElem(t string, d map[string]string, group bool, uid int64) (message.IMessageElement, error) {
+	f := d["file"]
+	if strings.HasPrefix(f, "http") || strings.HasPrefix(f, "https") {
+		cache := d["cache"]
+		if cache == "" {
+			cache = "1"
+		}
+		hash := md5.Sum([]byte(f))
+		cacheFile := path.Join(global.CACHE_PATH, hex.EncodeToString(hash[:])+".cache")
+		if global.PathExists(cacheFile) && cache == "1" {
+			b, err := ioutil.ReadFile(cacheFile)
+			if err == nil {
+				return message.NewImage(b), nil
+			}
+		}
+		b, err := global.GetBytes(f)
+		if err != nil {
+			return nil, err
+		}
+		_ = ioutil.WriteFile(cacheFile, b, 0644)
+		return message.NewImage(b), nil
+	}
+	if strings.HasPrefix(f, "base64") {
+		b, err := base64.StdEncoding.DecodeString(strings.ReplaceAll(f, "base64://", ""))
+		if err != nil {
+			return nil, err
+		}
+		return message.NewImage(b), nil
+	}
+	if strings.HasPrefix(f, "file") {
+		fu, err := url.Parse(f)
+		if err != nil {
+			return nil, err
+		}
+		if strings.HasPrefix(fu.Path, "/") && runtime.GOOS == `windows` {
+			fu.Path = fu.Path[1:]
+		}
+		b, err := ioutil.ReadFile(fu.Path)
+		if err != nil {
+			return nil, err
+		}
+		return message.NewImage(b), nil
+	}
+	rawPath := path.Join(global.IMAGE_PATH, f)
+	if !global.PathExists(rawPath) && global.PathExists(rawPath+".cqimg") {
+		rawPath += ".cqimg"
+	}
+	if !global.PathExists(rawPath) && d["url"] != "" {
+		return bot.ToElement(t, map[string]string{"file": d["url"]}, group, uid)
+	}
+	if global.PathExists(rawPath) {
+		b, err := ioutil.ReadFile(rawPath)
+		if err != nil {
+			return nil, err
+		}
+		if path.Ext(rawPath) != ".image" && path.Ext(rawPath) != ".cqimg" {
+			return message.NewImage(b), nil
+		}
+		if len(b) < 20 {
+			return nil, errors.New("invalid local file")
+		}
+		var size int32
+		var hash []byte
+		var url string
+		if path.Ext(rawPath) == ".cqimg" {
+			for _, line := range strings.Split(global.ReadAllText(rawPath), "\n") {
+				kv := strings.SplitN(line, "=", 2)
+				switch kv[0] {
+				case "md5":
+					hash, _ = hex.DecodeString(strings.ReplaceAll(kv[1], "\r", ""))
+				case "size":
+					t, _ := strconv.Atoi(strings.ReplaceAll(kv[1], "\r", ""))
+					size = int32(t)
+				}
+			}
+		} else {
+			r := binary.NewReader(b)
+			hash = r.ReadBytes(16)
+			size = r.ReadInt32()
+			r.ReadString()
+			url = r.ReadString()
+		}
+		if size == 0 {
+			if url != "" {
+				return bot.ToElement(t, map[string]string{"file": url}, group, uid)
+			}
+			return nil, errors.New("img size is 0")
+		}
+		if len(hash) != 16 {
+			return nil, errors.New("invalid hash")
+		}
+		if group {
+			rsp, err := bot.Client.QueryGroupImage(1, hash, size)
+			if err != nil {
+				if url != "" {
+					return bot.ToElement(t, map[string]string{"file": url}, group, uid)
+				}
+				return nil, err
+			}
+			return rsp, nil
+		}
+		rsp, err := bot.Client.QueryFriendImage(1, hash, size)
+		if err != nil {
+			if url != "" {
+				return bot.ToElement(t, map[string]string{"file": url}, group, uid)
+			}
+			return nil, err
+		}
+		return rsp, nil
+	}
+	return nil, errors.New("invalid image")
+}
+
+//SendNewPic 一种xml 方式发送的群消息图片
+func (bot *CQBot) SendNewPic(id int64, i message.ImageElement, source string, icon string, group bool) (*message.ServiceElement, error) {
+		var xml string
+		if group == false {
+			gm, err := bot.Client.UploadPrivateImage(id, i.Data)
+			if err != nil {
+				log.Warnf("警告: 群 %v 消息图片上传失败: %v", id, err)
+				return nil, err
+			}
+			xml = fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="5" templateID="1" action="" brief="&#91;分享&#93;我看到一张很赞的图片，分享给你，快来看！" sourceMsgId="0" url="%s" flag="2" adverSign="0" multiMsgFlag="0"><item layout="0"><image uuid="%d" md5="%x" GroupFiledid="0" filesize="%d" local_path="%s" minWidth="400" minHeight="400" maxWidth="500" maxHeight="1000" /></item><source name="%s" icon="%s" action="" appid="-1" /></msg>`, "", gm.ImageId, gm.Md5, i.Size, "", source, icon)
+
+		} else {
+			gm, err := bot.Client.UploadGroupImage(id, i.Data)
+			if err != nil {
+				log.Warnf("警告: 群 %v 消息图片上传失败: %v", id, err)
+				return nil, err
+			}
+			xml = fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="5" templateID="1" action="" brief="&#91;分享&#93;我看到一张很赞的图片，分享给你，快来看！" sourceMsgId="0" url="%s" flag="2" adverSign="0" multiMsgFlag="0"><item layout="0"><image uuid="%d" md5="%x" GroupFiledid="0" filesize="%d" local_path="%s" minWidth="400" minHeight="400" maxWidth="500" maxHeight="1000" /></item><source name="%s" icon="%s" action="" appid="-1" /></msg>`, "", gm.FileId, gm.Md5, i.Size, "", source, icon)
+		}
+		log.Warn(xml)
+		XmlMsg := message.NewRichXml(xml, 5)
+		return XmlMsg, nil
+	return nil, errors.New("发送xml图片消息失败")
 }

@@ -119,7 +119,7 @@ func (bot *CQBot) CQSendGroupMessage(groupId int64, i interface{}, autoEscape bo
 	}
 	if m, ok := i.(gjson.Result); ok {
 		if m.Type == gjson.JSON {
-			elem := bot.ConvertObjectMessage(m, true)
+			elem := bot.ConvertObjectMessage(m, true,groupId)
 			fixAt(elem)
 			mid := bot.SendGroupMessage(groupId, &message.SendingMessage{Elements: elem})
 			if mid == -1 {
@@ -144,7 +144,7 @@ func (bot *CQBot) CQSendGroupMessage(groupId int64, i interface{}, autoEscape bo
 	if autoEscape {
 		elem = append(elem, message.NewText(str))
 	} else {
-		elem = bot.ConvertStringMessage(str, true)
+		elem = bot.ConvertStringMessage(str, true,groupId)
 	}
 	fixAt(elem)
 	mid := bot.SendGroupMessage(groupId, &message.SendingMessage{Elements: elem})
@@ -187,7 +187,7 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupId int64, m gjson.Result) MSG {
 						}
 						return m["time"].(int32)
 					}(),
-					Message: bot.ConvertStringMessage(m["message"].(string), true),
+					Message: bot.ConvertStringMessage(m["message"].(string), true,groupId),
 				})
 				return
 			}
@@ -196,7 +196,7 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupId int64, m gjson.Result) MSG {
 		}
 		uin, _ := strconv.ParseInt(e.Get("data.uin").Str, 10, 64)
 		name := e.Get("data.name").Str
-		content := bot.ConvertObjectMessage(e.Get("data.content"), true)
+		content := bot.ConvertObjectMessage(e.Get("data.content"), true,groupId)
 		if uin != 0 && name != "" && len(content) > 0 {
 			var newElem []message.IMessageElement
 			for _, elem := range content {
@@ -242,7 +242,7 @@ func (bot *CQBot) CQSendPrivateMessage(userId int64, i interface{}, autoEscape b
 	var str string
 	if m, ok := i.(gjson.Result); ok {
 		if m.Type == gjson.JSON {
-			elem := bot.ConvertObjectMessage(m, true)
+			elem := bot.ConvertObjectMessage(m, true,userId)
 			mid := bot.SendPrivateMessage(userId, &message.SendingMessage{Elements: elem})
 			if mid == -1 {
 				return Failed(100)
@@ -265,7 +265,7 @@ func (bot *CQBot) CQSendPrivateMessage(userId int64, i interface{}, autoEscape b
 	if autoEscape {
 		elem = append(elem, message.NewText(str))
 	} else {
-		elem = bot.ConvertStringMessage(str, false)
+		elem = bot.ConvertStringMessage(str, false,userId)
 	}
 	mid := bot.SendPrivateMessage(userId, &message.SendingMessage{Elements: elem})
 	if mid == -1 {
