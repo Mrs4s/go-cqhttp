@@ -601,7 +601,7 @@ func (bot *CQBot) SendNewPic(elem message.IMessageElement, source string, icon s
 		if group == false {
 			gm, err := bot.Client.UploadPrivateImage(1, i.Data)
 			if err != nil {
-				log.Warnf("警告: 群 %v 消息图片上传失败: %v", 1, err)
+				log.Warnf("警告: 好友消息 %v 消息图片上传失败: %v", 1, err)
 				return nil, err
 			}
 			xml = fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="5" templateID="1" action="" brief="&#91;分享&#93;我看到一张很赞的图片，分享给你，快来看！" sourceMsgId="0" url="%s" flag="2" adverSign="0" multiMsgFlag="0"><item layout="0"><image uuid="%d" md5="%x" GroupFiledid="0" filesize="%d" local_path="%s" minWidth="%d" minHeight="%d" maxWidth="%d" maxHeight="%d" /></item><source name="%s" icon="%s" action="" appid="-1" /></msg>`, "", gm.ImageId, gm.Md5, len(i.Data), "", minwidth, minheigt, maxwidth, maxheight, source, icon)
