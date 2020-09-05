@@ -396,6 +396,24 @@ func (bot *CQBot) CQDeleteMessage(messageId int32) MSG {
 	return OK(nil)
 }
 
+func (bot *CQBot) CQGetVipInfo(userId int64) MSG {
+	msg := MSG{}
+	vip, err := bot.Client.GetVipInfo(userId)
+	if err != nil {
+		return Failed(100)
+	}
+	msg = MSG{
+		"user_id":			vip.Uin,
+		"nickname":			vip.Name,
+		"level":			vip.Level,
+		"level_speed":		vip.LevelSpeed,
+		"vip_level":		vip.VipLevel,
+		"vip_growth_speed":	vip.VipGrowthSpeed,
+		"vip_growth_total":	vip.VipGrowthTotal,
+	}
+	return OK(msg)
+}
+
 // https://github.com/howmanybots/onebot/blob/master/v11/specs/api/public.md#get_group_honor_info-%E8%8E%B7%E5%8F%96%E7%BE%A4%E8%8D%A3%E8%AA%89%E4%BF%A1%E6%81%AF
 func (bot *CQBot) CQGetGroupHonorInfo(groupId int64, t string) MSG {
 	msg := MSG{"group_id": groupId}

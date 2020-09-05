@@ -154,6 +154,9 @@ func (s *httpServer) Run(addr, authToken string, bot *coolq.CQBot) {
 	s.engine.Any("/get_version_info", s.GetVersionInfo)
 	s.engine.Any("/get_version_info_async", s.GetVersionInfo)
 
+	s.engine.Any("/_get_vip_info", s.GetVipInfo)
+	s.engine.Any("/_get_vip_info_async", s.GetVipInfo)
+
 	s.engine.Any("/.handle_quick_operation", s.HandleQuickOperation)
 
 	go func() {
@@ -379,6 +382,11 @@ func (s *httpServer) GetStatus(c *gin.Context) {
 
 func (s *httpServer) GetVersionInfo(c *gin.Context) {
 	c.JSON(200, s.bot.CQGetVersionInfo())
+}
+
+func (s *httpServer) GetVipInfo(c *gin.Context) {
+	uid, _ := strconv.ParseInt(getParam(c, "user_id"), 10, 64)
+	c.JSON(200, s.bot.CQGetVipInfo(uid))
 }
 
 func (s *httpServer) HandleQuickOperation(c *gin.Context) {
