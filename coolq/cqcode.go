@@ -390,7 +390,7 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 			if info.Get("artists.0").Exists() {
 				artistName = info.Get("artists.0.name").Str
 			}
-			json := fmt.Sprintf("{\"app\": \"com.tencent.structmsg\",\"desc\":\"音乐\",\"view\":\"music\",\"prompt\":\"[分享]%s\",\"ver\":\"0.0.0.1\",\"meta\":{ \"music\": { \"desc\": \"%s\", \"jumpUrl\": \"%s\", \"musicUrl\": \"%s\", \"preview\": \"%s\", \"tag\": \"网易云音乐\", \"title\":\"%s\"}}}", name,artistName, jumpUrl, musicUrl, picUrl, name)
+			json := fmt.Sprintf("{\"app\": \"com.tencent.structmsg\",\"desc\":\"音乐\",\"view\":\"music\",\"prompt\":\"[分享]%s\",\"ver\":\"0.0.0.1\",\"meta\":{ \"music\": { \"desc\": \"%s\", \"jumpUrl\": \"%s\", \"musicUrl\": \"%s\", \"preview\": \"%s\", \"tag\": \"网易云音乐\", \"title\":\"%s\"}}}", name, artistName, jumpUrl, musicUrl, picUrl, name)
 			return message.NewLightApp(json), nil
 		}
 		if d["type"] == "custom" {
@@ -615,10 +615,17 @@ func (bot *CQBot) SendNewPic(elem message.IMessageElement, source string, icon s
 			xml = fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="5" templateID="1" action="" brief="&#91;分享&#93;我看到一张很赞的图片，分享给你，快来看！" sourceMsgId="0" url="%s" flag="2" adverSign="0" multiMsgFlag="0"><item layout="0"><image uuid="%d" md5="%x" GroupFiledid="0" filesize="%d" local_path="%s" minWidth="%d" minHeight="%d" maxWidth="%d" maxHeight="%d" /></item><source name="%s" icon="%s" action="" appid="-1" /></msg>`, "", gm.FileId, gm.Md5, len(i.Data), "", minwidth, minheigt, maxwidth, maxheight, source, icon)
 		}
 	}
+	if i, ok := elem.(*message.GroupImageElement); ok {
+		xml = fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="5" templateID="1" action="" brief="&#91;分享&#93;我看到一张很赞的图片，分享给你，快来看！" sourceMsgId="0" url="%s" flag="2" adverSign="0" multiMsgFlag="0"><item layout="0"><image uuid="%s" md5="%x" GroupFiledid="0" filesize="%d" local_path="%s" minWidth="%d" minHeight="%d" maxWidth="%d" maxHeight="%d" /></item><source name="%s" icon="%s" action="" appid="-1" /></msg>`, "", i.ImageId, i.Md5, 0, "", minwidth, minheigt, maxwidth, maxheight, source, icon)
+	}
+	if i, ok := elem.(*message.FriendImageElement); ok {
+		xml = fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="5" templateID="1" action="" brief="&#91;分享&#93;我看到一张很赞的图片，分享给你，快来看！" sourceMsgId="0" url="%s" flag="2" adverSign="0" multiMsgFlag="0"><item layout="0"><image uuid="%s" md5="%x" GroupFiledid="0" filesize="%d" local_path="%s" minWidth="%d" minHeight="%d" maxWidth="%d" maxHeight="%d" /></item><source name="%s" icon="%s" action="" appid="-1" /></msg>`, "", i.ImageId, i.Md5, 0, "", minwidth, minheigt, maxwidth, maxheight, source, icon)
+	}
 	if xml != "" {
 		log.Warn(xml)
 		XmlMsg := message.NewRichXml(xml, 5)
 		return XmlMsg, nil
 	}
+	log.Warnf("elem: %+v", elem)
 	return nil, errors.New("发送xml图片消息失败")
 }
