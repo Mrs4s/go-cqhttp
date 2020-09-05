@@ -626,6 +626,5 @@ func (bot *CQBot) SendNewPic(elem message.IMessageElement, source string, icon s
 		XmlMsg := message.NewRichXml(xml, 5)
 		return XmlMsg, nil
 	}
-	log.Warnf("elem: %+v", elem)
 	return nil, errors.New("发送xml图片消息失败")
 }
