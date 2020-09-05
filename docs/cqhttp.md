@@ -168,7 +168,7 @@ Type: `xml`
 </msg>
 ```
 
-###json消息支持
+### json消息支持
 
 Type: `json`
 
@@ -196,6 +196,33 @@ json中的字符串需要进行转义：
 示例json 的cq码：
 ```test
 [CQ:json,data={"app":"com.tencent.miniapp"&#44;"desc":""&#44;"view":"notification"&#44;"ver":"0.0.0.1"&#44;"prompt":"&#91;应用&#93;"&#44;"appID":""&#44;"sourceName":""&#44;"actionData":""&#44;"actionData_A":""&#44;"sourceUrl":""&#44;"meta":{"notification":{"appInfo":{"appName":"全国疫情数据统计"&#44;"appType":4&#44;"appid":1109659848&#44;"iconUrl":"http:\/\/gchat.qpic.cn\/gchatpic_new\/719328335\/-2010394141-6383A777BEB79B70B31CE250142D740F\/0"}&#44;"data":&#91;{"title":"确诊"&#44;"value":"80932"}&#44;{"title":"今日确诊"&#44;"value":"28"}&#44;{"title":"疑似"&#44;"value":"72"}&#44;{"title":"今日疑似"&#44;"value":"5"}&#44;{"title":"治愈"&#44;"value":"60197"}&#44;{"title":"今日治愈"&#44;"value":"1513"}&#44;{"title":"死亡"&#44;"value":"3140"}&#44;{"title":"今**亡"&#44;"value":"17"}&#93;&#44;"title":"中国加油，武汉加油"&#44;"button":&#91;{"name":"病毒：SARS-CoV-2，其导致疾病命名 COVID-19"&#44;"action":""}&#44;{"name":"传染源：新冠肺炎的患者。无症状感染者也可能成为传染源。"&#44;"action":""}&#93;&#44;"emphasis_keyword":""}}&#44;"text":""&#44;"sourceAd":""}]
+```
+
+
+### cardimage 一种xml的图片消息（装逼大图）
+
+ps: xml 接口的消息都存在风控风险，请自行兼容发送失败后的处理（可以失败后走普通图片模式）
+
+Type: `cardimage`
+
+范围: **发送**
+
+参数:
+
+| 参数名 | 类型   | 说明                                                         |
+| ------ | ------ | ------------------------------------------------------------ |
+| file     | string | 和image的file字段对齐，支持也是一样的|
+| minwidth     | int64 | 默认不填为400，最小width|
+| minheight     | int64 | 默认不填为400，最小height|
+| maxwidth     | int64 | 默认不填为500，最大width|
+| maxheight     | int64 | 默认不填为1000，最大height|
+| source     | string | 分享来源的名称，可以留空|
+| icon     | string | 分享来源的icon图标url，可以留空|
+
+
+示例cardimage 的cq码：
+```test
+[CQ:cardimage,file=https://i.pixiv.cat/img-master/img/2020/03/25/00/00/08/80334602_p0_master1200.jpg]```
 ```
 
 ## API
