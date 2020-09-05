@@ -477,7 +477,7 @@ var wsApi = map[string]func(*coolq.CQBot, gjson.Result) coolq.MSG{
 		}())
 	},
 	"set_group_name": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
-		return bot.CQSetGroupName(p.Get("group_id").Int(), p.Get("name").Str)
+		return bot.CQSetGroupName(p.Get("group_id").Int(), p.Get("group_name").Str)
 	},
 	"set_group_leave": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		return bot.CQSetGroupLeave(p.Get("group_id").Int())

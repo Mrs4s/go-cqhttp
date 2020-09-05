@@ -347,7 +347,7 @@ func (s *httpServer) SetWholeBan(c *gin.Context) {
 
 func (s *httpServer) SetGroupName(c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
-	c.JSON(200, s.bot.CQSetGroupName(gid, getParam(c, "name")))
+	c.JSON(200, s.bot.CQSetGroupName(gid, getParam(c, "group_name")))
 }
 
 func (s *httpServer) SetGroupLeave(c *gin.Context) {
