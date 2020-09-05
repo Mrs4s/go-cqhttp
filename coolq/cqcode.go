@@ -40,7 +40,7 @@ func ToArrayMessage(e []message.IMessageElement, code int64, raw ...bool) (r []M
 	if reply != nil {
 		r = append(r, MSG{
 			"type": "reply",
-			"data": map[string]string{"id": fmt.Sprint(ToGlobalId(code, o.ReplySeq))},
+			"data": map[string]string{"id": fmt.Sprint(ToGlobalId(code, reply.(*message.ReplyElement).ReplySeq))},
 		})
 	}
 	for _, elem := range e {
