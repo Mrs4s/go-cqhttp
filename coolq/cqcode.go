@@ -383,17 +383,15 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 				return nil, errors.New("song not found")
 			}
 			name := info.Get("name").Str
+			jumpUrl := "https://y.music.163.com/m/song/" + d["id"]
+			musicUrl := "http://music.163.com/song/media/outer/url?id=" + d["id"]
+			picUrl := info.Get("album.picUrl").Str
 			artistName := ""
 			if info.Get("artists.0").Exists() {
 				artistName = info.Get("artists.0.name").Str
 			}
-			xml := fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="2" templateID="1" action="web" brief="[分享] %s" sourceMsgId="0" url="http://music.163.com/m/song/%s" flag="0" adverSign="0" multiMsgFlag="0"><item layout="2"><audio cover="%s?param=90y90" src="https://music.163.com/song/media/outer/url?id=%s.mp3" /><title>%s</title><summary>%s</summary></item><source name="网易云音乐" icon="https://pic.rmb.bdstatic.com/911423bee2bef937975b29b265d737b3.png" url="http://web.p.qq.com/qqmpmobile/aio/app.html?id=100495085" action="app" a_actionData="com.netease.cloudmusic" i_actionData="tencent100495085://" appid="100495085" /></msg>`,
-				name, d["id"], info.Get("album.picUrl").Str, d["id"], name, artistName)
-			return &message.ServiceElement{
-				Id:      60,
-				Content: xml,
-				SubType: "music",
-			}, nil
+			json := fmt.Sprintf("{\"app\": \"com.tencent.structmsg\",\"desc\":\"音乐\",\"view\":\"music\",\"prompt\":\"[分享]%s\",\"ver\":\"0.0.0.1\",\"meta\":{ \"music\": { \"desc\": \"%s\", \"jumpUrl\": \"%s\", \"musicUrl\": \"%s\", \"preview\": \"%s\", \"tag\": \"网易云音乐\", \"title\":\"%s\"}}}", name,artistName, jumpUrl, musicUrl, picUrl, name)
+			return message.NewLightApp(json), nil
 		}
 		if d["type"] == "custom" {
 			xml := fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="2" templateID="1" action="web" brief="[分享] %s" sourceMsgId="0" url="%s" flag="0" adverSign="0" multiMsgFlag="0"><item layout="2"><audio cover="%s" src="%s"/><title>%s</title><summary>%s</summary></item><source name="音乐" icon="https://i.gtimg.cn/open/app_icon/01/07/98/56/1101079856_100_m.png" url="http://web.p.qq.com/qqmpmobile/aio/app.html?id=1101079856" action="app" a_actionData="com.tencent.qqmusic" i_actionData="tencent1101079856://" appid="1101079856" /></msg>`,

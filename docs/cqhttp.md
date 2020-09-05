@@ -222,7 +222,7 @@ Type: `cardimage`
 
 示例cardimage 的cq码：
 ```test
-[CQ:cardimage,file=https://i.pixiv.cat/img-master/img/2020/03/25/00/00/08/80334602_p0_master1200.jpg]```
+[CQ:cardimage,file=https://i.pixiv.cat/img-master/img/2020/03/25/00/00/08/80334602_p0_master1200.jpg]
 ```
 
 ## API
@@ -236,7 +236,7 @@ Type: `cardimage`
 | 字段     | 类型   | 说明 |
 | -------- | ------ | ---- |
 | group_id | int64  | 群号 |
-| name     | string | 新名 |
+| group_name     | string | 新名 |
 
 ### 获取图片信息
 
