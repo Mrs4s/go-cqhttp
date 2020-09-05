@@ -198,11 +198,24 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupId int64, m gjson.Result) MSG {
 		name := e.Get("data.name").Str
 		content := bot.ConvertObjectMessage(e.Get("data.content"), true)
 		if uin != 0 && name != "" && len(content) > 0 {
+			var newElem []message.IMessageElement
+			for _, elem := range content {
+				if img, ok := elem.(*message.ImageElement); ok {
+					gm, err := bot.Client.UploadGroupImage(groupId, img.Data)
+					if err != nil {
+						log.Warnf("警告：群 %v 图片上传失败: %v", groupId, err)
+						continue
+					}
+					newElem = append(newElem, gm)
+					continue
+				}
+				newElem = append(newElem, elem)
+			}
 			nodes = append(nodes, &message.ForwardNode{
 				SenderId:   uin,
 				SenderName: name,
 				Time:       int32(ts.Unix()),
-				Message:    content,
+				Message:    newElem,
 			})
 			return
 		}

@@ -32,10 +32,26 @@ func ToArrayMessage(e []message.IMessageElement, code int64, raw ...bool) (r []M
 	if len(raw) != 0 {
 		ur = raw[0]
 	}
+	m := &message.SendingMessage{Elements: e}
+	reply := m.FirstOrNil(func(e message.IMessageElement) bool {
+		_, ok := e.(*message.ReplyElement)
+		return ok
+	})
+	if reply != nil {
+		r = append(r, MSG{
+			"type": "reply",
+			"data": map[string]string{"id": fmt.Sprint(ToGlobalId(code, reply.(*message.ReplyElement).ReplySeq))},
+		})
+	}
 	for _, elem := range e {
 		m := MSG{}
 		switch o := elem.(type) {
 		case *message.TextElement:
+			m = MSG{
+				"type": "text",
+				"data": map[string]string{"text": o.Content},
+			}
+		case *message.LightAppElement:
 			m = MSG{
 				"type": "text",
 				"data": map[string]string{"text": o.Content},
@@ -51,11 +67,6 @@ func ToArrayMessage(e []message.IMessageElement, code int64, raw ...bool) (r []M
 					"type": "at",
 					"data": map[string]string{"qq": fmt.Sprint(o.Target)},
 				}
-			}
-		case *message.ReplyElement:
-			m = MSG{
-				"type": "reply",
-				"data": map[string]string{"id": fmt.Sprint(ToGlobalId(code, o.ReplySeq))},
 			}
 		case *message.ForwardElement:
 			m = MSG{
@@ -155,6 +166,8 @@ func ToStringMessage(e []message.IMessageElement, code int64, raw ...bool) (r st
 			} else {
 				r += fmt.Sprintf(`[CQ:image,file=%s,url=%s]`, o.Filename, CQCodeEscapeValue(o.Url))
 			}
+		case *message.LightAppElement:
+			r += CQCodeEscapeText(o.Content)
 		}
 	}
 	return
