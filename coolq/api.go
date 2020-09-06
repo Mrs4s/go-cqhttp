@@ -304,6 +304,14 @@ func (bot *CQBot) CQSetGroupName(groupId int64, name string) MSG {
 	return Failed(100)
 }
 
+func (bot *CQBot) CQSetGroupMemo(groupId int64, msg string) MSG {
+	if g := bot.Client.FindGroup(groupId); g != nil {
+		g.UpdateMemo(msg)
+		return OK(nil)
+	}
+	return Failed(100)
+}
+
 // https://cqhttp.cc/docs/4.15/#/API?id=set_group_kick-%E7%BE%A4%E7%BB%84%E8%B8%A2%E4%BA%BA
 func (bot *CQBot) CQSetGroupKick(groupId, userId int64, msg string) MSG {
 	if g := bot.Client.FindGroup(groupId); g != nil {

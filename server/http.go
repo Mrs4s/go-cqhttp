@@ -131,6 +131,9 @@ func (s *httpServer) Run(addr, authToken string, bot *coolq.CQBot) {
 	s.engine.Any("/set_group_name", s.SetGroupName)
 	s.engine.Any("/set_group_name_async", s.SetGroupName)
 
+	s.engine.Any("/_send_group_notice", s.SendGroupNotice)
+	s.engine.Any("/_send_group_notice_async", s.SendGroupNotice)
+
 	s.engine.Any("/set_group_leave", s.SetGroupLeave)
 	s.engine.Any("/set_group_leave_async", s.SetGroupLeave)
 
@@ -351,6 +354,11 @@ func (s *httpServer) SetWholeBan(c *gin.Context) {
 func (s *httpServer) SetGroupName(c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	c.JSON(200, s.bot.CQSetGroupName(gid, getParam(c, "group_name")))
+}
+
+func (s *httpServer) SendGroupNotice(c *gin.Context) {
+	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
+	c.JSON(200, s.bot.CQSetGroupMemo(gid, getParam(c, "content")))
 }
 
 func (s *httpServer) SetGroupLeave(c *gin.Context) {
