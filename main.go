@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/Mrs4s/go-cqhttp/extension"
 	"image"
 	"io"
 	"io/ioutil"
@@ -257,6 +258,7 @@ func main() {
 	global.Check(cli.ReloadGroupList())
 	log.Infof("共加载 %v 个群.", len(cli.GroupList))
 	b := coolq.NewQQBot(cli, conf)
+	extension.Run(b)
 	if conf.PostMessageFormat != "string" && conf.PostMessageFormat != "array" {
 		log.Warnf("post_message_format 配置错误, 将自动使用 string")
 		coolq.SetMessageFormat("string")
