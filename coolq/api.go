@@ -304,6 +304,14 @@ func (bot *CQBot) CQSetGroupName(groupId int64, name string) MSG {
 	return Failed(100)
 }
 
+func (bot *CQBot) CQSetGroupMemo(groupId int64, msg string) MSG {
+	if g := bot.Client.FindGroup(groupId); g != nil {
+		g.UpdateMemo(msg)
+		return OK(nil)
+	}
+	return Failed(100)
+}
+
 // https://cqhttp.cc/docs/4.15/#/API?id=set_group_kick-%E7%BE%A4%E7%BB%84%E8%B8%A2%E4%BA%BA
 func (bot *CQBot) CQSetGroupKick(groupId, userId int64, msg string) MSG {
 	if g := bot.Client.FindGroup(groupId); g != nil {
@@ -394,6 +402,24 @@ func (bot *CQBot) CQDeleteMessage(messageId int32) MSG {
 	}
 	bot.Client.RecallGroupMessage(msg["group"].(int64), msg["message-id"].(int32), msg["internal-id"].(int32))
 	return OK(nil)
+}
+
+func (bot *CQBot) CQGetVipInfo(userId int64) MSG {
+	msg := MSG{}
+	vip, err := bot.Client.GetVipInfo(userId)
+	if err != nil {
+		return Failed(100)
+	}
+	msg = MSG{
+		"user_id":			vip.Uin,
+		"nickname":			vip.Name,
+		"level":			vip.Level,
+		"level_speed":		vip.LevelSpeed,
+		"vip_level":		vip.VipLevel,
+		"vip_growth_speed":	vip.VipGrowthSpeed,
+		"vip_growth_total":	vip.VipGrowthTotal,
+	}
+	return OK(msg)
 }
 
 // https://github.com/howmanybots/onebot/blob/master/v11/specs/api/public.md#get_group_honor_info-%E8%8E%B7%E5%8F%96%E7%BE%A4%E8%8D%A3%E8%AA%89%E4%BF%A1%E6%81%AF
