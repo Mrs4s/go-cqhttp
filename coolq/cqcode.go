@@ -450,11 +450,11 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 		icon := d["icon"]
 		minwidth, _ := strconv.ParseInt(d["minwidth"], 10, 64)
 		if minwidth == 0 {
-			minwidth = 400
+			minwidth = 200
 		}
 		minheight, _ := strconv.ParseInt(d["minheight"], 10, 64)
 		if minheight == 0 {
-			minheight = 400
+			minheight = 200
 		}
 		maxwidth, _ := strconv.ParseInt(d["maxwidth"], 10, 64)
 		if maxwidth == 0 {
