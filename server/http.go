@@ -205,7 +205,7 @@ func (c *httpClient) onBotPushEvent(m coolq.MSG) {
 		return h
 	}()).SetTimeout(time.Second * time.Duration(c.timeout)).Do()
 	if err != nil {
-		log.Warnf("上报Event数据到 %v 失败: %v", c.addr, err)
+		log.Warnf("上报Event数据 %v 到 %v 失败: %v", m.ToJson(), c.addr, err)
 		return
 	}
 	if gjson.Valid(res) {
