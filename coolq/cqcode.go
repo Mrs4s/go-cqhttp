@@ -51,9 +51,13 @@ func ToArrayMessage(e []message.IMessageElement, code int64, raw ...bool) (r []M
 				"data": map[string]string{"text": o.Content},
 			}
 		case *message.LightAppElement:
+			//m = MSG{
+			//	"type": "text",
+			//	"data": map[string]string{"text": o.Content},
+			//}
 			m = MSG{
-				"type": "text",
-				"data": map[string]string{"text": o.Content},
+				"type": "json",
+				"data": map[string]string{"data": o.Content},
 			}
 		case *message.AtElement:
 			if o.Target == 0 {
@@ -113,6 +117,18 @@ func ToArrayMessage(e []message.IMessageElement, code int64, raw ...bool) (r []M
 					"data": map[string]string{"file": o.Filename, "url": o.Url},
 				}
 			}
+		case *message.ServiceElement:
+			if isOk := strings.Contains(o.Content, "<?xml"); isOk {
+				m = MSG{
+					"type": "xml",
+					"data": map[string]string{"data": o.Content, "resid": fmt.Sprintf("%d", o.Id)},
+				}
+			} else {
+				m = MSG{
+					"type": "json",
+					"data": map[string]string{"data": o.Content, "resid": fmt.Sprintf("%d", o.Id)},
+				}
+			}
 		}
 		r = append(r, m)
 	}
@@ -165,8 +181,15 @@ func ToStringMessage(e []message.IMessageElement, code int64, raw ...bool) (r st
 			} else {
 				r += fmt.Sprintf(`[CQ:image,file=%s,url=%s]`, o.Filename, CQCodeEscapeValue(o.Url))
 			}
+		case *message.ServiceElement:
+			if isOk := strings.Contains(o.Content, "<?xml"); isOk {
+				r += fmt.Sprintf(`[CQ:xml,data=%s,resid=%d]`, CQCodeEscapeValue(o.Content), o.Id)
+			} else {
+				r += fmt.Sprintf(`[CQ:json,data=%s,resid=%d]`, CQCodeEscapeValue(o.Content), o.Id)
+			}
 		case *message.LightAppElement:
-			r += CQCodeEscapeText(o.Content)
+			r += fmt.Sprintf(`[CQ:json,data=%s]`, CQCodeEscapeValue(o.Content))
+			//r += CQCodeEscapeText(o.Content)
 		}
 	}
 	return
