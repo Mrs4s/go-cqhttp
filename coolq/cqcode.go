@@ -500,7 +500,7 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 			if info.Get("artists.0").Exists() {
 				artistName = info.Get("artists.0.name").Str
 			}
-			json := fmt.Sprintf("{\"app\": \"com.tencent.structmsg\",\"desc\":\"音乐\",\"view\":\"music\",\"prompt\":\"[分享]%s\",\"ver\":\"0.0.0.1\",\"meta\":{ \"music\": { \"desc\": \"%s\", \"jumpUrl\": \"%s\", \"musicUrl\": \"%s\", \"preview\": \"%s\", \"tag\": \"网易云音乐\", \"title\":\"%s\"}}}", name,artistName, jumpUrl, musicUrl, picUrl, name)
+			json := fmt.Sprintf("{\"app\": \"com.tencent.structmsg\",\"desc\":\"音乐\",\"view\":\"music\",\"prompt\":\"[分享]%s\",\"ver\":\"0.0.0.1\",\"meta\":{ \"music\": { \"desc\": \"%s\", \"jumpUrl\": \"%s\", \"musicUrl\": \"%s\", \"preview\": \"%s\", \"tag\": \"网易云音乐\", \"title\":\"%s\"}}}", name, artistName, jumpUrl, musicUrl, picUrl, name)
 			return message.NewLightApp(json), nil
 		}
 		if d["type"] == "custom" {

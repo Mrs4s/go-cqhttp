@@ -411,13 +411,13 @@ func (bot *CQBot) CQGetVipInfo(userId int64) MSG {
 		return Failed(100)
 	}
 	msg = MSG{
-		"user_id":			vip.Uin,
-		"nickname":			vip.Name,
-		"level":			vip.Level,
-		"level_speed":		vip.LevelSpeed,
-		"vip_level":		vip.VipLevel,
-		"vip_growth_speed":	vip.VipGrowthSpeed,
-		"vip_growth_total":	vip.VipGrowthTotal,
+		"user_id":          vip.Uin,
+		"nickname":         vip.Name,
+		"level":            vip.Level,
+		"level_speed":      vip.LevelSpeed,
+		"vip_level":        vip.VipLevel,
+		"vip_growth_speed": vip.VipGrowthSpeed,
+		"vip_growth_total": vip.VipGrowthTotal,
 	}
 	return OK(msg)
 }
