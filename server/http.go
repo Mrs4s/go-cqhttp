@@ -233,14 +233,14 @@ func (s *httpServer) GetGroupInfo(c *gin.Context) {
 
 func (s *httpServer) GetGroupMemberList(c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
-	c.JSON(200, s.bot.CQGetGroupMemberList(gid))
+	nc := getParamOrDefault(c, "no_cache", "false")
+	c.JSON(200, s.bot.CQGetGroupMemberList(gid, nc == "true"))
 }
 
 func (s *httpServer) GetGroupMemberInfo(c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	uid, _ := strconv.ParseInt(getParam(c, "user_id"), 10, 64)
-	nc := getParamOrDefault(c, "no_cache", "false")
-	c.JSON(200, s.bot.CQGetGroupMemberInfo(gid, uid, nc == "true"))
+	c.JSON(200, s.bot.CQGetGroupMemberInfo(gid, uid))
 }
 
 func (s *httpServer) SendMessage(c *gin.Context) {

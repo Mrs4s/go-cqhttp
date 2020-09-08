@@ -68,20 +68,7 @@ func (bot *CQBot) CQGetGroupInfo(groupId int64) MSG {
 }
 
 // https://cqhttp.cc/docs/4.15/#/API?id=get_group_member_list-%E8%8E%B7%E5%8F%96%E7%BE%A4%E6%88%90%E5%91%98%E5%88%97%E8%A1%A8
-func (bot *CQBot) CQGetGroupMemberList(groupId int64) MSG {
-	group := bot.Client.FindGroup(groupId)
-	if group == nil {
-		return Failed(100)
-	}
-	members := make([]MSG, 0)
-	for _, m := range group.Members {
-		members = append(members, convertGroupMemberInfo(groupId, m))
-	}
-	return OK(members)
-}
-
-// https://cqhttp.cc/docs/4.15/#/API?id=get_group_member_info-%E8%8E%B7%E5%8F%96%E7%BE%A4%E6%88%90%E5%91%98%E4%BF%A1%E6%81%AF
-func (bot *CQBot) CQGetGroupMemberInfo(groupId, userId int64, noCache bool) MSG {
+func (bot *CQBot) CQGetGroupMemberList(groupId int64, noCache bool) MSG {
 	group := bot.Client.FindGroup(groupId)
 	if group == nil {
 		return Failed(100)
@@ -93,6 +80,19 @@ func (bot *CQBot) CQGetGroupMemberInfo(groupId, userId int64, noCache bool) MSG 
 			return Failed(100)
 		}
 		group.Members = t
+	}
+	members := make([]MSG, 0)
+	for _, m := range group.Members {
+		members = append(members, convertGroupMemberInfo(groupId, m))
+	}
+	return OK(members)
+}
+
+// https://cqhttp.cc/docs/4.15/#/API?id=get_group_member_info-%E8%8E%B7%E5%8F%96%E7%BE%A4%E6%88%90%E5%91%98%E4%BF%A1%E6%81%AF
+func (bot *CQBot) CQGetGroupMemberInfo(groupId, userId int64) MSG {
+	group := bot.Client.FindGroup(groupId)
+	if group == nil {
+		return Failed(100)
 	}
 	member := group.FindMember(userId)
 	if member == nil {
@@ -411,13 +411,13 @@ func (bot *CQBot) CQGetVipInfo(userId int64) MSG {
 		return Failed(100)
 	}
 	msg = MSG{
-		"user_id":			vip.Uin,
-		"nickname":			vip.Name,
-		"level":			vip.Level,
-		"level_speed":		vip.LevelSpeed,
-		"vip_level":		vip.VipLevel,
-		"vip_growth_speed":	vip.VipGrowthSpeed,
-		"vip_growth_total":	vip.VipGrowthTotal,
+		"user_id":          vip.Uin,
+		"nickname":         vip.Name,
+		"level":            vip.Level,
+		"level_speed":      vip.LevelSpeed,
+		"vip_level":        vip.VipLevel,
+		"vip_growth_speed": vip.VipGrowthSpeed,
+		"vip_growth_total": vip.VipGrowthTotal,
 	}
 	return OK(msg)
 }
