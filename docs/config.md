@@ -22,11 +22,11 @@ go-cqhttp 支持导入CQHTTP的配置文件, 具体步骤为:
 	"password_encrypted": "",
 	"enable_db": true,
 	"access_token": "",
-    "relogin": {
-        "enabled": true,
-        "relogin_delay": 3,
-        "max_relogin_times": 0
-    },
+	"relogin": {
+		"enabled": true,
+		"relogin_delay": 3,
+		"max_relogin_times": 0
+	},
 	"post_message_format": "string",
 	"ignore_invalid_cqcode": false,
 	"force_fragmented": true,
