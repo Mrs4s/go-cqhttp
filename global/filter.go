@@ -14,7 +14,7 @@ type Filter interface {
 }
 
 type OperationNode struct {
-	key string
+	key    string
 	filter Filter
 }
 
@@ -109,8 +109,8 @@ func orOperatorConstruct(argument gjson.Result) *OrOperator {
 }
 
 func (orOperator OrOperator) Eval(payload gjson.Result) bool {
-	log.Debug("or "+ payload.Str)
-	res:= false
+	log.Debug("or " + payload.Str)
+	res := false
 	for _, operand := range orOperator.operands {
 		res = res || operand.Eval(payload)
 
@@ -132,7 +132,7 @@ func equalOperatorConstruct(argument gjson.Result) *EqualOperator {
 }
 
 func (equalOperator EqualOperator) Eval(payload gjson.Result) bool {
-	log.Debug("eq "+ payload.Str + "==" + equalOperator.value.Str)
+	log.Debug("eq " + payload.Str + "==" + equalOperator.value.Str)
 	return payload.Str == equalOperator.value.Str
 }
 
@@ -150,7 +150,6 @@ func (notEqualOperator NotEqualOperator) Eval(payload gjson.Result) bool {
 	log.Debug("neq " + payload.Str)
 	return !(payload.Str == notEqualOperator.value.Str)
 }
-
 
 type InOperator struct {
 	operand gjson.Result
@@ -192,7 +191,7 @@ func containsOperatorConstruct(argument gjson.Result) *ContainsOperator {
 }
 
 func (containsOperator ContainsOperator) Eval(payload gjson.Result) bool {
-	log.Debug("contains "+ payload.Str)
+	log.Debug("contains " + payload.Str)
 	if payload.IsObject() || payload.IsArray() {
 		return false
 	}
@@ -217,8 +216,9 @@ func (containsOperator RegexOperator) Eval(payload gjson.Result) bool {
 	matched, _ := regexp.MatchString(containsOperator.regex, payload.Str)
 	return matched
 }
+
 // 单例工厂
-type operatorFactory struct{
+type operatorFactory struct {
 }
 
 var instance *operatorFactory = &operatorFactory{}
@@ -252,7 +252,7 @@ func (o operatorFactory) Generate(opName string, argument gjson.Result) Filter {
 }
 
 var filter = new(Filter)
-var once sync.Once   // 过滤器单例模式
+var once sync.Once // 过滤器单例模式
 
 func GetFilter() *Filter {
 	once.Do(func() {

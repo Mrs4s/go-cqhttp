@@ -21,6 +21,11 @@ type JsonConfig struct {
 		ReLoginDelay    int  `json:"relogin_delay"`
 		MaxReloginTimes uint `json:"max_relogin_times"`
 	} `json:"relogin"`
+	RateLimit struct {
+		Enabled    bool    `json:"enabled"`
+		Frequency  float64 `json:"frequency"`
+		BucketSize int     `json:"bucket_size"`
+	} `json:"_rate_limit"`
 	IgnoreInvalidCQCode bool                          `json:"ignore_invalid_cqcode"`
 	ForceFragmented     bool                          `json:"force_fragmented"`
 	HeartbeatInterval   time.Duration                 `json:"heartbeat_interval"`
@@ -84,6 +89,15 @@ func DefaultConfig() *JsonConfig {
 			Enabled:         true,
 			ReLoginDelay:    3,
 			MaxReloginTimes: 0,
+		},
+		RateLimit: struct {
+			Enabled    bool    `json:"enabled"`
+			Frequency  float64 `json:"frequency"`
+			BucketSize int     `json:"bucket_size"`
+		}{
+			Enabled:    false,
+			Frequency:  1,
+			BucketSize: 1,
 		},
 		PostMessageFormat: "string",
 		ForceFragmented:   true,

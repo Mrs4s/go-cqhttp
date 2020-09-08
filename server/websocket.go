@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -344,7 +345,7 @@ func (c *websocketConn) handleRequest(bot *coolq.CQBot, payload []byte) {
 			c.Close()
 		}
 	}()
-
+	global.RateLimit(context.Background())
 	j := gjson.ParseBytes(payload)
 	t := strings.ReplaceAll(j.Get("action").Str, "_async", "")
 	log.Debugf("WS接收到API调用: %v 参数: %v", t, j.Get("params").Raw)
