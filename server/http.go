@@ -4,7 +4,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/hex"
-	"fmt"
+	"github.com/Mrs4s/go-cqhttp/extension"
 	"golang.org/x/net/context"
 	"os"
 	"strconv"
@@ -136,7 +136,15 @@ func (s *httpServer) HandleActions(c *gin.Context) {
 	if f, ok := httpApi[action]; ok {
 		f(s, c)
 	} else {
-		fmt.Println("没有找到对应的API")
+		params := make(map[string]string)
+		pbody, _ := c.Get("json_body")
+		body := pbody.(gjson.Result)
+		body.ForEach(func(key, value gjson.Result) bool {
+			params[key.Str] = value.Str
+			return true
+		})
+		data := extension.OnMissedAction(action, params)
+		c.JSON(200, coolq.OK(data))
 	}
 }
 

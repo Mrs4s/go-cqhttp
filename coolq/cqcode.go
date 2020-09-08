@@ -6,10 +6,11 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/Mrs4s/MiraiGo/binary"
+	"github.com/Mrs4s/go-cqhttp/extension"
 	"github.com/Mrs4s/MiraiGo/message"
-	"github.com/Mrs4s/go-cqhttp/global"
+	"github.com/Mrs4s/MiraiGo/binary"
 	log "github.com/sirupsen/logrus"
+	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/tidwall/gjson"
 	"io/ioutil"
 	"net/url"
@@ -470,6 +471,10 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 		}
 		return bot.SendNewPic(img, source, icon, minwidth, minheight, maxwidth, maxheight, group)
 	default:
+		c := extension.OnMissedCQCode(t, d)
+		if c != nil {
+			return c, nil
+		}
 		return nil, errors.New("unsupported cq code: " + t)
 	}
 }

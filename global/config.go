@@ -35,6 +35,7 @@ type JsonConfig struct {
 	PostMessageFormat   string                        `json:"post_message_format"`
 	Debug               bool                          `json:"debug"`
 	LogLevel            string                        `json:"log_level"`
+	PluginEnable        bool                          `json:"enable_plugin"`
 }
 
 type CQHttpApiConfig struct {

@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"github.com/Mrs4s/go-cqhttp/extension"
 	"net/http"
 	"strconv"
 	"strings"
@@ -357,6 +358,22 @@ func (c *websocketConn) handleRequest(bot *coolq.CQBot, payload []byte) {
 		c.Lock()
 		defer c.Unlock()
 		_ = c.WriteJSON(ret)
+	} else {
+		params := make(map[string]string)
+		j.Get("params").ForEach(func(key, value gjson.Result) bool {
+			params[key.Str] = value.Str
+			return true
+		})
+		r := extension.OnMissedAction(j.Get("action").Str, params)
+		if r != nil {
+			ret := coolq.OK(r)
+			if j.Get("echo").Exists() {
+				ret["echo"] = j.Get("echo").Value()
+			}
+			c.Lock()
+			defer c.Unlock()
+			_ = c.WriteJSON(ret)
+		}
 	}
 }
 

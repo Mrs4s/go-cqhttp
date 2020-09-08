@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/Mrs4s/go-cqhttp/extension"
 	"image"
 	"io"
 	"io/ioutil"
@@ -136,7 +137,6 @@ func main() {
 		time.Sleep(time.Second * 5)
 		return
 	}
-
 	// log classified by level
 	// Collect all records up to the specified level (default level: warn)
 	logLevel := conf.LogLevel
@@ -257,6 +257,10 @@ func main() {
 	global.Check(cli.ReloadGroupList())
 	log.Infof("共加载 %v 个群.", len(cli.GroupList))
 	b := coolq.NewQQBot(cli, conf)
+	if conf.PluginEnable {
+		log.Info("开始加载插件...")
+		extension.Run(b.Client)
+	}
 	if conf.PostMessageFormat != "string" && conf.PostMessageFormat != "array" {
 		log.Warnf("post_message_format 配置错误, 将自动使用 string")
 		coolq.SetMessageFormat("string")
