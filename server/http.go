@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/hex"
@@ -74,93 +75,7 @@ func (s *httpServer) Run(addr, authToken string, bot *coolq.CQBot) {
 		})
 	}
 
-	s.engine.Any("/get_login_info", s.GetLoginInfo)
-	s.engine.Any("/get_login_info_async", s.GetLoginInfo)
-
-	s.engine.Any("/get_friend_list", s.GetFriendList)
-	s.engine.Any("/get_friend_list_async", s.GetFriendList)
-
-	s.engine.Any("/get_group_list", s.GetGroupList)
-	s.engine.Any("/get_group_list_async", s.GetGroupList)
-
-	s.engine.Any("/get_group_info", s.GetGroupInfo)
-	s.engine.Any("/get_group_info_async", s.GetGroupInfo)
-
-	s.engine.Any("/get_group_member_list", s.GetGroupMemberList)
-	s.engine.Any("/get_group_member_list_async", s.GetGroupMemberList)
-
-	s.engine.Any("/get_group_member_info", s.GetGroupMemberInfo)
-	s.engine.Any("/get_group_member_info_async", s.GetGroupMemberInfo)
-
-	s.engine.Any("/send_msg", s.SendMessage)
-	s.engine.Any("/send_msg_async", s.SendMessage)
-
-	s.engine.Any("/send_private_msg", s.SendPrivateMessage)
-	s.engine.Any("/send_private_msg_async", s.SendPrivateMessage)
-
-	s.engine.Any("/send_group_msg", s.SendGroupMessage)
-	s.engine.Any("/send_group_msg_async", s.SendGroupMessage)
-
-	s.engine.Any("/send_group_forward_msg", s.SendGroupForwardMessage)
-	s.engine.Any("/send_group_forward_msg_async", s.SendGroupForwardMessage)
-
-	s.engine.Any("/delete_msg", s.DeleteMessage)
-	s.engine.Any("/delete_msg_async", s.DeleteMessage)
-
-	s.engine.Any("/set_friend_add_request", s.ProcessFriendRequest)
-	s.engine.Any("/set_friend_add_request_async", s.ProcessFriendRequest)
-
-	s.engine.Any("/set_group_add_request", s.ProcessGroupRequest)
-	s.engine.Any("/set_group_add_request_async", s.ProcessGroupRequest)
-
-	s.engine.Any("/set_group_card", s.SetGroupCard)
-	s.engine.Any("/set_group_card_async", s.SetGroupCard)
-
-	s.engine.Any("/set_group_special_title", s.SetSpecialTitle)
-	s.engine.Any("/set_group_special_title_async", s.SetSpecialTitle)
-
-	s.engine.Any("/set_group_kick", s.SetGroupKick)
-	s.engine.Any("/set_group_kick_async", s.SetGroupKick)
-
-	s.engine.Any("/set_group_ban", s.SetGroupBan)
-	s.engine.Any("/set_group_ban_async", s.SetGroupBan)
-
-	s.engine.Any("/set_group_whole_ban", s.SetWholeBan)
-	s.engine.Any("/set_group_whole_ban_async", s.SetWholeBan)
-
-	s.engine.Any("/set_group_name", s.SetGroupName)
-	s.engine.Any("/set_group_name_async", s.SetGroupName)
-
-	s.engine.Any("/_send_group_notice", s.SendGroupNotice)
-	s.engine.Any("/_send_group_notice_async", s.SendGroupNotice)
-
-	s.engine.Any("/set_group_leave", s.SetGroupLeave)
-	s.engine.Any("/set_group_leave_async", s.SetGroupLeave)
-
-	s.engine.Any("/get_image", s.GetImage)
-
-	s.engine.Any("/get_forward_msg", s.GetForwardMessage)
-
-	s.engine.Any("/get_group_msg", s.GetGroupMessage)
-
-	s.engine.Any("/get_group_honor_info", s.GetGroupHonorInfo)
-
-	s.engine.Any("/can_send_image", s.CanSendImage)
-	s.engine.Any("/can_send_image_async", s.CanSendImage)
-
-	s.engine.Any("/can_send_record", s.CanSendRecord)
-	s.engine.Any("/can_send_record_async", s.CanSendRecord)
-
-	s.engine.Any("/get_status", s.GetStatus)
-	s.engine.Any("/get_status_async", s.GetStatus)
-
-	s.engine.Any("/get_version_info", s.GetVersionInfo)
-	s.engine.Any("/get_version_info_async", s.GetVersionInfo)
-
-	s.engine.Any("/_get_vip_info", s.GetVipInfo)
-	s.engine.Any("/_get_vip_info_async", s.GetVipInfo)
-
-	s.engine.Any("/.handle_quick_operation", s.HandleQuickOperation)
+	s.engine.Any("/:action", s.HandleActions)
 
 	go func() {
 		log.Infof("CQ HTTP 服务器已启动: %v", addr)
@@ -210,6 +125,17 @@ func (c *httpClient) onBotPushEvent(m coolq.MSG) {
 	}
 	if gjson.Valid(res) {
 		c.bot.CQHandleQuickOperation(gjson.Parse(m.ToJson()), gjson.Parse(res))
+	}
+}
+
+func (s *httpServer) HandleActions(c *gin.Context) {
+	global.RateLimit(context.Background())
+	action := strings.ReplaceAll(c.Param("action"), "_async", "")
+	log.Debugf("HTTPServer接收到API调用: %v", action)
+	if f, ok := httpApi[action]; ok {
+		f(s, c)
+	} else {
+		c.JSON(200, coolq.Failed(404))
 	}
 }
 
@@ -454,4 +380,100 @@ func getParamWithType(c *gin.Context, k string) (string, gjson.Type) {
 		}
 	}
 	return "", gjson.Null
+}
+
+var httpApi = map[string]func(s *httpServer, c *gin.Context){
+	"get_login_info": func(s *httpServer, c *gin.Context) {
+		s.GetLoginInfo(c)
+	},
+	"get_friend_list": func(s *httpServer, c *gin.Context) {
+		s.GetFriendList(c)
+	},
+	"get_group_list": func(s *httpServer, c *gin.Context) {
+		s.GetGroupList(c)
+	},
+	"get_group_info": func(s *httpServer, c *gin.Context) {
+		s.GetGroupInfo(c)
+	},
+	"get_group_member_list": func(s *httpServer, c *gin.Context) {
+		s.GetGroupMemberList(c)
+	},
+	"get_group_member_info": func(s *httpServer, c *gin.Context) {
+		s.GetGroupMemberInfo(c)
+	},
+	"send_msg": func(s *httpServer, c *gin.Context) {
+		s.SendMessage(c)
+	},
+	"send_group_msg": func(s *httpServer, c *gin.Context) {
+		s.SendGroupMessage(c)
+	},
+	"send_group_forward_msg": func(s *httpServer, c *gin.Context) {
+		s.SendGroupForwardMessage(c)
+	},
+	"send_private_msg": func(s *httpServer, c *gin.Context) {
+		s.SendPrivateMessage(c)
+	},
+	"delete_msg": func(s *httpServer, c *gin.Context) {
+		s.DeleteMessage(c)
+	},
+	"set_friend_add_request": func(s *httpServer, c *gin.Context) {
+		s.ProcessFriendRequest(c)
+	},
+	"set_group_add_request": func(s *httpServer, c *gin.Context) {
+		s.ProcessGroupRequest(c)
+	},
+	"set_group_card": func(s *httpServer, c *gin.Context) {
+		s.SetGroupCard(c)
+	},
+	"set_group_special_title": func(s *httpServer, c *gin.Context) {
+		s.SetSpecialTitle(c)
+	},
+	"set_group_kick": func(s *httpServer, c *gin.Context) {
+		s.SetGroupKick(c)
+	},
+	"set_group_ban": func(s *httpServer, c *gin.Context) {
+		s.SetGroupBan(c)
+	},
+	"set_group_whole_ban": func(s *httpServer, c *gin.Context) {
+		s.SetWholeBan(c)
+	},
+	"set_group_name": func(s *httpServer, c *gin.Context) {
+		s.SetGroupName(c)
+	},
+	"_send_group_notice": func(s *httpServer, c *gin.Context) {
+		s.SendGroupNotice(c)
+	},
+	"set_group_leave": func(s *httpServer, c *gin.Context) {
+		s.SetGroupLeave(c)
+	},
+	"get_image": func(s *httpServer, c *gin.Context) {
+		s.GetImage(c)
+	},
+	"get_forward_msg": func(s *httpServer, c *gin.Context) {
+		s.GetForwardMessage(c)
+	},
+	"get_group_msg": func(s *httpServer, c *gin.Context) {
+		s.GetGroupMessage(c)
+	},
+	"get_group_honor_info": func(s *httpServer, c *gin.Context) {
+		s.GetGroupHonorInfo(c)
+	},
+	"can_send_image": func(s *httpServer, c *gin.Context) {
+		s.CanSendImage(c)
+	},
+	"can_send_record": func(s *httpServer, c *gin.Context) {
+		s.CanSendRecord(c)
+	},
+	"get_status": func(s *httpServer, c *gin.Context) {
+		s.GetStatus(c)
+	},
+	"get_version_info": func(s *httpServer, c *gin.Context) {
+		s.GetVersionInfo(c)
+	},
+	"_get_vip_info": func(s *httpServer, c *gin.Context) {
+		s.GetVipInfo(c)
+	},
+	".handle_quick_operation": func(s *httpServer, c *gin.Context) {
+		s.HandleQuickOperation(c)
+	},
 }

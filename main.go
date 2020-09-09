@@ -263,6 +263,9 @@ func main() {
 	} else {
 		coolq.SetMessageFormat(conf.PostMessageFormat)
 	}
+	if conf.RateLimit.Enabled {
+		global.InitLimiter(conf.RateLimit.Frequency, conf.RateLimit.BucketSize)
+	}
 	coolq.IgnoreInvalidCQCode = conf.IgnoreInvalidCQCode
 	coolq.ForceFragmented = conf.ForceFragmented
 	if conf.HttpConfig != nil && conf.HttpConfig.Enabled {

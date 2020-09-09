@@ -26,5 +26,6 @@ require (
 	github.com/yinghau76/go-ascii-art v0.0.0-20190517192627-e7f465a30189
 	golang.org/x/net v0.0.0-20200904194848-62affa334b73 // indirect
 	golang.org/x/sys v0.0.0-20200905004654-be1d3432aa8f // indirect
+	golang.org/x/time v0.0.0-20200630173020-3af7569d3a1e
 	gopkg.in/yaml.v2 v2.3.0 // indirect
 )

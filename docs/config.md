@@ -27,6 +27,11 @@ go-cqhttp 支持导入CQHTTP的配置文件, 具体步骤为:
 		"relogin_delay": 3,
 		"max_relogin_times": 0
 	},
+    "_rate_limit": {
+		"enabled": false,
+		"frequency": 1,
+		"bucket_size": 1
+    },
 	"post_message_format": "string",
 	"ignore_invalid_cqcode": false,
 	"force_fragmented": true,
@@ -66,6 +71,9 @@ go-cqhttp 支持导入CQHTTP的配置文件, 具体步骤为:
 | relogin              | bool     | 是否自动重新登录                                                     |
 | relogin_delay        | int      | 重登录延时（秒）                                                     |
 | max_relogin_times    | uint     | 最大重登录次数，若0则不设置上限                                        |
+| _rate_limit          | bool     | 是否启用API调用限速                                                  |
+| frequency            | float64  | 1s内能调用API的次数                                                  |
+| bucket_size          | int      | 令牌桶的大小，默认为1，修改此值可允许一定程度内连续调用api                 |
 | post_message_format  | string   | 上报信息类型                                                        |
 | ignore_invalid_cqcode| bool     | 是否忽略错误的CQ码                                                   |
 | force_fragmented     | bool     | 是否强制分片发送群长消息                                              |
