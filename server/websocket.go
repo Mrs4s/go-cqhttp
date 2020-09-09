@@ -222,20 +222,12 @@ func (c *websocketClient) onBotPushEvent(m coolq.MSG) {
 
 func (s *websocketServer) event(w http.ResponseWriter, r *http.Request) {
 	if s.token != "" {
-		if auth := r.URL.Query().Get("access_token"); auth != s.token && auth != "" {
-			log.Warnf("已拒绝 %v 的 Websocket 请求: Token错误", r.RemoteAddr)
-			w.WriteHeader(401)
-			return
-		} else if auth := strings.SplitN(r.Header.Get("Authorization"), " ", 2); len(auth) == 2 {
-			if auth[1] != s.token {
-				log.Warnf("已拒绝 %v 的 Websocket 请求: Token错误", r.RemoteAddr)
+		if auth := r.URL.Query().Get("access_token"); auth != s.token {
+			if auth := strings.SplitN(r.Header.Get("Authorization"), " ", 2); len(auth) != 2 || auth[1] != s.token {
+				log.Warnf("已拒绝 %v 的 Websocket 请求: Token鉴权失败", r.RemoteAddr)
 				w.WriteHeader(401)
 				return
 			}
-		} else {
-			log.Warnf("已拒绝 %v 的 Websocket 请求: 空Token或传入格式错误", r.RemoteAddr)
-			w.WriteHeader(401)
-			return
 		}
 	}
 	c, err := upgrader.Upgrade(w, r, nil)
@@ -261,20 +253,12 @@ func (s *websocketServer) event(w http.ResponseWriter, r *http.Request) {
 
 func (s *websocketServer) api(w http.ResponseWriter, r *http.Request) {
 	if s.token != "" {
-		if auth := r.URL.Query().Get("access_token"); auth != s.token && auth != "" {
-			log.Warnf("已拒绝 %v 的 Websocket 请求: Token错误", r.RemoteAddr)
-			w.WriteHeader(401)
-			return
-		} else if auth := strings.SplitN(r.Header.Get("Authorization"), " ", 2); len(auth) == 2 {
-			if auth[1] != s.token {
-				log.Warnf("已拒绝 %v 的 Websocket 请求: Token错误", r.RemoteAddr)
+		if auth := r.URL.Query().Get("access_token"); auth != s.token {
+			if auth := strings.SplitN(r.Header.Get("Authorization"), " ", 2); len(auth) != 2 || auth[1] != s.token {
+				log.Warnf("已拒绝 %v 的 Websocket 请求: Token鉴权失败", r.RemoteAddr)
 				w.WriteHeader(401)
 				return
 			}
-		} else {
-			log.Warnf("已拒绝 %v 的 Websocket 请求: 空Token或传入格式错误", r.RemoteAddr)
-			w.WriteHeader(401)
-			return
 		}
 	}
 	c, err := upgrader.Upgrade(w, r, nil)
@@ -289,20 +273,12 @@ func (s *websocketServer) api(w http.ResponseWriter, r *http.Request) {
 
 func (s *websocketServer) any(w http.ResponseWriter, r *http.Request) {
 	if s.token != "" {
-		if auth := r.URL.Query().Get("access_token"); auth != s.token && auth != "" {
-			log.Warnf("已拒绝 %v 的 Websocket 请求: Token错误", r.RemoteAddr)
-			w.WriteHeader(401)
-			return
-		} else if auth := strings.SplitN(r.Header.Get("Authorization"), " ", 2); len(auth) == 2 {
-			if auth[1] != s.token {
-				log.Warnf("已拒绝 %v 的 Websocket 请求: Token错误", r.RemoteAddr)
+		if auth := r.URL.Query().Get("access_token"); auth != s.token {
+			if auth := strings.SplitN(r.Header.Get("Authorization"), " ", 2); len(auth) != 2 || auth[1] != s.token {
+				log.Warnf("已拒绝 %v 的 Websocket 请求: Token鉴权失败", r.RemoteAddr)
 				w.WriteHeader(401)
 				return
 			}
-		} else {
-			log.Warnf("已拒绝 %v 的 Websocket 请求: 空Token或传入格式错误", r.RemoteAddr)
-			w.WriteHeader(401)
-			return
 		}
 	}
 	c, err := upgrader.Upgrade(w, r, nil)
@@ -316,7 +292,6 @@ func (s *websocketServer) any(w http.ResponseWriter, r *http.Request) {
 		c.Close()
 		return
 	}
-
 	log.Infof("接受 Websocket 连接: %v (/)", r.RemoteAddr)
 	conn := &websocketConn{Conn: c}
 	s.eventConn = append(s.eventConn, conn)
