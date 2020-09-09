@@ -282,6 +282,12 @@ func (s *httpServer) SetGroupName(c *gin.Context) {
 	c.JSON(200, s.bot.CQSetGroupName(gid, getParam(c, "group_name")))
 }
 
+func (s *httpServer) SetGroupAdmin(c *gin.Context) {
+	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
+	uid, _ := strconv.ParseInt(getParam(c, "user_id"), 10, 64)
+	c.JSON(200, s.bot.CQSetGroupAdmin(gid, uid, getParamOrDefault(c, "enable", "true") == "true"))
+}
+
 func (s *httpServer) SendGroupNotice(c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	c.JSON(200, s.bot.CQSetGroupMemo(gid, getParam(c, "content")))
@@ -439,6 +445,9 @@ var httpApi = map[string]func(s *httpServer, c *gin.Context){
 	},
 	"set_group_name": func(s *httpServer, c *gin.Context) {
 		s.SetGroupName(c)
+	},
+	"set_group_admin": func(s *httpServer, c *gin.Context) {
+		s.SetGroupAdmin(c)
 	},
 	"_send_group_notice": func(s *httpServer, c *gin.Context) {
 		s.SendGroupNotice(c)
