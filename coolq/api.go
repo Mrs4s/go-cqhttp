@@ -404,6 +404,26 @@ func (bot *CQBot) CQDeleteMessage(messageId int32) MSG {
 	return OK(nil)
 }
 
+// https://github.com/howmanybots/onebot/blob/master/v11/specs/api/public.md#set_group_admin-%E7%BE%A4%E7%BB%84%E8%AE%BE%E7%BD%AE%E7%AE%A1%E7%90%86%E5%91%98
+func (bot *CQBot) CQSetGroupAdmin(groupId, userId int64, enable bool) MSG {
+	group := bot.Client.FindGroup(groupId)
+	if group == nil || group.OwnerUin != bot.Client.Uin {
+		return Failed(100)
+	}
+	mem := group.FindMember(userId)
+	if mem == nil {
+		return Failed(100)
+	}
+	mem.SetAdmin(enable)
+	t, err := bot.Client.GetGroupMembers(group)
+	if err != nil {
+		log.Warnf("刷新群 %v 成员列表失败: %v", groupId, err)
+		return Failed(100)
+	}
+	group.Members = t
+	return OK(nil)
+}
+
 func (bot *CQBot) CQGetVipInfo(userId int64) MSG {
 	msg := MSG{}
 	vip, err := bot.Client.GetVipInfo(userId)
