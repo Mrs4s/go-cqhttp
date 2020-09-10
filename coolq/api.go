@@ -627,6 +627,11 @@ func (bot *CQBot) CQCanSendRecord() MSG {
 	return OK(MSG{"yes": true})
 }
 
+func (bot *CQBot) CQReloadEventFilter() MSG {
+	global.BootFilter()
+	return OK(nil)
+}
+
 func (bot *CQBot) CQGetStatus() MSG {
 	return OK(MSG{
 		"app_initialized": true,

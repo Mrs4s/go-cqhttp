@@ -280,6 +280,8 @@ func main() {
 	for _, rc := range conf.ReverseServers {
 		server.NewWebsocketClient(rc, conf.AccessToken, b).Run()
 	}
+	log.Info("正在加载事件过滤器.")
+	global.BootFilter()
 	log.Info("资源初始化完成, 开始处理信息.")
 	log.Info("アトリは、高性能ですから!")
 	cli.OnDisconnected(func(bot *client.QQClient, e *client.ClientDisconnectedEvent) {

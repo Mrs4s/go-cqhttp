@@ -226,7 +226,7 @@ func (bot *CQBot) Release() {
 
 func (bot *CQBot) dispatchEventMessage(m MSG) {
 	payload := gjson.Parse(m.ToJson())
-	filter := global.GetFilter()
+	filter := global.EventFilter
 	if filter != nil && (*filter).Eval(payload) == false {
 		log.Debug("Event filtered!")
 		return
