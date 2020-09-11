@@ -1,0 +1,133 @@
+<include file="user/main"/>
+
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <h1>
+            用户中心
+            <small>User Center</small>
+        </h1>
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+        <!-- START PROGRESS BARS -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="box box-primary">
+                    <div class="box-header">
+                        <i class="fa fa-bullhorn"></i>
+
+                        <h3 class="box-title">公告&FAQ</h3>
+                    </div>
+                    <!-- /.box-header -->
+                    <div class="box-body">
+                        {$msg}
+                        <h3>使用说明：</h3>
+                        <p>首先，请完成<a href="/ddns/user/dnstype" target="_blank">秘钥配置，设置好你的apikey</a></p>
+                        <p>然后，请完成<a href="/ddns/user/userdomain" target="_blank">域名配置</a></p>
+                        <p>最后，你可以选择接受qq推送<a href="/ddns/user/qq" target="_blank">qq推送</a></p>
+                    </div>
+                    <!-- /.box-body -->
+                </div>
+                <!-- /.box -->
+            </div>
+            <!-- /.col (right) -->
+
+            <div class="col-md-6">
+                <div class="box box-primary">
+                    <div class="box-header">
+                        <i class="fa fa-exchange"></i>
+
+                        <h3 class="box-title">私密链接（左侧所有步骤完成后可用）</h3>
+                    </div>
+                    <!-- /.box-header -->
+                    <div class="box-body">
+                        <div class="row">
+                            <div class="col-xs-12">
+                                <p>{$request->domain()}/ddns/client/id/{$ddnsuserinfo.id}/token/{$ddnsuserinfo.token}</p>
+                                <p>在路由器或者其他服务器添加定时任务(crontab)</p>
+                                <p>* * * * * curl -k {$request->domain()}/ddns/client/id/{$ddnsuserinfo.id}/token/{$ddnsuserinfo.token}</p>
+                                <p>或者其他地方具备触发的行为</p>
+                                <p>如果没有安装curl，可以使用</p><p>* * * * * wget -O /tmp/ddns {$request->domain()}/ddns/client/id/{$ddnsuserinfo.id}/token/{$ddnsuserinfo.token} --no-check-certificate</p>
+                                <p>特别说明：api不支持@和通配*的A记录更新，如需此类记录更新，请cname到其他记录</p>
+                                <p>ps:要完整的使用本功能，请确保完善ddns帐号配置和域名配置，如果不配置域名记录，将不会更新域名下的ip</p>
+                                <h3>php版本---可用于docker <a href="https://github.com/scjtqs/docker-ddns" target="_blank">点击查看</a> </h3>
+                                <form method="post">
+                                <div class="input-group">
+                                    <div class="input-group-btn">
+                                        <button type="submit" id="ddns-domain-add" class="btn btn-primary">确认下载ddns文件</button>
+                                    </div>
+                                </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- /.box-body -->
+                </div>
+                <!-- /.box -->
+            </div>
+            <!-- /.col (left) -->
+
+            <div class="col-md-6">
+                <div class="box box-primary">
+                    <div class="box-header">
+                        <i class="fa fa-pencil"></i>
+
+                        <h3 class="box-title">域名</h3>
+                    </div>
+                    <!-- /.box-header -->
+                    <div class="box-body">
+                        <foreach name="userdomin" item="vo">
+                            <p>{$vo.domain}</p>
+                        </foreach>
+                    </div>
+                    <!-- /.box-body -->
+                </div>
+                <!-- /.box -->
+            </div>
+            <!-- /.col (right) -->
+
+            <div class="col-md-6">
+                <div class="box box-primary">
+                    <div class="box-header">
+                        <i class="fa  fa-paper-plane"></i>
+                        <h3 class="box-title">QQ推送</h3>
+                    </div>
+                    <!-- /.box-header -->
+                    <div class="box-body">
+                    <p>推送的QQ:{$ddnsuserinfo.qq}</p>
+                    </div>
+                    <!-- /.box-body -->
+                </div>
+                <!-- /.box -->
+            </div>
+            <!-- /.col (right) -->
+        </div>
+        <!-- /.row --><!-- END PROGRESS BARS -->
+    </section>
+    <!-- /.content -->
+</div><!-- /.content-wrapper -->
+
+<script>
+    $(document).ready(function () {
+        $("#checkin").click(function () {
+            $.ajax({
+                type: "POST",
+                url: "/ddns/User/docheckin",
+                dataType: "json",
+                success: function (data) {
+                    $("#checkin-msg").html(data.msg);
+                    $("#checkin-btn").hide();
+                },
+                error: function (jqXHR) {
+                    alert("发生错误：" + jqXHR.status);
+                }
+            })
+        })
+    })
+</script>
+
+
+<include file="user/footer"/>

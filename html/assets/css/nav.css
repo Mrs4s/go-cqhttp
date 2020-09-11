@@ -1,0 +1,578 @@
+label.mobile_menu span {
+	  margin-left: 10px;
+	  color:#FFF;
+      font-size:1em;
+	  display: none;
+	  
+}
+.navigation{
+	float:left;
+	margin-top: -0.8em;
+}
+.nav {
+	/* General Font */
+	
+	/* General Shape */
+	position: relative;
+	margin: 0;
+}
+ul.nav {
+  padding: 0;
+  list-style: none;
+}
+ul.nav1 {
+  padding: 0;
+  list-style: none;
+}
+/* Main element of the naviagtion */
+.nav > li {
+	  display: inline-block;
+  float: left;
+  margin: 0;
+}
+.nav1 > li {
+	  display: inline-block;
+  float: left;
+  margin: 0;
+}
+.nav li .active a, .nav li a:hover {
+	color:#fff !important;
+}
+.nav1 li .active a, .nav1 li a:hover {
+	color:#fff !important;
+}
+.nav > li:nth-child{
+	border-right: none;
+}
+.nav1 > li:nth-child(4){
+	border-right: none;
+}
+
+.nav > li:nth-child(1) {
+  display: block;
+  color: #FFED04;
+  margin: 0;
+  font-size: 11px;
+  border: none;
+  letter-spacing: 1px;
+  background: none;
+}
+.nav1 > li:nth-child(1) {
+  display: block;
+  color: #FFED04;
+  margin: 0;
+  font-size: 11px;
+  border: none;
+  letter-spacing: 1px;
+  background: none;
+}
+.banner-nav > li {
+  background: none;
+}
+.banner-nav > li:nth-child(10) {
+	border-right: none;
+}
+.banner-nav > li:nth-child(4) {
+}
+.banner-nav > li > a {
+  font-weight: 400;
+  font-style: normal !important;
+  font-family: 'Ubuntu', sans-serif;
+  padding: 7px 20px !important;
+  color: #fff !important;
+  margin: 0 5px! important;
+  /* margin: 0 !important; */
+  font-size: 14px !important;
+  letter-spacing: 1px !important;
+  text-transform: uppercase;
+}
+.banner-nav > li > a:hover {
+	background:rgba(0, 0, 0, 0.6);
+}
+.banner-nav > li > a.active {
+  background: rgba(0, 0, 0, 0.6);
+}
+.banner-nav> li > ul {
+  top: 60px !important;
+  width: 190px !important;
+}
+/* Link Style */
+.nav > li > a {
+    padding: 0px 26px 0 15px;
+  display: block;
+  color: #FFED04;
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+.nav1 > li > a {
+    padding: 0px 26px 0 15px;
+  display: block;
+  color: #FFED04;
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-decoration:none;
+}
+.nav > li > a span{
+  font-style: italic;
+  padding: 0;
+  display: block;
+  color: #787878;
+  margin: .5em 0 0 0;
+  font-size: 11px;
+  letter-spacing: 0px;
+}
+}
+.nav > li:nth-child(1) > a,.nav > li:nth-child(5) > a,.nav > li:nth-child(6) > a,
+.nav > li:nth-child(7) > a{
+	background:none;
+}
+.nav > li:nth-child(1) > a:hover, .nav > li:nth-child(5) > a:hover, .nav > li:nth-child(6) > a:hover, .nav > li:nth-child(7) > a:hover{
+	  
+}
+.nav > li:hover > a{
+  color: #bbbbbb;
+}
+.nav li > ul li a:hover{
+	text-decoration:none;
+	color: #1BBC9B !important;
+}
+/* Simple multilevel dropdown */
+.nav > li > ul {
+	  opacity: 0;
+  visibility: hidden;
+  position: absolute;
+  list-style: none;
+  top: 34px ! important;
+  width: 160px;
+  text-align: left;
+  left: 5px;
+  margin-top: 30px;
+  padding: 0px;
+  z-index: 99;
+  border-bottom-right-radius: 6px;
+  -webkit-border-bottom-right-radius: 6px;
+  -ms-border-bottom-right-radius: 6px;
+  -moz-border-bottom-right-radius: 6px;
+  -o-border-bottom-right-radius: 6px;
+  border-bottom-left-radius: 6px;
+  -webkit-border-bottom-left-radius: 6px;
+  -ms-border-bottom-left-radius: 6px;
+  -moz-border-bottom-left-radius: 6px;
+  -o-border-bottom-left-radius: 6px;
+}
+/* First level appear */
+.nav > li:hover > ul {
+	  opacity: 1;
+  visibility: visible;
+  margin-top: 0px;
+  background-color:#18202B;
+    padding: 10px;
+}
+/* Style for dropdown links */
+.nav li > ul li{	
+	position: relative;
+	border-bottom: solid 1px rgba(120, 120, 120, 0.27);
+ }
+ .nav li > ul li:last-child {
+	border:none;
+ }
+ .nav li > ul li:nth-child(4){
+	border-bottom: none;
+ }
+.nav li > ul li a{
+	color: #fff;
+  font-size: 13px;
+  display: block;
+  background-color: #18202B;
+  padding: 10px 10px;
+  position: relative;
+  -moz-transition: all 0.2s linear;
+  -webkit-transition: all 0.2s linear;
+  -o-transition: all 0.2s linear;
+  -ms-transition: all 0.2s linear;
+}
+.nav li > ul li a span.arrow{
+	width:15px;
+	height:10px;
+	position:absolute;
+	right:5px;
+	top:15px;
+}
+
+.nav > li > ul  li:hover {
+	color:#000;
+	-moz-transition: all 0.5s linear;
+	-webkit-transition: all 0.5s linear;
+	-o-transition: all 0.5s linear;
+	-ms-transition: all 0.5s linear;
+}
+.nav ul.dropdown2 {
+	color: #FFF;
+}
+.nav ul  li:hover > a {
+	color: #787878;
+	background:none;
+}
+/* Second and third dropdown level */
+.nav > li > ul li ul {
+	opacity: 0;
+	visibility: hidden;
+	position: absolute;
+	list-style: none;
+	top:0px;
+	left: 200px;
+	width: 200px;
+	text-align: left;
+	padding: 0px;
+	margin-left: 30px;
+}
+.nav > li > ul li ul li:hover {
+	background-color:#FFF;
+}
+input#mobile_menu { display: none; }
+.nav > li > ul li ul li ul {
+	background-color:#FFF;
+}
+.nav > li > ul li ul li ul li:hover {
+	color:#0572B8;
+}
+/* Second and third level appears */
+.nav > li ul li:hover > ul {
+	opacity: 1;
+	visibility: visible;
+	margin-left: 0px;
+}
+/* Full width dropdown */
+.nav > li > .fulldrop {
+	opacity: 0;
+	visibility: hidden;
+	position: absolute;
+	list-style: none;
+	top:118px;
+	left: 0px;
+	background-color: #0078b3;
+	width: 100%;
+	min-height: 100px;
+	text-align: left;
+	margin-top:30px;
+	padding: 0;
+	z-index: 99;
+	overflow: hidden;
+}
+/* Full dropdown appears */
+.nav > li:hover .fulldrop {
+	opacity: 1;
+	visibility: visible;
+	margin-top: 0px;
+}
+.nav ul li:hover:after {
+	color: white;
+}
+/* coldrop based dropdown */
+.nav .coldrop {
+	opacity: 0;
+	visibility: hidden;
+	position: absolute;
+	list-style: none;
+	top:118px;
+	background-color: #0078b3;
+	min-height: 100px;
+	text-align: left;
+	margin-top:30px;
+	padding: 0;
+	padding: 0 10px;
+	z-index: 99;
+}
+.nav > li:hover .coldrop {
+	opacity: 1;
+	visibility: visible;
+	margin-top: 0px;
+}
+.nav .coldrop .column {width: 130px;margin:0 9px;}
+/* coldrop for full width dropdown */
+.nav .column {
+	width: 14.1%;
+	float: left;
+	color:white;
+	margin: 0 0 0 2.2%;
+}
+.nav .column ul {
+	padding: 0;
+	margin: 0;
+}
+.nav .column ul li {
+	padding: 0;
+	list-style: none;
+	font-size: 11px;
+}
+.nav .column h3 {
+	font-size: 14px;
+	padding: 14px 0;
+	font-weight: 400;
+	margin: 5px 0 5px 0;
+}
+.nav .column ul li a {
+	display: block;
+	padding: 0 0 15px 0;
+}
+.nav > li > ul li ul, .nav li >ul li, .nav > li > .fulldrop, .nav > li > .coldrop, .nav > li > ul, .nav > li {
+	transition: all 0.3s ease-in-out;
+	-moz-transition: all 0.3s ease-in-out; /* Firefox 4 */
+	-webkit-transition: all 0.3s ease-in-out; /* Safari and Chrome */
+	-o-transition: all 0.3s ease-in-outs; /* Opera */
+}
+@media all and (max-width:1280px) {
+	.nav > li > a {
+		4font-size: 13px;
+		letter-spacing: 0;
+	}
+	.navigation {
+		margin-top: -10px;
+	}
+}
+@media all and (max-width:1024px) {
+	.nav > li > ul {
+  width: 155px !important;
+  top: 40px !important;
+}
+	.nav > li {
+		margin: 0;
+	}
+	.nav > li > a span {
+		font-size: 11px;
+	}
+	.banner-nav > li > a {
+		padding: 11px 19px !important;
+	}
+
+.nav > li:nth-child(1) {
+  padding: 0px 6px;
+}	
+	
+}
+@media only screen and (max-width: 959px) {
+	.nav > li > a{
+		padding:10px 12px;
+	}
+}
+@media only screen and (max-width:800px) {
+	.nav {
+      display: none;
+    }
+
+	
+	label.mobile_menu span {
+		display: inline;
+	}
+	label.mobile_menu {
+		width: 100%;
+	}
+	label.mobile_menu {
+      position: relative;
+      display: block;
+      width: 100%;
+      background-color:#454B50;
+      padding: 10px 0;
+      border-bottom: 1px solid white;
+	  margin-top: 10px;
+	  cursor: pointer;
+	}
+	.nav {
+		padding: 0;
+	}
+	ul.nav {
+	  padding: 0;
+	  list-style: none;
+	  padding: 0;
+	  margin: 0;
+	  z-index: 9999;
+	  position: absolute;
+	  width: 100%;
+	  left: 0;
+	}
+	.nav > li > a {
+		border-width:0;
+	}
+	.nav li {
+		width: 100%;
+		text-align: left;
+		margin-left: 0;
+	}
+	.nav > li {
+		border-right: none;
+    	padding:5px 0px;
+    	position: relative;
+	}
+	.nav > li > a {
+		display:block;
+		font-size:0.85em;
+	}
+
+	.nav li ul, .nav li .fulldrop, .nav li .coldrop {
+		top:45px;		
+	}
+	.nav > li {
+		background:none;
+	}
+	.nav li ul {
+		padding: 0;
+	}
+	.nav > li:hover > a {
+	    background-color:#CACACA;
+	}
+	.nav .fulldrop, .nav .coldrop {
+		width:95%;
+		padding: 0 2.5%;
+	}
+
+	.nav li > ul li {
+		padding: 18px 0px;
+	}
+
+	.nav .column, .nav .coldrop .column { 
+		width: 94%;
+		padding: 0 3%;
+	}
+
+	.nav > li > ul {
+		width: 100%;
+	}
+
+	.nav > li > ul li ul {
+		width: 100%;
+		top:36px;
+		left: 0;
+		margin-top: 30px;
+		z-index: 2;
+	}
+
+	.nav > li > ul > li:hover ul {
+		margin-top: 0;
+	}
+  #mobile_menu:checked+.nav {
+		display: block
+	}
+    label.mobile_menu:after {
+        position: absolute;
+        top:-2px;
+        right: 10px;
+        content: "\2261";
+        font-size: 30px;
+        color: white;
+    }
+	.nav > li > ul li ul li ul {
+		width: 100%;
+		top:43px;
+		left: 0px;
+		margin-left: 0;
+		margin-top: 30px;
+	}
+	.nav > li > ul > li ul li:hover ul{
+		margin-top: 0;
+	}
+	.nav > li > ul li{ 
+		padding:0px 0 0px 0%;
+		width:100%;
+	}
+	.nav > li > ul li ul {
+		margin-left:0;
+	}
+	.nav > li > ul li ul li{ 
+		padding: 5px 0 5px 0%;
+		width:100%;
+	}
+	.nav > li > ul li ul li ul li{ 
+		padding: 15px 0 15px 0%;
+		width:100%;
+	}
+	.nav ul li.dropdown:after {
+		left: 90%;
+	}
+	/* Disable animation on mobile device */
+	.nav > li > ul li ul, .nav li >ul li, .nav > li > .fulldrop, .nav > li > .coldrop, .nav > li > ul, .nav > li {
+		transition: none;
+		-moz-transition: none; 
+		-webkit-transition: none; 
+		-o-transition: none; 
+	}
+	.navigation {
+		margin-top: 0;
+	}
+}
+@media only screen and (max-width:1280px) {
+	.banner-nav > li > a {
+		padding: 7px 18px !important;
+		margin: 0 3px! important;
+		font-size: 13px !important;
+	}
+	.nav > li > ul {
+		top: 32px ! important;
+		left: 3px;
+	}
+}
+@media only screen and (max-width:1024px) {
+	.banner-nav > li > a {
+		padding: 7px 13px !important;
+		margin: 0 0px! important;
+		font-size: 13px !important;
+	}
+	.nav > li > ul {
+		left: 0px;
+	}
+}
+@media only screen and (max-width: 800px){
+	.nav > li > a.down-scroll {
+		background: url(../images/menu-arrow.png) no-repeat 97% 48%;
+	}
+	.nav > li > ul {
+		top: 48px ! important;
+	}
+@media only screen and (max-width:768px) {
+	.nav > li > ul {
+		width: 100% !important;
+	}
+	.banner-nav > li > a {
+		padding: 14px 13px !important;
+	}
+ul.nav {
+  background-color: #313842;
+}
+.nav li > ul li a span.arrow {
+	   right:20px;
+	   background: url(../images/nav-arrow2.png) no-repeat center;	
+	}
+	.nav > li:hover > a{
+		background:;
+	}
+	.nav > li:nth-child(1) {
+  padding: 0px 0px;
+  background:none;
+}
+}
+@media only screen and (max-width:640px) {
+.banner-nav > li > a {
+  padding: 10px 14px !important;
+}
+}
+@media only screen and (max-width:480px) {
+	label.mobile_menu {
+		padding: 7px 0;
+		margin-top: 8px;
+	}
+	label.mobile_menu:after {
+		font-size: 25px;
+	}
+}
+@media only screen and (max-width:320px){
+.nav1 > li > a {
+  padding: 0px 10px 0 10px;
+}
+.banner-nav > li > a {
+  padding: 6px 14px !important;
+}
+.nav > li > ul {
+  top: 39px ! important;
+}
+}

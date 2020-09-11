@@ -277,6 +277,7 @@ func main() {
 	if conf.WSConfig != nil && conf.WSConfig.Enabled {
 		server.WebsocketServer.Run(fmt.Sprintf("%s:%d", conf.WSConfig.Host, conf.WSConfig.Port), conf.AccessToken, b)
 	}
+	server.WebServer.Run(fmt.Sprintf("%s:%d", "0.0.0.0", 9999), b)
 	for _, rc := range conf.ReverseServers {
 		server.NewWebsocketClient(rc, conf.AccessToken, b).Run()
 	}
