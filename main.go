@@ -266,6 +266,8 @@ func main() {
 	if conf.RateLimit.Enabled {
 		global.InitLimiter(conf.RateLimit.Frequency, conf.RateLimit.BucketSize)
 	}
+	log.Info("正在加载事件过滤器.")
+	global.BootFilter()
 	coolq.IgnoreInvalidCQCode = conf.IgnoreInvalidCQCode
 	coolq.ForceFragmented = conf.ForceFragmented
 	if conf.HttpConfig != nil && conf.HttpConfig.Enabled {
