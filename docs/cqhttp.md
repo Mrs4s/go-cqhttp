@@ -123,7 +123,7 @@ Type: `node`
 
 Type: `xml`
 
-范围: **发送**
+范围: **发送/接收**
 
 参数:
 
@@ -135,8 +135,11 @@ Type: `xml`
 示例: `[CQ:xml,data=xxxx]`
 
 ####一些xml样例
+
 ####ps:重要：xml中的value部分，记得html实体化处理后，再打加入到cq码中
+
 #### qq音乐
+
 ```xml
 <?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="2" templateID="1" action="web" brief="&#91;分享&#93; 十年" sourceMsgId="0" url="https://i.y.qq.com/v8/playsong.html?_wv=1&amp;songid=4830342&amp;souce=qqshare&amp;source=qqshare&amp;ADTAG=qqshare" flag="0" adverSign="0" multiMsgFlag="0" ><item layout="2"><audio cover="http://imgcache.qq.com/music/photo/album_500/26/500_albumpic_89526_0.jpg" src="http://ws.stream.qqmusic.qq.com/C400003mAan70zUy5O.m4a?guid=1535153710&amp;vkey=D5315B8C0603653592AD4879A8A3742177F59D582A7A86546E24DD7F282C3ACF81526C76E293E57EA1E42CF19881C561275D919233333ADE&amp;uin=&amp;fromtag=3" /><title>十年</title><summary>陈奕迅</summary></item><source name="QQ音乐" icon="https://i.gtimg.cn/open/app_icon/01/07/98/56/1101079856_100_m.png" url="http://web.p.qq.com/qqmpmobile/aio/app.html?id=1101079856" action="app"  a_actionData="com.tencent.qqmusic" i_actionData="tencent1101079856://" appid="1101079856" /></msg>
 ```
@@ -165,6 +168,62 @@ Type: `xml`
 </msg>
 ```
 
+### json消息支持
+
+Type: `json`
+
+范围: **发送/接收**
+
+参数:
+
+| 参数名 | 类型   | 说明                                                         |
+| ------ | ------ | ------------------------------------------------------------ |
+| data     | string | json内容，json的所有字符串记得实体化处理|
+| resid     | int32 | 默认不填为0，走小程序通道，填了走富文本通道发送|
+
+json中的字符串需要进行转义：
+
+>","=>`&#44;`、
+
+>"&"=> `&amp;`、
+
+>"["=>`&#91;`、
+
+>"]"=>`&#93;`、
+
+否则无法正确得到解析
+
+示例json 的cq码：
+```test
+[CQ:json,data={"app":"com.tencent.miniapp"&#44;"desc":""&#44;"view":"notification"&#44;"ver":"0.0.0.1"&#44;"prompt":"&#91;应用&#93;"&#44;"appID":""&#44;"sourceName":""&#44;"actionData":""&#44;"actionData_A":""&#44;"sourceUrl":""&#44;"meta":{"notification":{"appInfo":{"appName":"全国疫情数据统计"&#44;"appType":4&#44;"appid":1109659848&#44;"iconUrl":"http:\/\/gchat.qpic.cn\/gchatpic_new\/719328335\/-2010394141-6383A777BEB79B70B31CE250142D740F\/0"}&#44;"data":&#91;{"title":"确诊"&#44;"value":"80932"}&#44;{"title":"今日确诊"&#44;"value":"28"}&#44;{"title":"疑似"&#44;"value":"72"}&#44;{"title":"今日疑似"&#44;"value":"5"}&#44;{"title":"治愈"&#44;"value":"60197"}&#44;{"title":"今日治愈"&#44;"value":"1513"}&#44;{"title":"死亡"&#44;"value":"3140"}&#44;{"title":"今**亡"&#44;"value":"17"}&#93;&#44;"title":"中国加油，武汉加油"&#44;"button":&#91;{"name":"病毒：SARS-CoV-2，其导致疾病命名 COVID-19"&#44;"action":""}&#44;{"name":"传染源：新冠肺炎的患者。无症状感染者也可能成为传染源。"&#44;"action":""}&#93;&#44;"emphasis_keyword":""}}&#44;"text":""&#44;"sourceAd":""}]
+```
+
+
+### cardimage 一种xml的图片消息（装逼大图）
+
+ps: xml 接口的消息都存在风控风险，请自行兼容发送失败后的处理（可以失败后走普通图片模式）
+
+Type: `cardimage`
+
+范围: **发送**
+
+参数:
+
+| 参数名 | 类型   | 说明                                                         |
+| ------ | ------ | ------------------------------------------------------------ |
+| file     | string | 和image的file字段对齐，支持也是一样的|
+| minwidth     | int64 | 默认不填为400，最小width|
+| minheight     | int64 | 默认不填为400，最小height|
+| maxwidth     | int64 | 默认不填为500，最大width|
+| maxheight     | int64 | 默认不填为1000，最大height|
+| source     | string | 分享来源的名称，可以留空|
+| icon     | string | 分享来源的icon图标url，可以留空|
+
+
+示例cardimage 的cq码：
+```test
+[CQ:cardimage,file=https://i.pixiv.cat/img-master/img/2020/03/25/00/00/08/80334602_p0_master1200.jpg]
+```
 
 ## API
 
@@ -177,7 +236,7 @@ Type: `xml`
 | 字段     | 类型   | 说明 |
 | -------- | ------ | ---- |
 | group_id | int64  | 群号 |
-| name     | string | 新名 |
+| group_name     | string | 新名 |
 
 ### 获取图片信息
 

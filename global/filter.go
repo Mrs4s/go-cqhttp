@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"regexp"
 	"strings"
-	"sync"
 )
 
 type Filter interface {
@@ -14,7 +13,7 @@ type Filter interface {
 }
 
 type OperationNode struct {
-	key string
+	key    string
 	filter Filter
 }
 
@@ -24,15 +23,14 @@ type NotOperator struct {
 
 func notOperatorConstruct(argument gjson.Result) *NotOperator {
 	if !argument.IsObject() {
-		log.Error("the argument of 'not' operator must be an object")
+		panic("the argument of 'not' operator must be an object")
 	}
 	op := new(NotOperator)
-	op.operand_ = GetOperatorFactory().Generate("and", argument)
+	op.operand_ = Generate("and", argument)
 	return op
 }
 
 func (notOperator NotOperator) Eval(payload gjson.Result) bool {
-	log.Debug("not " + payload.Str)
 	return !(notOperator.operand_).Eval(payload)
 }
 
@@ -42,7 +40,7 @@ type AndOperator struct {
 
 func andOperatorConstruct(argument gjson.Result) *AndOperator {
 	if !argument.IsObject() {
-		log.Error("the argument of 'and' operator must be an object")
+		panic("the argument of 'and' operator must be an object")
 	}
 	op := new(AndOperator)
 	argument.ForEach(func(key, value gjson.Result) bool {
@@ -52,19 +50,19 @@ func andOperatorConstruct(argument gjson.Result) *AndOperator {
 			//       "bar": "baz"
 			//   }
 			opKey := key.Str[1:]
-			op.operands = append(op.operands, OperationNode{"", GetOperatorFactory().Generate(opKey, value)})
+			op.operands = append(op.operands, OperationNode{"", Generate(opKey, value)})
 		} else if value.IsObject() {
 			// is an normal key with an object as the value
 			//   "foo": {
 			//       ".bar": "baz"
 			//   }
-			opKey := key.Str
-			op.operands = append(op.operands, OperationNode{opKey, GetOperatorFactory().Generate("and", value)})
+			opKey := key.String()
+			op.operands = append(op.operands, OperationNode{opKey, Generate("and", value)})
 		} else {
 			// is an normal key with a non-object as the value
 			//   "foo": "bar"
-			opKey := key.Str
-			op.operands = append(op.operands, OperationNode{opKey, GetOperatorFactory().Generate("eq", value)})
+			opKey := key.String()
+			op.operands = append(op.operands, OperationNode{opKey, Generate("eq", value)})
 		}
 		return true
 	})
@@ -72,7 +70,6 @@ func andOperatorConstruct(argument gjson.Result) *AndOperator {
 }
 
 func (andOperator *AndOperator) Eval(payload gjson.Result) bool {
-	log.Debug("and " + payload.Str)
 	res := true
 	for _, operand := range andOperator.operands {
 
@@ -98,19 +95,18 @@ type OrOperator struct {
 
 func orOperatorConstruct(argument gjson.Result) *OrOperator {
 	if !argument.IsArray() {
-		log.Error("the argument of 'or' operator must be an array")
+		panic("the argument of 'or' operator must be an array")
 	}
 	op := new(OrOperator)
 	argument.ForEach(func(_, value gjson.Result) bool {
-		op.operands = append(op.operands, GetOperatorFactory().Generate("and", value))
+		op.operands = append(op.operands, Generate("and", value))
 		return true
 	})
 	return op
 }
 
 func (orOperator OrOperator) Eval(payload gjson.Result) bool {
-	log.Debug("or "+ payload.Str)
-	res:= false
+	res := false
 	for _, operand := range orOperator.operands {
 		res = res || operand.Eval(payload)
 
@@ -132,8 +128,7 @@ func equalOperatorConstruct(argument gjson.Result) *EqualOperator {
 }
 
 func (equalOperator EqualOperator) Eval(payload gjson.Result) bool {
-	log.Debug("eq "+ payload.Str + "==" + equalOperator.value.Str)
-	return payload.Str == equalOperator.value.Str
+	return payload.String() == equalOperator.value.String()
 }
 
 type NotEqualOperator struct {
@@ -147,10 +142,8 @@ func notEqualOperatorConstruct(argument gjson.Result) *NotEqualOperator {
 }
 
 func (notEqualOperator NotEqualOperator) Eval(payload gjson.Result) bool {
-	log.Debug("neq " + payload.Str)
-	return !(payload.Str == notEqualOperator.value.Str)
+	return !(payload.String() == notEqualOperator.value.String())
 }
-
 
 type InOperator struct {
 	operand gjson.Result
@@ -158,7 +151,7 @@ type InOperator struct {
 
 func inOperatorConstruct(argument gjson.Result) *InOperator {
 	if argument.IsObject() {
-		log.Error("the argument of 'in' operator must be an array or a string")
+		panic("the argument of 'in' operator must be an array or a string")
 	}
 	op := new(InOperator)
 	op.operand = argument
@@ -166,16 +159,15 @@ func inOperatorConstruct(argument gjson.Result) *InOperator {
 }
 
 func (inOperator InOperator) Eval(payload gjson.Result) bool {
-	log.Debug("in " + payload.Str)
 	if inOperator.operand.IsArray() {
 		res := false
 		inOperator.operand.ForEach(func(key, value gjson.Result) bool {
-			res = res || value.Str == payload.Str
+			res = res || value.String() == payload.String()
 			return true
 		})
 		return res
 	}
-	return strings.Contains(inOperator.operand.Str, payload.Str)
+	return strings.Contains(inOperator.operand.String(), payload.String())
 }
 
 type ContainsOperator struct {
@@ -184,15 +176,14 @@ type ContainsOperator struct {
 
 func containsOperatorConstruct(argument gjson.Result) *ContainsOperator {
 	if argument.IsArray() || argument.IsObject() {
-		log.Error("the argument of 'contains' operator must be a string")
+		panic("the argument of 'contains' operator must be a string")
 	}
 	op := new(ContainsOperator)
-	op.operand = argument.Str
+	op.operand = argument.String()
 	return op
 }
 
 func (containsOperator ContainsOperator) Eval(payload gjson.Result) bool {
-	log.Debug("contains "+ payload.Str)
 	if payload.IsObject() || payload.IsArray() {
 		return false
 	}
@@ -205,29 +196,19 @@ type RegexOperator struct {
 
 func regexOperatorConstruct(argument gjson.Result) *RegexOperator {
 	if argument.IsArray() || argument.IsObject() {
-		log.Error("the argument of 'regex' operator must be a string")
+		panic("the argument of 'regex' operator must be a string")
 	}
 	op := new(RegexOperator)
-	op.regex = argument.Str
+	op.regex = argument.String()
 	return op
 }
 
 func (containsOperator RegexOperator) Eval(payload gjson.Result) bool {
-	log.Debug("regex " + payload.Str)
-	matched, _ := regexp.MatchString(containsOperator.regex, payload.Str)
+	matched, _ := regexp.MatchString(containsOperator.regex, payload.String())
 	return matched
 }
-// 单例工厂
-type operatorFactory struct{
-}
 
-var instance *operatorFactory = &operatorFactory{}
-
-func GetOperatorFactory() *operatorFactory {
-	return instance
-}
-
-func (o operatorFactory) Generate(opName string, argument gjson.Result) Filter {
+func Generate(opName string, argument gjson.Result) Filter {
 	switch opName {
 	case "not":
 		return notOperatorConstruct(argument)
@@ -246,22 +227,25 @@ func (o operatorFactory) Generate(opName string, argument gjson.Result) Filter {
 	case "regex":
 		return regexOperatorConstruct(argument)
 	default:
-		log.Warnf("the operator '%s' is not supported", opName)
-		return nil
+		panic("the operator " + opName + " is not supported")
 	}
 }
 
-var filter = new(Filter)
-var once sync.Once   // 过滤器单例模式
+var EventFilter = new(Filter)
 
-func GetFilter() *Filter {
-	once.Do(func() {
-		f, err := ioutil.ReadFile("filter.json")
-		if err != nil {
-			filter = nil
+func BootFilter() {
+	defer func() {
+		if e := recover(); e != nil {
+			log.Warnf("事件过滤器启动失败: %v", e)
+			EventFilter = nil
 		} else {
-			*filter = GetOperatorFactory().Generate("and", gjson.ParseBytes(f))
+			log.Info("事件过滤器启动成功.")
 		}
-	})
-	return filter
+	}()
+	f, err := ioutil.ReadFile("filter.json")
+	if err != nil {
+		panic(err)
+	} else {
+		*EventFilter = Generate("and", gjson.ParseBytes(f))
+	}
 }

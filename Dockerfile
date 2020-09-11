@@ -1,4 +1,4 @@
-FROM golang:1.14.2-alpine AS builder
+FROM golang:1.14.7-alpine AS builder
 
 RUN go env -w GO111MODULE=auto \
   && go env -w CGO_ENABLED=0 \

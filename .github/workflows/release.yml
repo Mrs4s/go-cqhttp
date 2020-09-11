@@ -26,5 +26,5 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           goos: ${{ matrix.goos }}
           goarch: ${{ matrix.goarch }}
-          ldflags: -w -s -X "github.com/Mrs4s/go-cqhttp/coolq.version=${{ env.RELEASE_VERSION }}"
+          ldflags: -w -s -X "github.com/Mrs4s/go-cqhttp/coolq.Version=${{ env.RELEASE_VERSION }}"
           

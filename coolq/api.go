@@ -16,7 +16,7 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-var version = "unknown"
+var Version = "unknown"
 
 // https://cqhttp.cc/docs/4.15/#/API?id=get_login_info-%E8%8E%B7%E5%8F%96%E7%99%BB%E5%BD%95%E5%8F%B7%E4%BF%A1%E6%81%AF
 func (bot *CQBot) CQGetLoginInfo() MSG {
@@ -25,7 +25,7 @@ func (bot *CQBot) CQGetLoginInfo() MSG {
 
 // https://cqhttp.cc/docs/4.15/#/API?id=get_friend_list-%E8%8E%B7%E5%8F%96%E5%A5%BD%E5%8F%8B%E5%88%97%E8%A1%A8
 func (bot *CQBot) CQGetFriendList() MSG {
-	var fs []MSG
+	fs := make([]MSG, 0)
 	for _, f := range bot.Client.FriendList {
 		fs = append(fs, MSG{
 			"nickname": f.Nickname,
@@ -38,7 +38,7 @@ func (bot *CQBot) CQGetFriendList() MSG {
 
 // https://cqhttp.cc/docs/4.15/#/API?id=get_group_list-%E8%8E%B7%E5%8F%96%E7%BE%A4%E5%88%97%E8%A1%A8
 func (bot *CQBot) CQGetGroupList(noCache bool) MSG {
-	var gs []MSG
+	gs := make([]MSG, 0)
 	if noCache {
 		_ = bot.Client.ReloadGroupList()
 	}
@@ -68,20 +68,7 @@ func (bot *CQBot) CQGetGroupInfo(groupId int64) MSG {
 }
 
 // https://cqhttp.cc/docs/4.15/#/API?id=get_group_member_list-%E8%8E%B7%E5%8F%96%E7%BE%A4%E6%88%90%E5%91%98%E5%88%97%E8%A1%A8
-func (bot *CQBot) CQGetGroupMemberList(groupId int64) MSG {
-	group := bot.Client.FindGroup(groupId)
-	if group == nil {
-		return Failed(100)
-	}
-	var members []MSG
-	for _, m := range group.Members {
-		members = append(members, convertGroupMemberInfo(groupId, m))
-	}
-	return OK(members)
-}
-
-// https://cqhttp.cc/docs/4.15/#/API?id=get_group_member_info-%E8%8E%B7%E5%8F%96%E7%BE%A4%E6%88%90%E5%91%98%E4%BF%A1%E6%81%AF
-func (bot *CQBot) CQGetGroupMemberInfo(groupId, userId int64, noCache bool) MSG {
+func (bot *CQBot) CQGetGroupMemberList(groupId int64, noCache bool) MSG {
 	group := bot.Client.FindGroup(groupId)
 	if group == nil {
 		return Failed(100)
@@ -93,6 +80,19 @@ func (bot *CQBot) CQGetGroupMemberInfo(groupId, userId int64, noCache bool) MSG 
 			return Failed(100)
 		}
 		group.Members = t
+	}
+	members := make([]MSG, 0)
+	for _, m := range group.Members {
+		members = append(members, convertGroupMemberInfo(groupId, m))
+	}
+	return OK(members)
+}
+
+// https://cqhttp.cc/docs/4.15/#/API?id=get_group_member_info-%E8%8E%B7%E5%8F%96%E7%BE%A4%E6%88%90%E5%91%98%E4%BF%A1%E6%81%AF
+func (bot *CQBot) CQGetGroupMemberInfo(groupId, userId int64) MSG {
+	group := bot.Client.FindGroup(groupId)
+	if group == nil {
+		return Failed(100)
 	}
 	member := group.FindMember(userId)
 	if member == nil {
@@ -198,11 +198,24 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupId int64, m gjson.Result) MSG {
 		name := e.Get("data.name").Str
 		content := bot.ConvertObjectMessage(e.Get("data.content"), true)
 		if uin != 0 && name != "" && len(content) > 0 {
+			var newElem []message.IMessageElement
+			for _, elem := range content {
+				if img, ok := elem.(*message.ImageElement); ok {
+					gm, err := bot.Client.UploadGroupImage(groupId, img.Data)
+					if err != nil {
+						log.Warnf("警告：群 %v 图片上传失败: %v", groupId, err)
+						continue
+					}
+					newElem = append(newElem, gm)
+					continue
+				}
+				newElem = append(newElem, elem)
+			}
 			nodes = append(nodes, &message.ForwardNode{
 				SenderId:   uin,
 				SenderName: name,
 				Time:       int32(ts.Unix()),
-				Message:    content,
+				Message:    newElem,
 			})
 			return
 		}
@@ -286,6 +299,14 @@ func (bot *CQBot) CQSetGroupSpecialTitle(groupId, userId int64, title string) MS
 func (bot *CQBot) CQSetGroupName(groupId int64, name string) MSG {
 	if g := bot.Client.FindGroup(groupId); g != nil {
 		g.UpdateName(name)
+		return OK(nil)
+	}
+	return Failed(100)
+}
+
+func (bot *CQBot) CQSetGroupMemo(groupId int64, msg string) MSG {
+	if g := bot.Client.FindGroup(groupId); g != nil {
+		g.UpdateMemo(msg)
 		return OK(nil)
 	}
 	return Failed(100)
@@ -381,6 +402,44 @@ func (bot *CQBot) CQDeleteMessage(messageId int32) MSG {
 	}
 	bot.Client.RecallGroupMessage(msg["group"].(int64), msg["message-id"].(int32), msg["internal-id"].(int32))
 	return OK(nil)
+}
+
+// https://github.com/howmanybots/onebot/blob/master/v11/specs/api/public.md#set_group_admin-%E7%BE%A4%E7%BB%84%E8%AE%BE%E7%BD%AE%E7%AE%A1%E7%90%86%E5%91%98
+func (bot *CQBot) CQSetGroupAdmin(groupId, userId int64, enable bool) MSG {
+	group := bot.Client.FindGroup(groupId)
+	if group == nil || group.OwnerUin != bot.Client.Uin {
+		return Failed(100)
+	}
+	mem := group.FindMember(userId)
+	if mem == nil {
+		return Failed(100)
+	}
+	mem.SetAdmin(enable)
+	t, err := bot.Client.GetGroupMembers(group)
+	if err != nil {
+		log.Warnf("刷新群 %v 成员列表失败: %v", groupId, err)
+		return Failed(100)
+	}
+	group.Members = t
+	return OK(nil)
+}
+
+func (bot *CQBot) CQGetVipInfo(userId int64) MSG {
+	msg := MSG{}
+	vip, err := bot.Client.GetVipInfo(userId)
+	if err != nil {
+		return Failed(100)
+	}
+	msg = MSG{
+		"user_id":          vip.Uin,
+		"nickname":         vip.Name,
+		"level":            vip.Level,
+		"level_speed":      vip.LevelSpeed,
+		"vip_level":        vip.VipLevel,
+		"vip_growth_speed": vip.VipGrowthSpeed,
+		"vip_growth_total": vip.VipGrowthTotal,
+	}
+	return OK(msg)
 }
 
 // https://github.com/howmanybots/onebot/blob/master/v11/specs/api/public.md#get_group_honor_info-%E8%8E%B7%E5%8F%96%E7%BE%A4%E8%8D%A3%E8%AA%89%E4%BF%A1%E6%81%AF
@@ -525,7 +584,7 @@ func (bot *CQBot) CQGetForwardMessage(resId string) MSG {
 	if m == nil {
 		return Failed(100)
 	}
-	var r []MSG
+	r := make([]MSG, 0)
 	for _, n := range m.Nodes {
 		bot.checkMedia(n.Message)
 		r = append(r, MSG{
@@ -568,6 +627,11 @@ func (bot *CQBot) CQCanSendRecord() MSG {
 	return OK(MSG{"yes": true})
 }
 
+func (bot *CQBot) CQReloadEventFilter() MSG {
+	global.BootFilter()
+	return OK(nil)
+}
+
 func (bot *CQBot) CQGetStatus() MSG {
 	return OK(MSG{
 		"app_initialized": true,
@@ -590,7 +654,7 @@ func (bot *CQBot) CQGetVersionInfo() MSG {
 		"plugin_build_configuration": "release",
 		"runtime_version":            runtime.Version(),
 		"runtime_os":                 runtime.GOOS,
-		"version":                    version,
+		"version":                    Version,
 	})
 }
 
