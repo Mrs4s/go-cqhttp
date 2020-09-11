@@ -77,7 +77,7 @@ go-cqhttp 支持导入CQHTTP的配置文件, 具体步骤为:
 | post_message_format  | string   | 上报信息类型                                                        |
 | ignore_invalid_cqcode| bool     | 是否忽略错误的CQ码                                                   |
 | force_fragmented     | bool     | 是否强制分片发送群长消息                                              |
-| heartbeat_interval   | int64    | 心跳间隔时间，单位秒，若0则关闭心跳                                     |
+| heartbeat_interval   | int64    | 心跳间隔时间，单位秒。小于0则关闭心跳，等于0使用默认值(5秒)        |
 | http_config          | object   | HTTP API配置                                                       |
 | ws_config            | object   | Websocket API 配置                                                 |
 | ws_reverse_servers   | object[] | 反向 Websocket API 配置                                             |
