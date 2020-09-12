@@ -1,9 +1,7 @@
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
-github.com/Mrs4s/MiraiGo v0.0.0-20200912102543-d8eaf11f598b h1:3uUSB/3FzPrcUmp4m+QO+F/U/oNf3n82KQqp+468fvs=
-github.com/Mrs4s/MiraiGo v0.0.0-20200912102543-d8eaf11f598b/go.mod h1:cwYPI2uq6nxNbx0nA6YuAKF1V5szSs6FPlGVLQvRUlo=
-github.com/Mrs4s/MiraiGo v0.0.0-20200912113251-498ec93183e0 h1:c6LzgaZJRRLSnCTwOGwcPHJTzDHjIxRrVcV3NL+G4f0=
-github.com/Mrs4s/MiraiGo v0.0.0-20200912113251-498ec93183e0/go.mod h1:cwYPI2uq6nxNbx0nA6YuAKF1V5szSs6FPlGVLQvRUlo=
+github.com/Mrs4s/MiraiGo v0.0.0-20200912123655-d92d61c5998e h1:wiaXXMPnYCfA+rX1wy9SNrDyW3O43wfun5dIYKKK3BI=
+github.com/Mrs4s/MiraiGo v0.0.0-20200912123655-d92d61c5998e/go.mod h1:cwYPI2uq6nxNbx0nA6YuAKF1V5szSs6FPlGVLQvRUlo=
 github.com/bwmarrin/snowflake v0.3.0 h1:xm67bEhkKh6ij1790JB83OujPR5CzNe8QuQqAgISZN0=
 github.com/bwmarrin/snowflake v0.3.0/go.mod h1:NdZxfVWX+oR6y2K0o6qAYv6gIOP9rjG0/E9WsDpxqwE=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
