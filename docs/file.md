@@ -7,6 +7,7 @@ go-cqhttp 默认生成的文件树如下所示:
 ├── go-cqhttp
 ├── config.json
 ├── device.json
+├── servers.bin
 ├── logs
 │   └── xx-xx-xx.log
 └── data
@@ -20,6 +21,7 @@ go-cqhttp 默认生成的文件树如下所示:
 | go-cqhttp   | go-cqhttp可执行文件 |
 | config.json | 运行配置文件        |
 | device.json | 虚拟设备配置文件    |
+| servers.bin | 储存QQ服务器地址    |
 | logs        | 日志存放目录        |
 | data        | 数据目录            |
 | data/images | 图片缓存目录        |

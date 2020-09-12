@@ -18,6 +18,20 @@ Type : `reply`
 
 示例: `[CQ:reply,id=123456]`
 
+### 红包
+
+Type: `redbag`
+
+范围: **接收**
+
+参数:
+
+| 参数名 | 类型   | 说明        |
+| ------ | ------ | ----------- |
+| title  | string | 祝福语/口令 |
+
+示例: `[CQ:redbag,title=恭喜发财]`
+
  ### 合并转发
 
 Type: `forward`
@@ -362,3 +376,30 @@ Type: `cardimage`
 | `user_id`     | int64  |                | 好友id        |
 | `message_id`  | int64  |                | 被撤回的消息id |
 
+#### 群内戳一戳
+
+> 注意：此事件无法在平板和手表协议上触发
+
+**上报数据**
+
+| 字段          | 类型   | 可能的值       | 说明           |
+| ------------- | ------ | -------------- | -------------- |
+| `post_type`   | string | `notice`       | 上报类型       |
+| `notice_type` | string | `notify` | 消息类型       |
+| `notify_type` | string | `poke` | 提示类型 |
+| `user_id`     | int64  |                | 发送者id    |
+| `receiver_id` | int64 | | 被戳者id |
+
+#### 群红包运气王提示
+
+> 注意：此事件无法在平板和手表协议上触发
+
+**上报数据**
+
+| 字段          | 类型   | 可能的值       | 说明           |
+| ------------- | ------ | -------------- | -------------- |
+| `post_type`   | string | `notice`       | 上报类型       |
+| `notice_type` | string | `notify` | 消息类型       |
+| `notify_type` | string | `lucky_king` | 提示类型 |
+| `user_id`     | int64  |                | 红包发送者id |
+| `lucky_king_id` | int64 | | 运气王id |
