@@ -59,6 +59,7 @@ func NewQQBot(cli *client.QQClient, conf *global.JsonConfig) *CQBot {
 	bot.Client.OnTempMessage(bot.tempMessageEvent)
 	bot.Client.OnGroupMuted(bot.groupMutedEvent)
 	bot.Client.OnGroupMessageRecalled(bot.groupRecallEvent)
+	bot.Client.OnGroupNotify(bot.groupNotifyEvent)
 	bot.Client.OnFriendMessageRecalled(bot.friendRecallEvent)
 	bot.Client.OnJoinGroup(bot.joinGroupEvent)
 	bot.Client.OnLeaveGroup(bot.leaveGroupEvent)

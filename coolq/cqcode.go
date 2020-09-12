@@ -71,6 +71,11 @@ func ToArrayMessage(e []message.IMessageElement, code int64, raw ...bool) (r []M
 					"data": map[string]string{"qq": fmt.Sprint(o.Target)},
 				}
 			}
+		case *message.RedBagElement:
+			m = MSG{
+				"type": "redbag",
+				"data": map[string]string{"title": o.Title},
+			}
 		case *message.ForwardElement:
 			m = MSG{
 				"type": "forward",
@@ -159,6 +164,8 @@ func ToStringMessage(e []message.IMessageElement, code int64, raw ...bool) (r st
 				continue
 			}
 			r += fmt.Sprintf("[CQ:at,qq=%d]", o.Target)
+		case *message.RedBagElement:
+			r += fmt.Sprintf("[CQ:redbag,title=%s]", o.Title)
 		case *message.ForwardElement:
 			r += fmt.Sprintf("[CQ:forward,id=%s]", o.ResId)
 		case *message.FaceElement:
