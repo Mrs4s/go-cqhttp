@@ -386,6 +386,7 @@ Type: `cardimage`
 | ------------- | ------ | -------------- | -------------- |
 | `post_type`   | string | `notice`       | 上报类型       |
 | `notice_type` | string | `notify` | 消息类型       |
+| `group_id` | int64 |  | 群号 |
 | `sub_type` | string | `poke` | 提示类型 |
 | `user_id`     | int64  |                | 发送者id    |
 | `target_id` | int64 | | 被戳者id |
@@ -400,6 +401,7 @@ Type: `cardimage`
 | ------------- | ------ | -------------- | -------------- |
 | `post_type`   | string | `notice`       | 上报类型       |
 | `notice_type` | string | `notify` | 消息类型       |
+| `group_id` | int64 |  | 群号 |
 | `sub_type` | string | `lucky_king` | 提示类型 |
 | `user_id`     | int64  |                | 红包发送者id |
 | `target_id` | int64 | | 运气王id |
@@ -414,6 +416,7 @@ Type: `cardimage`
 | ------------- | ------ | -------------- | -------------- |
 | `post_type`   | string | `notice`       | 上报类型       |
 | `notice_type` | string | `notify` | 消息类型       |
+| `group_id` | int64 |  | 群号 |
 | `sub_type` | string | `honor` | 提示类型 |
 | `user_id`     | int64  |                | 成员id |
 | `honor_type` | string | `talkative:龙王` `performer:群聊之火` `emotion:快乐源泉` | 荣誉类型 |
