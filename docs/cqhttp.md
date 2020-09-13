@@ -386,9 +386,9 @@ Type: `cardimage`
 | ------------- | ------ | -------------- | -------------- |
 | `post_type`   | string | `notice`       | 上报类型       |
 | `notice_type` | string | `notify` | 消息类型       |
-| `notify_type` | string | `poke` | 提示类型 |
+| `sub_type` | string | `poke` | 提示类型 |
 | `user_id`     | int64  |                | 发送者id    |
-| `receiver_id` | int64 | | 被戳者id |
+| `target_id` | int64 | | 被戳者id |
 
 #### 群红包运气王提示
 
@@ -400,6 +400,20 @@ Type: `cardimage`
 | ------------- | ------ | -------------- | -------------- |
 | `post_type`   | string | `notice`       | 上报类型       |
 | `notice_type` | string | `notify` | 消息类型       |
-| `notify_type` | string | `lucky_king` | 提示类型 |
+| `sub_type` | string | `lucky_king` | 提示类型 |
 | `user_id`     | int64  |                | 红包发送者id |
-| `lucky_king_id` | int64 | | 运气王id |
+| `target_id` | int64 | | 运气王id |
+
+#### 群成员荣誉变更提示
+
+> 注意：此事件无法在平板和手表协议上触发
+
+**上报数据**
+
+| 字段          | 类型   | 可能的值       | 说明           |
+| ------------- | ------ | -------------- | -------------- |
+| `post_type`   | string | `notice`       | 上报类型       |
+| `notice_type` | string | `notify` | 消息类型       |
+| `sub_type` | string | `honor` | 提示类型 |
+| `user_id`     | int64  |                | 成员id |
+| `honor_type` | int64 | `talkative:龙王` `performer:群聊之火` `emotion:快乐源泉` | 荣誉类型 |

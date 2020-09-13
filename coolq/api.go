@@ -655,6 +655,18 @@ func (bot *CQBot) CQGetVersionInfo() MSG {
 		"runtime_version":            runtime.Version(),
 		"runtime_os":                 runtime.GOOS,
 		"version":                    Version,
+		"protocol": func() int {
+			switch client.SystemDeviceInfo.Protocol {
+			case client.AndroidPad:
+				return 0
+			case client.AndroidPhone:
+				return 1
+			case client.AndroidWatch:
+				return 2
+			default:
+				return -1
+			}
+		}(),
 	})
 }
 

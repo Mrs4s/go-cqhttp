@@ -216,11 +216,11 @@ func (bot *CQBot) groupNotifyEvent(c *client.QQClient, e client.IGroupNotifyEven
 			"post_type":   "notice",
 			"group_id":    group.Code,
 			"notice_type": "notify",
-			"notify_type": "poke",
+			"sub_type":    "poke",
 			"self_id":     c.Uin,
 			"user_id":     notify.Sender,
 			"sender_id":   notify.Sender,
-			"receiver_id": notify.Receiver,
+			"target_id":   notify.Receiver,
 			"time":        time.Now().Unix(),
 		})
 	case *client.GroupRedBagLuckyKingNotifyEvent:
@@ -228,15 +228,15 @@ func (bot *CQBot) groupNotifyEvent(c *client.QQClient, e client.IGroupNotifyEven
 		luckyKing := group.FindMember(notify.LuckyKing)
 		log.Infof("群 %v 内 %v 的红包被抢完, %v 是运气王", formatGroupName(group), formatMemberName(sender), formatMemberName(luckyKing))
 		bot.dispatchEventMessage(MSG{
-			"post_type":     "notice",
-			"group_id":      group.Code,
-			"notice_type":   "notify",
-			"notify_type":   "lucky_king",
-			"self_id":       c.Uin,
-			"user_id":       notify.Sender,
-			"sender_id":     notify.Sender,
-			"lucky_king_id": notify.LuckyKing,
-			"time":          time.Now().Unix(),
+			"post_type":   "notice",
+			"group_id":    group.Code,
+			"notice_type": "notify",
+			"sub_type":    "lucky_king",
+			"self_id":     c.Uin,
+			"user_id":     notify.Sender,
+			"sender_id":   notify.Sender,
+			"target_id":   notify.LuckyKing,
+			"time":        time.Now().Unix(),
 		})
 	case *client.MemberHonorChangedNotifyEvent:
 		log.Info(notify.Content())
@@ -244,7 +244,7 @@ func (bot *CQBot) groupNotifyEvent(c *client.QQClient, e client.IGroupNotifyEven
 			"post_type":   "notice",
 			"group_id":    group.Code,
 			"notice_type": "notify",
-			"notify_type": "honor",
+			"sub_type":    "honor",
 			"self_id":     c.Uin,
 			"user_id":     notify.Uin,
 			"time":        time.Now().Unix(),
