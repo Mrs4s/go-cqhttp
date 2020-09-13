@@ -416,4 +416,4 @@ Type: `cardimage`
 | `notice_type` | string | `notify` | 消息类型       |
 | `sub_type` | string | `honor` | 提示类型 |
 | `user_id`     | int64  |                | 成员id |
-| `honor_type` | int64 | `talkative:龙王` `performer:群聊之火` `emotion:快乐源泉` | 荣誉类型 |
+| `honor_type` | string | `talkative:龙王` `performer:群聊之火` `emotion:快乐源泉` | 荣誉类型 |
