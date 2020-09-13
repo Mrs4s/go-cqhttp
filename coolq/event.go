@@ -238,6 +238,29 @@ func (bot *CQBot) groupNotifyEvent(c *client.QQClient, e client.IGroupNotifyEven
 			"lucky_king_id": notify.LuckyKing,
 			"time":          time.Now().Unix(),
 		})
+	case *client.MemberHonorChangedNotifyEvent:
+		log.Info(notify.Content())
+		bot.dispatchEventMessage(MSG{
+			"post_type":   "notice",
+			"group_id":    group.Code,
+			"notice_type": "notify",
+			"notify_type": "honor",
+			"self_id":     c.Uin,
+			"user_id":     notify.Uin,
+			"time":        time.Now().Unix(),
+			"honor_type": func() string {
+				switch notify.Honor {
+				case client.Talkative:
+					return "talkative"
+				case client.Performer:
+					return "performer"
+				case client.Emotion:
+					return "emotion"
+				default:
+					return "ERROR"
+				}
+			}(),
+		})
 	}
 }
 
