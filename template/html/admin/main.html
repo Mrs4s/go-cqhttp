@@ -1,8 +1,9 @@
+{{ define "admin/main.html" }}
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>{$config.site_name}</title>
+    <title>miraigo web</title>
     <meta content='width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no' name='viewport'>
     <!-- Bootstrap 3.3.2 -->
     <link href="/assets/css/bootstrap.css" rel="stylesheet" type="text/css"/>
@@ -47,27 +48,27 @@
                     <!-- User Account: style can be found in dropdown.less -->
                     <li class="dropdown user user-menu">
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                            <img src="{$userinfo.avatar}" class="user-image" alt="User Image"/>
+                            <img src="{{getavator}}" class="user-image" alt="User Image"/>
                             <span class="hidden-xs"></span>
                         </a>
                         <ul class="dropdown-menu">
                             <!-- User image -->
                             <li class="user-header">
-                                <img src="{$userinfo.avatar}" class="img-circle" alt="User Image"/>
+                                <img src="{{getavator}}" class="img-circle" alt="User Image"/>
 
                                 <p>
-                                    {$userinfo.user_email}
-                                    <small>加入时间：{$userinfo.create_time|date="Y-m-d H:i:s",###}</small>
+                                    {{getConf.Uin}}
+                                    <small>当前时间：{{getDate}}</small>
                                 </p>
                             </li>
-                            <li class="user-footer">
-                                <div class="pull-left">
-                                    <a href="/user/profile/center.html" class="btn btn-default btn-flat">个人信息</a>
-                                </div>
-                                <div class="pull-right">
-                                    <a href="/User/Index/logout" class="btn btn-default btn-flat">退出</a>
-                                </div>
-                            </li>
+{{/*                            <li class="user-footer">*/}}
+{{/*                                <div class="pull-left">*/}}
+{{/*                                    <a href="/user/profile/center.html" class="btn btn-default btn-flat">个人信息</a>*/}}
+{{/*                                </div>*/}}
+{{/*                                <div class="pull-right">*/}}
+{{/*                                    <a href="/User/Index/logout" class="btn btn-default btn-flat">退出</a>*/}}
+{{/*                                </div>*/}}
+{{/*                            </li>*/}}
                         </ul>
                     </li>
                 </ul>
@@ -84,10 +85,10 @@
             <!-- Sidebar user panel -->
             <div class="user-panel">
                 <div class="pull-left image">
-                    <img src="{$userinfo.avatar}" class="img-circle" alt="User Image"/>
+                    <img src="{{getavator}}" class="img-circle" alt="User Image"/>
                 </div>
                 <div class="pull-left info">
-                    <p>{$userinfo.user_nickname}</p>
+                    <p>{{getConf.Uin}}</p>
 
                     <a href="#"><i class="fa fa-circle text-success"></i> Online</a>
                 </div>
@@ -96,39 +97,45 @@
             <!-- sidebar menu: : style can be found in sidebar.less -->
             <ul class="sidebar-menu">
                 <li>
-                    <a href="/ddns/User/index">
+                    <a href="/admin/index">
                         <i class="fa fa-dashboard"></i> <span>用户中心</span>
                     </a>
                 </li>
 
                 <li>
-                    <a href="/ddns/user/dnstype">
-                        <i class="fa fa-sitemap"></i> <span>ddns类型选择</span>
+                    <a href="/admin/config_json">
+                        <i class="fa fa-sitemap"></i> <span>config.json</span>
                     </a>
                 </li>
 
                 <li>
-                    <a href="/ddns/user/userdomain">
-                        <i class="fa fa-pencil"></i> <span>域名配置</span>
+                    <a href="/admin/config">
+                        <i class="fa fa-pencil"></i> <span>简易配置</span>
                     </a>
                 </li>
 
                 <li>
-                    <a href="/ddns/user/qq">
-                        <i class="fa fa-history"></i> <span>qq推送设置</span>
+                    <a href="/admin/debug">
+                        <i class="fa fa-history"></i> <span>api调试</span>
                     </a>
                 </li>
 
 
                 <li>
-                    <a href="/ddns/user/fzuser">
-                        <i class="fa  fa-pencil"></i> <span>负载单域名多ip</span>
+                    <a href="/admin/log">
+                        <i class="fa  fa-pencil"></i> <span>日志</span>
                     </a>
                 </li>
 
                 <li>
-                    <a href="/ddns/user/ipv6">
-                        <i class="fa fa-users"></i> <span>ipv6支持</span>
+                    <a href="/admin/friend_list">
+                        <i class="fa fa-users"></i> <span>好友列表</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="/admin/group_list">
+                        <i class="fa fa-users"></i> <span>群列表</span>
                     </a>
                 </li>
 			 	<!--<li>-->
@@ -147,3 +154,4 @@
         </section>
         <!-- /.sidebar -->
     </aside>
+{{ end }}
