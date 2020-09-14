@@ -495,6 +495,9 @@ var wsApi = map[string]func(*coolq.CQBot, gjson.Result) coolq.MSG{
 	"_get_vip_info": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		return bot.CQGetVipInfo(p.Get("user_id").Int())
 	},
+	"reload_event_filter": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
+		return bot.CQReloadEventFilter()
+	},
 	".handle_quick_operation": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		return bot.CQHandleQuickOperation(p.Get("context"), p.Get("operation"))
 	},

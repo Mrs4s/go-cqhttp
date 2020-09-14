@@ -59,6 +59,7 @@ func NewQQBot(cli *client.QQClient, conf *global.JsonConfig) *CQBot {
 	bot.Client.OnTempMessage(bot.tempMessageEvent)
 	bot.Client.OnGroupMuted(bot.groupMutedEvent)
 	bot.Client.OnGroupMessageRecalled(bot.groupRecallEvent)
+	bot.Client.OnGroupNotify(bot.groupNotifyEvent)
 	bot.Client.OnFriendMessageRecalled(bot.friendRecallEvent)
 	bot.Client.OnJoinGroup(bot.joinGroupEvent)
 	bot.Client.OnLeaveGroup(bot.leaveGroupEvent)
@@ -137,6 +138,14 @@ func (bot *CQBot) SendGroupMessage(groupId int64, m *message.SendingMessage) int
 			}
 			newElem = append(newElem, gv)
 			continue
+		}
+		if i, ok := elem.(*PokeElement); ok {
+			if group := bot.Client.FindGroup(groupId); group != nil {
+				if mem := group.FindMember(i.Target); mem != nil {
+					mem.Poke()
+					return 0
+				}
+			}
 		}
 		newElem = append(newElem, elem)
 	}
@@ -226,7 +235,7 @@ func (bot *CQBot) Release() {
 
 func (bot *CQBot) dispatchEventMessage(m MSG) {
 	payload := gjson.Parse(m.ToJson())
-	filter := global.GetFilter()
+	filter := global.EventFilter
 	if filter != nil && (*filter).Eval(payload) == false {
 		log.Debug("Event filtered!")
 		return

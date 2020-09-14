@@ -324,6 +324,10 @@ func (s *httpServer) GetVersionInfo(c *gin.Context) {
 	c.JSON(200, s.bot.CQGetVersionInfo())
 }
 
+func (s *httpServer) ReloadEventFilter(c *gin.Context) {
+	c.JSON(200, s.bot.CQReloadEventFilter())
+}
+
 func (s *httpServer) GetVipInfo(c *gin.Context) {
 	uid, _ := strconv.ParseInt(getParam(c, "user_id"), 10, 64)
 	c.JSON(200, s.bot.CQGetVipInfo(uid))
@@ -481,6 +485,9 @@ var httpApi = map[string]func(s *httpServer, c *gin.Context){
 	},
 	"_get_vip_info": func(s *httpServer, c *gin.Context) {
 		s.GetVipInfo(c)
+	},
+	"reload_event_filter": func(s *httpServer, c *gin.Context) {
+		s.ReloadEventFilter(c)
 	},
 	".handle_quick_operation": func(s *httpServer, c *gin.Context) {
 		s.HandleQuickOperation(c)

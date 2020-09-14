@@ -26,6 +26,14 @@ var paramReg = regexp.MustCompile(`,([\w\-.]+?)=([^,\]]+)`)
 
 var IgnoreInvalidCQCode = false
 
+type PokeElement struct {
+	Target int64
+}
+
+func (e *PokeElement) Type() message.ElementType {
+	return message.At
+}
+
 func ToArrayMessage(e []message.IMessageElement, code int64, raw ...bool) (r []MSG) {
 	ur := false
 	if len(raw) != 0 {
@@ -50,6 +58,8 @@ func ToArrayMessage(e []message.IMessageElement, code int64, raw ...bool) (r []M
 				"type": "text",
 				"data": map[string]string{"text": o.Content},
 			}
+		case *message.ReplyElement:
+			continue
 		case *message.LightAppElement:
 			//m = MSG{
 			//	"type": "text",
@@ -70,6 +80,11 @@ func ToArrayMessage(e []message.IMessageElement, code int64, raw ...bool) (r []M
 					"type": "at",
 					"data": map[string]string{"qq": fmt.Sprint(o.Target)},
 				}
+			}
+		case *message.RedBagElement:
+			m = MSG{
+				"type": "redbag",
+				"data": map[string]string{"title": o.Title},
 			}
 		case *message.ForwardElement:
 			m = MSG{
@@ -159,6 +174,8 @@ func ToStringMessage(e []message.IMessageElement, code int64, raw ...bool) (r st
 				continue
 			}
 			r += fmt.Sprintf("[CQ:at,qq=%d]", o.Target)
+		case *message.RedBagElement:
+			r += fmt.Sprintf("[CQ:redbag,title=%s]", o.Title)
 		case *message.ForwardElement:
 			r += fmt.Sprintf("[CQ:forward,id=%s]", o.ResId)
 		case *message.FaceElement:
@@ -310,6 +327,12 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 		return message.NewText(d["text"]), nil
 	case "image":
 		return bot.makeImageElem(t, d, group)
+	case "poke":
+		if !group {
+			return nil, errors.New("todo") // TODO: private poke
+		}
+		t, _ := strconv.ParseInt(d["qq"], 10, 64)
+		return &PokeElement{Target: t}, nil
 	case "record":
 		if !group {
 			return nil, errors.New("private voice unsupported now")
