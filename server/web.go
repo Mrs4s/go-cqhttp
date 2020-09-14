@@ -17,6 +17,7 @@ import (
 	"runtime"
 	"strings"
 	"time"
+	"encoding/json"
 )
 
 type webServer struct {
@@ -27,11 +28,10 @@ type webServer struct {
 var WebServer = &webServer{}
 
 func (s *webServer) Run(addr string, bot *coolq.CQBot) {
-	//r.Run() // listen and serve on 0.0.0.0:8080
 	gin.SetMode(gin.ReleaseMode)
 	s.engine = gin.New()
-	s.bot = bot
-	//func 函数映射
+	s.bot = bot //外部引入 bot对象，用于操作bot
+	//func 函数映射 全局模板可用
 	s.engine.SetFuncMap(template.FuncMap{
 		"getYear":       getYear,
 		"formatAsDate":  formatAsDate,
@@ -44,9 +44,8 @@ func (s *webServer) Run(addr string, bot *coolq.CQBot) {
 	s.engine.LoadHTMLGlob("template/html/**/*")
 	//静态资源
 	s.engine.Static("/assets", "./template/assets")
-	//s.engine.StaticFS("/assets", http.Dir("html/assets"))
 	//s.engine.StaticFile("/favicon.ico", "./html/favicon.ico")
-	// 无参数
+	// 自动转跳到 admin/index
 	s.engine.GET("/", func(c *gin.Context) {
 		c.Redirect(http.StatusMovedPermanently, "/admin/index")
 	})
@@ -85,59 +84,100 @@ func (s *webServer) Run(addr string, bot *coolq.CQBot) {
 		}
 	}()
 }
+
 func (s *webServer) admin(c *gin.Context) {
 	action := c.Param("action")
-	log.Debugf("HTTPServer接收到API调用: %v", action)
-	if f, ok := httpuri[action]; ok {
+	log.Debugf("WebServer接收到cgi调用: %v", action)
+	if f, ok := httpuriAdmin[action]; ok {
 		f(s, c)
 	} else {
 		c.JSON(200, coolq.Failed(404))
 	}
 }
 
-var httpuri = map[string]func(s *webServer, c *gin.Context){
+// admin 子站的 路由映射
+var httpuriAdmin = map[string]func(s *webServer, c *gin.Context){
 	"index": func(s *webServer, c *gin.Context) {
 		s.AdminIndex(c)
 	},
-	"test": func(s *webServer, c *gin.Context) {
-		s.test(c)
+	"config_json": func(s *webServer, c *gin.Context) {
+		s.AdminConfigJson(c)
+	},
+	"config":func(s *webServer, c *gin.Context) {
+		s.AdminConfig(c)
+	},
+	"debug":func(s *webServer, c *gin.Context) {
+		s.AdminConfigJson(c)
+	},
+	"log":func(s *webServer, c *gin.Context) {
+		s.AdminConfigJson(c)
+	},
+	"friend_list":func(s *webServer, c *gin.Context) {
+		s.AdminConfigJson(c)
+	},
+	"group_list":func(s *webServer, c *gin.Context) {
+		s.AdminConfigJson(c)
 	},
 }
 
+// 首页
 func (s *webServer) AdminIndex(c *gin.Context) {
 	c.HTML(http.StatusOK, "index.html", gin.H{})
 }
 
-func (s *webServer) test(c *gin.Context) {
-	//h :=*HttpServer
-	//h.CanSendImage(c)
-	println(os.Args[0])
+//json config
+func (s *webServer) AdminConfigJson(c *gin.Context) {
+	conf:=getConf()
+	data, _ := json.MarshalIndent(conf, "", "\t")
+	c.HTML(http.StatusOK, "config_json.html", gin.H{
+		"json":template.HTML(data),
+	})
 }
+
+// config
+func (s *webServer) AdminConfig(c *gin.Context) {
+	conf := getConf()
+	var post string
+	var secret string
+	ws_reverse_servers :=conf.ReverseServers[0]
+	for k, v := range conf.HttpConfig.PostUrls {
+		post=k
+		secret=v
+	}
+	c.HTML(http.StatusOK, "config.html", gin.H{
+		"post":post,
+		"secret":secret,
+		"ReverseServers":ws_reverse_servers,
+	})
+}
+
+//格式化年月日
 func formatAsDate(t time.Time) string {
 	year, month, day := t.Date()
 	return fmt.Sprintf("%d%02d/%02d", year, month, day)
 }
-func formatAsYear(t time.Time) string {
-	year, _, _ := t.Date()
-	return fmt.Sprintf("%d", year)
-}
+
+// 获取年份
 func getYear() string {
 	t := time.Now()
 	year, _, _ := t.Date()
 	return fmt.Sprintf("%d", year)
 }
 
+// 获取当前年月日
 func getDate() string {
 	t := time.Now()
 	year, month, day := t.Date()
 	return fmt.Sprintf("%d-%02d-%02d", year, month, day)
 }
 
+// 获取当前配置文件信息
 func getConf() *global.JsonConfig {
 	conf := global.Load("config.json")
 	return conf
 }
 
+// 随机获取一个头像
 func getavator() string {
 	Uuid := uuid.New().String()
 	grav_url := "https://www.gravatar.com/avatar/" + Uuid

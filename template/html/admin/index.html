@@ -46,7 +46,7 @@
                                 <p> GO 路径:{{getServerInfo.Root}}</p>
                                 <p>GO 版本信息:{{getServerInfo.Version}}</p>
                                 <p>PC名:{{getServerInfo.Hostname}}</p>
-                                <p>网卡信息:{{getServerInfo.Interfaces}}</p>
+                                {{/*<p>网卡信息:{{getServerInfo.Interfaces}}</p>*/}}
                                 <p>系统构架:{{getServerInfo.Goarch}}</p>
                                 <p>系统版本:{{getServerInfo.Goos}}</p>
                                 <p>内存Total:{{getServerInfo.VirtualMemory.Total |formatFileSize}}</p>
@@ -64,39 +64,39 @@
             </div>
             <!-- /.col (left) -->
 
-            <div class="col-md-6">
-                <div class="box box-primary">
-                    <div class="box-header">
-                        <i class="fa fa-pencil"></i>
+            {{/*<div class="col-md-6">*/}}
+                {{/*<div class="box box-primary">*/}}
+                    {{/*<div class="box-header">*/}}
+                        {{/*<i class="fa fa-pencil"></i>*/}}
 
-                        <h3 class="box-title">域名</h3>
-                    </div>
-                    <!-- /.box-header -->
-                    <div class="box-body">
-                        <foreach name="userdomin" item="vo">
-                            <p>{$vo.domain}</p>
-                        </foreach>
-                    </div>
-                    <!-- /.box-body -->
-                </div>
-                <!-- /.box -->
-            </div>
+                        {{/*<h3 class="box-title">域名</h3>*/}}
+                    {{/*</div>*/}}
+                    {{/*<!-- /.box-header -->*/}}
+                    {{/*<div class="box-body">*/}}
+                        {{/*<foreach name="userdomin" item="vo">*/}}
+                            {{/*<p>{$vo.domain}</p>*/}}
+                        {{/*</foreach>*/}}
+                    {{/*</div>*/}}
+                    {{/*<!-- /.box-body -->*/}}
+                {{/*</div>*/}}
+                {{/*<!-- /.box -->*/}}
+            {{/*</div>*/}}
             <!-- /.col (right) -->
 
-            <div class="col-md-6">
-                <div class="box box-primary">
-                    <div class="box-header">
-                        <i class="fa  fa-paper-plane"></i>
-                        <h3 class="box-title">QQ推送</h3>
-                    </div>
-                    <!-- /.box-header -->
-                    <div class="box-body">
-                    <p>推送的QQ:{$ddnsuserinfo.qq}</p>
-                    </div>
-                    <!-- /.box-body -->
-                </div>
-                <!-- /.box -->
-            </div>
+            {{/*<div class="col-md-6">*/}}
+                {{/*<div class="box box-primary">*/}}
+                    {{/*<div class="box-header">*/}}
+                        {{/*<i class="fa  fa-paper-plane"></i>*/}}
+                        {{/*<h3 class="box-title">QQ推送</h3>*/}}
+                    {{/*</div>*/}}
+                    {{/*<!-- /.box-header -->*/}}
+                    {{/*<div class="box-body">*/}}
+                    {{/*<p>推送的QQ:{$ddnsuserinfo.qq}</p>*/}}
+                    {{/*</div>*/}}
+                    {{/*<!-- /.box-body -->*/}}
+                {{/*</div>*/}}
+                {{/*<!-- /.box -->*/}}
+            {{/*</div>*/}}
             <!-- /.col (right) -->
         </div>
         <!-- /.row --><!-- END PROGRESS BARS -->
