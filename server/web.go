@@ -153,6 +153,7 @@ type info struct {
 	Goos       string
 	VirtualMemory *mem.VirtualMemoryStat
 	Sys uint64
+	CpuInfoStat []cpu.InfoStat
 }
 
 func getServerInfo() *info {
@@ -176,7 +177,8 @@ func getServerInfo() *info {
 	var ms runtime.MemStats
 	runtime.ReadMemStats(&ms)
 	Info.Sys=ms.Sys
-
+	Cpu,_:=cpu.Info()
+	Info.CpuInfoStat=Cpu
 	//log.Printf("Alloc:%d(bytes) HeapIdle:%d(bytes) HeapReleased:%d(bytes)", ms.Alloc, ms.HeapIdle, ms.HeapReleased)
 	return Info
 }
