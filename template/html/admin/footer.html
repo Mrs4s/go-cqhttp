@@ -1,3 +1,4 @@
+{{ define "admin/footer.html" }}
 <footer class="main-footer">
     <div align="center">
         {$userFooter}
@@ -5,7 +6,7 @@
     <div class="pull-right hidden-xs">
         Made with Love
     </div>
-    <strong>Copyright &copy; {:date("Y")} <a href="#">{$config.site_name}</a> </strong>
+    <strong>Copyright &copy; {{getYear}}</strong>
     All rights reserved. Powered by <b>scjtqs</b> 
 </footer>
 </div><!-- ./wrapper -->
@@ -24,3 +25,4 @@
 </div>
 </body>
 </html>
+{{ end }}
