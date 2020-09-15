@@ -2,8 +2,6 @@ package global
 
 import (
 	"encoding/json"
-	"errors"
-	"fmt"
 	"os"
 	"strconv"
 	"time"
@@ -84,8 +82,8 @@ type GoCQReverseWebsocketConfig struct {
 type GoCqWebUi struct {
 	Enabled   bool   `json:"enabled"`
 	WebUiPort uint64 `json:"web_ui_port"`
-	User      string  `json:"user"`
-	Password      string  `json:"password"`
+	User      string `json:"user"`
+	Password  string `json:"password"`
 }
 
 func DefaultConfig() *JsonConfig {
@@ -134,8 +132,8 @@ func DefaultConfig() *JsonConfig {
 		WebUi: &GoCqWebUi{
 			Enabled:   true,
 			WebUiPort: 9999,
-			User: "admin",
-			Password: "admin",
+			User:      "admin",
+			Password:  "admin",
 		},
 	}
 }
@@ -158,26 +156,6 @@ func Load(p string) *JsonConfig {
 
 func (c *JsonConfig) Save(p string) error {
 	data, err := json.MarshalIndent(c, "", "\t")
-	if err != nil {
-		return err
-	}
-	WriteAllText(p, string(data))
-	return nil
-}
-
-func Update(j string,p string) error{
-	c := JsonConfig{}
-	println(fmt.Sprintf("%v",c))
-	println(fmt.Sprintf("%s",j))
-	err := json.Unmarshal([]byte(j), &c)
-	if err != nil {
-		log.Warnf("尝试加载配置文件 %v 时出现错误: %v", p, err)
-		return errors.New("保存json失败")
-	}
-	println(fmt.Sprintf("%v",c))
-	data, err := json.MarshalIndent(c, "", "\t")
-	println(fmt.Sprintf("%s",string(data)))
-	println(fmt.Sprintf("%v",p))
 	if err != nil {
 		return err
 	}
