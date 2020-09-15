@@ -250,6 +250,9 @@ func readLastLine(fname string, size int) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	if int64(size)>fi.Size(){
+		size=int(fi.Size())
+	}
 	buf := make([]byte, size)
 	n, err := file.ReadAt(buf, fi.Size()-int64(len(buf)))
 	if err != nil {
