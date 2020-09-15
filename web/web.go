@@ -235,7 +235,6 @@ func AuthMiddleWare() gin.HandlerFunc {
 		md51:=hex.EncodeToString(h.Sum(nil))
 		if cookie, err := c.Request.Cookie("userinfo"); err == nil {
 			value := cookie.Value
-			fmt.Println(value)
 			if value == md51 {
 				c.Next()
 				return
