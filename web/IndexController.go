@@ -52,7 +52,7 @@ func checkLogin(s *webServer, c *gin.Context) {
 	password:=conf.WebUi.Password
 	if user=="" || password==""{
 		//无需登录
-		c.Redirect(http.StatusMovedPermanently, "/Admin/index")
+		c.Redirect(http.StatusMovedPermanently, "/admin/index")
 		return
 	}
 	str1:=user+password
@@ -62,7 +62,7 @@ func checkLogin(s *webServer, c *gin.Context) {
 	if cookie, err := c.Request.Cookie("userinfo"); err == nil {
 		value := cookie.Value
 		if value == md51 {
-			c.Redirect(http.StatusMovedPermanently, "/Admin/index")
+			c.Redirect(http.StatusMovedPermanently, "/admin/index")
 			return
 		}
 	}
