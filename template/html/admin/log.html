@@ -16,25 +16,24 @@
         <div class="row">
             <div class="col-md-12">
                 <div style="margin: 0 auto; max-width: 400px;">
-                    <div class="alert"></div>
                     <ol class="breadcrumb">
                         <li><a href="/admin/index">管理</a></li>
-                        <li class="active">json完整配置</li>
+                        <li class="active">log查看</li>
                     </ol>
 
                     <div class="panel panel-default">
                         <div class="panel-heading">
-                            <h3 class="panel-title">json完整配置 </h3>
+                            <h3 class="panel-title">最近xx行日志</h3>
                         </div>
                         <div class="panel-body">
-                            <div class="form-group">
-                                <textarea class="form-control" rows="20" id="json" name="json">{{.json}}</textarea>
-                            </div>
-                            <button type="button" class="btn btn-default" id="update_profile" onclick="updateConfigJson();">
+                                <div class="form-group">
+                                    <textarea id="logs" class="form-control" rows="50" >{{.logs}}</textarea>
+                                </div>
+                            <button type="button" class="btn btn-default" id="refresh" onclick="refreshLog();">
                                 <span class="glyphicon glyphicon-floppy-disk"></span>
-                                更新
+                                刷新
                             </button>
-                            <a href="/admin/config_json" class="btn btn-default">
+                            <a href="/admin/index" class="btn btn-default">
                                 <span class="glyphicon glyphicon-arrow-left"></span>
                                 返回
                             </a>
@@ -52,24 +51,24 @@
 </div><!-- /.content-wrapper -->
 
 <script>
-    function updateConfigJson() {
-        $.ajax({
-            type: "POST",
-            url: "/admin/do_config_json",
-            data:{
-                "json":$("#json").val(),
-            },
-            dataType: "json",
-            success: function (data) {
-                console.log(data);
-                $(".alert").html(data.msg).addClass("alert-warning").show().delay(5400).fadeOut();
-            },
-            error: function (jqXHR) {
-                console.log(jqXHR);
-                $(".alert").html("httpcode:"+jqXHR.status).addClass("alert-error").show().delay(5400).fadeOut();
+    function refreshLog() {
+        $.get('/admin/get_log',function(json) {
+            if (json.code !== 0) {
+                clearInterval(id);
+               alert(json.msg)
+            } else {
+                $("#logs").html(json.logs)
+                // console.log(json.logs)
             }
-        })
+        }, "json");
     }
+    //定时刷新
+    var id=setInterval(refreshLog, 1000);
+    //自动拉滑动条到底部
+    $(document).ready(function(){
+        var height=$("#logs")[0].scrollHeight;
+        $("#logs").scrollTop(height);
+    })
 </script>
 
 

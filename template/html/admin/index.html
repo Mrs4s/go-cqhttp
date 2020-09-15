@@ -54,8 +54,11 @@
                                 <p>内存used:{{getServerInfo.VirtualMemory.Used |formatFileSize}}</p>
                                 <p>程序占用内存:{{getServerInfo.Sys|formatFileSize}}</p>
                                 <p>内存占用百分百:{{getServerInfo.VirtualMemory.UsedPercent}}%</p>
-
-                            </div>
+                                <p>cpu内核:{{getServerInfo.CpuInfoStat.Count}}</p>
+                                {{range $k,$v := getServerInfo.CpuInfoStat.Percent}}
+                                <p>cpu百分百:{{$v}}</p>
+                                {{end}}
+                             </div>
                         </div>
                     </div>
                     <!-- /.box-body -->

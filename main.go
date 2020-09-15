@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/Mrs4s/go-cqhttp/web"
 	"image"
 	"io"
 	"io/ioutil"
@@ -313,7 +314,9 @@ func main() {
 	if conf.WSConfig != nil && conf.WSConfig.Enabled {
 		server.WebsocketServer.Run(fmt.Sprintf("%s:%d", conf.WSConfig.Host, conf.WSConfig.Port), conf.AccessToken, b)
 	}
-	server.WebServer.Run(fmt.Sprintf("%s:%d", "0.0.0.0", 9999), b)
+	if conf.WebUi.Enabled {
+		web.WebServer.Run(fmt.Sprintf("%s:%d", "0.0.0.0", conf.WebUi.WebUiPort), b)
+	}
 	for _, rc := range conf.ReverseServers {
 		server.NewWebsocketClient(rc, conf.AccessToken, b).Run()
 	}

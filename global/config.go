@@ -2,6 +2,8 @@ package global
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"os"
 	"strconv"
 	"time"
@@ -35,6 +37,7 @@ type JsonConfig struct {
 	PostMessageFormat   string                        `json:"post_message_format"`
 	Debug               bool                          `json:"debug"`
 	LogLevel            string                        `json:"log_level"`
+	WebUi               *GoCqWebUi                    `json:"web_ui"`
 }
 
 type CQHttpApiConfig struct {
@@ -76,6 +79,11 @@ type GoCQReverseWebsocketConfig struct {
 	ReverseApiUrl            string `json:"reverse_api_url"`
 	ReverseEventUrl          string `json:"reverse_event_url"`
 	ReverseReconnectInterval uint16 `json:"reverse_reconnect_interval"`
+}
+
+type GoCqWebUi struct {
+	Enabled   bool   `json:"enabled"`
+	WebUiPort uint64 `json:"web_ui_port"`
 }
 
 func DefaultConfig() *JsonConfig {
@@ -121,6 +129,10 @@ func DefaultConfig() *JsonConfig {
 				ReverseReconnectInterval: 3000,
 			},
 		},
+		WebUi: &GoCqWebUi{
+			Enabled:   true,
+			WebUiPort: 9999,
+		},
 	}
 }
 
@@ -142,6 +154,26 @@ func Load(p string) *JsonConfig {
 
 func (c *JsonConfig) Save(p string) error {
 	data, err := json.MarshalIndent(c, "", "\t")
+	if err != nil {
+		return err
+	}
+	WriteAllText(p, string(data))
+	return nil
+}
+
+func Update(j string,p string) error{
+	c := JsonConfig{}
+	println(fmt.Sprintf("%v",c))
+	println(fmt.Sprintf("%s",j))
+	err := json.Unmarshal([]byte(j), &c)
+	if err != nil {
+		log.Warnf("尝试加载配置文件 %v 时出现错误: %v", p, err)
+		return errors.New("保存json失败")
+	}
+	println(fmt.Sprintf("%v",c))
+	data, err := json.MarshalIndent(c, "", "\t")
+	println(fmt.Sprintf("%s",string(data)))
+	println(fmt.Sprintf("%v",p))
 	if err != nil {
 		return err
 	}

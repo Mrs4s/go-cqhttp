@@ -1,4 +1,4 @@
-package server
+package web
 
 import (
 	"fmt"
@@ -6,8 +6,8 @@ import (
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/shirou/gopsutil/mem"
 	"github.com/shirou/gopsutil/cpu"
+	"github.com/shirou/gopsutil/mem"
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 	"html/template"
@@ -17,7 +17,6 @@ import (
 	"runtime"
 	"strings"
 	"time"
-	"encoding/json"
 )
 
 type webServer struct {
@@ -33,13 +32,13 @@ func (s *webServer) Run(addr string, bot *coolq.CQBot) {
 	s.bot = bot //外部引入 bot对象，用于操作bot
 	//func 函数映射 全局模板可用
 	s.engine.SetFuncMap(template.FuncMap{
-		"getYear":       getYear,
-		"formatAsDate":  formatAsDate,
-		"getConf":       getConf,
-		"getDate":       getDate,
-		"getavator":     getavator,
-		"getServerInfo": getServerInfo,
-		"formatFileSize": formatFileSize,
+		"getYear":        GetYear,
+		"formatAsDate":   FormatAsDate,
+		"getConf":        GetConf,
+		"getDate":        GetDate,
+		"getavator":      Getavator,
+		"getServerInfo":  GetServerInfo,
+		"formatFileSize": FormatFileSize,
 	})
 	s.engine.LoadHTMLGlob("template/html/**/*")
 	//静态资源
@@ -51,6 +50,7 @@ func (s *webServer) Run(addr string, bot *coolq.CQBot) {
 	})
 	//通用路由
 	s.engine.Any("/admin/:action", s.admin)
+
 	s.engine.Use(func(c *gin.Context) {
 		if c.Request.Method != "GET" && c.Request.Method != "POST" {
 			log.Warnf("已拒绝客户端 %v 的请求: 方法错误", c.Request.RemoteAddr)
@@ -88,115 +88,62 @@ func (s *webServer) Run(addr string, bot *coolq.CQBot) {
 func (s *webServer) admin(c *gin.Context) {
 	action := c.Param("action")
 	log.Debugf("WebServer接收到cgi调用: %v", action)
-	if f, ok := httpuriAdmin[action]; ok {
+	if f, ok := HttpuriAdmin[action]; ok {
 		f(s, c)
 	} else {
 		c.JSON(200, coolq.Failed(404))
 	}
 }
 
-// admin 子站的 路由映射
-var httpuriAdmin = map[string]func(s *webServer, c *gin.Context){
-	"index": func(s *webServer, c *gin.Context) {
-		s.AdminIndex(c)
-	},
-	"config_json": func(s *webServer, c *gin.Context) {
-		s.AdminConfigJson(c)
-	},
-	"config":func(s *webServer, c *gin.Context) {
-		s.AdminConfig(c)
-	},
-	"debug":func(s *webServer, c *gin.Context) {
-		s.AdminConfigJson(c)
-	},
-	"log":func(s *webServer, c *gin.Context) {
-		s.AdminConfigJson(c)
-	},
-	"friend_list":func(s *webServer, c *gin.Context) {
-		s.AdminConfigJson(c)
-	},
-	"group_list":func(s *webServer, c *gin.Context) {
-		s.AdminConfigJson(c)
-	},
-}
-
-// 首页
-func (s *webServer) AdminIndex(c *gin.Context) {
-	c.HTML(http.StatusOK, "index.html", gin.H{})
-}
-
-//json config
-func (s *webServer) AdminConfigJson(c *gin.Context) {
-	conf:=getConf()
-	data, _ := json.MarshalIndent(conf, "", "\t")
-	c.HTML(http.StatusOK, "config_json.html", gin.H{
-		"json":template.HTML(data),
-	})
-}
-
-// config
-func (s *webServer) AdminConfig(c *gin.Context) {
-	conf := getConf()
-	var post string
-	var secret string
-	ws_reverse_servers :=conf.ReverseServers[0]
-	for k, v := range conf.HttpConfig.PostUrls {
-		post=k
-		secret=v
-	}
-	c.HTML(http.StatusOK, "config.html", gin.H{
-		"post":post,
-		"secret":secret,
-		"ReverseServers":ws_reverse_servers,
-	})
-}
-
 //格式化年月日
-func formatAsDate(t time.Time) string {
+func FormatAsDate(t time.Time) string {
 	year, month, day := t.Date()
 	return fmt.Sprintf("%d%02d/%02d", year, month, day)
 }
 
 // 获取年份
-func getYear() string {
+func GetYear() string {
 	t := time.Now()
 	year, _, _ := t.Date()
 	return fmt.Sprintf("%d", year)
 }
 
 // 获取当前年月日
-func getDate() string {
+func GetDate() string {
 	t := time.Now()
 	year, month, day := t.Date()
 	return fmt.Sprintf("%d-%02d-%02d", year, month, day)
 }
 
 // 获取当前配置文件信息
-func getConf() *global.JsonConfig {
+func GetConf() *global.JsonConfig {
 	conf := global.Load("config.json")
 	return conf
 }
 
 // 随机获取一个头像
-func getavator() string {
+func Getavator() string {
 	Uuid := uuid.New().String()
 	grav_url := "https://www.gravatar.com/avatar/" + Uuid
 	return grav_url
 }
 
 type info struct {
-	Root       string
-	Version    string
-	Hostname   string
-	Interfaces interface{}
-	Goarch     string
-	Goos       string
+	Root          string
+	Version       string
+	Hostname      string
+	Interfaces    interface{}
+	Goarch        string
+	Goos          string
 	VirtualMemory *mem.VirtualMemoryStat
-	Sys uint64
-	CpuInfoStat []cpu.InfoStat
+	Sys           uint64
+	CpuInfoStat   struct {
+		Count   int
+		Percent []float64
+	}
 }
 
-func getServerInfo() *info {
+func GetServerInfo() *info {
 	root := runtime.GOROOT()          // GO 路径
 	version := runtime.Version()      //GO 版本信息
 	hostname, _ := os.Hostname()      //获得PC名
@@ -213,20 +160,17 @@ func getServerInfo() *info {
 	}
 
 	v, _ := mem.VirtualMemory()
-	Info.VirtualMemory=v
+	Info.VirtualMemory = v
 	var ms runtime.MemStats
 	runtime.ReadMemStats(&ms)
-	Info.Sys=ms.Sys
-	Cpu,_:=cpu.Info()
-	Info.CpuInfoStat=Cpu
-	//log.Printf("Alloc:%d(bytes) HeapIdle:%d(bytes) HeapReleased:%d(bytes)", ms.Alloc, ms.HeapIdle, ms.HeapReleased)
+	Info.Sys = ms.Sys
+	Info.CpuInfoStat.Count, _ = cpu.Counts(true)
+	Info.CpuInfoStat.Percent, _ = cpu.Percent(0, true)
 	return Info
 }
 
-
-
 // 字节的单位转换 保留两位小数
-func formatFileSize(fileSize uint64) (size string) {
+func FormatFileSize(fileSize uint64) (size string) {
 	if fileSize < 1024 {
 		//return strconv.FormatInt(fileSize, 10) + "B"
 		return fmt.Sprintf("%.2fB", float64(fileSize)/float64(1))
