@@ -52,8 +52,8 @@ func (s *webServer) Run(addr string, bot *coolq.CQBot) {
 		c.Redirect(http.StatusMovedPermanently, "/index/login")
 	})
 	//通用路由
-	s.engine.Any("/admin/:action",AuthMiddleWare(), s.admin)
-	s.engine.Any("/index/:action",s.index)
+	s.engine.Any("/admin/:action", AuthMiddleWare(), s.admin)
+	s.engine.Any("/index/:action", s.index)
 	s.engine.Use(func(c *gin.Context) {
 		if c.Request.Method != "GET" && c.Request.Method != "POST" {
 			log.Warnf("已拒绝客户端 %v 的请求: 方法错误", c.Request.RemoteAddr)
@@ -142,15 +142,15 @@ func Getavator() string {
 }
 
 type info struct {
-	Root          string
-	Version       string
-	Hostname      string
-	Interfaces    interface{}
-	Goarch        string
-	Goos          string
+	Root       string
+	Version    string
+	Hostname   string
+	Interfaces interface{}
+	Goarch     string
+	Goos       string
 	//VirtualMemory *mem.VirtualMemoryStat
-	Sys           uint64
-	CpuInfoStat   struct {
+	Sys         uint64
+	CpuInfoStat struct {
 		Count   int
 		Percent []float64
 	}
@@ -203,13 +203,13 @@ func FormatFileSize(fileSize uint64) (size string) {
 // admin 控制器 登录验证
 func AuthMiddleWare() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		conf:=GetConf()
-		user:=conf.WebUi.User
-		password:=conf.WebUi.Password
-		str1:=user+password
-		h:= md5.New()
+		conf := GetConf()
+		user := conf.WebUi.User
+		password := conf.WebUi.Password
+		str1 := user + password
+		h := md5.New()
 		h.Write([]byte(str1))
-		md51:=hex.EncodeToString(h.Sum(nil))
+		md51 := hex.EncodeToString(h.Sum(nil))
 		if cookie, err := c.Request.Cookie("userinfo"); err == nil {
 			value := cookie.Value
 			if value == md51 {
@@ -217,11 +217,11 @@ func AuthMiddleWare() gin.HandlerFunc {
 				return
 			}
 		}
-		c.HTML(http.StatusOK,"jump.html",gin.H{
-			"url":"/index/login",
-			"timeout":"3",
-			"code":0,//1为success,0为error
-			"msg":"请登录后再访问",
+		c.HTML(http.StatusOK, "jump.html", gin.H{
+			"url":     "/index/login",
+			"timeout": "3",
+			"code":    0, //1为success,0为error
+			"msg":     "请登录后再访问",
 		})
 		//c.Redirect(http.StatusMovedPermanently, "/index/login")
 		c.Abort()

@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	log "github.com/sirupsen/logrus"
 	"html/template"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
-	log "github.com/sirupsen/logrus"
 )
 
 // admin 子站的 路由映射
@@ -142,7 +142,9 @@ func AdminDoConfigHttp(s *webServer, c *gin.Context) {
 	}
 	t, _ := strconv.ParseInt(c.PostForm("timeout"), 10, 32)
 	conf.HttpConfig.Timeout = int32(t)
-	conf.HttpConfig.PostUrls[c.PostForm("post_url")] = c.PostForm("post_secret")
+	if c.PostForm("post_url") != "" {
+		conf.HttpConfig.PostUrls[c.PostForm("post_url")] = c.PostForm("post_secret")
+	}
 	if err := conf.Save("config.json"); err != nil {
 		//log.Fatalf("保存 config.json 时出现错误: %v", err)
 		c.JSON(200, gin.H{"code": -1, "msg": "保存 config.json 时出现错误:" + fmt.Sprintf("%v", err)})
