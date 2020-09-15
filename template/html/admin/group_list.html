@@ -47,12 +47,12 @@
             url: "/admin/do_group_list",
             dataType: "json",
             success: function (data) {
-                if(data.retcode===0){
-                    $.each(data.data,function (k,v) {
-                        html="<tr><td>"+v.group_id+"</td><td>"+v.group_name+"</td><td>"+v.member_count+"</td><td>"+v.max_member_count+"</td></tr>";
+                if (data.retcode === 0) {
+                    $.each(data.data, function (k, v) {
+                        html = "<tr><td>" + v.group_id + "</td><td>" + v.group_name + "</td><td>" + v.member_count + "</td><td>" + v.max_member_count + "</td></tr>";
                         $("#list").append(html);
                     })
-                }else{
+                } else {
                     alert(data)
                 }
             },

@@ -4,10 +4,10 @@
 <div class="content-wrapper">
     <!-- Content Header (Page header) -->
     {{/*<section class="content-header">*/}}
-        {{/*<h1>*/}}
-            {{/*用户中心*/}}
-            {{/*<small>User Center</small>*/}}
-        {{/*</h1>*/}}
+    {{/*<h1>*/}}
+    {{/*用户中心*/}}
+    {{/*<small>User Center</small>*/}}
+    {{/*</h1>*/}}
     {{/*</section>*/}}
 
     <!-- Main content -->
@@ -25,15 +25,15 @@
                         <div class="panel-heading">
                             <h3 class="panel-title">好友列表 </h3>
                         </div>
-                            <table class="table table-bordered" id="list">
-                                <thead>
-                                <tr>
-                                    <th>昵称</th>
-                                    <th>备注</th>
-                                    <th>qq号</th>
-                                </tr>
-                                </thead>
-                            </table>
+                        <table class="table table-bordered" id="list">
+                            <thead>
+                            <tr>
+                                <th>昵称</th>
+                                <th>备注</th>
+                                <th>qq号</th>
+                            </tr>
+                            </thead>
+                        </table>
                     </div>
 
 
@@ -53,12 +53,12 @@
             url: "/admin/do_friend_list",
             dataType: "json",
             success: function (data) {
-                if(data.retcode===0){
-                   $.each(data.data,function (k,v) {
-                       html="<tr><td>"+v.nickname+"</td><td>"+v.remark+"</td><td>"+v.user_id+"</td></tr>";
-                       $("#list").append(html);
-                   })
-                }else{
+                if (data.retcode === 0) {
+                    $.each(data.data, function (k, v) {
+                        html = "<tr><td>" + v.nickname + "</td><td>" + v.remark + "</td><td>" + v.user_id + "</td></tr>";
+                        $("#list").append(html);
+                    })
+                } else {
                     alert(data)
                 }
             },
