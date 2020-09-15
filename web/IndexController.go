@@ -1,4 +1,5 @@
 package web
+
 // 此Controller用于 无需鉴权 即可访问的cgi
 import (
 	"crypto/md5"
@@ -10,8 +11,8 @@ import (
 
 // index 子站的 路由映射
 var HttpuriIndex = map[string]func(s *webServer, c *gin.Context){
-	"login":    IndexLogin,
-	"do_login": IndexDoLogin,
+	"login":     IndexLogin,
+	"do_login":  IndexDoLogin,
 	"do_logout": IndexDoLogout,
 }
 
@@ -40,7 +41,7 @@ func IndexDoLogin(s *webServer, c *gin.Context) {
 			Value:    md51,
 			Path:     "/",
 			HttpOnly: true,
-			Expires: time.Now().Add(24*30 * time.Hour),//默认30天内cookie 有效期
+			Expires:  time.Now().Add(24 * 30 * time.Hour), //默认30天内cookie 有效期
 		}
 		http.SetCookie(c.Writer, cookie)
 		c.JSON(200, gin.H{"code": 0, "msg": "登录成功"})
@@ -55,7 +56,7 @@ func IndexDoLogout(s *webServer, c *gin.Context) {
 		Value:    "",
 		Path:     "/",
 		HttpOnly: true,
-		MaxAge: -1,
+		MaxAge:   -1,
 	}
 	http.SetCookie(c.Writer, cookie)
 	c.HTML(http.StatusOK, "jump.html", gin.H{
