@@ -86,8 +86,15 @@ func AdmingetLogs(s *webServer, c *gin.Context) {
 	}
 }
 
+// api调试
 func AdminDebug(s *webServer, c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"code": -1, "msg": "开发中"})
+	c.HTML(http.StatusOK, "jump.html", gin.H{
+		"url":     "/admin/index",
+		"timeout": "3",
+		"code":    0, //1为success,0为error
+		"msg":     "开发中",
+	})
+	//c.JSON(http.StatusOK, gin.H{"code": -1, "msg": "开发中"})
 }
 
 // 好友列表html页面
