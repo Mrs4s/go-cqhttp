@@ -314,7 +314,7 @@ func main() {
 	if conf.WSConfig != nil && conf.WSConfig.Enabled {
 		server.WebsocketServer.Run(fmt.Sprintf("%s:%d", conf.WSConfig.Host, conf.WSConfig.Port), conf.AccessToken, b)
 	}
-	if conf.WebUi.Enabled {
+	if conf.WebUi !=nil && conf.WebUi.Enabled {
 		web.WebServer.Run(fmt.Sprintf("%s:%d", "0.0.0.0", conf.WebUi.WebUiPort), b)
 	}
 	for _, rc := range conf.ReverseServers {

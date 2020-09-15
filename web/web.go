@@ -50,36 +50,9 @@ func (s *webServer) Run(addr string, bot *coolq.CQBot) {
 	s.engine.GET("/", func(c *gin.Context) {
 		c.Redirect(http.StatusMovedPermanently, "/index/login")
 	})
-	s.engine.GET("/index/login", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "login.html", gin.H{})
-	})
-	s.engine.POST("/index/do_login", func(c *gin.Context) {
-		conf:=GetConf()
-		user:=conf.WebUi.User
-		password:=conf.WebUi.Password
-		str1:=user+password
-		str2:=c.PostForm("user")+c.PostForm("password")
-		h:= md5.New()
-		h.Write([]byte(str1))
-		md51:=hex.EncodeToString(h.Sum(nil))
-		h.Write([]byte(str2))
-		md52:=hex.EncodeToString(h.Sum(nil))
-		if md51==md52{
-			cookie := &http.Cookie{
-				Name:     "userinfo",
-				Value: md51,
-				Path:     "/",
-				HttpOnly: true,
-			}
-			http.SetCookie(c.Writer, cookie)
-			c.JSON(200,gin.H{"code":0,"msg":"登录成功"})
-			return
-		}
-		c.JSON(200,gin.H{"code":-1,"msg":"登录失败"})
-	})
 	//通用路由
 	s.engine.Any("/admin/:action",AuthMiddleWare(), s.admin)
-
+	s.engine.Any("/index/:action",s.index)
 	s.engine.Use(func(c *gin.Context) {
 		if c.Request.Method != "GET" && c.Request.Method != "POST" {
 			log.Warnf("已拒绝客户端 %v 的请求: 方法错误", c.Request.RemoteAddr)
@@ -118,6 +91,16 @@ func (s *webServer) admin(c *gin.Context) {
 	action := c.Param("action")
 	log.Debugf("WebServer接收到cgi调用: %v", action)
 	if f, ok := HttpuriAdmin[action]; ok {
+		f(s, c)
+	} else {
+		c.JSON(200, coolq.Failed(404))
+	}
+}
+
+func (s *webServer) index(c *gin.Context) {
+	action := c.Param("action")
+	log.Debugf("WebServer接收到cgi调用: %v", action)
+	if f, ok := HttpuriIndex[action]; ok {
 		f(s, c)
 	} else {
 		c.JSON(200, coolq.Failed(404))
