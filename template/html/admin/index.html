@@ -41,25 +41,21 @@
                     </div>
                     <!-- /.box-header -->
                     <div class="box-body">
-                        <div class="row">
-                            <div class="col-xs-12">
                                 <p> GO 路径:{{getServerInfo.Root}}</p>
                                 <p>GO 版本信息:{{getServerInfo.Version}}</p>
                                 <p>PC名:{{getServerInfo.Hostname}}</p>
                                 {{/*<p>网卡信息:{{getServerInfo.Interfaces}}</p>*/}}
                                 <p>系统构架:{{getServerInfo.Goarch}}</p>
                                 <p>系统版本:{{getServerInfo.Goos}}</p>
-                                <p>内存Total:{{getServerInfo.VirtualMemory.Total |formatFileSize}}</p>
-                                <p>内存free:{{getServerInfo.VirtualMemory.Free |formatFileSize}}</p>
-                                <p>内存used:{{getServerInfo.VirtualMemory.Used |formatFileSize}}</p>
+                                {{/*<p>内存Total:{{getServerInfo.VirtualMemory.Total |formatFileSize}}</p>*/}}
+                                {{/*<p>内存free:{{getServerInfo.VirtualMemory.Free |formatFileSize}}</p>*/}}
+                                {{/*<p>内存used:{{getServerInfo.VirtualMemory.Used |formatFileSize}}</p>*/}}
                                 <p>程序占用内存:{{getServerInfo.Sys|formatFileSize}}</p>
-                                <p>内存占用百分百:{{getServerInfo.VirtualMemory.UsedPercent}}%</p>
-                                <p>cpu内核:{{getServerInfo.CpuInfoStat.Count}}</p>
-                                {{range $k,$v := getServerInfo.CpuInfoStat.Percent}}
-                                <p>cpu百分百:{{$v}}</p>
-                                {{end}}
-                             </div>
-                        </div>
+                                {{/*<p>内存占用百分百:{{getServerInfo.VirtualMemory.UsedPercent}}%</p>*/}}
+                                {{/*<p>cpu内核:{{getServerInfo.CpuInfoStat.Count}}</p>*/}}
+                                {{/*{{range $k,$v := getServerInfo.CpuInfoStat.Percent}}*/}}
+                                {{/*<p>cpu百分百:{{$v}}</p>*/}}
+                                {{/*{{end}}*/}}
                     </div>
                     <!-- /.box-body -->
                 </div>
@@ -108,22 +104,6 @@
 </div><!-- /.content-wrapper -->
 
 <script>
-    $(document).ready(function () {
-        $("#checkin").click(function () {
-            $.ajax({
-                type: "POST",
-                url: "/ddns/User/docheckin",
-                dataType: "json",
-                success: function (data) {
-                    $("#checkin-msg").html(data.msg);
-                    $("#checkin-btn").hide();
-                },
-                error: function (jqXHR) {
-                    alert("发生错误：" + jqXHR.status);
-                }
-            })
-        })
-    })
 </script>
 
 

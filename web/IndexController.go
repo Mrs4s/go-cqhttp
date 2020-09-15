@@ -29,6 +29,7 @@ func IndexDoLogin(s *webServer, c *gin.Context) {
 	h:= md5.New()
 	h.Write([]byte(str1))
 	md51:=hex.EncodeToString(h.Sum(nil))
+	h=md5.New()
 	h.Write([]byte(str2))
 	md52:=hex.EncodeToString(h.Sum(nil))
 	if md51==md52{

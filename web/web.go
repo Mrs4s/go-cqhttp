@@ -8,8 +8,9 @@ import (
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/shirou/gopsutil/cpu"
-	"github.com/shirou/gopsutil/mem"
+	//"github.com/shirou/gopsutil/cpu"
+
+	//"github.com/shirou/gopsutil/mem"
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 	"html/template"
@@ -147,7 +148,7 @@ type info struct {
 	Interfaces    interface{}
 	Goarch        string
 	Goos          string
-	VirtualMemory *mem.VirtualMemoryStat
+	//VirtualMemory *mem.VirtualMemoryStat
 	Sys           uint64
 	CpuInfoStat   struct {
 		Count   int
@@ -171,13 +172,13 @@ func GetServerInfo() *info {
 		Goos:       goos,
 	}
 
-	v, _ := mem.VirtualMemory()
-	Info.VirtualMemory = v
+	//v, _ := mem.VirtualMemory()
+	//Info.VirtualMemory = v
 	var ms runtime.MemStats
 	runtime.ReadMemStats(&ms)
 	Info.Sys = ms.Sys
-	Info.CpuInfoStat.Count, _ = cpu.Counts(true)
-	Info.CpuInfoStat.Percent, _ = cpu.Percent(0, true)
+	//Info.CpuInfoStat.Count, _ = cpu.Counts(true)
+	//Info.CpuInfoStat.Percent, _ = cpu.Percent(0, true)
 	return Info
 }
 
