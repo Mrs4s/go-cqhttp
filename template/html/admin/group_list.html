@@ -1,0 +1,67 @@
+{{ template "admin/main.html"}}
+
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <!-- Main content -->
+    <section class="content">
+        <!-- START PROGRESS BARS -->
+        <div class="row">
+            <div class="col-md-12">
+                <div style="margin: 0 auto; max-width: 400px;">
+                    <ol class="breadcrumb">
+                        <li><a href="/admin/index">管理</a></li>
+                        <li class="active">群列表</li>
+                    </ol>
+
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">群列表 </h3>
+                        </div>
+                        <table class="table table-bordered" id="list">
+                            <thead>
+                            <tr>
+                                <th>群号</th>
+                                <th>群名称</th>
+                                <th>成员数</th>
+                                <th>群容量</th>
+                            </tr>
+                            </thead>
+                        </table>
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+
+        <!-- /.row --><!-- END PROGRESS BARS -->
+    </section>
+    <!-- /.content -->
+</div><!-- /.content-wrapper -->
+
+<script>
+    $(document).ready(function () {
+        $.ajax({
+            type: "get",
+            url: "/admin/do_group_list",
+            dataType: "json",
+            success: function (data) {
+                if(data.retcode===0){
+                    $.each(data.data,function (k,v) {
+                        html="<tr><td>"+v.group_id+"</td><td>"+v.group_name+"</td><td>"+v.member_count+"</td><td>"+v.max_member_count+"</td></tr>";
+                        $("#list").append(html);
+                    })
+                }else{
+                    alert(data)
+                }
+            },
+            error: function (jqXHR) {
+                alert("发生错误：" + jqXHR.status);
+            }
+        })
+    });
+</script>
+
+
+{{ template "admin/footer.html"}}

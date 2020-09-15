@@ -1,0 +1,75 @@
+{{ template "admin/main.html"}}
+
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    {{/*<section class="content-header">*/}}
+        {{/*<h1>*/}}
+            {{/*用户中心*/}}
+            {{/*<small>User Center</small>*/}}
+        {{/*</h1>*/}}
+    {{/*</section>*/}}
+
+    <!-- Main content -->
+    <section class="content">
+        <!-- START PROGRESS BARS -->
+        <div class="row">
+            <div class="col-md-12">
+                <div style="margin: 0 auto; max-width: 400px;">
+                    <ol class="breadcrumb">
+                        <li><a href="/admin/index">管理</a></li>
+                        <li class="active">log查看</li>
+                    </ol>
+
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">最近xx行日志</h3>
+                        </div>
+                        <div class="panel-body">
+                                <div class="form-group">
+                                    <textarea id="logs" class="form-control" rows="50" >{{.logs}}</textarea>
+                                </div>
+                            <button type="button" class="btn btn-default" id="refresh" onclick="refreshLog();">
+                                <span class="glyphicon glyphicon-floppy-disk"></span>
+                                刷新
+                            </button>
+                            <a href="/admin/index" class="btn btn-default">
+                                <span class="glyphicon glyphicon-arrow-left"></span>
+                                返回
+                            </a>
+                        </div>
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+
+        <!-- /.row --><!-- END PROGRESS BARS -->
+    </section>
+    <!-- /.content -->
+</div><!-- /.content-wrapper -->
+
+<script>
+    function refreshLog() {
+        $.get('/admin/get_log',function(json) {
+            if (json.code !== 0) {
+                clearInterval(id);
+               alert(json.msg)
+            } else {
+                $("#logs").html(json.logs)
+                // console.log(json.logs)
+            }
+        }, "json");
+    }
+    //定时刷新
+    var id=setInterval(refreshLog, 1000);
+    //自动拉滑动条到底部
+    $(document).ready(function(){
+        var height=$("#logs")[0].scrollHeight;
+        $("#logs").scrollTop(height);
+    })
+</script>
+
+
+{{ template "admin/footer.html"}}

@@ -1,0 +1,110 @@
+{{ template "admin/main.html"}}
+
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <h1>
+            用户中心
+            <small>User Center</small>
+        </h1>
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+        <!-- START PROGRESS BARS -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="box box-primary">
+                    <div class="box-header">
+                        <i class="fa fa-bullhorn"></i>
+
+                        <h3 class="box-title">账号信息</h3>
+                    </div>
+                    <!-- /.box-header -->
+                    <div class="box-body">
+                        <p>当前登录账户：{{ getConf.Uin}}</p>
+                        <p>当前登录密码：{{ getConf.Password}}</p>
+                    </div>
+                    <!-- /.box-body -->
+                </div>
+                <!-- /.box -->
+            </div>
+            <!-- /.col (right) -->
+
+            <div class="col-md-6">
+                <div class="box box-primary">
+                    <div class="box-header">
+                        <i class="fa fa-exchange"></i>
+
+                        <h3 class="box-title">系统信息</h3>
+                    </div>
+                    <!-- /.box-header -->
+                    <div class="box-body">
+                                <p> GO 路径:{{getServerInfo.Root}}</p>
+                                <p>GO 版本信息:{{getServerInfo.Version}}</p>
+                                <p>PC名:{{getServerInfo.Hostname}}</p>
+                                {{/*<p>网卡信息:{{getServerInfo.Interfaces}}</p>*/}}
+                                <p>系统构架:{{getServerInfo.Goarch}}</p>
+                                <p>系统版本:{{getServerInfo.Goos}}</p>
+                                {{/*<p>内存Total:{{getServerInfo.VirtualMemory.Total |formatFileSize}}</p>*/}}
+                                {{/*<p>内存free:{{getServerInfo.VirtualMemory.Free |formatFileSize}}</p>*/}}
+                                {{/*<p>内存used:{{getServerInfo.VirtualMemory.Used |formatFileSize}}</p>*/}}
+                                <p>程序占用内存:{{getServerInfo.Sys|formatFileSize}}</p>
+                                {{/*<p>内存占用百分百:{{getServerInfo.VirtualMemory.UsedPercent}}%</p>*/}}
+                                {{/*<p>cpu内核:{{getServerInfo.CpuInfoStat.Count}}</p>*/}}
+                                {{/*{{range $k,$v := getServerInfo.CpuInfoStat.Percent}}*/}}
+                                {{/*<p>cpu百分百:{{$v}}</p>*/}}
+                                {{/*{{end}}*/}}
+                    </div>
+                    <!-- /.box-body -->
+                </div>
+                <!-- /.box -->
+            </div>
+            <!-- /.col (left) -->
+
+            {{/*<div class="col-md-6">*/}}
+                {{/*<div class="box box-primary">*/}}
+                    {{/*<div class="box-header">*/}}
+                        {{/*<i class="fa fa-pencil"></i>*/}}
+
+                        {{/*<h3 class="box-title">域名</h3>*/}}
+                    {{/*</div>*/}}
+                    {{/*<!-- /.box-header -->*/}}
+                    {{/*<div class="box-body">*/}}
+                        {{/*<foreach name="userdomin" item="vo">*/}}
+                            {{/*<p>{$vo.domain}</p>*/}}
+                        {{/*</foreach>*/}}
+                    {{/*</div>*/}}
+                    {{/*<!-- /.box-body -->*/}}
+                {{/*</div>*/}}
+                {{/*<!-- /.box -->*/}}
+            {{/*</div>*/}}
+            <!-- /.col (right) -->
+
+            {{/*<div class="col-md-6">*/}}
+                {{/*<div class="box box-primary">*/}}
+                    {{/*<div class="box-header">*/}}
+                        {{/*<i class="fa  fa-paper-plane"></i>*/}}
+                        {{/*<h3 class="box-title">QQ推送</h3>*/}}
+                    {{/*</div>*/}}
+                    {{/*<!-- /.box-header -->*/}}
+                    {{/*<div class="box-body">*/}}
+                    {{/*<p>推送的QQ:{$ddnsuserinfo.qq}</p>*/}}
+                    {{/*</div>*/}}
+                    {{/*<!-- /.box-body -->*/}}
+                {{/*</div>*/}}
+                {{/*<!-- /.box -->*/}}
+            {{/*</div>*/}}
+            <!-- /.col (right) -->
+        </div>
+        <!-- /.row --><!-- END PROGRESS BARS -->
+    </section>
+    <!-- /.content -->
+</div><!-- /.content-wrapper -->
+
+<script>
+</script>
+
+
+{{ template "admin/footer.html"}}

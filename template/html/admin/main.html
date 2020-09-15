@@ -1,0 +1,157 @@
+{{ define "admin/main.html" }}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>miraigo web</title>
+    <meta content='width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no' name='viewport'>
+    <!-- Bootstrap 3.3.2 -->
+    <link rel="stylesheet" href="//cdn.bootcss.com/bootstrap/3.3.2/css/bootstrap.min.css">
+    <!-- Font Awesome Icons -->
+    <link href="//cdn.bootcdn.net/ajax/libs/font-awesome/4.4.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+    <!-- Ionicons -->
+    <link href="//cdn.bootcss.com/ionicons/2.0.0/css/ionicons.min.css" rel="stylesheet">
+    <!-- Theme style -->
+    <link href="/assets/css/AdminLTE.min.css" rel="stylesheet" type="text/css"/>
+    <!-- AdminLTE Skins. Choose a skin from the css/skins
+         folder instead of downloading all of them to reduce the load. -->
+    <link href="/assets/css/skins/_all-skins.min.css" rel="stylesheet" type="text/css"/>
+	<!--<script src="https://use.fontawesome.com/7ef1787acb.js"></script>-->
+    <!-- jQuery 2.1.3 -->
+    <script src="//cdn.bootcdn.net/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="//cdn.bootcdn.net/ajax/libs/html5shiv/r29/html5.min.js"></script>
+    <script src="//cdn.bootcdn.net/ajax/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+<body class="skin-blue">
+<!-- Site wrapper -->
+<div class="wrapper">
+
+    <header class="main-header">
+        <a href="/admin/index" class="logo">管理</a>
+        <!-- Header Navbar: style can be found in header.less -->
+        <nav class="navbar navbar-static-top" role="navigation">
+            <!-- Sidebar toggle button-->
+            <a href="#" class="sidebar-toggle" data-toggle="offcanvas" role="button">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </a>
+
+            <div class="navbar-custom-menu">
+                <ul class="nav navbar-nav">
+                    <!-- User Account: style can be found in dropdown.less -->
+                    <li class="dropdown user user-menu">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                            <img src="{{getavator}}" class="user-image" alt="User Image"/>
+                            <span class="hidden-xs"></span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <!-- User image -->
+                            <li class="user-header">
+                                <img src="{{getavator}}" class="img-circle" alt="User Image"/>
+
+                                <p>
+                                    {{getConf.Uin}}
+                                    <small>当前时间：{{getDate}}</small>
+                                </p>
+                            </li>
+                            <li class="user-footer">
+                                <div class="pull-left">
+                                    <a href="/admin/index" class="btn btn-default btn-flat">个人信息</a>
+                                </div>
+                                <div class="pull-right">
+                                    <a href="/index/do_logout" class="btn btn-default btn-flat">退出</a>
+                                </div>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <!-- =============================================== -->
+
+    <!-- Left side column. contains the sidebar -->
+    <aside class="main-sidebar">
+        <!-- sidebar: style can be found in sidebar.less -->
+        <section class="sidebar">
+            <!-- Sidebar user panel -->
+            <div class="user-panel">
+                <div class="pull-left image">
+                    <img src="{{getavator}}" class="img-circle" alt="User Image"/>
+                </div>
+                <div class="pull-left info">
+                    <p>{{getConf.Uin}}</p>
+
+                    <a href="#"><i class="fa fa-circle text-success"></i> Online</a>
+                </div>
+            </div>
+
+            <!-- sidebar menu: : style can be found in sidebar.less -->
+            <ul class="sidebar-menu">
+                <li>
+                    <a href="/admin/index">
+                        <i class="fa fa-dashboard"></i> <span>用户中心</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="/admin/config_json">
+                        <i class="fa fa-sitemap"></i> <span>config.json</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="/admin/config">
+                        <i class="fa fa-pencil"></i> <span>简易配置</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="/admin/debug">
+                        <i class="fa fa-history"></i> <span>api调试</span>
+                    </a>
+                </li>
+
+
+                <li>
+                    <a href="/admin/log">
+                        <i class="fa  fa-pencil"></i> <span>日志</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="/admin/friend_list">
+                        <i class="fa fa-users"></i> <span>好友列表</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="/admin/group_list">
+                        <i class="fa fa-users"></i> <span>群列表</span>
+                    </a>
+                </li>
+			 	<!--<li>-->
+                    <!--<a href="/ddns/user/download">-->
+                        <!--<i class="fa fa-download"></i> <span>下载SS</span>-->
+                    <!--</a>-->
+                <!--</li>-->
+                <!--<li>-->
+               	 	<!--<a href="/ddns/user/biling">-->
+                        <!--<i class="fa fa-building"></i> <span>订单查看</span>-->
+                    <!--</a>-->
+                <!--</li>-->
+
+
+            </ul>
+        </section>
+        <!-- /.sidebar -->
+    </aside>
+{{ end }}

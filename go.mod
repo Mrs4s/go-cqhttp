@@ -4,9 +4,11 @@ go 1.14
 
 require (
 	github.com/Mrs4s/MiraiGo v0.0.0-20200913133024-ad43b3f471e2
+	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
 	github.com/fastly/go-utils v0.0.0-20180712184237-d95a45783239 // indirect
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-playground/validator/v10 v10.3.0 // indirect
+	github.com/google/uuid v1.1.1
 	github.com/gorilla/websocket v1.4.2
 	github.com/guonaihong/gout v0.1.2
 	github.com/jehiah/go-strftime v0.0.0-20171201141054-1d33003b3869 // indirect
@@ -18,6 +20,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rifflock/lfshook v0.0.0-20180920164130-b9218ef580f5
+	github.com/shirou/gopsutil v2.20.8+incompatible
 	github.com/sirupsen/logrus v1.6.0
 	github.com/t-tomalak/logrus-easy-formatter v0.0.0-20190827215021-c074f06c5816
 	github.com/tebeka/strftime v0.1.5 // indirect
