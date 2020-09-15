@@ -1,5 +1,5 @@
 package web
-
+// 此Controller用于 需要鉴权 才能访问的cgi
 import (
 	"encoding/json"
 	"fmt"

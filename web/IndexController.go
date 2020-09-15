@@ -1,13 +1,14 @@
 package web
-
+// 此Controller用于 无需鉴权 即可访问的cgi
 import (
 	"crypto/md5"
 	"encoding/hex"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"time"
 )
 
-// admin 子站的 路由映射
+// index 子站的 路由映射
 var HttpuriIndex = map[string]func(s *webServer, c *gin.Context){
 	"login":    IndexLogin,
 	"do_login": IndexDoLogin,
@@ -38,6 +39,7 @@ func IndexDoLogin(s *webServer, c *gin.Context) {
 			Value:    md51,
 			Path:     "/",
 			HttpOnly: true,
+			Expires: time.Now().Add(24*30 * time.Hour),//默认30天内cookie 有效期
 		}
 		http.SetCookie(c.Writer, cookie)
 		c.JSON(200, gin.H{"code": 0, "msg": "登录成功"})
