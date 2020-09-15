@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>miraiGo登录</title>
+
+    <!-- 新 Bootstrap4 核心 CSS 文件 -->
+    <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/4.1.0/css/bootstrap.min.css">
+
+    <!-- jQuery文件。务必在bootstrap.min.js 之前引入 -->
+    <script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+
+    <!-- popper.min.js 用于弹窗、提示、下拉菜单 -->
+    <script src="https://cdn.bootcss.com/popper.js/1.12.5/umd/popper.min.js"></script>
+
+    <!-- 最新的 Bootstrap4 核心 JavaScript 文件 -->
+    <script src="https://cdn.bootcss.com/bootstrap/4.1.0/js/bootstrap.min.js"></script>
+
+    <script>
+        function register() {
+            //跳转到注册界面register.html进行注册
+            window.open("register.html", "_blank");  //_self,_parent,_top,_blank
+        }
+        function login() {
+            $.ajax({
+                type: "POST",
+                url: "/index/do_login",
+                data:{
+                    "user":$("#user").val(),
+                    "password":$("#password").val(),
+                },
+                dataType: "json",
+                success: function (data) {
+                    console.log(data);
+                    if(data.code ===0)
+                    {
+                        $(".alert").html(data.msg).addClass("alert-warning").show().delay(5400).fadeOut();
+                        window.location.href="/admin/index"
+                    }else{
+                        $(".alert").html(data.msg).addClass("alert-error").show().delay(5400).fadeOut();
+                    }
+                },
+                error: function (jqXHR) {
+                    console.log(jqXHR.status);
+                    $(".alert").html("httpcode:"+jqXHR.status).addClass("alert-error").show().delay(5400).fadeOut();
+                }
+            })
+        }
+    </script>
+</head>
+<body>
+<!-- 登录表单 -->
+<div class="row">
+    <div class="col-md-12">
+        <div style="margin: 0 auto; max-width: 400px;">
+    <div class="alert"></div>
+    <div class="form-group">
+        <label for="user" stype="display:inline;">账户：</label>
+        <input type="text" class="form-control" id="user" style="display:inline;width:200px;"autocomplete="off" />
+    </div>
+    <div class="form-group">
+        <label for="password" style="display:inline;">密码：</label>
+        <input type="text" class="form-control" id="password" style="display:inline;width:200px;"autocomplete="off" />
+    </div>
+    <button type="submit" class="btn btn-primary" onclick="login()">登录</button>
+{{/*    <button type="submit" class="btn btn-primary" onclick="register()">注册</button>*/}}
+        </div>
+    </div>
+</div>
+</body>
+</html>

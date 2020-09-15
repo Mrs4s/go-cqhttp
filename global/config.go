@@ -84,6 +84,8 @@ type GoCQReverseWebsocketConfig struct {
 type GoCqWebUi struct {
 	Enabled   bool   `json:"enabled"`
 	WebUiPort uint64 `json:"web_ui_port"`
+	User      string  `json:"user"`
+	Password      string  `json:"password"`
 }
 
 func DefaultConfig() *JsonConfig {

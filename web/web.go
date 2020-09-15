@@ -1,6 +1,8 @@
 package web
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
@@ -46,10 +48,45 @@ func (s *webServer) Run(addr string, bot *coolq.CQBot) {
 	//s.engine.StaticFile("/favicon.ico", "./html/favicon.ico")
 	// 自动转跳到 admin/index
 	s.engine.GET("/", func(c *gin.Context) {
-		c.Redirect(http.StatusMovedPermanently, "/admin/index")
+		c.Redirect(http.StatusMovedPermanently, "/index/login")
+	})
+	s.engine.GET("/index/login", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "login.html", gin.H{})
+		//cookie := &http.Cookie{
+		//	Name:     "session_id",
+		//	Value:    "onion",   //这个是value要自己生成？？规则自定就可以？
+		//	Path:     "/",
+		//	HttpOnly: true,
+		//}
+		//http.SetCookie(c.Writer, cookie)
+		//c.String(http.StatusOK, "登录成功")
+	})
+	s.engine.POST("/index/do_login", func(c *gin.Context) {
+		conf:=GetConf()
+		user:=conf.WebUi.User
+		password:=conf.WebUi.Password
+		str1:=user+password
+		str2:=c.PostForm("user")+c.PostForm("password")
+		h:= md5.New()
+		h.Write([]byte(str1))
+		md51:=hex.EncodeToString(h.Sum(nil))
+		h.Write([]byte(str2))
+		md52:=hex.EncodeToString(h.Sum(nil))
+		if md51==md52{
+			cookie := &http.Cookie{
+				Name:     "userinfo",
+				Value: md51,
+				Path:     "/",
+				HttpOnly: true,
+			}
+			http.SetCookie(c.Writer, cookie)
+			c.JSON(200,gin.H{"code":0,"msg":"登录成功"})
+			return
+		}
+		c.JSON(200,gin.H{"code":-1,"msg":"登录失败"})
 	})
 	//通用路由
-	s.engine.Any("/admin/:action", s.admin)
+	s.engine.Any("/admin/:action",AuthMiddleWare(), s.admin)
 
 	s.engine.Use(func(c *gin.Context) {
 		if c.Request.Method != "GET" && c.Request.Method != "POST" {
@@ -184,5 +221,31 @@ func FormatFileSize(fileSize uint64) (size string) {
 		return fmt.Sprintf("%.2fTB", float64(fileSize)/float64(1024*1024*1024*1024))
 	} else { //if fileSize < (1024 * 1024 * 1024 * 1024 * 1024 * 1024)
 		return fmt.Sprintf("%.2fEB", float64(fileSize)/float64(1024*1024*1024*1024*1024))
+	}
+}
+
+func AuthMiddleWare() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		conf:=GetConf()
+		user:=conf.WebUi.User
+		password:=conf.WebUi.Password
+		str1:=user+password
+		h:= md5.New()
+		h.Write([]byte(str1))
+		md51:=hex.EncodeToString(h.Sum(nil))
+		if cookie, err := c.Request.Cookie("userinfo"); err == nil {
+			value := cookie.Value
+			fmt.Println(value)
+			if value == md51 {
+				c.Next()
+				return
+			}
+		}
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "Unauthorized",
+		})
+		c.Redirect(http.StatusMovedPermanently, "/index/login")
+		c.Abort()
+		return
 	}
 }
