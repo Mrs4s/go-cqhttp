@@ -12,6 +12,7 @@ import (
 var HttpuriIndex = map[string]func(s *webServer, c *gin.Context){
 	"login":    IndexLogin,
 	"do_login": IndexDoLogin,
+	"do_logout": IndexDoLogout,
 }
 
 // 登录页面
@@ -48,13 +49,32 @@ func IndexDoLogin(s *webServer, c *gin.Context) {
 	c.JSON(200, gin.H{"code": -1, "msg": "登录失败"})
 }
 
+func IndexDoLogout(s *webServer, c *gin.Context) {
+	cookie := &http.Cookie{
+		Name:     "userinfo",
+		Value:    "",
+		Path:     "/",
+		HttpOnly: true,
+		MaxAge: -1,
+	}
+	http.SetCookie(c.Writer, cookie)
+	c.HTML(http.StatusOK, "jump.html", gin.H{
+		"url":     "/index/login",
+		"timeout": "3",
+		"code":    1, //1为success,0为error
+		"msg":     "已退出登录，即将转跳到登录页",
+	})
+	c.Abort()
+	return
+}
+
 func checkLogin(s *webServer, c *gin.Context) {
 	conf := GetConf()
 	user := conf.WebUi.User
 	password := conf.WebUi.Password
 	if user == "" || password == "" {
 		//无需登录
-		c.Redirect(http.StatusMovedPermanently, "/admin/index")
+		c.Redirect(302, "/admin/index")
 		return
 	}
 	str1 := user + password
@@ -64,7 +84,7 @@ func checkLogin(s *webServer, c *gin.Context) {
 	if cookie, err := c.Request.Cookie("userinfo"); err == nil {
 		value := cookie.Value
 		if value == md51 {
-			c.Redirect(http.StatusMovedPermanently, "/admin/index")
+			c.Redirect(302, "/admin/index")
 			return
 		}
 	}

@@ -49,7 +49,7 @@ func (s *webServer) Run(addr string, bot *coolq.CQBot) {
 	//s.engine.StaticFile("/favicon.ico", "./html/favicon.ico")
 	// 自动转跳到 admin/index
 	s.engine.GET("/", func(c *gin.Context) {
-		c.Redirect(http.StatusMovedPermanently, "/index/login")
+		c.Redirect(302, "/index/login")
 	})
 	//通用路由
 	s.engine.Any("/admin/:action", AuthMiddleWare(), s.admin)
