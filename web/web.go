@@ -216,10 +216,13 @@ func AuthMiddleWare() gin.HandlerFunc {
 				return
 			}
 		}
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": "Unauthorized",
+		c.HTML(http.StatusOK,"jump.html",gin.H{
+			"url":"/index/login",
+			"timeout":"3",
+			"code":0,//1为success,0为error
+			"msg":"请登录后再访问",
 		})
-		c.Redirect(http.StatusMovedPermanently, "/index/login")
+		//c.Redirect(http.StatusMovedPermanently, "/index/login")
 		c.Abort()
 		return
 	}
