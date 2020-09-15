@@ -224,6 +224,7 @@ func FormatFileSize(fileSize uint64) (size string) {
 	}
 }
 
+// admin 控制器 登录验证
 func AuthMiddleWare() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		conf:=GetConf()
