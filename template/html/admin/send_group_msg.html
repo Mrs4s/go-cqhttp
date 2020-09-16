@@ -19,29 +19,32 @@
                     <div class="alert"></div>
                     <ol class="breadcrumb">
                         <li><a href="/admin/index">管理</a></li>
-                        <li class="active">json完整配置</li>
+                        <li class="active">群消息发送(支持cq码)</li>
                     </ol>
 
                     <div class="panel panel-default">
                         <div class="panel-heading">
-                            <h3 class="panel-title">json完整配置 </h3>
+                            <h3 class="panel-title">{{.groupName}} </h3>
                         </div>
                         <div class="panel-body">
                             <div class="form-group">
-                                <textarea class="form-control" rows="20" id="json" name="json">{{.json}}</textarea>
+                                <textarea class="form-control" rows="20" id="msg" name="msg"></textarea>
                             </div>
-                            <button type="button" class="btn btn-default" id="update_profile" onclick="updateConfigJson();">
+                            <button type="button" class="btn btn-default" id="send_msg" onclick="group_msg_send({{.groupId}});">
                                 <span class="glyphicon glyphicon-floppy-disk"></span>
-                                更新
+                                发送
                             </button>
-                            <a href="/admin/config_json" class="btn btn-default">
+                            <a href="/admin/group_list" class="btn btn-default">
                                 <span class="glyphicon glyphicon-arrow-left"></span>
                                 返回
                             </a>
                         </div>
                     </div>
-
-
+                    <div class="alert2" style="display: none">
+                        <div class="form-group">
+                            <textarea class="form-control" rows="20" id="msg_result" name="msg_result"></textarea>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -52,17 +55,24 @@
 </div><!-- /.content-wrapper -->
 
 <script>
-    function updateConfigJson() {
+    function group_msg_send(gid) {
         $.ajax({
             type: "POST",
-            url: "/admin/do_config_json",
+            url: "/admin/do_group_msg_send",
             data:{
-                "json":$("#json").val(),
+                "msg":$("#msg").val(),
+                "gid":gid,
             },
             dataType: "json",
             success: function (data) {
                 console.log(data);
-                $(".alert").html(data.msg).addClass("alert-warning").show().delay(5400).fadeOut();
+                if(data.code!==0)
+                {
+                    $(".alert").html(data.msg).addClass("alert-warning").show().delay(5400).fadeOut();
+                }else{
+                    $("#msg_result").html(JSON.stringify(data.msg));
+                    $(".alert2").addClass("alert-warning").show().delay(5400).fadeOut();
+                }
             },
             error: function (jqXHR) {
                 console.log(jqXHR);

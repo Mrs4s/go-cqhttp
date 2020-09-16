@@ -8,7 +8,7 @@
         <!-- START PROGRESS BARS -->
         <div class="row">
             <div class="col-md-12">
-                <div style="margin: 0 auto; max-width: 400px;">
+                <div style="margin: 0 auto; max-width: 1000px;">
                     <ol class="breadcrumb">
                         <li><a href="/admin/index">管理</a></li>
                         <li class="active">群列表</li>
@@ -25,6 +25,7 @@
                                 <th>群名称</th>
                                 <th>成员数</th>
                                 <th>群容量</th>
+                                <th>操作</th>
                             </tr>
                             </thead>
                         </table>
@@ -49,7 +50,7 @@
             success: function (data) {
                 if(data.retcode===0){
                     $.each(data.data,function (k,v) {
-                        html="<tr><td>"+v.group_id+"</td><td>"+v.group_name+"</td><td>"+v.member_count+"</td><td>"+v.max_member_count+"</td></tr>";
+                        html="<tr><td>"+v.group_id+"</td><td>"+v.group_name+"</td><td>"+v.member_count+"</td><td>"+v.max_member_count+"</td>"+"<td>"+"<a href='/admin/do_leave_group?gid="+v.group_id+"'>一键退群</a> | "+"<a href='/admin/send_group_msg?gid="+v.group_id+"'>发送消息</a>"+"</td>"+"</tr>";
                         $("#list").append(html);
                     })
                 }else{

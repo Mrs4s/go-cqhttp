@@ -1,10 +1,12 @@
 package web
+
 // 此Controller用于 需要鉴权 才能访问的cgi
 import (
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
+	"github.com/tidwall/gjson"
 	"html/template"
 	"net/http"
 	"os"
@@ -14,21 +16,27 @@ import (
 
 // admin 子站的 路由映射
 var HttpuriAdmin = map[string]func(s *webServer, c *gin.Context){
-	"index":             AdminIndex,
-	"config_json":       AdminConfigJson,
-	"config":            AdminConfig,
-	"debug":             AdminDebug,
-	"log":               AdminLog,
-	"friend_list":       AdminFriendList,
-	"group_list":        AdminGroupList,
-	"get_log":           AdmingetLogs,
-	"do_friend_list":    AdminDoFriendList,
-	"do_group_list":     AdminDoGroupList,
-	"do_config_base":    AdminDoConfigBase,
-	"do_config_http":    AdminDoConfigHttp,
-	"do_config_ws":      AdminDoConfigWs,
-	"do_config_reverse": AdminDoConfigReverse,
-	"do_config_json":    AdminDoConfigJson,
+	"index":               AdminIndex,
+	"config_json":         AdminConfigJson,
+	"config":              AdminConfig,
+	"debug":               AdminDebug,
+	"log":                 AdminLog,
+	"friend_list":         AdminFriendList,
+	"group_list":          AdminGroupList,
+	"get_log":             AdmingetLogs,
+	"do_friend_list":      AdminDoFriendList,
+	"do_group_list":       AdminDoGroupList,
+	"do_config_base":      AdminDoConfigBase,
+	"do_config_http":      AdminDoConfigHttp,
+	"do_config_ws":        AdminDoConfigWs,
+	"do_config_reverse":   AdminDoConfigReverse,
+	"do_config_json":      AdminDoConfigJson,
+	"do_leave_group":      AdminDoLeaveGroup,
+	"send_group_msg":      AdminSendGroupMsg,
+	"do_group_msg_send":   AdminDoGoupMsgSend,
+	"do_del_friend":       AdminDoDelFriend,
+	"send_private_msg":    AdminSendPrivateMsg,
+	"do_send_private_msg": AdminDoPrivateMsgSend,
 }
 
 // 首页
@@ -218,6 +226,208 @@ func AdminDoConfigJson(s *webServer, c *gin.Context) {
 	}
 }
 
+// 退群
+func AdminDoLeaveGroup(s *webServer, c *gin.Context) {
+	gid, ext := c.GetQuery("gid")
+	if !ext {
+		c.HTML(http.StatusOK, "jump.html", gin.H{
+			"url":     "/admin/group_list",
+			"timeout": "3",
+			"code":    0, //1为success,0为error
+			"msg":     "缺失参数gid/群号码",
+		})
+		c.Abort()
+		return
+	}
+	groupId, _ := strconv.ParseInt(gid, 10, 64)
+	rsp := s.bot.CQSetGroupLeave(groupId)
+	if rsp["status"] == "ok" {
+		c.HTML(http.StatusOK, "jump.html", gin.H{
+			"url":     "/admin/group_list",
+			"timeout": 3,
+			"code":    1, //1为success,0为error
+			"msg":     "一键离群成功",
+		})
+		c.Abort()
+		return
+	} else {
+		c.HTML(http.StatusOK, "jump.html", gin.H{
+			"url":     "/admin/group_list",
+			"timeout": 3,
+			"code":    0, //1为success,0为error
+			"msg":     "一键离群失败",
+		})
+		c.Abort()
+		return
+	}
+}
+
+// 发送群消息html
+func AdminSendGroupMsg(s *webServer, c *gin.Context) {
+	gid, ext := c.GetQuery("gid")
+	if !ext {
+		c.HTML(http.StatusOK, "jump.html", gin.H{
+			"url":     "/admin/group_list",
+			"timeout": "3",
+			"code":    0, //1为success,0为error
+			"msg":     "缺失参数gid/群号码",
+		})
+		c.Abort()
+		return
+	}
+	groupId, _ := strconv.ParseInt(gid, 10, 64)
+	rsp := s.bot.CQGetGroupInfo(groupId)
+	if rsp["status"] != "ok" {
+		c.HTML(http.StatusOK, "jump.html", gin.H{
+			"url":     "/admin/group_list",
+			"timeout": 3,
+			"code":    0, //1为success,0为error
+			"msg":     "获取群信息失败",
+		})
+		c.Abort()
+		return
+	}
+	Json := gjson.Parse(rsp.ToJson())
+	groupName := Json.Get("data.group_name")
+	c.HTML(http.StatusOK, "send_group_msg.html", gin.H{
+		"groupId":   groupId,
+		"groupName": groupName,
+	})
+}
+
+// 发送群消息
+func AdminDoGoupMsgSend(s *webServer, c *gin.Context) {
+	gid := c.PostForm("gid")
+	if gid == "" {
+		c.JSON(200, gin.H{
+			"code": -1,
+			"msg":  "缺失了gid/群号码",
+		})
+		c.Abort()
+		return
+	}
+	msg := c.PostForm("msg")
+	if msg == "" {
+		c.JSON(200, gin.H{
+			"code": -1,
+			"msg":  "缺失了msg/消息内容",
+		})
+		c.Abort()
+		return
+	}
+	groupId, _ := strconv.ParseInt(gid, 10, 64)
+	rsp := s.bot.CQSendGroupMessage(groupId, msg, false)
+	c.JSON(200, gin.H{
+		"code": 0,
+		"msg":  rsp,
+	})
+}
+
+// 删好友
+func AdminDoDelFriend(s *webServer, c *gin.Context) {
+	//uid,ext:=c.GetQuery("uid")
+	//if !ext{
+	//	c.HTML(http.StatusOK, "jump.html", gin.H{
+	//		"url":     "/admin/friend_list",
+	//		"timeout": "3",
+	//		"code":    0, //1为success,0为error
+	//		"msg":     "缺失参数uid/qq号",
+	//	})
+	//	c.Abort()
+	//	return
+	//}
+	//cqq,_:=strconv.ParseInt(uid,10,64)
+	//rsp:=s.bot.CQDeleteMessage(cqq)
+	//if rsp["status"]=="ok"{
+	//	c.HTML(http.StatusOK, "jump.html", gin.H{
+	//		"url":     "/admin/gfriend_list",
+	//		"timeout": 3,
+	//		"code":    1, //1为success,0为error
+	//		"msg":     "删除好友成功",
+	//	})
+	//	c.Abort()
+	//	return
+	//}else{
+	//	c.HTML(http.StatusOK, "jump.html", gin.H{
+	//		"url":     "/admin/friend_list",
+	//		"timeout": 3,
+	//		"code":   0, //1为success,0为error
+	//		"msg":     "删除好友失败",
+	//	})
+	//	c.Abort()
+	//	return
+	//}
+	c.HTML(http.StatusOK, "jump.html", gin.H{
+		"url":     "/admin/friend_list",
+		"timeout": 3,
+		"code":    0, //1为success,0为error
+		"msg":     "功能未实现",
+	})
+	c.Abort()
+	return
+}
+
+// 发送好友消息html
+func AdminSendPrivateMsg(s *webServer, c *gin.Context) {
+	uid, ext := c.GetQuery("uid")
+	if !ext {
+		c.HTML(http.StatusOK, "jump.html", gin.H{
+			"url":     "/admin/friend_list",
+			"timeout": "3",
+			"code":    0, //1为success,0为error
+			"msg":     "缺失参数uid/qq号码",
+		})
+		c.Abort()
+		return
+	}
+	userId, _ := strconv.ParseInt(uid, 10, 64)
+	rsp := s.bot.CQGetVipInfo(userId)
+	if rsp["status"] != "ok" {
+		c.HTML(http.StatusOK, "jump.html", gin.H{
+			"url":     "/admin/friend_list",
+			"timeout": 3,
+			"code":    0, //1为success,0为error
+			"msg":     "获取群信息失败",
+		})
+		c.Abort()
+		return
+	}
+	Json := gjson.Parse(rsp.ToJson())
+	nickname := Json.Get("data.nickname")
+	c.HTML(http.StatusOK, "send_private_msg.html", gin.H{
+		"userId":   userId,
+		"nickname": nickname,
+	})
+}
+
+// 发送群消息
+func AdminDoPrivateMsgSend(s *webServer, c *gin.Context) {
+	uid := c.PostForm("uid")
+	if uid == "" {
+		c.JSON(200, gin.H{
+			"code": -1,
+			"msg":  "缺失了uid/qq号码",
+		})
+		c.Abort()
+		return
+	}
+	msg := c.PostForm("msg")
+	if msg == "" {
+		c.JSON(200, gin.H{
+			"code": -1,
+			"msg":  "缺失了msg/消息内容",
+		})
+		c.Abort()
+		return
+	}
+	userId, _ := strconv.ParseInt(uid, 10, 64)
+	rsp := s.bot.CQSendPrivateMessage(userId, msg, false)
+	c.JSON(200, gin.H{
+		"code": 0,
+		"msg":  rsp,
+	})
+}
+
 func getLogPath() string {
 	date := time.Now().Format("2006-01-02")
 	dir, _ := os.Getwd()
@@ -250,8 +460,8 @@ func readLastLine(fname string, size int) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if int64(size)>fi.Size(){
-		size=int(fi.Size())
+	if int64(size) > fi.Size() {
+		size = int(fi.Size())
 	}
 	buf := make([]byte, size)
 	n, err := file.ReadAt(buf, fi.Size()-int64(len(buf)))
