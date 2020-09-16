@@ -7,10 +7,8 @@ import (
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
-	//"github.com/shirou/gopsutil/cpu"
 	"github.com/gobuffalo/packr/v2"
-	//"github.com/shirou/gopsutil/mem"
+	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 	"html/template"
@@ -33,8 +31,10 @@ func (s *webServer) Run(addr string, bot *coolq.CQBot) {
 	gin.SetMode(gin.ReleaseMode)
 	s.engine = gin.New()
 	s.bot = bot //外部引入 bot对象，用于操作bot
+	// 自动加载模板
+	t := template.New("")
 	//func 函数映射 全局模板可用
-	s.engine.SetFuncMap(template.FuncMap{
+	t.Funcs(template.FuncMap{
 		"getYear":        GetYear,
 		"formatAsDate":   FormatAsDate,
 		"getConf":        GetConf,
@@ -43,17 +43,15 @@ func (s *webServer) Run(addr string, bot *coolq.CQBot) {
 		"getServerInfo":  GetServerInfo,
 		"formatFileSize": FormatFileSize,
 	})
+	tmp, err := loadTemplate(t)
+	if err != nil {
+		panic(err)
+	}
+	s.engine.SetHTMLTemplate(tmp)
 	//静态资源
-	assets := packr.New("assets","../template/assets")
+	assets := packr.New("assets", "../template/assets")
 	//s.engine.Static("/assets", "./template/assets")
 	s.engine.StaticFS("/assets", assets)
-	//Html := packr.New("template","../template")
-	//s.engine.Static("/assets", "./template/assets")
-	//s.engine.StaticFS("", Html)
-	//s.engine.StaticFile("/favicon.ico", "./html/favicon.ico")
-	// 自动转跳到 admin/index
-	s.engine.SetHTMLTemplate(initTemplates())
-	//s.engine.LoadHTMLGlob("template/html/**/*")
 	s.engine.GET("/", func(c *gin.Context) {
 		c.Redirect(302, "/index/login")
 	})
@@ -235,30 +233,21 @@ func AuthMiddleWare() gin.HandlerFunc {
 	}
 }
 
-func FileGetContent(file string) string {
-	str := ""
-	box := packr.New("tmpl","../template")
-	content, err := box.FindString(file)
-	if err != nil {
-		return str
+// loadTemplate loads templates by packr 将html 打包到二进制包
+func loadTemplate(t *template.Template) (*template.Template, error) {
+	box := packr.New("tmp", "../template/html")
+	for _, file := range box.List() {
+		if !strings.HasSuffix(file, ".html") {
+			continue
+		}
+		h, err := box.FindString(file)
+		if err != nil {
+			return nil, err
+		}
+		t, err = t.New(strings.Replace(file,"html/","",1)).Parse(h)
+		if err != nil {
+			return nil, err
+		}
 	}
-	return content
-}
-
-func initTemplates() *template.Template {
-	box := packr.New("tmp","../template")
-	t := template.New("")
-	tmpl := t.New("index/login.html")
-	data, _ := box.FindString("index/login.html")
-	tmpl.Parse(data)
-
-	tmpl = t.New("admin/index.html")
-	data, _ = box.FindString("admin/index.html")
-	tmpl.Parse(data)
-	tmpl = t.New("admin/jump.html")
-	data, _ = box.FindString("admin/jump.html")
-	tmpl = t.New("index/jump.html")
-	data, _ = box.FindString("index/jump.html")
-	tmpl.Parse(data)
-	return t
+	return t, nil
 }
