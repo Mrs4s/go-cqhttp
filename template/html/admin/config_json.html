@@ -4,10 +4,10 @@
 <div class="content-wrapper">
     <!-- Content Header (Page header) -->
     {{/*<section class="content-header">*/}}
-        {{/*<h1>*/}}
-            {{/*用户中心*/}}
-            {{/*<small>User Center</small>*/}}
-        {{/*</h1>*/}}
+    {{/*<h1>*/}}
+    {{/*用户中心*/}}
+    {{/*<small>User Center</small>*/}}
+    {{/*</h1>*/}}
     {{/*</section>*/}}
 
     <!-- Main content -->
@@ -30,7 +30,8 @@
                             <div class="form-group">
                                 <textarea class="form-control" rows="20" id="json" name="json">{{.json}}</textarea>
                             </div>
-                            <button type="button" class="btn btn-default" id="update_profile" onclick="updateConfigJson();">
+                            <button type="button" class="btn btn-default" id="update_profile"
+                                    onclick="updateConfigJson();">
                                 <span class="glyphicon glyphicon-floppy-disk"></span>
                                 更新
                             </button>
@@ -56,8 +57,8 @@
         $.ajax({
             type: "POST",
             url: "/admin/do_config_json",
-            data:{
-                "json":$("#json").val(),
+            data: {
+                "json": $("#json").val(),
             },
             dataType: "json",
             success: function (data) {
@@ -66,7 +67,7 @@
             },
             error: function (jqXHR) {
                 console.log(jqXHR);
-                $(".alert").html("httpcode:"+jqXHR.status).addClass("alert-error").show().delay(5400).fadeOut();
+                $(".alert").html("httpcode:" + jqXHR.status).addClass("alert-error").show().delay(5400).fadeOut();
             }
         })
     }

@@ -53,7 +53,7 @@
                         html="<tr><td>"+v.group_id+"</td><td>"+v.group_name+"</td><td>"+v.member_count+"</td><td>"+v.max_member_count+"</td>"+"<td>"+"<a href='/admin/do_leave_group?gid="+v.group_id+"'>一键退群</a> | "+"<a href='/admin/send_group_msg?gid="+v.group_id+"'>发送消息</a>"+"</td>"+"</tr>";
                         $("#list").append(html);
                     })
-                }else{
+                } else {
                     alert(data)
                 }
             },
