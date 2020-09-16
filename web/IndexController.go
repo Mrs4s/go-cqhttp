@@ -19,7 +19,7 @@ var HttpuriIndex = map[string]func(s *webServer, c *gin.Context){
 // 登录页面
 func IndexLogin(s *webServer, c *gin.Context) {
 	checkLogin(s, c)
-	c.HTML(http.StatusOK, "login.html", gin.H{})
+	c.HTML(http.StatusOK, "index/login.html", gin.H{})
 }
 
 //处理登录
@@ -59,7 +59,7 @@ func IndexDoLogout(s *webServer, c *gin.Context) {
 		MaxAge:   -1,
 	}
 	http.SetCookie(c.Writer, cookie)
-	c.HTML(http.StatusOK, "jump.html", gin.H{
+	c.HTML(http.StatusOK, "index/jump.html", gin.H{
 		"url":     "/index/login",
 		"timeout": "3",
 		"code":    1, //1为success,0为error

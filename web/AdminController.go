@@ -41,14 +41,14 @@ var HttpuriAdmin = map[string]func(s *webServer, c *gin.Context){
 
 // 首页
 func AdminIndex(s *webServer, c *gin.Context) {
-	c.HTML(http.StatusOK, "index.html", gin.H{})
+	c.HTML(http.StatusOK, "admin/index.html", gin.H{})
 }
 
 //json config
 func AdminConfigJson(s *webServer, c *gin.Context) {
 	conf := GetConf()
 	data, _ := json.MarshalIndent(conf, "", "\t")
-	c.HTML(http.StatusOK, "config_json.html", gin.H{
+	c.HTML(http.StatusOK, "admin/config_json.html", gin.H{
 		"json": template.HTML(data),
 	})
 }
@@ -63,7 +63,7 @@ func AdminConfig(s *webServer, c *gin.Context) {
 		post = k
 		secret = v
 	}
-	c.HTML(http.StatusOK, "config.html", gin.H{
+	c.HTML(http.StatusOK, "admin/config.html", gin.H{
 		"post":           post,
 		"secret":         secret,
 		"ReverseServers": ws_reverse_servers,
@@ -77,7 +77,7 @@ func AdminLog(s *webServer, c *gin.Context) {
 	Logs, _ := readLastLine(LogsPath, 10240)
 	//conf := GetConf()
 	//data, _ := json.MarshalIndent(conf, "", "\t")
-	c.HTML(http.StatusOK, "log.html", gin.H{
+	c.HTML(http.StatusOK, "admin/log.html", gin.H{
 		"logs": template.HTML(Logs),
 	})
 }
@@ -96,7 +96,7 @@ func AdmingetLogs(s *webServer, c *gin.Context) {
 
 // api调试
 func AdminDebug(s *webServer, c *gin.Context) {
-	c.HTML(http.StatusOK, "jump.html", gin.H{
+	c.HTML(http.StatusOK, "admin/jump.html", gin.H{
 		"url":     "/admin/index",
 		"timeout": "3",
 		"code":    0, //1为success,0为error
@@ -107,12 +107,12 @@ func AdminDebug(s *webServer, c *gin.Context) {
 
 // 好友列表html页面
 func AdminFriendList(s *webServer, c *gin.Context) {
-	c.HTML(http.StatusOK, "friend_list.html", gin.H{})
+	c.HTML(http.StatusOK, "admin/friend_list.html", gin.H{})
 }
 
 // 群列表html页面
 func AdminGroupList(s *webServer, c *gin.Context) {
-	c.HTML(http.StatusOK, "group_list.html", gin.H{})
+	c.HTML(http.StatusOK, "admin/group_list.html", gin.H{})
 }
 
 // 好友列表js
@@ -230,7 +230,7 @@ func AdminDoConfigJson(s *webServer, c *gin.Context) {
 func AdminDoLeaveGroup(s *webServer, c *gin.Context) {
 	gid, ext := c.GetQuery("gid")
 	if !ext {
-		c.HTML(http.StatusOK, "jump.html", gin.H{
+		c.HTML(http.StatusOK, "admin/jump.html", gin.H{
 			"url":     "/admin/group_list",
 			"timeout": "3",
 			"code":    0, //1为success,0为error
@@ -242,7 +242,7 @@ func AdminDoLeaveGroup(s *webServer, c *gin.Context) {
 	groupId, _ := strconv.ParseInt(gid, 10, 64)
 	rsp := s.bot.CQSetGroupLeave(groupId)
 	if rsp["status"] == "ok" {
-		c.HTML(http.StatusOK, "jump.html", gin.H{
+		c.HTML(http.StatusOK, "admin/jump.html", gin.H{
 			"url":     "/admin/group_list",
 			"timeout": 3,
 			"code":    1, //1为success,0为error
@@ -251,7 +251,7 @@ func AdminDoLeaveGroup(s *webServer, c *gin.Context) {
 		c.Abort()
 		return
 	} else {
-		c.HTML(http.StatusOK, "jump.html", gin.H{
+		c.HTML(http.StatusOK, "admin/jump.html", gin.H{
 			"url":     "/admin/group_list",
 			"timeout": 3,
 			"code":    0, //1为success,0为error
@@ -266,7 +266,7 @@ func AdminDoLeaveGroup(s *webServer, c *gin.Context) {
 func AdminSendGroupMsg(s *webServer, c *gin.Context) {
 	gid, ext := c.GetQuery("gid")
 	if !ext {
-		c.HTML(http.StatusOK, "jump.html", gin.H{
+		c.HTML(http.StatusOK, "admin/jump.html", gin.H{
 			"url":     "/admin/group_list",
 			"timeout": "3",
 			"code":    0, //1为success,0为error
@@ -278,7 +278,7 @@ func AdminSendGroupMsg(s *webServer, c *gin.Context) {
 	groupId, _ := strconv.ParseInt(gid, 10, 64)
 	rsp := s.bot.CQGetGroupInfo(groupId)
 	if rsp["status"] != "ok" {
-		c.HTML(http.StatusOK, "jump.html", gin.H{
+		c.HTML(http.StatusOK, "admin/jump.html", gin.H{
 			"url":     "/admin/group_list",
 			"timeout": 3,
 			"code":    0, //1为success,0为error
@@ -289,7 +289,7 @@ func AdminSendGroupMsg(s *webServer, c *gin.Context) {
 	}
 	Json := gjson.Parse(rsp.ToJson())
 	groupName := Json.Get("data.group_name")
-	c.HTML(http.StatusOK, "send_group_msg.html", gin.H{
+	c.HTML(http.StatusOK, "admin/send_group_msg.html", gin.H{
 		"groupId":   groupId,
 		"groupName": groupName,
 	})
@@ -357,7 +357,7 @@ func AdminDoDelFriend(s *webServer, c *gin.Context) {
 	//	c.Abort()
 	//	return
 	//}
-	c.HTML(http.StatusOK, "jump.html", gin.H{
+	c.HTML(http.StatusOK, "admin/jump.html", gin.H{
 		"url":     "/admin/friend_list",
 		"timeout": 3,
 		"code":    0, //1为success,0为error
@@ -371,7 +371,7 @@ func AdminDoDelFriend(s *webServer, c *gin.Context) {
 func AdminSendPrivateMsg(s *webServer, c *gin.Context) {
 	uid, ext := c.GetQuery("uid")
 	if !ext {
-		c.HTML(http.StatusOK, "jump.html", gin.H{
+		c.HTML(http.StatusOK, "admin/jump.html", gin.H{
 			"url":     "/admin/friend_list",
 			"timeout": "3",
 			"code":    0, //1为success,0为error
@@ -383,7 +383,7 @@ func AdminSendPrivateMsg(s *webServer, c *gin.Context) {
 	userId, _ := strconv.ParseInt(uid, 10, 64)
 	rsp := s.bot.CQGetVipInfo(userId)
 	if rsp["status"] != "ok" {
-		c.HTML(http.StatusOK, "jump.html", gin.H{
+		c.HTML(http.StatusOK, "admin/jump.html", gin.H{
 			"url":     "/admin/friend_list",
 			"timeout": 3,
 			"code":    0, //1为success,0为error
@@ -394,7 +394,7 @@ func AdminSendPrivateMsg(s *webServer, c *gin.Context) {
 	}
 	Json := gjson.Parse(rsp.ToJson())
 	nickname := Json.Get("data.nickname")
-	c.HTML(http.StatusOK, "send_private_msg.html", gin.H{
+	c.HTML(http.StatusOK, "admin/send_private_msg.html", gin.H{
 		"userId":   userId,
 		"nickname": nickname,
 	})

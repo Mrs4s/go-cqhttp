@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	//"github.com/shirou/gopsutil/cpu"
-
+	"github.com/gobuffalo/packr/v2"
 	//"github.com/shirou/gopsutil/mem"
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
@@ -43,11 +43,17 @@ func (s *webServer) Run(addr string, bot *coolq.CQBot) {
 		"getServerInfo":  GetServerInfo,
 		"formatFileSize": FormatFileSize,
 	})
-	s.engine.LoadHTMLGlob("template/html/**/*")
 	//静态资源
-	s.engine.Static("/assets", "./template/assets")
+	assets := packr.New("assets","../template/assets")
+	//s.engine.Static("/assets", "./template/assets")
+	s.engine.StaticFS("/assets", assets)
+	//Html := packr.New("template","../template")
+	//s.engine.Static("/assets", "./template/assets")
+	//s.engine.StaticFS("", Html)
 	//s.engine.StaticFile("/favicon.ico", "./html/favicon.ico")
 	// 自动转跳到 admin/index
+	s.engine.SetHTMLTemplate(initTemplates())
+	//s.engine.LoadHTMLGlob("template/html/**/*")
 	s.engine.GET("/", func(c *gin.Context) {
 		c.Redirect(302, "/index/login")
 	})
@@ -217,7 +223,7 @@ func AuthMiddleWare() gin.HandlerFunc {
 				return
 			}
 		}
-		c.HTML(http.StatusOK, "jump.html", gin.H{
+		c.HTML(http.StatusOK, "index/jump.html", gin.H{
 			"url":     "/index/login",
 			"timeout": "3",
 			"code":    0, //1为success,0为error
@@ -227,4 +233,32 @@ func AuthMiddleWare() gin.HandlerFunc {
 		c.Abort()
 		return
 	}
+}
+
+func FileGetContent(file string) string {
+	str := ""
+	box := packr.New("tmpl","../template")
+	content, err := box.FindString(file)
+	if err != nil {
+		return str
+	}
+	return content
+}
+
+func initTemplates() *template.Template {
+	box := packr.New("tmp","../template")
+	t := template.New("")
+	tmpl := t.New("index/login.html")
+	data, _ := box.FindString("index/login.html")
+	tmpl.Parse(data)
+
+	tmpl = t.New("admin/index.html")
+	data, _ = box.FindString("admin/index.html")
+	tmpl.Parse(data)
+	tmpl = t.New("admin/jump.html")
+	data, _ = box.FindString("admin/jump.html")
+	tmpl = t.New("index/jump.html")
+	data, _ = box.FindString("index/jump.html")
+	tmpl.Parse(data)
+	return t
 }
