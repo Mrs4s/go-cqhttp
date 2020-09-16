@@ -43,9 +43,10 @@ func (s *webServer) Run(addr string, bot *coolq.CQBot) {
 		"getServerInfo":  GetServerInfo,
 		"formatFileSize": FormatFileSize,
 	})
+	//从二进制中加载模板（后缀必须.html)
 	tmp, err := loadTemplate(t)
 	if err != nil {
-		panic(err)
+		log.Errorf("%v",err)
 	}
 	s.engine.SetHTMLTemplate(tmp)
 	//静态资源
@@ -244,7 +245,8 @@ func loadTemplate(t *template.Template) (*template.Template, error) {
 		if err != nil {
 			return nil, err
 		}
-		t, err = t.New(strings.Replace(file,"html/","",1)).Parse(h)
+		//拼接方式，组装模板  admin/index.html 这种，方便调用
+		t, err = t.New(strings.Replace(file, "html/", "", 1)).Parse(h)
 		if err != nil {
 			return nil, err
 		}
