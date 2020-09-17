@@ -26,7 +26,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           goos: ${{ matrix.goos }}
           goarch: ${{ matrix.goarch }}
-          pre_command: go get -u github.com/gobuffalo/packr/v2/packr2
-          build_command: packr2 build
-          ldflags: -w -s -X "github.com/scjtqs/go-cqhttp/coolq.Version=${{ env.RELEASE_VERSION }}"
+          pre_command: 'go get -u github.com/gobuffalo/packr/v2/packr2'
+          build_command: 'packr2 build'
+#          ldflags: -w -s -X "github.com/scjtqs/go-cqhttp/coolq.Version=${{ env.RELEASE_VERSION }}"
           
