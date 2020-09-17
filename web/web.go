@@ -37,7 +37,7 @@ func (s *webServer) Run(addr string, cli *client.QQClient)  *coolq.CQBot{
 	gin.SetMode(gin.ReleaseMode)
 	s.engine = gin.New()
 	// 自动加载模板
-	t := template.New("")
+	t := template.New("tmp")
 	//func 函数映射 全局模板可用
 	t.Funcs(template.FuncMap{
 		"getYear":        GetYear,
@@ -49,11 +49,8 @@ func (s *webServer) Run(addr string, cli *client.QQClient)  *coolq.CQBot{
 		"formatFileSize": FormatFileSize,
 	})
 	//从二进制中加载模板（后缀必须.html)
-	tmp, err := loadTemplate(t)
-	if err != nil {
-		log.Errorf("%v",err)
-	}
-	s.engine.SetHTMLTemplate(tmp)
+	t,_=s.LoadTemplate(t)
+	s.engine.SetHTMLTemplate(t)
 	//静态资源
 	assets := packr.New("assets", "../template/assets")
 	//s.engine.Static("/assets", "./template/assets")
@@ -346,7 +343,7 @@ func AuthMiddleWare() gin.HandlerFunc {
 }
 
 // loadTemplate loads templates by packr 将html 打包到二进制包
-func loadTemplate(t *template.Template) (*template.Template, error) {
+func  (s *webServer) LoadTemplate(t *template.Template) (*template.Template, error) {
 	box := packr.New("tmp", "../template/html")
 	for _, file := range box.List() {
 		if !strings.HasSuffix(file, ".html") {
@@ -357,8 +354,6 @@ func loadTemplate(t *template.Template) (*template.Template, error) {
 			return nil, err
 		}
 		//拼接方式，组装模板  admin/index.html 这种，方便调用
-		println(file)
-		println(strings.Replace(file, "html/", "", 1))
 		t, err = t.New(strings.Replace(file, "html/", "", 1)).Parse(h)
 		if err != nil {
 			return nil, err
