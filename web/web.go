@@ -26,7 +26,6 @@ import (
 	"runtime"
 	"strings"
 	"time"
-	"github.com/fvbock/endless"
 )
 
 type webServer struct {
@@ -101,7 +100,8 @@ func (s *webServer) Run(addr string, cli *client.QQClient)  *coolq.CQBot{
 			os.Exit(1)
 		}
 	}()
-	go s.Dologin()
+	s.Dologin()
+	s.UpServer()
 	b:=s.bot //外部引入 bot对象，用于操作bot
 	return b
 }
@@ -402,9 +402,10 @@ func (s *webServer) DoRelogin()  {
 		server.HttpServer.ShutDown()
 	}
 	if OldConf.WSConfig != nil && OldConf.WSConfig.Enabled {
-		err:endless.ListenAndServe(":"+string(OldConf.WSConfig.Port), server.WebsocketServer)
+		//server.WebsocketServer.ShutDown()
 	}
-	s.UpServer()
+	//s.UpServer()
+	s.ReloadServer()
 }
 
 func (s *webServer) UpServer()  {
@@ -417,6 +418,20 @@ func (s *webServer) UpServer()  {
 	}
 	if conf.WSConfig != nil && conf.WSConfig.Enabled {
 		go server.WebsocketServer.Run(fmt.Sprintf("%s:%d", conf.WSConfig.Host, conf.WSConfig.Port), conf.AccessToken, s.bot)
+	}
+	for _, rc := range conf.ReverseServers {
+		go server.NewWebsocketClient(rc, conf.AccessToken, s.bot).Run()
+	}
+}
+
+// 暂不支持ws服务的重启
+func (s *webServer) ReloadServer()  {
+	conf:=GetConf()
+	if conf.HttpConfig != nil && conf.HttpConfig.Enabled {
+		go server.HttpServer.Run(fmt.Sprintf("%s:%d", conf.HttpConfig.Host, conf.HttpConfig.Port), conf.AccessToken, s.bot)
+		for k, v := range conf.HttpConfig.PostUrls {
+			server.NewHttpClient().Run(k, v, conf.HttpConfig.Timeout, s.bot)
+		}
 	}
 	for _, rc := range conf.ReverseServers {
 		go server.NewWebsocketClient(rc, conf.AccessToken, s.bot).Run()
