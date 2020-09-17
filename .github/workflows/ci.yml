@@ -41,7 +41,7 @@ jobs:
         export BINARY_NAME="$BINARY_PREFIX$GOOS_$GOARCH$BINARY_SUFFIX"
         export CGO_ENABLED=0
         go get -u github.com/gobuffalo/packr/v2/packr2
-        packr2 build -o "output/$BINARY_NAME" -ldflags "$LD_FLAGS" .
+        packr2 build -o "output/$BINARY_NAME"
     
     - name: Upload artifact
       uses: actions/upload-artifact@v2
