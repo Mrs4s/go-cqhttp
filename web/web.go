@@ -131,6 +131,7 @@ func (s *webServer) Dologin() {
 					}
 				}
 				rsp, err = cli.SubmitCaptcha(strings.ReplaceAll(text, "\n", ""), rsp.CaptchaSign)
+				global.DelFile("captcha.jpg")
 				continue
 			case client.UnsafeDeviceError:
 				log.Warnf("账号已开启设备锁，请前往 -> %v <- 验证并重启Bot.", rsp.VerifyUrl)
