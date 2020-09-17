@@ -2,8 +2,10 @@ package web
 
 // 此Controller用于 需要鉴权 才能访问的cgi
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
@@ -37,8 +39,10 @@ var HttpuriAdmin = map[string]func(s *webServer, c *gin.Context){
 	"do_del_friend":       AdminDoDelFriend,
 	"send_private_msg":    AdminSendPrivateMsg,
 	"do_send_private_msg": AdminDoPrivateMsgSend,
-	"restart":AdminRestart,
-	"do_restart":AdminDoRestart,
+	"restart":             AdminRestart,
+	"do_restart":          AdminDoRestart,
+	"web_write":           AdminWebWrite,
+	"do_web_write":        AdminDoWebWrite,
 }
 
 // 首页
@@ -437,7 +441,6 @@ func AdminRestart(s *webServer, c *gin.Context) {
 
 // 热重启
 func AdminDoRestart(s *webServer, c *gin.Context) {
-	//c.HTML(http.StatusOK, "admin/index.html", gin.H{})
 	s.DoRelogin()
 	c.HTML(http.StatusOK, "admin/jump.html", gin.H{
 		"url":     "/admin/log",
@@ -447,6 +450,31 @@ func AdminDoRestart(s *webServer, c *gin.Context) {
 	})
 	c.Abort()
 	return
+}
+
+// web输入 html 页面
+func AdminWebWrite(s *webServer, c *gin.Context) {
+	pic := global.ReadAllText("captcha.jpg")
+	var picbase64 string
+	if pic != "" {
+		input := []byte(pic)
+		// base64编码
+		picbase64 = base64.StdEncoding.EncodeToString(input)
+	}
+	c.HTML(http.StatusOK, "admin/web_write.html", gin.H{
+		"pic":       pic,
+		"picbase64": picbase64,
+	})
+}
+
+// web输入 处理
+func AdminDoWebWrite(s *webServer, c *gin.Context) {
+	input := c.PostForm("input")
+	global.WriteAllText("input.txt", input)
+	c.JSON(200, gin.H{
+		"code": 0,
+		"msg":  "ok",
+	})
 }
 
 func getLogPath() string {

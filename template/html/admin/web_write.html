@@ -1,0 +1,97 @@
+{{ define "admin/web_write.html" }}
+{{ template "admin/main.html"}}
+
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    {{/*<section class="content-header">*/}}
+    {{/*<h1>*/}}
+    {{/*用户中心*/}}
+    {{/*<small>User Center</small>*/}}
+    {{/*</h1>*/}}
+    {{/*</section>*/}}
+
+    <!-- Main content -->
+    <section class="content">
+        <!-- START PROGRESS BARS -->
+        <div class="row">
+            <div class="col-md-12">
+                <div style="margin: 0 auto; max-width: 1000px;">
+                    <div class="alert" style="display: none"></div>
+                    <ol class="breadcrumb">
+                        <li><a href="/admin/index">管理</a></li>
+                        <li class="active">web输入</li>
+                    </ol>
+
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">web输入 </h3>
+                        </div>
+                        <div class="panel-body">
+                            <div class="form-group">
+                                {{if .pic}}
+                                    <h3 align="center">验证码</h3>
+                                    <img align="center" src="data:image/jpeg;base64,{{.picbase64}}" />
+                                {{else}}
+                                    <h3 align="center">设备锁</h3>
+                                {{end}}
+                            </div>
+                            <div class="form-group">
+                                <textarea class="form-control"  id="input" name="input"></textarea>
+                            </div>
+                            <button type="button" class="btn btn-default" id="update_profile"
+                                    onclick="doWrite();">
+                                <span class="glyphicon glyphicon-floppy-disk"></span>
+                                确认
+                            </button>
+                            <a href="/admin/config_json" class="btn btn-default">
+                                <span class="glyphicon glyphicon-arrow-left"></span>
+                                返回
+                            </a>
+                            <button type="button" class="btn btn-default"
+                                    onclick="reload();">
+                                <span class="glyphicon glyphicon-floppy-disk"></span>
+                                刷新
+                            </button>
+                        </div>
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+
+        <!-- /.row --><!-- END PROGRESS BARS -->
+    </section>
+    <!-- /.content -->
+</div><!-- /.content-wrapper -->
+
+<script>
+    function doWrite() {
+        $.ajax({
+            type: "POST",
+            url: "/admin/do_web_write",
+            data: {
+                "input": $("#input").val(),
+            },
+            dataType: "json",
+            success: function (data) {
+                console.log(data);
+                $(".alert").html(data.msg).addClass("alert-warning").show().delay(5400).fadeOut();
+                setTimeout(reload,3000)
+            },
+            error: function (jqXHR) {
+                console.log(jqXHR);
+                $(".alert").html("httpcode:" + jqXHR.status).addClass("alert-error").show().delay(5400).fadeOut();
+                setTimeout(reload,3000)
+            }
+        })
+    }
+    function reload() {
+        window.location.reload()
+    }
+</script>
+
+
+{{ template "admin/footer.html"}}
+{{end}}

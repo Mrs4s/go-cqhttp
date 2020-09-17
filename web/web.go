@@ -29,18 +29,18 @@ import (
 )
 
 type webServer struct {
-	engine *gin.Engine
-	bot    *coolq.CQBot
-	Cli *client.QQClient
-	Conf *global.JsonConfig
+	engine  *gin.Engine
+	bot     *coolq.CQBot
+	Cli     *client.QQClient
+	Conf    *global.JsonConfig
+	Console *bufio.Reader
 }
 
 var WebServer = &webServer{}
 
-
-func (s *webServer) Run(addr string, cli *client.QQClient)  *coolq.CQBot{
-	s.Cli=cli
-	s.Conf=GetConf()
+func (s *webServer) Run(addr string, cli *client.QQClient) *coolq.CQBot {
+	s.Cli = cli
+	s.Conf = GetConf()
 	gin.SetMode(gin.ReleaseMode)
 	s.engine = gin.New()
 	// 自动加载模板
@@ -56,7 +56,7 @@ func (s *webServer) Run(addr string, cli *client.QQClient)  *coolq.CQBot{
 		"formatFileSize": FormatFileSize,
 	})
 	//从二进制中加载模板（后缀必须.html)
-	t,_=s.LoadTemplate(t)
+	t, _ = s.LoadTemplate(t)
 	s.engine.SetHTMLTemplate(t)
 	//静态资源
 	assets := packr.New("assets", "../template/assets")
@@ -102,14 +102,14 @@ func (s *webServer) Run(addr string, cli *client.QQClient)  *coolq.CQBot{
 	}()
 	s.Dologin()
 	s.UpServer()
-	b:=s.bot //外部引入 bot对象，用于操作bot
+	b := s.bot //外部引入 bot对象，用于操作bot
 	return b
 }
 
-func (s *webServer) Dologin()  {
-	console := bufio.NewReader(os.Stdin)
-	conf:=GetConf()
-	cli:=s.Cli
+func (s *webServer) Dologin() {
+	s.Console = bufio.NewReader(os.Stdin)
+	conf := GetConf()
+	cli := s.Cli
 	rsp, err := cli.Login()
 	for {
 		global.Check(err)
@@ -119,15 +119,33 @@ func (s *webServer) Dologin()  {
 				_ = ioutil.WriteFile("captcha.jpg", rsp.CaptchaImage, 0644)
 				img, _, _ := image.Decode(bytes.NewReader(rsp.CaptchaImage))
 				fmt.Println(asciiart.New("image", img).Art)
-				log.Warn("请输入验证码 (captcha.jpg)： (Enter 提交)")
-				text, _ := console.ReadString('\n')
+				log.Warn("请输入验证码 (captcha.jpg)： (http://127.0.0.1/admin/web_write 输入)")
+				//text, _ := s.Console.ReadString('\n')
+				var text string
+				for {
+					file := "input.txt"
+					text = global.ReadAllText(file)
+					if text != "" {
+						global.DelFile(file)
+						break
+					}
+				}
 				rsp, err = cli.SubmitCaptcha(strings.ReplaceAll(text, "\n", ""), rsp.CaptchaSign)
 				continue
 			case client.UnsafeDeviceError:
 				log.Warnf("账号已开启设备锁，请前往 -> %v <- 验证并重启Bot.", rsp.VerifyUrl)
-				log.Infof(" 按 Enter 继续....")
-				_, _ = console.ReadString('\n')
-				return
+				log.Infof(" (http://127.0.0.1/admin/web_write 确认后继续)....")
+				//_, _ = s.Console.ReadString('\n')
+				var text string
+				for {
+					file := "input.txt"
+					text = global.ReadAllText(file)
+					if text != "" {
+						global.DelFile(file)
+						break
+					}
+				}
+				continue
 			case client.OtherLoginError, client.UnknownLoginError:
 				log.Fatalf("登录失败: %v", rsp.ErrorMessage)
 				return
@@ -143,7 +161,7 @@ func (s *webServer) Dologin()  {
 	log.Infof("开始加载群列表...")
 	global.Check(cli.ReloadGroupList())
 	log.Infof("共加载 %v 个群.", len(cli.GroupList))
-	s.bot= coolq.NewQQBot(cli, conf)
+	s.bot = coolq.NewQQBot(cli, conf)
 	if conf.PostMessageFormat != "string" && conf.PostMessageFormat != "array" {
 		log.Warnf("post_message_format 配置错误, 将自动使用 string")
 		coolq.SetMessageFormat("string")
@@ -340,7 +358,7 @@ func AuthMiddleWare() gin.HandlerFunc {
 }
 
 // loadTemplate loads templates by packr 将html 打包到二进制包
-func  (s *webServer) LoadTemplate(t *template.Template) (*template.Template, error) {
+func (s *webServer) LoadTemplate(t *template.Template) (*template.Template, error) {
 	box := packr.New("tmp", "../template/html")
 	for _, file := range box.List() {
 		if !strings.HasSuffix(file, ".html") {
@@ -359,9 +377,9 @@ func  (s *webServer) LoadTemplate(t *template.Template) (*template.Template, err
 	return t, nil
 }
 
-func (s *webServer) DoRelogin()  {
-	conf:=GetConf()
-	OldConf:=s.Conf
+func (s *webServer) DoRelogin() {
+	conf := GetConf()
+	OldConf := s.Conf
 	cli := client.NewClient(conf.Uin, conf.Password)
 	cli.OnLog(func(c *client.QQClient, e *client.LogEvent) {
 		switch e.Type {
@@ -395,7 +413,7 @@ func (s *webServer) DoRelogin()  {
 			}
 		}
 	}
-	s.Cli=cli
+	s.Cli = cli
 	s.Dologin()
 	//关闭之前的 server
 	if OldConf.HttpConfig != nil && OldConf.HttpConfig.Enabled {
@@ -408,8 +426,8 @@ func (s *webServer) DoRelogin()  {
 	s.ReloadServer()
 }
 
-func (s *webServer) UpServer()  {
-	conf:=GetConf()
+func (s *webServer) UpServer() {
+	conf := GetConf()
 	if conf.HttpConfig != nil && conf.HttpConfig.Enabled {
 		go server.HttpServer.Run(fmt.Sprintf("%s:%d", conf.HttpConfig.Host, conf.HttpConfig.Port), conf.AccessToken, s.bot)
 		for k, v := range conf.HttpConfig.PostUrls {
@@ -425,8 +443,8 @@ func (s *webServer) UpServer()  {
 }
 
 // 暂不支持ws服务的重启
-func (s *webServer) ReloadServer()  {
-	conf:=GetConf()
+func (s *webServer) ReloadServer() {
+	conf := GetConf()
 	if conf.HttpConfig != nil && conf.HttpConfig.Enabled {
 		go server.HttpServer.Run(fmt.Sprintf("%s:%d", conf.HttpConfig.Host, conf.HttpConfig.Port), conf.AccessToken, s.bot)
 		for k, v := range conf.HttpConfig.PostUrls {
