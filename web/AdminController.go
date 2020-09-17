@@ -38,6 +38,7 @@ var HttpuriAdmin = map[string]func(s *webServer, c *gin.Context){
 	"send_private_msg":    AdminSendPrivateMsg,
 	"do_send_private_msg": AdminDoPrivateMsgSend,
 	"restart":AdminRestart,
+	"do_restart":AdminDoRestart,
 }
 
 // 首页
@@ -429,10 +430,23 @@ func AdminDoPrivateMsgSend(s *webServer, c *gin.Context) {
 	})
 }
 
-// 热重启
+// 热重启 html
 func AdminRestart(s *webServer, c *gin.Context) {
+	c.HTML(http.StatusOK, "admin/restart.html", gin.H{})
+}
+
+// 热重启
+func AdminDoRestart(s *webServer, c *gin.Context) {
 	//c.HTML(http.StatusOK, "admin/index.html", gin.H{})
 	s.DoRelogin()
+	c.HTML(http.StatusOK, "admin/jump.html", gin.H{
+		"url":     "/admin/log",
+		"timeout": 3,
+		"code":    1, //1为success,0为error
+		"msg":     "重启完成",
+	})
+	c.Abort()
+	return
 }
 
 func getLogPath() string {

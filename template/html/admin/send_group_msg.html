@@ -43,8 +43,12 @@
                     </div>
                     <div class="alert2" style="display: none">
                         <div class="form-group">
-                            <textarea class="form-control" rows="20" id="msg_result" name="msg_result"></textarea>
+                            <textarea class="form-control"  id="msg_result" name="msg_result"></textarea>
                         </div>
+                        <button type="button" class="btn btn-default" onclick="closeAlert()">
+                            <span class="glyphicon glyphicon-floppy-disk"></span>
+                            关闭
+                        </button>
                     </div>
                 </div>
             </div>
@@ -69,10 +73,10 @@
                 console.log(data);
                 if(data.code!==0)
                 {
-                    $(".alert").html(data.msg).addClass("alert-warning").show().delay(5400).fadeOut();
+                    $(".alert").html(data.msg).show();
                 }else{
                     $("#msg_result").html(JSON.stringify(data.msg));
-                    $(".alert2").addClass("alert-warning").show().delay(5400).fadeOut();
+                    $(".alert2").show();
                 }
             },
             error: function (jqXHR) {
@@ -80,6 +84,9 @@
                 $(".alert").html("httpcode:"+jqXHR.status).addClass("alert-error").show().delay(5400).fadeOut();
             }
         })
+    }
+    function closeAlert() {
+        $(".alert2").delay(100).fadeOut();
     }
 </script>
 
