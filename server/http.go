@@ -493,3 +493,7 @@ var httpApi = map[string]func(s *httpServer, c *gin.Context){
 		s.HandleQuickOperation(c)
 	},
 }
+
+func (s *httpServer) ShutDown() {
+	os.Exit(1)
+}

@@ -10,6 +10,7 @@ import (
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
+	"github.com/Mrs4s/go-cqhttp/server"
 	"github.com/gin-gonic/gin"
 	"github.com/gobuffalo/packr/v2"
 	"github.com/google/uuid"
@@ -25,18 +26,22 @@ import (
 	"runtime"
 	"strings"
 	"time"
+	"github.com/fvbock/endless"
 )
 
 type webServer struct {
 	engine *gin.Engine
 	bot    *coolq.CQBot
 	Cli *client.QQClient
+	Conf *global.JsonConfig
 }
 
 var WebServer = &webServer{}
 
+
 func (s *webServer) Run(addr string, cli *client.QQClient)  *coolq.CQBot{
 	s.Cli=cli
+	s.Conf=GetConf()
 	gin.SetMode(gin.ReleaseMode)
 	s.engine = gin.New()
 	// 自动加载模板
@@ -96,7 +101,7 @@ func (s *webServer) Run(addr string, cli *client.QQClient)  *coolq.CQBot{
 			os.Exit(1)
 		}
 	}()
-	s.Dologin()
+	go s.Dologin()
 	b:=s.bot //外部引入 bot对象，用于操作bot
 	return b
 }
@@ -153,18 +158,6 @@ func (s *webServer) Dologin()  {
 	global.BootFilter()
 	coolq.IgnoreInvalidCQCode = conf.IgnoreInvalidCQCode
 	coolq.ForceFragmented = conf.ForceFragmented
-	//if conf.HttpConfig != nil && conf.HttpConfig.Enabled {
-	//	go server.HttpServer.Run(fmt.Sprintf("%s:%d", conf.HttpConfig.Host, conf.HttpConfig.Port), conf.AccessToken, s.bot)
-	//	for k, v := range conf.HttpConfig.PostUrls {
-	//		server.NewHttpClient().Run(k, v, conf.HttpConfig.Timeout, s.bot)
-	//	}
-	//}
-	//if conf.WSConfig != nil && conf.WSConfig.Enabled {
-	//	go server.WebsocketServer.Run(fmt.Sprintf("%s:%d", conf.WSConfig.Host, conf.WSConfig.Port), conf.AccessToken, s.bot)
-	//}
-	//for _, rc := range conf.ReverseServers {
-	//	go server.NewWebsocketClient(rc, conf.AccessToken, s.bot).Run()
-	//}
 	log.Info("资源初始化完成, 开始处理信息.")
 	log.Info("アトリは、高性能ですから!")
 	cli.OnDisconnected(func(bot *client.QQClient, e *client.ClientDisconnectedEvent) {
@@ -368,6 +361,7 @@ func  (s *webServer) LoadTemplate(t *template.Template) (*template.Template, err
 
 func (s *webServer) DoRelogin()  {
 	conf:=GetConf()
+	OldConf:=s.Conf
 	cli := client.NewClient(conf.Uin, conf.Password)
 	cli.OnLog(func(c *client.QQClient, e *client.LogEvent) {
 		switch e.Type {
@@ -403,4 +397,28 @@ func (s *webServer) DoRelogin()  {
 	}
 	s.Cli=cli
 	s.Dologin()
+	//关闭之前的 server
+	if OldConf.HttpConfig != nil && OldConf.HttpConfig.Enabled {
+		server.HttpServer.ShutDown()
+	}
+	if OldConf.WSConfig != nil && OldConf.WSConfig.Enabled {
+		err:endless.ListenAndServe(":"+string(OldConf.WSConfig.Port), server.WebsocketServer)
+	}
+	s.UpServer()
+}
+
+func (s *webServer) UpServer()  {
+	conf:=GetConf()
+	if conf.HttpConfig != nil && conf.HttpConfig.Enabled {
+		go server.HttpServer.Run(fmt.Sprintf("%s:%d", conf.HttpConfig.Host, conf.HttpConfig.Port), conf.AccessToken, s.bot)
+		for k, v := range conf.HttpConfig.PostUrls {
+			server.NewHttpClient().Run(k, v, conf.HttpConfig.Timeout, s.bot)
+		}
+	}
+	if conf.WSConfig != nil && conf.WSConfig.Enabled {
+		go server.WebsocketServer.Run(fmt.Sprintf("%s:%d", conf.WSConfig.Host, conf.WSConfig.Port), conf.AccessToken, s.bot)
+	}
+	for _, rc := range conf.ReverseServers {
+		go server.NewWebsocketClient(rc, conf.AccessToken, s.bot).Run()
+	}
 }
