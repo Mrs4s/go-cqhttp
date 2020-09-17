@@ -37,6 +37,7 @@ var HttpuriAdmin = map[string]func(s *webServer, c *gin.Context){
 	"do_del_friend":       AdminDoDelFriend,
 	"send_private_msg":    AdminSendPrivateMsg,
 	"do_send_private_msg": AdminDoPrivateMsgSend,
+	"restart":AdminRestart,
 }
 
 // 首页
@@ -426,6 +427,12 @@ func AdminDoPrivateMsgSend(s *webServer, c *gin.Context) {
 		"code": 0,
 		"msg":  rsp,
 	})
+}
+
+// 热重启
+func AdminRestart(s *webServer, c *gin.Context) {
+	//c.HTML(http.StatusOK, "admin/index.html", gin.H{})
+	s.DoRelogin()
 }
 
 func getLogPath() string {

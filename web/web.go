@@ -6,6 +6,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
+	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
@@ -29,11 +30,13 @@ import (
 type webServer struct {
 	engine *gin.Engine
 	bot    *coolq.CQBot
+	Cli *client.QQClient
 }
 
 var WebServer = &webServer{}
 
 func (s *webServer) Run(addr string, cli *client.QQClient)  *coolq.CQBot{
+	s.Cli=cli
 	gin.SetMode(gin.ReleaseMode)
 	s.engine = gin.New()
 	// 自动加载模板
@@ -93,14 +96,15 @@ func (s *webServer) Run(addr string, cli *client.QQClient)  *coolq.CQBot{
 			os.Exit(1)
 		}
 	}()
-	go s.Dologin(cli)
+	s.Dologin()
 	b:=s.bot //外部引入 bot对象，用于操作bot
 	return b
 }
 
-func (s *webServer) Dologin(cli *client.QQClient)  {
+func (s *webServer) Dologin()  {
 	console := bufio.NewReader(os.Stdin)
 	conf:=GetConf()
+	cli:=s.Cli
 	rsp, err := cli.Login()
 	for {
 		global.Check(err)
@@ -360,4 +364,43 @@ func  (s *webServer) LoadTemplate(t *template.Template) (*template.Template, err
 		}
 	}
 	return t, nil
+}
+
+func (s *webServer) DoRelogin()  {
+	conf:=GetConf()
+	cli := client.NewClient(conf.Uin, conf.Password)
+	cli.OnLog(func(c *client.QQClient, e *client.LogEvent) {
+		switch e.Type {
+		case "INFO":
+			log.Info("Protocol -> " + e.Message)
+		case "ERROR":
+			log.Error("Protocol -> " + e.Message)
+		case "DEBUG":
+			log.Debug("Protocol -> " + e.Message)
+		}
+	})
+	cli.OnServerUpdated(func(bot *client.QQClient, e *client.ServerUpdatedEvent) {
+		log.Infof("收到服务器地址更新通知, 将在下一次重连时应用. 服务器地址: %v:%v 服务器位置: %v", e.Servers[0].Server, e.Servers[0].Port, e.Servers[0].Location)
+		_ = ioutil.WriteFile("servers.bin", binary.NewWriterF(func(w *binary.Writer) {
+			w.WriteUInt16(uint16(len(e.Servers)))
+			for _, s := range e.Servers {
+				if !strings.Contains(s.Server, "com") {
+					w.WriteString(s.Server)
+					w.WriteUInt16(uint16(s.Port))
+				}
+			}
+		}), 0644)
+	})
+	if global.PathExists("servers.bin") {
+		if data, err := ioutil.ReadFile("servers.bin"); err == nil {
+			r := binary.NewReader(data)
+			r.ReadUInt16()
+			cli.CustomServer = &net.TCPAddr{
+				IP:   net.ParseIP(r.ReadString()),
+				Port: int(r.ReadUInt16()),
+			}
+		}
+	}
+	s.Cli=cli
+	s.Dologin()
 }
