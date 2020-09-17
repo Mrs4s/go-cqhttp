@@ -130,7 +130,7 @@ func DefaultConfig() *JsonConfig {
 			},
 		},
 		WebUi: &GoCqWebUi{
-			Enabled:   false,
+			Enabled:   true,
 			WebUiPort: 9999,
 			User:      "admin",
 			Password:  "admin",
