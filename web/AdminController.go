@@ -43,6 +43,8 @@ var HttpuriAdmin = map[string]func(s *webServer, c *gin.Context){
 	"do_restart":          AdminDoRestart,
 	"web_write":           AdminWebWrite,
 	"do_web_write":        AdminDoWebWrite,
+	"restart_docker":      AdminRestartDocker,
+	"do_restart_docker":   AdminDoRestartDocker,
 }
 
 // 首页
@@ -449,6 +451,21 @@ func AdminDoRestart(s *webServer, c *gin.Context) {
 	return
 }
 
+// 冷重启 html
+func AdminRestartDocker(s *webServer, c *gin.Context) {
+	c.HTML(http.StatusOK, "admin/restart_docker.html", gin.H{})
+}
+
+// 冷重启
+func AdminDoRestartDocker(s *webServer, c *gin.Context) {
+	Console <- os.Kill
+	c.JSON(200, gin.H{
+		"code": 0,
+		"msg":  "ok",
+	})
+	return
+}
+
 // web输入 html 页面
 func AdminWebWrite(s *webServer, c *gin.Context) {
 	pic := global.ReadAllText("captcha.jpg")
@@ -480,18 +497,6 @@ func getLogPath() string {
 	dir, _ := os.Getwd()
 	sep := string(os.PathSeparator)
 	LogsPath := dir + sep + "logs" + sep + string(date) + ".log"
-	//conf:=GetConf()
-	//logLevel := conf.LogLevel
-	//if logLevel != ""{
-	//	switch conf.LogLevel {
-	//	case "warn":
-	//		LogsPath= dir + sep + "logs" + sep + string(date) + "-"+logLevel+".log"
-	//	case "error":
-	//		LogsPath= dir + sep + "logs" + sep + string(date) + "-"+logLevel+".log"
-	//	default:
-	//		LogsPath= dir + sep + "logs" + sep + string(date) + "-warn"+".log"
-	//	}
-	//}
 	return LogsPath
 }
 

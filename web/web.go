@@ -30,6 +30,8 @@ import (
 
 var WebInput = make(chan string, 1) //长度1，用于阻塞
 
+var Console = make(chan os.Signal, 1)
+
 type webServer struct {
 	engine  *gin.Engine
 	bot     *coolq.CQBot
