@@ -237,7 +237,7 @@ func main() {
 		}
 	})
 	cli.OnServerUpdated(func(bot *client.QQClient, e *client.ServerUpdatedEvent) {
-		log.Infof("收到服务器地址更新通知, 将在下一次重连时应用. 服务器地址: %v:%v 服务器位置: %v", e.Servers[0].Server, e.Servers[0].Port, e.Servers[0].Location)
+		log.Infof("收到服务器地址更新通知, 将在下一次重连时应用. 地址信息已储存到 servers.bin 文件")
 		_ = ioutil.WriteFile("servers.bin", binary.NewWriterF(func(w *binary.Writer) {
 			w.WriteUInt16(uint16(len(e.Servers)))
 			for _, s := range e.Servers {
@@ -251,10 +251,12 @@ func main() {
 	if global.PathExists("servers.bin") {
 		if data, err := ioutil.ReadFile("servers.bin"); err == nil {
 			r := binary.NewReader(data)
-			r.ReadUInt16()
-			cli.CustomServer = &net.TCPAddr{
-				IP:   net.ParseIP(r.ReadString()),
-				Port: int(r.ReadUInt16()),
+			var addr []*net.TCPAddr
+			for i := 0; i < int(r.ReadUInt16()); i++ {
+				addr = append(addr, &net.TCPAddr{
+					IP:   net.ParseIP(r.ReadString()),
+					Port: int(r.ReadUInt16()),
+				})
 			}
 		}
 	}
