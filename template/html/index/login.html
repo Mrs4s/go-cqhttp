@@ -35,7 +35,7 @@
                 success: function (data) {
                     console.log(data);
                     if (data.code === 0) {
-                        $(".alert").html(data.msg).addClass("alert-warning").show().delay(5400).fadeOut();
+                        $(".alert").html(data.msg).addClass("alert-success").show().delay(5400).fadeOut();
                         window.location.href = "/admin/index"
                     } else {
                         $(".alert").html(data.msg).addClass("alert-error").show().delay(5400).fadeOut();

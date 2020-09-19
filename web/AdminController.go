@@ -442,13 +442,10 @@ func AdminRestart(s *webServer, c *gin.Context) {
 // 热重启
 func AdminDoRestart(s *webServer, c *gin.Context) {
 	s.DoRelogin()
-	c.HTML(http.StatusOK, "admin/jump.html", gin.H{
-		"url":     "/admin/log",
-		"timeout": 3,
-		"code":    1, //1为success,0为error
-		"msg":     "重启完成",
+	c.JSON(200, gin.H{
+		"code": 0,
+		"msg":  "ok",
 	})
-	c.Abort()
 	return
 }
 
@@ -470,7 +467,8 @@ func AdminWebWrite(s *webServer, c *gin.Context) {
 // web输入 处理
 func AdminDoWebWrite(s *webServer, c *gin.Context) {
 	input := c.PostForm("input")
-	global.WriteAllText("input.txt", input)
+	WebInput <- input
+	//global.WriteAllText("input.txt", input)
 	c.JSON(200, gin.H{
 		"code": 0,
 		"msg":  "ok",

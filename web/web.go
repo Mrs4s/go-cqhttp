@@ -28,6 +28,8 @@ import (
 	"time"
 )
 
+var WebInput = make(chan string, 1) //长度1，用于阻塞
+
 type webServer struct {
 	engine  *gin.Engine
 	bot     *coolq.CQBot
@@ -121,15 +123,16 @@ func (s *webServer) Dologin() {
 				fmt.Println(asciiart.New("image", img).Art)
 				log.Warn("请输入验证码 (captcha.jpg)： (http://127.0.0.1/admin/web_write 输入)")
 				//text, _ := s.Console.ReadString('\n')
-				var text string
-				for {
-					file := "input.txt"
-					text = global.ReadAllText(file)
-					if text != "" {
-						global.DelFile(file)
-						break
-					}
-				}
+				//var text string
+				//for {
+				//	file := "input.txt"
+				//	text = global.ReadAllText(file)
+				//	if text != "" {
+				//		global.DelFile(file)
+				//		break
+				//	}
+				//}
+				text := <-WebInput
 				rsp, err = cli.SubmitCaptcha(strings.ReplaceAll(text, "\n", ""), rsp.CaptchaSign)
 				global.DelFile("captcha.jpg")
 				continue
@@ -137,15 +140,17 @@ func (s *webServer) Dologin() {
 				log.Warnf("账号已开启设备锁，请前往 -> %v <- 验证并重启Bot.", rsp.VerifyUrl)
 				log.Infof(" (http://127.0.0.1/admin/web_write 确认后继续)....")
 				//_, _ = s.Console.ReadString('\n')
-				var text string
-				for {
-					file := "input.txt"
-					text = global.ReadAllText(file)
-					if text != "" {
-						global.DelFile(file)
-						break
-					}
-				}
+				//var text string
+				//for {
+				//	file := "input.txt"
+				//	text = global.ReadAllText(file)
+				//	if text != "" {
+				//		global.DelFile(file)
+				//		break
+				//	}
+				//}
+				text := <-WebInput
+				log.Info(text)
 				continue
 			case client.OtherLoginError, client.UnknownLoginError:
 				log.Fatalf("登录失败: %v", rsp.ErrorMessage)
@@ -420,9 +425,9 @@ func (s *webServer) DoRelogin() {
 	if OldConf.HttpConfig != nil && OldConf.HttpConfig.Enabled {
 		server.HttpServer.ShutDown()
 	}
-	if OldConf.WSConfig != nil && OldConf.WSConfig.Enabled {
-		//server.WebsocketServer.ShutDown()
-	}
+	//if OldConf.WSConfig != nil && OldConf.WSConfig.Enabled {
+	//	server.WsShutdown()
+	//}
 	//s.UpServer()
 	s.ReloadServer()
 }

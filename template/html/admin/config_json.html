@@ -64,7 +64,7 @@
             dataType: "json",
             success: function (data) {
                 console.log(data);
-                $(".alert").html(data.msg).addClass("alert-warning").show().delay(5400).fadeOut();
+                $(".alert").html(data.msg).addClass("alert-success").show().delay(5400).fadeOut();
             },
             error: function (jqXHR) {
                 console.log(jqXHR);

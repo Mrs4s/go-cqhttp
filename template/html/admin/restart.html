@@ -17,7 +17,7 @@
         <div class="row">
             <div class="col-md-12">
                 <div style="margin: 0 auto; max-width: 1000px;">
-                    <div class="alert"></div>
+                    <div class="alert" style="display: none"></div>
                     <ol class="breadcrumb">
                         <li><a href="/admin/index">管理</a></li>
                         <li class="active">服务重启</li>
@@ -32,7 +32,7 @@
                             <div class="form-group">
                                 <p class="form-control" id="json">目前暂时不支持ws服务重启</p>
                             </div>
-                            <button type="button" class="btn btn-default" id="update_profile"
+                            <button type="button" class="btn btn-default" id="restart"
                                     onclick="dorestart();">
                                 <span class="glyphicon glyphicon-floppy-disk"></span>
                                 重启
@@ -56,7 +56,31 @@
 </div><!-- /.content-wrapper -->
 <script>
     function dorestart() {
-        $("#fmt").submit();
+        $.ajax({
+            type: "GET",
+            url: "/admin/do_restart",
+            dataType: "json",
+            beforeSend: function(){
+                $("#restart").attr({ disabled: "disabled" });
+                $(".alert").addClass("alert-warning").html("正在处理，请稍等！").show();
+            },
+            success: function (data) {
+                console.log(data);
+                $(".alert").html(data.msg).addClass("alert-success").show().delay(5400).fadeOut();
+                setTimeout(reload,3000)
+            },
+            complete: function () {
+                $("#restart").removeAttr("disabled");
+            },
+            error: function (jqXHR) {
+                console.log(jqXHR);
+                $(".alert").html("httpcode:" + jqXHR.status).addClass("alert-error").show().delay(5400).fadeOut();
+                // setTimeout(reload,3000)
+            },
+        })
+    }
+    function reload() {
+        window.location.href="/admin/log"
     }
 </script>
 

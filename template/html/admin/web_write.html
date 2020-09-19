@@ -77,7 +77,7 @@
             dataType: "json",
             success: function (data) {
                 console.log(data);
-                $(".alert").html(data.msg).addClass("alert-warning").show().delay(5400).fadeOut();
+                $(".alert").html(data.msg).addClass("alert-success").show().delay(5400).fadeOut();
                 setTimeout(reload,3000)
             },
             error: function (jqXHR) {
