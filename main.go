@@ -252,11 +252,15 @@ func main() {
 		if data, err := ioutil.ReadFile("servers.bin"); err == nil {
 			r := binary.NewReader(data)
 			var addr []*net.TCPAddr
-			for i := 0; i < int(r.ReadUInt16()); i++ {
+			l := r.ReadUInt16()
+			for i := 0; i < int(l); i++ {
 				addr = append(addr, &net.TCPAddr{
 					IP:   net.ParseIP(r.ReadString()),
 					Port: int(r.ReadUInt16()),
 				})
+			}
+			if len(addr) > 0 {
+				cli.SetCustomServer(addr)
 			}
 		}
 	}
