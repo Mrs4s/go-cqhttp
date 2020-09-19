@@ -486,6 +486,9 @@ var wsApi = map[string]func(*coolq.CQBot, gjson.Result) coolq.MSG{
 	"can_send_record": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		return bot.CQCanSendRecord()
 	},
+	"get_stranger_info": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
+		return bot.CQGetStrangerInfo(p.Get("user_id").Int())
+	},
 	"get_status": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		return bot.CQGetStatus()
 	},

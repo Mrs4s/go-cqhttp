@@ -333,6 +333,11 @@ func (s *httpServer) GetVipInfo(c *gin.Context) {
 	c.JSON(200, s.bot.CQGetVipInfo(uid))
 }
 
+func (s *httpServer) GetStrangerInfo(c *gin.Context) {
+	uid, _ := strconv.ParseInt(getParam(c, "user_id"), 10, 64)
+	c.JSON(200, s.bot.CQGetStrangerInfo(uid))
+}
+
 func (s *httpServer) HandleQuickOperation(c *gin.Context) {
 	if c.Request.Method != "POST" {
 		c.AbortWithStatus(404)
@@ -485,6 +490,9 @@ var httpApi = map[string]func(s *httpServer, c *gin.Context){
 	},
 	"_get_vip_info": func(s *httpServer, c *gin.Context) {
 		s.GetVipInfo(c)
+	},
+	"get_stranger_info": func(s *httpServer, c *gin.Context) {
+		s.GetStrangerInfo(c)
 	},
 	"reload_event_filter": func(s *httpServer, c *gin.Context) {
 		s.ReloadEventFilter(c)
