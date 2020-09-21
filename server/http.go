@@ -349,6 +349,11 @@ func (s *httpServer) HandleQuickOperation(c *gin.Context) {
 	}
 }
 
+func (s *httpServer) OcrImage(c *gin.Context) {
+	img := getParam(c, "image")
+	c.JSON(200, s.bot.CQOcrImage(img))
+}
+
 func getParamOrDefault(c *gin.Context, k, def string) string {
 	r := getParam(c, k)
 	if r != "" {
@@ -499,5 +504,8 @@ var httpApi = map[string]func(s *httpServer, c *gin.Context){
 	},
 	".handle_quick_operation": func(s *httpServer, c *gin.Context) {
 		s.HandleQuickOperation(c)
+	},
+	".ocr_image": func(s *httpServer, c *gin.Context) {
+		s.OcrImage(c)
 	},
 }

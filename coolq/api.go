@@ -648,6 +648,20 @@ func (bot *CQBot) CQCanSendRecord() MSG {
 	return OK(MSG{"yes": true})
 }
 
+func (bot *CQBot) CQOcrImage(imageId string) MSG {
+	img, err := bot.makeImageElem("image", map[string]string{"file": imageId}, true)
+	if err != nil {
+		log.Warnf("load image error: %v", err)
+		return Failed(100)
+	}
+	rsp, err := bot.Client.ImageOcr(img)
+	if err != nil {
+		log.Warnf("ocr image error: %v", err)
+		return Failed(100)
+	}
+	return OK(rsp)
+}
+
 func (bot *CQBot) CQReloadEventFilter() MSG {
 	global.BootFilter()
 	return OK(nil)
