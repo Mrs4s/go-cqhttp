@@ -164,9 +164,9 @@ Type: `xml`
 
 示例: `[CQ:xml,data=xxxx]`
 
-####一些xml样例
+#### 一些xml样例
 
-####ps:重要：xml中的value部分，记得html实体化处理后，再打加入到cq码中
+#### ps:重要：xml中的value部分，记得html实体化处理后，再打加入到cq码中
 
 #### qq音乐
 
