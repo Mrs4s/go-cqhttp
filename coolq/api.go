@@ -125,6 +125,7 @@ func (bot *CQBot) CQSendGroupMessage(groupId int64, i interface{}, autoEscape bo
 			if mid == -1 {
 				return Failed(100)
 			}
+			log.Infof("发送群 %v(%v)  的消息: %v (%v)", groupId, groupId, m.String(), mid)
 			return OK(MSG{"message_id": mid})
 		}
 		str = func() string {
@@ -248,6 +249,7 @@ func (bot *CQBot) CQSendPrivateMessage(userId int64, i interface{}, autoEscape b
 			if mid == -1 {
 				return Failed(100)
 			}
+			log.Infof("发送好友 %v(%v)  的消息: %v (%v)", userId, userId, m.String(), mid)
 			return OK(MSG{"message_id": mid})
 		}
 		str = func() string {
