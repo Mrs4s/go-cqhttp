@@ -38,6 +38,10 @@
                                 <span class="glyphicon glyphicon-arrow-left"></span>
                                 返回
                             </a>
+                            <button type="button" class="btn btn-default" id="refresh" onclick="stoprefreshLog();">
+                                <span class="glyphicon glyphicon-floppy-disk"></span>
+                                停止刷新
+                            </button>
                         </div>
                     </div>
 
@@ -71,6 +75,9 @@
         var height = $("#logs")[0].scrollHeight;
         $("#logs").scrollTop(height);
     })
+    function stoprefreshLog() {
+        clearInterval(id);
+    }
 </script>
 
 
