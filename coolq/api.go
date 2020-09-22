@@ -497,6 +497,27 @@ func (bot *CQBot) CQGetGroupHonorInfo(groupId int64, t string) MSG {
 	return OK(msg)
 }
 
+// https://github.com/howmanybots/onebot/blob/master/v11/specs/api/public.md#get_stranger_info-%E8%8E%B7%E5%8F%96%E9%99%8C%E7%94%9F%E4%BA%BA%E4%BF%A1%E6%81%AF
+func (bot *CQBot) CQGetStrangerInfo(userId int64) MSG {
+	info, err := bot.Client.GetSummaryInfo(userId)
+	if err != nil {
+		return Failed(100)
+	}
+	return OK(MSG{
+		"user_id":  info.Uin,
+		"nickname": info.Nickname,
+		"sex": func() string {
+			if info.Sex == 1 {
+				return "female"
+			}
+			return "male"
+		}(),
+		"age":        info.Age,
+		"level":      info.Level,
+		"login_days": info.LoginDays,
+	})
+}
+
 // https://cqhttp.cc/docs/4.15/#/API?id=-handle_quick_operation-%E5%AF%B9%E4%BA%8B%E4%BB%B6%E6%89%A7%E8%A1%8C%E5%BF%AB%E9%80%9F%E6%93%8D%E4%BD%9C
 // https://github.com/richardchien/coolq-http-api/blob/master/src/cqhttp/plugins/web/http.cpp#L376
 func (bot *CQBot) CQHandleQuickOperation(context, operation gjson.Result) MSG {
@@ -627,6 +648,20 @@ func (bot *CQBot) CQCanSendRecord() MSG {
 	return OK(MSG{"yes": true})
 }
 
+func (bot *CQBot) CQOcrImage(imageId string) MSG {
+	img, err := bot.makeImageElem("image", map[string]string{"file": imageId}, true)
+	if err != nil {
+		log.Warnf("load image error: %v", err)
+		return Failed(100)
+	}
+	rsp, err := bot.Client.ImageOcr(img)
+	if err != nil {
+		log.Warnf("ocr image error: %v", err)
+		return Failed(100)
+	}
+	return OK(rsp)
+}
+
 func (bot *CQBot) CQReloadEventFilter() MSG {
 	global.BootFilter()
 	return OK(nil)
@@ -655,6 +690,18 @@ func (bot *CQBot) CQGetVersionInfo() MSG {
 		"runtime_version":            runtime.Version(),
 		"runtime_os":                 runtime.GOOS,
 		"version":                    Version,
+		"protocol": func() int {
+			switch client.SystemDeviceInfo.Protocol {
+			case client.AndroidPad:
+				return 0
+			case client.AndroidPhone:
+				return 1
+			case client.AndroidWatch:
+				return 2
+			default:
+				return -1
+			}
+		}(),
 	})
 }
 

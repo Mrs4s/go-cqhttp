@@ -333,6 +333,11 @@ func (s *httpServer) GetVipInfo(c *gin.Context) {
 	c.JSON(200, s.bot.CQGetVipInfo(uid))
 }
 
+func (s *httpServer) GetStrangerInfo(c *gin.Context) {
+	uid, _ := strconv.ParseInt(getParam(c, "user_id"), 10, 64)
+	c.JSON(200, s.bot.CQGetStrangerInfo(uid))
+}
+
 func (s *httpServer) HandleQuickOperation(c *gin.Context) {
 	if c.Request.Method != "POST" {
 		c.AbortWithStatus(404)
@@ -342,6 +347,11 @@ func (s *httpServer) HandleQuickOperation(c *gin.Context) {
 		body := i.(gjson.Result)
 		c.JSON(200, s.bot.CQHandleQuickOperation(body.Get("context"), body.Get("operation")))
 	}
+}
+
+func (s *httpServer) OcrImage(c *gin.Context) {
+	img := getParam(c, "image")
+	c.JSON(200, s.bot.CQOcrImage(img))
 }
 
 func getParamOrDefault(c *gin.Context, k, def string) string {
@@ -486,10 +496,16 @@ var httpApi = map[string]func(s *httpServer, c *gin.Context){
 	"_get_vip_info": func(s *httpServer, c *gin.Context) {
 		s.GetVipInfo(c)
 	},
+	"get_stranger_info": func(s *httpServer, c *gin.Context) {
+		s.GetStrangerInfo(c)
+	},
 	"reload_event_filter": func(s *httpServer, c *gin.Context) {
 		s.ReloadEventFilter(c)
 	},
 	".handle_quick_operation": func(s *httpServer, c *gin.Context) {
 		s.HandleQuickOperation(c)
+	},
+	".ocr_image": func(s *httpServer, c *gin.Context) {
+		s.OcrImage(c)
 	},
 }

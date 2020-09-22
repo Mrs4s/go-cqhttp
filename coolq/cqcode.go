@@ -26,6 +26,14 @@ var paramReg = regexp.MustCompile(`,([\w\-.]+?)=([^,\]]+)`)
 
 var IgnoreInvalidCQCode = false
 
+type PokeElement struct {
+	Target int64
+}
+
+func (e *PokeElement) Type() message.ElementType {
+	return message.At
+}
+
 func ToArrayMessage(e []message.IMessageElement, code int64, raw ...bool) (r []MSG) {
 	ur := false
 	if len(raw) != 0 {
@@ -50,6 +58,8 @@ func ToArrayMessage(e []message.IMessageElement, code int64, raw ...bool) (r []M
 				"type": "text",
 				"data": map[string]string{"text": o.Content},
 			}
+		case *message.ReplyElement:
+			continue
 		case *message.LightAppElement:
 			//m = MSG{
 			//	"type": "text",
@@ -317,6 +327,12 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 		return message.NewText(d["text"]), nil
 	case "image":
 		return bot.makeImageElem(t, d, group)
+	case "poke":
+		if !group {
+			return nil, errors.New("todo") // TODO: private poke
+		}
+		t, _ := strconv.ParseInt(d["qq"], 10, 64)
+		return &PokeElement{Target: t}, nil
 	case "record":
 		if !group {
 			return nil, errors.New("private voice unsupported now")
