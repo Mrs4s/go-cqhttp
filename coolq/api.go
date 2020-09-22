@@ -667,6 +667,19 @@ func (bot *CQBot) CQReloadEventFilter() MSG {
 	return OK(nil)
 }
 
+func (bot *CQBot) CQSetGroupPortrait(groupId int64, file, cache string) MSG {
+	if g := bot.Client.FindGroup(groupId); g != nil {
+		img, err := global.FindFile(file, cache, global.IMAGE_PATH)
+		if err != nil {
+			log.Warnf("set group portrait error: %v", err)
+			return Failed(100)
+		}
+		g.UpdateGroupHeadPortrait(img)
+		return OK(nil)
+	}
+	return Failed(100)
+}
+
 func (bot *CQBot) CQGetStatus() MSG {
 	return OK(MSG{
 		"app_initialized": true,

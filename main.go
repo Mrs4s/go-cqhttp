@@ -260,7 +260,7 @@ func main() {
 			func() {
 				defer func() {
 					if pan := recover(); pan != nil {
-						log.Error("读取服务器地址时出现错误: %v", pan)
+						log.Error("读取服务器地址时出现错误: ", pan)
 					}
 				}()
 				r := binary.NewReader(data)
