@@ -58,8 +58,6 @@ func ToArrayMessage(e []message.IMessageElement, code int64, raw ...bool) (r []M
 				"type": "text",
 				"data": map[string]string{"text": o.Content},
 			}
-		case *message.ReplyElement:
-			continue
 		case *message.LightAppElement:
 			//m = MSG{
 			//	"type": "text",
@@ -144,6 +142,8 @@ func ToArrayMessage(e []message.IMessageElement, code int64, raw ...bool) (r []M
 					"data": map[string]string{"data": o.Content, "resid": fmt.Sprintf("%d", o.Id)},
 				}
 			}
+		default:
+			continue
 		}
 		r = append(r, m)
 	}
