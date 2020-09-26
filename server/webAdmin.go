@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
-	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
@@ -15,7 +14,6 @@ import (
 	"github.com/yinghau76/go-ascii-art"
 	"image"
 	"io/ioutil"
-	"net"
 	"os"
 	"strings"
 	"time"
@@ -34,6 +32,15 @@ type webServer struct {
 }
 
 var WebServer = &webServer{}
+
+// admin 子站的 路由映射
+var HttpuriAdmin = map[string]func(s *webServer, c *gin.Context){
+	"do_restart":        AdminDoRestart,       //热重启
+	"get_web_write":     AdminWebWrite,        //获取是否验证码输入
+	"do_web_write":      AdminDoWebWrite,      //web上进行输入操作
+	"do_restart_docker": AdminDoRestartDocker, //直接停止（依赖supervisord/docker）重新拉起
+}
+
 
 func (s *webServer) Run(addr string, cli *client.QQClient) *coolq.CQBot {
 	s.Cli = cli
@@ -74,11 +81,11 @@ func (s *webServer) Dologin() {
 				_ = ioutil.WriteFile("captcha.jpg", rsp.CaptchaImage, 0644)
 				img, _, _ := image.Decode(bytes.NewReader(rsp.CaptchaImage))
 				fmt.Println(asciiart.New("image", img).Art)
-				if conf.WebUi.Enabled{
+				if conf.WebUi.WebInput {
 					log.Warn("请输入验证码 (captcha.jpg)： (http://127.0.0.1/admin/web_write 输入)")
 					text = <-WebInput
-				}else{
-					log.Warn("请输入验证码 (captcha.jpg)：ENTER 输入")
+				} else {
+					log.Warn("请输入验证码 (captcha.jpg)： (Enter 提交)")
 					text, _ = s.Console.ReadString('\n')
 				}
 				rsp, err = cli.SubmitCaptcha(strings.ReplaceAll(text, "\n", ""), rsp.CaptchaSign)
@@ -86,15 +93,15 @@ func (s *webServer) Dologin() {
 				continue
 			case client.UnsafeDeviceError:
 				log.Warnf("账号已开启设备锁，请前往 -> %v <- 验证并重启Bot.", rsp.VerifyUrl)
-				if conf.WebUi.Enabled{
+				if conf.WebUi.WebInput {
 					log.Infof(" (http://127.0.0.1/admin/web_write 确认后继续)....")
 					text = <-WebInput
-				}else{
-					log.Infof(" (ENTER 确认后继续)....")
+				} else {
+					log.Infof(" 按 Enter 继续....")
 					_, _ = s.Console.ReadString('\n')
 				}
 				log.Info(text)
-				continue
+				return
 			case client.OtherLoginError, client.UnknownLoginError:
 				log.Fatalf("登录失败: %v", rsp.ErrorMessage)
 				return
@@ -175,15 +182,11 @@ func (s *webServer) admin(c *gin.Context) {
 	}
 }
 
-
-
 // 获取当前配置文件信息
 func GetConf() *global.JsonConfig {
 	conf := global.Load("config.json")
 	return conf
 }
-
-
 
 // admin 控制器 登录验证
 func AuthMiddleWare() gin.HandlerFunc {
@@ -208,7 +211,7 @@ func AuthMiddleWare() gin.HandlerFunc {
 			c.Set("json_body", gjson.ParseBytes(d))
 		}
 		conf := GetConf()
-		authToken:=conf.AccessToken
+		authToken := conf.AccessToken
 		if auth := c.Request.Header.Get("Authorization"); auth != "" {
 			if strings.SplitN(auth, " ", 2)[1] != authToken {
 				c.AbortWithStatus(401)
@@ -223,10 +226,22 @@ func AuthMiddleWare() gin.HandlerFunc {
 	}
 }
 
-
 func (s *webServer) DoRelogin() {
 	conf := GetConf()
 	OldConf := s.Conf
+	cli := client.NewClient(conf.Uin, conf.Password)
+	log.Info("开始尝试登录并同步消息...")
+	log.Infof("使用协议: %v", func() string {
+		switch client.SystemDeviceInfo.Protocol {
+		case client.AndroidPad:
+			return "Android Pad"
+		case client.AndroidPhone:
+			return "Android Phone"
+		case client.AndroidWatch:
+			return "Android Watch"
+		}
+		return "未知"
+	}())
 	cli := client.NewClient(conf.Uin, conf.Password)
 	cli.OnLog(func(c *client.QQClient, e *client.LogEvent) {
 		switch e.Type {
@@ -239,47 +254,8 @@ func (s *webServer) DoRelogin() {
 		}
 	})
 	cli.OnServerUpdated(func(bot *client.QQClient, e *client.ServerUpdatedEvent) {
-		log.Infof("收到服务器地址更新通知, 将在下一次重连时应用. 地址信息已储存到 servers.bin 文件")
-		_ = ioutil.WriteFile("servers.bin", binary.NewWriterF(func(w *binary.Writer) {
-			w.WriteUInt16(func() (c uint16) {
-				for _, s := range e.Servers {
-					if !strings.Contains(s.Server, "com") {
-						c++
-					}
-				}
-				return
-			}())
-			for _, s := range e.Servers {
-				if !strings.Contains(s.Server, "com") {
-					w.WriteString(s.Server)
-					w.WriteUInt16(uint16(s.Port))
-				}
-			}
-		}), 0644)
+		log.Infof("收到服务器地址更新通知, 将在下一次重连时应用. ")
 	})
-	if global.PathExists("servers.bin") {
-		if data, err := ioutil.ReadFile("servers.bin"); err == nil {
-			func() {
-				defer func() {
-					if pan := recover(); pan != nil {
-						log.Error("读取服务器地址时出现错误: %v", pan)
-					}
-				}()
-				r := binary.NewReader(data)
-				var addr []*net.TCPAddr
-				l := r.ReadUInt16()
-				for i := 0; i < int(l); i++ {
-					addr = append(addr, &net.TCPAddr{
-						IP:   net.ParseIP(r.ReadString()),
-						Port: int(r.ReadUInt16()),
-					})
-				}
-				if len(addr) > 0 {
-					cli.SetCustomServer(addr)
-				}
-			}()
-		}
-	}
 	s.Cli = cli
 	s.Dologin()
 	//关闭之前的 server
@@ -323,14 +299,6 @@ func (s *webServer) ReloadServer() {
 	}
 }
 
-// admin 子站的 路由映射
-var HttpuriAdmin = map[string]func(s *webServer, c *gin.Context){
-	"do_restart":          AdminDoRestart,
-	"get_web_write":           AdminWebWrite,
-	"do_web_write":        AdminDoWebWrite,
-	"do_restart_docker":   AdminDoRestartDocker,
-}
-
 
 // 热重启
 func AdminDoRestart(s *webServer, c *gin.Context) {
@@ -346,10 +314,6 @@ func AdminDoRestartDocker(s *webServer, c *gin.Context) {
 	return
 }
 
-type PicData struct{
-	pic string
-	picbase64 string
-}
 // web输入 html 页面
 func AdminWebWrite(s *webServer, c *gin.Context) {
 	pic := global.ReadAllText("captcha.jpg")
@@ -360,8 +324,8 @@ func AdminWebWrite(s *webServer, c *gin.Context) {
 		picbase64 = base64.StdEncoding.EncodeToString(input)
 	}
 	c.JSON(200, coolq.OK(coolq.MSG{
-		"pic":pic,
-		"picbase64":picbase64,
+		"pic":       pic,
+		"picbase64": picbase64,
 	}))
 }
 
