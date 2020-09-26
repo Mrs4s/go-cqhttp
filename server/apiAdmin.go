@@ -32,7 +32,7 @@ type webServer struct {
 	engine  *gin.Engine
 	bot     *coolq.CQBot
 	Cli     *client.QQClient
-	Conf    *global.JsonConfig
+	Conf    *global.JsonConfig //old config
 	Console *bufio.Reader
 }
 
@@ -296,6 +296,7 @@ func (s *webServer) DoRelogin() {
 	//}
 	//s.UpServer()
 	s.ReloadServer()
+	s.Conf = conf
 }
 
 func (s *webServer) UpServer() {
@@ -330,6 +331,8 @@ func (s *webServer) ReloadServer() {
 
 // 热重启
 func AdminDoRestart(s *webServer, c *gin.Context) {
+	s.bot = nil
+	s.Cli = nil
 	s.DoRelogin()
 	c.JSON(200, coolq.OK(coolq.MSG{}))
 	return
@@ -381,7 +384,7 @@ func AdminDoConfigBase(s *webServer, c *gin.Context) {
 		log.Fatalf("保存 config.json 时出现错误: %v", err)
 		c.JSON(200, Failed(502, "保存 config.json 时出现错误:"+fmt.Sprintf("%v", err)))
 	} else {
-		Jsonconfig=nil
+		Jsonconfig = nil
 		c.JSON(200, coolq.OK(coolq.MSG{}))
 	}
 }
@@ -406,7 +409,7 @@ func AdminDoConfigHttp(s *webServer, c *gin.Context) {
 		log.Fatalf("保存 config.json 时出现错误: %v", err)
 		c.JSON(200, Failed(502, "保存 config.json 时出现错误:"+fmt.Sprintf("%v", err)))
 	} else {
-		Jsonconfig=nil
+		Jsonconfig = nil
 		c.JSON(200, coolq.OK(coolq.MSG{}))
 	}
 }
@@ -426,7 +429,7 @@ func AdminDoConfigWs(s *webServer, c *gin.Context) {
 		log.Fatalf("保存 config.json 时出现错误: %v", err)
 		c.JSON(200, Failed(502, "保存 config.json 时出现错误:"+fmt.Sprintf("%v", err)))
 	} else {
-		Jsonconfig=nil
+		Jsonconfig = nil
 		c.JSON(200, coolq.OK(coolq.MSG{}))
 	}
 }
@@ -448,7 +451,7 @@ func AdminDoConfigReverse(s *webServer, c *gin.Context) {
 		log.Fatalf("保存 config.json 时出现错误: %v", err)
 		c.JSON(200, Failed(502, "保存 config.json 时出现错误:"+fmt.Sprintf("%v", err)))
 	} else {
-		Jsonconfig=nil
+		Jsonconfig = nil
 		c.JSON(200, coolq.OK(coolq.MSG{}))
 	}
 }
@@ -467,7 +470,7 @@ func AdminDoConfigJson(s *webServer, c *gin.Context) {
 		log.Fatalf("保存 config.json 时出现错误: %v", err)
 		c.JSON(200, Failed(502, "保存 config.json 时出现错误:"+fmt.Sprintf("%v", err)))
 	} else {
-		Jsonconfig=nil
+		Jsonconfig = nil
 		c.JSON(200, coolq.OK(coolq.MSG{}))
 	}
 }
