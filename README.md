@@ -4,16 +4,6 @@
 
 测试版可前往 Release 下载
 
-# 编译方式：
-```bash
-#安装编译工具，用于打包html到二进制
-go get -u github.com/gobuffalo/packr/v2/packr2
-#build和go build一样，交叉编译的方式也是一样的
-CGO_ENABLED=0 GOOS=linux GOARCH=arm packr2 build  -o miraigo
-#简单点的
-packr2 build  -o miraigo
-```
-
 # 兼容性
 
 #### 接口
