@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/go-cqhttp/coolq"
@@ -15,6 +16,7 @@ import (
 	"image"
 	"io/ioutil"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -39,8 +41,16 @@ var HttpuriAdmin = map[string]func(s *webServer, c *gin.Context){
 	"get_web_write":     AdminWebWrite,        //获取是否验证码输入
 	"do_web_write":      AdminDoWebWrite,      //web上进行输入操作
 	"do_restart_docker": AdminDoRestartDocker, //直接停止（依赖supervisord/docker）重新拉起
+	"do_config_base":      AdminDoConfigBase,
+	"do_config_http":      AdminDoConfigHttp,
+	"do_config_ws":        AdminDoConfigWs,
+	"do_config_reverse":   AdminDoConfigReverse,
+	"do_config_json":      AdminDoConfigJson,
 }
 
+func Failed(code int,msg string) coolq.MSG {
+	return coolq.MSG{"data": nil, "retcode": code, "status": "failed","msg":msg}
+}
 
 func (s *webServer) Run(addr string, cli *client.QQClient) *coolq.CQBot {
 	s.Cli = cli
@@ -318,14 +328,16 @@ func AdminDoRestartDocker(s *webServer, c *gin.Context) {
 func AdminWebWrite(s *webServer, c *gin.Context) {
 	pic := global.ReadAllText("captcha.jpg")
 	var picbase64 string
+	var ispic=false
 	if pic != "" {
 		input := []byte(pic)
 		// base64编码
 		picbase64 = base64.StdEncoding.EncodeToString(input)
+		ispic=true
 	}
 	c.JSON(200, coolq.OK(coolq.MSG{
-		"pic":       pic,
-		"picbase64": picbase64,
+		"ispic":       ispic,//为空则为 设备锁 或者没有需要输入
+		"picbase64": picbase64,//web上显示图片
 	}))
 }
 
@@ -333,6 +345,106 @@ func AdminWebWrite(s *webServer, c *gin.Context) {
 func AdminDoWebWrite(s *webServer, c *gin.Context) {
 	input := c.PostForm("input")
 	WebInput <- input
-	//global.WriteAllText("input.txt", input)
 	c.JSON(200, coolq.OK(coolq.MSG{}))
+}
+
+// 普通配置修改
+func AdminDoConfigBase(s *webServer, c *gin.Context) {
+	conf := GetConf()
+	conf.Uin, _ = strconv.ParseInt(c.PostForm("uin"), 10, 64)
+	conf.Password = c.PostForm("password")
+	if c.PostForm("enable_db") == "true" {
+		conf.EnableDB = true
+	} else {
+		conf.EnableDB = false
+	}
+	conf.AccessToken = c.PostForm("access_token")
+	if err := conf.Save("config.json"); err != nil {
+		log.Fatalf("保存 config.json 时出现错误: %v", err)
+		c.JSON(200, Failed(502,"保存 config.json 时出现错误:" + fmt.Sprintf("%v", err)))
+	} else {
+		c.JSON(200, coolq.OK(coolq.MSG{}))
+	}
+}
+
+// http配置修改
+func AdminDoConfigHttp(s *webServer, c *gin.Context) {
+	conf := GetConf()
+	p, _ := strconv.ParseUint(c.PostForm("port"), 10, 16)
+	conf.HttpConfig.Port = uint16(p)
+	conf.HttpConfig.Host = c.PostForm("host")
+	if c.PostForm("enable") == "true" {
+		conf.HttpConfig.Enabled = true
+	} else {
+		conf.HttpConfig.Enabled = false
+	}
+	t, _ := strconv.ParseInt(c.PostForm("timeout"), 10, 32)
+	conf.HttpConfig.Timeout = int32(t)
+	if c.PostForm("post_url") != "" {
+		conf.HttpConfig.PostUrls[c.PostForm("post_url")] = c.PostForm("post_secret")
+	}
+	if err := conf.Save("config.json"); err != nil {
+		log.Fatalf("保存 config.json 时出现错误: %v", err)
+		c.JSON(200, Failed(101,"保存 config.json 时出现错误:" + fmt.Sprintf("%v", err)))
+	} else {
+		c.JSON(200, coolq.OK(coolq.MSG{}))
+	}
+}
+
+// ws配置修改
+func AdminDoConfigWs(s *webServer, c *gin.Context) {
+	conf := GetConf()
+	p, _ := strconv.ParseUint(c.PostForm("port"), 10, 16)
+	conf.WSConfig.Port = uint16(p)
+	conf.WSConfig.Host = c.PostForm("host")
+	if c.PostForm("enable") == "true" {
+		conf.WSConfig.Enabled = true
+	} else {
+		conf.WSConfig.Enabled = false
+	}
+	if err := conf.Save("config.json"); err != nil {
+		log.Fatalf("保存 config.json 时出现错误: %v", err)
+		c.JSON(200, Failed(101,"保存 config.json 时出现错误:" + fmt.Sprintf("%v", err)))
+	} else {
+		c.JSON(200, coolq.OK(coolq.MSG{}))
+	}
+}
+
+// 反向ws配置修改
+func AdminDoConfigReverse(s *webServer, c *gin.Context) {
+	conf := GetConf()
+	conf.ReverseServers[0].ReverseApiUrl = c.PostForm("reverse_api_url")
+	conf.ReverseServers[0].ReverseUrl = c.PostForm("reverse_url")
+	conf.ReverseServers[0].ReverseEventUrl = c.PostForm("reverse_event_url")
+	t, _ := strconv.ParseUint(c.PostForm("reverse_reconnect_interval"), 10, 16)
+	conf.ReverseServers[0].ReverseReconnectInterval = uint16(t)
+	if c.PostForm("enable") == "true" {
+		conf.ReverseServers[0].Enabled = true
+	} else {
+		conf.ReverseServers[0].Enabled = false
+	}
+	if err := conf.Save("config.json"); err != nil {
+		log.Fatalf("保存 config.json 时出现错误: %v", err)
+		c.JSON(200, Failed(101,"保存 config.json 时出现错误:" + fmt.Sprintf("%v", err)))
+	} else {
+		c.JSON(200, coolq.OK(coolq.MSG{}))
+	}
+}
+
+// 反向ws配置修改
+func AdminDoConfigJson(s *webServer, c *gin.Context) {
+	conf := GetConf()
+	Json := c.PostForm("json")
+	err := json.Unmarshal([]byte(Json), &conf)
+	if err != nil {
+		log.Warnf("尝试加载配置文件 %v 时出现错误: %v", "config.json", err)
+		c.JSON(200, gin.H{"code": -1, "msg": "保存 config.json 时出现错误:" + fmt.Sprintf("%v", err)})
+		return
+	}
+	if err := conf.Save("config.json"); err != nil {
+		log.Fatalf("保存 config.json 时出现错误: %v", err)
+		c.JSON(200, gin.H{"code": -1, "msg": "保存 config.json 时出现错误:" + fmt.Sprintf("%v", err)})
+	} else {
+		c.JSON(200, coolq.OK(coolq.MSG{}))
+	}
 }
