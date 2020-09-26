@@ -15,6 +15,7 @@ import (
 	"github.com/yinghau76/go-ascii-art"
 	"image"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -24,6 +25,8 @@ import (
 var WebInput = make(chan string, 1) //长度1，用于阻塞
 
 var Console = make(chan os.Signal, 1)
+
+var Jsonconfig *global.JsonConfig
 
 type webServer struct {
 	engine  *gin.Engine
@@ -41,20 +44,21 @@ var HttpuriAdmin = map[string]func(s *webServer, c *gin.Context){
 	"get_web_write":     AdminWebWrite,        //获取是否验证码输入
 	"do_web_write":      AdminDoWebWrite,      //web上进行输入操作
 	"do_restart_docker": AdminDoRestartDocker, //直接停止（依赖supervisord/docker）重新拉起
-	"do_config_base":      AdminDoConfigBase,
-	"do_config_http":      AdminDoConfigHttp,
-	"do_config_ws":        AdminDoConfigWs,
-	"do_config_reverse":   AdminDoConfigReverse,
-	"do_config_json":      AdminDoConfigJson,
+	"do_config_base":    AdminDoConfigBase,
+	"do_config_http":    AdminDoConfigHttp,
+	"do_config_ws":      AdminDoConfigWs,
+	"do_config_reverse": AdminDoConfigReverse,
+	"do_config_json":    AdminDoConfigJson,
 }
 
-func Failed(code int,msg string) coolq.MSG {
-	return coolq.MSG{"data": nil, "retcode": code, "status": "failed","msg":msg}
+func Failed(code int, msg string) coolq.MSG {
+	return coolq.MSG{"data": nil, "retcode": code, "status": "failed", "msg": msg}
 }
 
 func (s *webServer) Run(addr string, cli *client.QQClient) *coolq.CQBot {
 	s.Cli = cli
 	s.Conf = GetConf()
+	Jsonconfig = s.Conf
 	gin.SetMode(gin.ReleaseMode)
 	s.engine = gin.New()
 
@@ -194,6 +198,9 @@ func (s *webServer) admin(c *gin.Context) {
 
 // 获取当前配置文件信息
 func GetConf() *global.JsonConfig {
+	if Jsonconfig != nil {
+		return Jsonconfig
+	}
 	conf := global.Load("config.json")
 	return conf
 }
@@ -201,6 +208,19 @@ func GetConf() *global.JsonConfig {
 // admin 控制器 登录验证
 func AuthMiddleWare() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		conf := GetConf()
+		//处理跨域问题
+		c.Header("Access-Control-Allow-Origin", "*")
+		c.Header("Access-Control-Allow-Headers", "Content-Type,AccessToken,X-CSRF-Token, Authorization, Token")
+		c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, PATCH, DELETE")
+		c.Header("Access-Control-Expose-Headers", "Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Content-Type")
+		c.Header("Access-Control-Allow-Credentials", "true")
+		// 放行所有OPTIONS方法，因为有的模板是要请求两次的
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(http.StatusNoContent)
+		}
+		// 处理请求
+		c.Next()
 		if c.Request.Method != "GET" && c.Request.Method != "POST" {
 			log.Warnf("已拒绝客户端 %v 的请求: 方法错误", c.Request.RemoteAddr)
 			c.Status(404)
@@ -220,7 +240,6 @@ func AuthMiddleWare() gin.HandlerFunc {
 			}
 			c.Set("json_body", gjson.ParseBytes(d))
 		}
-		conf := GetConf()
 		authToken := conf.AccessToken
 		if auth := c.Request.Header.Get("Authorization"); auth != "" {
 			if strings.SplitN(auth, " ", 2)[1] != authToken {
@@ -237,6 +256,7 @@ func AuthMiddleWare() gin.HandlerFunc {
 }
 
 func (s *webServer) DoRelogin() {
+	Jsonconfig = nil
 	conf := GetConf()
 	OldConf := s.Conf
 	cli := client.NewClient(conf.Uin, conf.Password)
@@ -252,7 +272,6 @@ func (s *webServer) DoRelogin() {
 		}
 		return "未知"
 	}())
-	cli := client.NewClient(conf.Uin, conf.Password)
 	cli.OnLog(func(c *client.QQClient, e *client.LogEvent) {
 		switch e.Type {
 		case "INFO":
@@ -309,7 +328,6 @@ func (s *webServer) ReloadServer() {
 	}
 }
 
-
 // 热重启
 func AdminDoRestart(s *webServer, c *gin.Context) {
 	s.DoRelogin()
@@ -328,16 +346,16 @@ func AdminDoRestartDocker(s *webServer, c *gin.Context) {
 func AdminWebWrite(s *webServer, c *gin.Context) {
 	pic := global.ReadAllText("captcha.jpg")
 	var picbase64 string
-	var ispic=false
+	var ispic = false
 	if pic != "" {
 		input := []byte(pic)
 		// base64编码
 		picbase64 = base64.StdEncoding.EncodeToString(input)
-		ispic=true
+		ispic = true
 	}
 	c.JSON(200, coolq.OK(coolq.MSG{
-		"ispic":       ispic,//为空则为 设备锁 或者没有需要输入
-		"picbase64": picbase64,//web上显示图片
+		"ispic":     ispic,     //为空则为 设备锁 或者没有需要输入
+		"picbase64": picbase64, //web上显示图片
 	}))
 }
 
@@ -361,8 +379,9 @@ func AdminDoConfigBase(s *webServer, c *gin.Context) {
 	conf.AccessToken = c.PostForm("access_token")
 	if err := conf.Save("config.json"); err != nil {
 		log.Fatalf("保存 config.json 时出现错误: %v", err)
-		c.JSON(200, Failed(502,"保存 config.json 时出现错误:" + fmt.Sprintf("%v", err)))
+		c.JSON(200, Failed(502, "保存 config.json 时出现错误:"+fmt.Sprintf("%v", err)))
 	} else {
+		Jsonconfig=nil
 		c.JSON(200, coolq.OK(coolq.MSG{}))
 	}
 }
@@ -385,8 +404,9 @@ func AdminDoConfigHttp(s *webServer, c *gin.Context) {
 	}
 	if err := conf.Save("config.json"); err != nil {
 		log.Fatalf("保存 config.json 时出现错误: %v", err)
-		c.JSON(200, Failed(502,"保存 config.json 时出现错误:" + fmt.Sprintf("%v", err)))
+		c.JSON(200, Failed(502, "保存 config.json 时出现错误:"+fmt.Sprintf("%v", err)))
 	} else {
+		Jsonconfig=nil
 		c.JSON(200, coolq.OK(coolq.MSG{}))
 	}
 }
@@ -404,8 +424,9 @@ func AdminDoConfigWs(s *webServer, c *gin.Context) {
 	}
 	if err := conf.Save("config.json"); err != nil {
 		log.Fatalf("保存 config.json 时出现错误: %v", err)
-		c.JSON(200, Failed(502,"保存 config.json 时出现错误:" + fmt.Sprintf("%v", err)))
+		c.JSON(200, Failed(502, "保存 config.json 时出现错误:"+fmt.Sprintf("%v", err)))
 	} else {
+		Jsonconfig=nil
 		c.JSON(200, coolq.OK(coolq.MSG{}))
 	}
 }
@@ -425,8 +446,9 @@ func AdminDoConfigReverse(s *webServer, c *gin.Context) {
 	}
 	if err := conf.Save("config.json"); err != nil {
 		log.Fatalf("保存 config.json 时出现错误: %v", err)
-		c.JSON(200, Failed(502,"保存 config.json 时出现错误:" + fmt.Sprintf("%v", err)))
+		c.JSON(200, Failed(502, "保存 config.json 时出现错误:"+fmt.Sprintf("%v", err)))
 	} else {
+		Jsonconfig=nil
 		c.JSON(200, coolq.OK(coolq.MSG{}))
 	}
 }
@@ -438,13 +460,14 @@ func AdminDoConfigJson(s *webServer, c *gin.Context) {
 	err := json.Unmarshal([]byte(Json), &conf)
 	if err != nil {
 		log.Warnf("尝试加载配置文件 %v 时出现错误: %v", "config.json", err)
-		c.JSON(200, Failed(502,"保存 config.json 时出现错误:" + fmt.Sprintf("%v", err)))
+		c.JSON(200, Failed(502, "保存 config.json 时出现错误:"+fmt.Sprintf("%v", err)))
 		return
 	}
 	if err := conf.Save("config.json"); err != nil {
 		log.Fatalf("保存 config.json 时出现错误: %v", err)
-		c.JSON(200, Failed(502,"保存 config.json 时出现错误:" + fmt.Sprintf("%v", err)))
+		c.JSON(200, Failed(502, "保存 config.json 时出现错误:"+fmt.Sprintf("%v", err)))
 	} else {
+		Jsonconfig=nil
 		c.JSON(200, coolq.OK(coolq.MSG{}))
 	}
 }
