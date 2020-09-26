@@ -62,8 +62,10 @@ func (s *webServer) Run(addr string, cli *client.QQClient) *coolq.CQBot {
 	gin.SetMode(gin.ReleaseMode)
 	s.engine = gin.New()
 
+	s.engine.Use(AuthMiddleWare())
+
 	//通用路由
-	s.engine.Any("/admin/:action", AuthMiddleWare(), s.admin)
+	s.engine.Any("/admin/:action", s.admin)
 
 	go func() {
 		log.Infof("miraigo adminapi 服务器已启动: %v", addr)
@@ -220,7 +222,6 @@ func AuthMiddleWare() gin.HandlerFunc {
 			c.AbortWithStatus(http.StatusNoContent)
 		}
 		// 处理请求
-		c.Next()
 		if c.Request.Method != "GET" && c.Request.Method != "POST" {
 			log.Warnf("已拒绝客户端 %v 的请求: 方法错误", c.Request.RemoteAddr)
 			c.Status(404)
