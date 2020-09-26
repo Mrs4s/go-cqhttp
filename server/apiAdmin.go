@@ -385,7 +385,7 @@ func AdminDoConfigHttp(s *webServer, c *gin.Context) {
 	}
 	if err := conf.Save("config.json"); err != nil {
 		log.Fatalf("保存 config.json 时出现错误: %v", err)
-		c.JSON(200, Failed(101,"保存 config.json 时出现错误:" + fmt.Sprintf("%v", err)))
+		c.JSON(200, Failed(502,"保存 config.json 时出现错误:" + fmt.Sprintf("%v", err)))
 	} else {
 		c.JSON(200, coolq.OK(coolq.MSG{}))
 	}
@@ -404,7 +404,7 @@ func AdminDoConfigWs(s *webServer, c *gin.Context) {
 	}
 	if err := conf.Save("config.json"); err != nil {
 		log.Fatalf("保存 config.json 时出现错误: %v", err)
-		c.JSON(200, Failed(101,"保存 config.json 时出现错误:" + fmt.Sprintf("%v", err)))
+		c.JSON(200, Failed(502,"保存 config.json 时出现错误:" + fmt.Sprintf("%v", err)))
 	} else {
 		c.JSON(200, coolq.OK(coolq.MSG{}))
 	}
@@ -425,7 +425,7 @@ func AdminDoConfigReverse(s *webServer, c *gin.Context) {
 	}
 	if err := conf.Save("config.json"); err != nil {
 		log.Fatalf("保存 config.json 时出现错误: %v", err)
-		c.JSON(200, Failed(101,"保存 config.json 时出现错误:" + fmt.Sprintf("%v", err)))
+		c.JSON(200, Failed(502,"保存 config.json 时出现错误:" + fmt.Sprintf("%v", err)))
 	} else {
 		c.JSON(200, coolq.OK(coolq.MSG{}))
 	}
@@ -438,12 +438,12 @@ func AdminDoConfigJson(s *webServer, c *gin.Context) {
 	err := json.Unmarshal([]byte(Json), &conf)
 	if err != nil {
 		log.Warnf("尝试加载配置文件 %v 时出现错误: %v", "config.json", err)
-		c.JSON(200, gin.H{"code": -1, "msg": "保存 config.json 时出现错误:" + fmt.Sprintf("%v", err)})
+		c.JSON(200, Failed(502,"保存 config.json 时出现错误:" + fmt.Sprintf("%v", err)))
 		return
 	}
 	if err := conf.Save("config.json"); err != nil {
 		log.Fatalf("保存 config.json 时出现错误: %v", err)
-		c.JSON(200, gin.H{"code": -1, "msg": "保存 config.json 时出现错误:" + fmt.Sprintf("%v", err)})
+		c.JSON(200, Failed(502,"保存 config.json 时出现错误:" + fmt.Sprintf("%v", err)))
 	} else {
 		c.JSON(200, coolq.OK(coolq.MSG{}))
 	}
