@@ -11,10 +11,10 @@ jobs:
         # build and publish in parallel: linux/386, linux/amd64, windows/386, windows/amd64, darwin/386, darwin/amd64 
         goos: [linux, windows, darwin]
         goarch: ["386", amd64, arm]
-        exclude: 
+        exclude:
           - goos: darwin
             goarch: arm
-            
+
     steps:
       - uses: actions/checkout@v2
       - name: Set RELEASE_VERSION env
@@ -26,7 +26,4 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           goos: ${{ matrix.goos }}
           goarch: ${{ matrix.goarch }}
-          pre_command: 'go get -u github.com/gobuffalo/packr/v2/packr2'
-          build_command: 'packr2 build'
-          ldflags: -w -s -X "github.com/scjtqs/go-cqhttp/coolq.Version=${{ env.RELEASE_VERSION }}"
-          
+          ldflags: -w -s -X "github.com/Mrs4s/go-cqhttp/coolq.Version=${{ env.RELEASE_VERSION }}"
