@@ -58,8 +58,6 @@ func ToArrayMessage(e []message.IMessageElement, code int64, raw ...bool) (r []M
 				"type": "text",
 				"data": map[string]string{"text": o.Content},
 			}
-		case *message.ReplyElement:
-			continue
 		case *message.LightAppElement:
 			//m = MSG{
 			//	"type": "text",
@@ -144,6 +142,8 @@ func ToArrayMessage(e []message.IMessageElement, code int64, raw ...bool) (r []M
 					"data": map[string]string{"data": o.Content, "resid": fmt.Sprintf("%d", o.Id)},
 				}
 			}
+		default:
+			continue
 		}
 		r = append(r, m)
 	}
@@ -338,41 +338,9 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 			return nil, errors.New("private voice unsupported now")
 		}
 		f := d["file"]
-		var data []byte
-		if strings.HasPrefix(f, "http") || strings.HasPrefix(f, "https") {
-			b, err := global.GetBytes(f)
-			if err != nil {
-				return nil, err
-			}
-			data = b
-		}
-		if strings.HasPrefix(f, "base64") {
-			b, err := base64.StdEncoding.DecodeString(strings.ReplaceAll(f, "base64://", ""))
-			if err != nil {
-				return nil, err
-			}
-			data = b
-		}
-		if strings.HasPrefix(f, "file") {
-			fu, err := url.Parse(f)
-			if err != nil {
-				return nil, err
-			}
-			if strings.HasPrefix(fu.Path, "/") && runtime.GOOS == `windows` {
-				fu.Path = fu.Path[1:]
-			}
-			b, err := ioutil.ReadFile(fu.Path)
-			if err != nil {
-				return nil, err
-			}
-			data = b
-		}
-		if global.PathExists(path.Join(global.VOICE_PATH, f)) {
-			b, err := ioutil.ReadFile(path.Join(global.VOICE_PATH, f))
-			if err != nil {
-				return nil, err
-			}
-			data = b
+		data, err := global.FindFile(f, d["cache"], global.VOICE_PATH)
+		if err != nil {
+			return nil, err
 		}
 		if !global.IsAMRorSILK(data) {
 			return nil, errors.New("unsupported voice file format (please use AMR file for now)")

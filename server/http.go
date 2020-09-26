@@ -361,6 +361,18 @@ func (s *httpServer) HandleQuickOperation(c *gin.Context) {
 	}
 }
 
+func (s *httpServer) OcrImage(c *gin.Context) {
+	img := getParam(c, "image")
+	c.JSON(200, s.bot.CQOcrImage(img))
+}
+
+func (s *httpServer) SetGroupPortrait(c *gin.Context) {
+	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
+	file := getParam(c, "file")
+	cache := getParam(c, "cache")
+	c.JSON(200, s.bot.CQSetGroupPortrait(gid, file, cache))
+}
+
 func getParamOrDefault(c *gin.Context, k, def string) string {
 	r := getParam(c, k)
 	if r != "" {
@@ -509,8 +521,14 @@ var httpApi = map[string]func(s *httpServer, c *gin.Context){
 	"reload_event_filter": func(s *httpServer, c *gin.Context) {
 		s.ReloadEventFilter(c)
 	},
+	"set_group_portrait": func(s *httpServer, c *gin.Context) {
+		s.SetGroupPortrait(c)
+	},
 	".handle_quick_operation": func(s *httpServer, c *gin.Context) {
 		s.HandleQuickOperation(c)
+	},
+	".ocr_image": func(s *httpServer, c *gin.Context) {
+		s.OcrImage(c)
 	},
 }
 

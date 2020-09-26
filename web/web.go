@@ -125,15 +125,6 @@ func (s *webServer) Dologin() {
 				fmt.Println(asciiart.New("image", img).Art)
 				log.Warn("请输入验证码 (captcha.jpg)： (http://127.0.0.1/admin/web_write 输入)")
 				//text, _ := s.Console.ReadString('\n')
-				//var text string
-				//for {
-				//	file := "input.txt"
-				//	text = global.ReadAllText(file)
-				//	if text != "" {
-				//		global.DelFile(file)
-				//		break
-				//	}
-				//}
 				text := <-WebInput
 				rsp, err = cli.SubmitCaptcha(strings.ReplaceAll(text, "\n", ""), rsp.CaptchaSign)
 				global.DelFile("captcha.jpg")
@@ -142,15 +133,6 @@ func (s *webServer) Dologin() {
 				log.Warnf("账号已开启设备锁，请前往 -> %v <- 验证并重启Bot.", rsp.VerifyUrl)
 				log.Infof(" (http://127.0.0.1/admin/web_write 确认后继续)....")
 				//_, _ = s.Console.ReadString('\n')
-				//var text string
-				//for {
-				//	file := "input.txt"
-				//	text = global.ReadAllText(file)
-				//	if text != "" {
-				//		global.DelFile(file)
-				//		break
-				//	}
-				//}
 				text := <-WebInput
 				log.Info(text)
 				continue
