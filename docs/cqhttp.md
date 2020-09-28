@@ -268,6 +268,28 @@ Type: `cardimage`
 | group_id | int64  | 群号 |
 | group_name     | string | 新名 |
 
+### 设置群头像
+
+终结点: `/set_group_portrait`  
+
+**参数** 
+
+| 字段     | 类型   | 说明 |
+| -------- | ------ | ---- |
+| group_id | int64  | 群号 |
+| file     | string | 图片文件名 |
+| cache |  int | 表示是否使用已缓存的文件 |
+
+[1]`file` 参数支持以下几种格式：
+
+- 绝对路径，例如 `file:///C:\\Users\Richard\Pictures\1.png`，格式使用 [`file` URI](https://tools.ietf.org/html/rfc8089)
+- 网络 URL，例如 `http://i1.piimg.com/567571/fdd6e7b6d93f1ef0.jpg`
+- Base64 编码，例如 `base64://iVBORw0KGgoAAAANSUhEUgAAABQAAAAVCAIAAADJt1n/AAAAKElEQVQ4EWPk5+RmIBcwkasRpG9UM4mhNxpgowFGMARGEwnBIEJVAAAdBgBNAZf+QAAAAABJRU5ErkJggg==`
+
+[2]`cache`参数: 通过网络 URL 发送时有效，`1`表示使用缓存，`0`关闭关闭缓存，默认 为`1`
+
+[3] 目前这个API在登录一段时间后因cookie失效而失效，请考虑后使用
+
 ### 获取图片信息
 
 终结点: `/get_image`  
