@@ -6,6 +6,7 @@ import (
 	"path"
 	"runtime"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Mrs4s/MiraiGo/binary"
@@ -125,6 +126,7 @@ func (bot *CQBot) CQSendGroupMessage(groupId int64, i interface{}, autoEscape bo
 			if mid == -1 {
 				return Failed(100)
 			}
+			log.Infof("发送群 %v(%v)  的消息: %v (%v)", groupId, groupId, limitedString(m.String()), mid)
 			return OK(MSG{"message_id": mid})
 		}
 		str = func() string {
@@ -151,6 +153,7 @@ func (bot *CQBot) CQSendGroupMessage(groupId int64, i interface{}, autoEscape bo
 	if mid == -1 {
 		return Failed(100)
 	}
+	log.Infof("发送群 %v(%v)  的消息: %v (%v)", groupId, groupId, limitedString(str), mid)
 	return OK(MSG{"message_id": mid})
 }
 
@@ -247,6 +250,7 @@ func (bot *CQBot) CQSendPrivateMessage(userId int64, i interface{}, autoEscape b
 			if mid == -1 {
 				return Failed(100)
 			}
+			log.Infof("发送好友 %v(%v)  的消息: %v (%v)", userId, userId, limitedString(m.String()), mid)
 			return OK(MSG{"message_id": mid})
 		}
 		str = func() string {
@@ -271,6 +275,7 @@ func (bot *CQBot) CQSendPrivateMessage(userId int64, i interface{}, autoEscape b
 	if mid == -1 {
 		return Failed(100)
 	}
+	log.Infof("发送好友 %v(%v)  的消息: %v (%v)", userId, userId, limitedString(str), mid)
 	return OK(MSG{"message_id": mid})
 }
 
@@ -753,4 +758,13 @@ func convertGroupMemberInfo(groupId int64, m *client.GroupMemberInfo) MSG {
 		"title_expire_time": m.SpecialTitleExpireTime,
 		"card_changeable":   false,
 	}
+}
+
+func limitedString(str string) string {
+	if strings.Count(str, "") <= 10 {
+		return str
+	}
+	limited := []rune(str)
+	limited = limited[:10]
+	return string(limited) + " ..."
 }
