@@ -4,6 +4,8 @@ github.com/Mrs4s/MiraiGo v0.0.0-20200921142226-9a449519db5c h1:TpGiSjI8Pe0YLEQPA
 github.com/Mrs4s/MiraiGo v0.0.0-20200921142226-9a449519db5c/go.mod h1:cwYPI2uq6nxNbx0nA6YuAKF1V5szSs6FPlGVLQvRUlo=
 github.com/Mrs4s/MiraiGo v0.0.0-20200926101830-afb0ed6368ad h1:m4KU2n3desxr1L3Idk7qRlf71+77rm0JEMWqd4gmrlQ=
 github.com/Mrs4s/MiraiGo v0.0.0-20200926101830-afb0ed6368ad/go.mod h1:cwYPI2uq6nxNbx0nA6YuAKF1V5szSs6FPlGVLQvRUlo=
+github.com/Mrs4s/MiraiGo v0.0.0-20200928022552-1a81a97597d7 h1:xRZdiVfVepgmLOYZFXAU0KrSd55fY0OmhqZElHNs93w=
+github.com/Mrs4s/MiraiGo v0.0.0-20200928022552-1a81a97597d7/go.mod h1:cwYPI2uq6nxNbx0nA6YuAKF1V5szSs6FPlGVLQvRUlo=
 github.com/bwmarrin/snowflake v0.3.0 h1:xm67bEhkKh6ij1790JB83OujPR5CzNe8QuQqAgISZN0=
 github.com/bwmarrin/snowflake v0.3.0/go.mod h1:NdZxfVWX+oR6y2K0o6qAYv6gIOP9rjG0/E9WsDpxqwE=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
