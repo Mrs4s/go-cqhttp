@@ -44,11 +44,12 @@ var HttpuriAdmin = map[string]func(s *webServer, c *gin.Context){
 	"get_web_write":     AdminWebWrite,        //获取是否验证码输入
 	"do_web_write":      AdminDoWebWrite,      //web上进行输入操作
 	"do_restart_docker": AdminDoRestartDocker, //直接停止（依赖supervisord/docker）重新拉起
-	"do_config_base":    AdminDoConfigBase,
-	"do_config_http":    AdminDoConfigHttp,
-	"do_config_ws":      AdminDoConfigWs,
-	"do_config_reverse": AdminDoConfigReverse,
-	"do_config_json":    AdminDoConfigJson,
+	"do_config_base":    AdminDoConfigBase,    //修改config.json中的基础部分
+	"do_config_http":    AdminDoConfigHttp,    //修改config.json的http部分
+	"do_config_ws":      AdminDoConfigWs,      //修改config.json的正向ws部分
+	"do_config_reverse": AdminDoConfigReverse, //修改config.json 中的反向ws部分
+	"do_config_json":    AdminDoConfigJson,    //直接修改 config.json配置
+	"get_config_json":   AdminDoConfigJson,    //拉取 当前的config.json配置
 }
 
 func Failed(code int, msg string) coolq.MSG {
@@ -457,7 +458,7 @@ func AdminDoConfigReverse(s *webServer, c *gin.Context) {
 	}
 }
 
-// 反向ws配置修改
+// config.json配置修改
 func AdminDoConfigJson(s *webServer, c *gin.Context) {
 	conf := GetConf()
 	Json := c.PostForm("json")
@@ -474,4 +475,11 @@ func AdminDoConfigJson(s *webServer, c *gin.Context) {
 		Jsonconfig = nil
 		c.JSON(200, coolq.OK(coolq.MSG{}))
 	}
+}
+
+// 拉取config.json配置
+func AdminGetConfigJson(s *webServer, c *gin.Context) {
+	conf := GetConf()
+	c.JSON(200, coolq.OK(coolq.MSG{"config": conf}))
+
 }
