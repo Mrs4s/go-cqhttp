@@ -2,32 +2,27 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"crypto/md5"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"image"
+	"github.com/Mrs4s/go-cqhttp/server"
 	"io"
 	"io/ioutil"
 	"os"
 	"os/signal"
 	"path"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
-	"github.com/Mrs4s/go-cqhttp/server"
-
-	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
+	"github.com/lestrrat-go/file-rotatelogs"
 	"github.com/rifflock/lfshook"
 	log "github.com/sirupsen/logrus"
-	easy "github.com/t-tomalak/logrus-easy-formatter"
-	asciiart "github.com/yinghau76/go-ascii-art"
+	"github.com/t-tomalak/logrus-easy-formatter"
 )
 
 func init() {
@@ -238,105 +233,22 @@ func main() {
 	cli.OnServerUpdated(func(bot *client.QQClient, e *client.ServerUpdatedEvent) {
 		log.Infof("收到服务器地址更新通知, 将在下一次重连时应用. ")
 	})
-	rsp, err := cli.Login()
-	for {
-		global.Check(err)
-		if !rsp.Success {
-			switch rsp.Error {
-			case client.NeedCaptcha:
-				_ = ioutil.WriteFile("captcha.jpg", rsp.CaptchaImage, 0644)
-				img, _, _ := image.Decode(bytes.NewReader(rsp.CaptchaImage))
-				fmt.Println(asciiart.New("image", img).Art)
-				log.Warn("请输入验证码 (captcha.jpg)： (Enter 提交)")
-				text, _ := console.ReadString('\n')
-				rsp, err = cli.SubmitCaptcha(strings.ReplaceAll(text, "\n", ""), rsp.CaptchaSign)
-				continue
-			case client.UnsafeDeviceError:
-				log.Warnf("账号已开启设备锁，请前往 -> %v <- 验证并重启Bot.", rsp.VerifyUrl)
-				log.Infof(" 按 Enter 继续....")
-				_, _ = console.ReadString('\n')
-				return
-			case client.OtherLoginError, client.UnknownLoginError:
-				log.Fatalf("登录失败: %v", rsp.ErrorMessage)
-			}
-		}
-		break
-	}
-	log.Infof("登录成功 欢迎使用: %v", cli.Nickname)
-	time.Sleep(time.Second)
-	log.Info("开始加载好友列表...")
-	global.Check(cli.ReloadFriendList())
-	log.Infof("共加载 %v 个好友.", len(cli.FriendList))
-	log.Infof("开始加载群列表...")
-	global.Check(cli.ReloadGroupList())
-	log.Infof("共加载 %v 个群.", len(cli.GroupList))
-	b := coolq.NewQQBot(cli, conf)
-	if conf.PostMessageFormat != "string" && conf.PostMessageFormat != "array" {
-		log.Warnf("post_message_format 配置错误, 将自动使用 string")
-		coolq.SetMessageFormat("string")
-	} else {
-		coolq.SetMessageFormat(conf.PostMessageFormat)
-	}
-	if conf.RateLimit.Enabled {
-		global.InitLimiter(conf.RateLimit.Frequency, conf.RateLimit.BucketSize)
-	}
-	log.Info("正在加载事件过滤器.")
-	global.BootFilter()
-	coolq.IgnoreInvalidCQCode = conf.IgnoreInvalidCQCode
-	coolq.ForceFragmented = conf.ForceFragmented
-	if conf.HttpConfig != nil && conf.HttpConfig.Enabled {
-		server.HttpServer.Run(fmt.Sprintf("%s:%d", conf.HttpConfig.Host, conf.HttpConfig.Port), conf.AccessToken, b)
-		for k, v := range conf.HttpConfig.PostUrls {
-			server.NewHttpClient().Run(k, v, conf.HttpConfig.Timeout, b)
+	if conf.WebUi == nil {
+		conf.WebUi = &global.GoCqWebUi{
+			Enabled:   true,
+			WebInput:  false,
+			WebUiPort: 9999,
 		}
 	}
-	if conf.WSConfig != nil && conf.WSConfig.Enabled {
-		server.WebsocketServer.Run(fmt.Sprintf("%s:%d", conf.WSConfig.Host, conf.WSConfig.Port), conf.AccessToken, b)
+	if conf.WebUi.WebUiPort <= 0 {
+		conf.WebUi.WebUiPort = 9999
 	}
-	for _, rc := range conf.ReverseServers {
-		server.NewWebsocketClient(rc, conf.AccessToken, b).Run()
+	confErr := conf.Save("config.json")
+	if confErr != nil {
+		log.Error("保存配置文件失败")
 	}
-	log.Info("资源初始化完成, 开始处理信息.")
-	log.Info("アトリは、高性能ですから!")
-	cli.OnDisconnected(func(bot *client.QQClient, e *client.ClientDisconnectedEvent) {
-		if conf.ReLogin.Enabled {
-			var times uint = 1
-			for {
-
-				if conf.ReLogin.MaxReloginTimes == 0 {
-				} else if times > conf.ReLogin.MaxReloginTimes {
-					break
-				}
-				log.Warnf("Bot已离线 (%v)，将在 %v 秒后尝试重连. 重连次数：%v",
-					e.Message, conf.ReLogin.ReLoginDelay, times)
-				times++
-				time.Sleep(time.Second * time.Duration(conf.ReLogin.ReLoginDelay))
-				rsp, err := cli.Login()
-				if err != nil {
-					log.Errorf("重连失败: %v", err)
-					continue
-				}
-				if !rsp.Success {
-					switch rsp.Error {
-					case client.NeedCaptcha:
-						log.Fatalf("重连失败: 需要验证码. (验证码处理正在开发中)")
-					case client.UnsafeDeviceError:
-						log.Fatalf("重连失败: 设备锁")
-					default:
-						log.Errorf("重连失败: %v", rsp.ErrorMessage)
-						continue
-					}
-				}
-				log.Info("重连成功")
-				return
-
-			}
-			log.Fatal("重连失败: 重连次数达到设置的上限值")
-		}
-		b.Release()
-		log.Fatalf("Bot已离线：%v", e.Message)
-	})
-	c := make(chan os.Signal, 1)
+	b := server.WebServer.Run(fmt.Sprintf("%s:%d", "0.0.0.0", conf.WebUi.WebUiPort), cli)
+	c := server.Console
 	signal.Notify(c, os.Interrupt, os.Kill)
 	<-c
 	b.Release()
