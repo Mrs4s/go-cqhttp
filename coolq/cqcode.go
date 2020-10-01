@@ -30,6 +30,27 @@ type PokeElement struct {
 	Target int64
 }
 
+type GiftElement struct {
+	Target int64
+	GiftId message.GroupGift
+}
+
+func (e *GiftElement) Type() message.ElementType {
+	return message.At
+}
+
+var GiftId = []message.GroupGift{
+	message.SweetWink,
+	message.HappyCola,
+	message.LuckyBracelet,
+	message.Cappuccino,
+	message.CatWatch,
+	message.FleeceGloves,
+	message.RainbowCandy,
+	message.Stronger,
+	message.LoveMicrophone,
+}
+
 func (e *PokeElement) Type() message.ElementType {
 	return message.At
 }
@@ -333,6 +354,16 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 		}
 		t, _ := strconv.ParseInt(d["qq"], 10, 64)
 		return &PokeElement{Target: t}, nil
+	case "gift":
+		if !group {
+			return nil, errors.New("private gift unsupported") // no free private gift
+		}
+		t, _ := strconv.ParseInt(d["qq"], 10, 64)
+		id, _ := strconv.Atoi(d["id"])
+		if id < 0 || id >= 9 {
+			return nil,errors.New("invalid gift id")
+		}
+		return &GiftElement{Target: t,GiftId: GiftId[id]}, nil
 	case "record":
 		if !group {
 			return nil, errors.New("private voice unsupported now")
