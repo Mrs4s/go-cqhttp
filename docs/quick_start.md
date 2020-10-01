@@ -107,13 +107,13 @@ enable ws?(Y/n)
 
 ## 如何自己构建
 
-1. [下载源码](https://github.com/Mrs4s/go-cqhttp/archive/master.zip)并解压
+1. [下载源码](https://github.com/Mrs4s/go-cqhttp/archive/master.zip)并解压 || 使用`git clone https://github.com/Mrs4s/go-cqhttp.git`来拉取
 
 2. [下载golang binary release](https://golang.google.cn/dl/)并安装或者[自己构建golang](https://golang.google.cn/doc/install/source)
 
 3. 在`cmd`或Linux命令行中，`cd`到目录中
 
-4. 输入`go build main.go`，`Enter`运行
+4. 输入`go build -ldflags "-s -w -extldflags '-static'"`，`Enter`运行
 
 *注：可以使用*`go env -w GOPROXY=https://goproxy.cn,direct`*来加速国内依赖安装速度*
 
