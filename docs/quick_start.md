@@ -8,7 +8,7 @@
 
 - Windows下32位文件为  `go-cqhttp-v*-windows-386.zip`
 - Windows下64位文件为 `go-cqhttp-v*-windows-amd64.zip`
-- Windows下arm用(如使用高通CPU的笔记本)文件为 `go-cqhttp-v*-linux-arm.zip`
+- Windows下arm用(如使用高通CPU的笔记本)文件为 `go-cqhttp-v*-windows-arm.zip`
 - Linux下32位文件为 `go-cqhttp-v*-linux-386.tar.gz`
 - Linux下64位文件为 `go-cqhttp-v*-linux-amd64.tar.gz`
 - Linux下arm用(如树莓派)文件为 `go-cqhttp-v*-linux-arm.tar.gz`
