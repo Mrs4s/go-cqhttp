@@ -303,10 +303,14 @@ func main() {
 			var times uint = 1
 			for {
 
-				if conf.ReLogin.MaxReloginTimes == 0 {
-				} else if times > conf.ReLogin.MaxReloginTimes {
+				if cli.Online {
+					log.Warn("Bot已登录")
+					return
+				}
+				if conf.ReLogin.MaxReloginTimes != 0 && times > conf.ReLogin.MaxReloginTimes {
 					break
 				}
+
 				log.Warnf("Bot已离线 (%v)，将在 %v 秒后尝试重连. 重连次数：%v",
 					e.Message, conf.ReLogin.ReLoginDelay, times)
 				times++
