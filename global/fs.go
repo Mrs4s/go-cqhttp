@@ -53,7 +53,7 @@ func IsAMRorSILK(b []byte) bool {
 }
 
 func FindFile(f, cache, PATH string) (data []byte, err error) {
-	data, err = nil, errors.New("can't find the file: "+f)
+	data, err = nil, errors.New("syntax error")
 	if strings.HasPrefix(f, "http") || strings.HasPrefix(f, "https") {
 		if cache == "" {
 			cache = "1"
@@ -74,7 +74,8 @@ func FindFile(f, cache, PATH string) (data []byte, err error) {
 			return nil, err
 		}
 	} else if strings.HasPrefix(f, "file") {
-		fu, err := url.Parse(f)
+		var fu *url.URL
+		fu, err = url.Parse(f)
 		if err != nil {
 			return nil, err
 		}

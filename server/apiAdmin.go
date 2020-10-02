@@ -155,6 +155,10 @@ func (s *webServer) Dologin() {
 		if conf.ReLogin.Enabled {
 			var times uint = 1
 			for {
+				if cli.Online {
+					log.Warn("Bot已登录")
+					return
+				}
 				if conf.ReLogin.MaxReloginTimes == 0 {
 				} else if times > conf.ReLogin.MaxReloginTimes {
 					break

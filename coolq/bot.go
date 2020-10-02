@@ -147,6 +147,10 @@ func (bot *CQBot) SendGroupMessage(groupId int64, m *message.SendingMessage) int
 				}
 			}
 		}
+		if i, ok := elem.(*GiftElement); ok {
+			bot.Client.SendGroupGift(uint64(groupId), uint64(i.Target), i.GiftId)
+			return 0
+		}
 		newElem = append(newElem, elem)
 	}
 	m.Elements = newElem
