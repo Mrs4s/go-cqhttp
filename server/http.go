@@ -118,7 +118,9 @@ func (c *httpClient) onBotPushEvent(m coolq.MSG) {
 			h["X-Signature"] = "sha1=" + hex.EncodeToString(mac.Sum(nil))
 		}
 		return h
-	}()).SetTimeout(time.Second * time.Duration(c.timeout)).Do()
+	}()).SetTimeout(time.Second * time.Duration(c.timeout)).F().Retry().Attempt(5).
+		WaitTime(time.Millisecond * 500).MaxWaitTime(time.Second * 5).
+		Do()
 	if err != nil {
 		log.Warnf("上报Event数据 %v 到 %v 失败: %v", m.ToJson(), c.addr, err)
 		return

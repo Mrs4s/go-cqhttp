@@ -100,7 +100,7 @@ func DefaultConfig() *JsonConfig {
 			BucketSize: 1,
 		},
 		PostMessageFormat: "string",
-		ForceFragmented:   true,
+		ForceFragmented:   false,
 		HttpConfig: &GoCQHttpConfig{
 			Enabled:  true,
 			Host:     "0.0.0.0",
