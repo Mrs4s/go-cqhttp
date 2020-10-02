@@ -50,4 +50,3 @@ func NeteaseMusicSongInfo(id string) (gjson.Result, error) {
 	}
 	return gjson.ParseBytes(d).Get("songs.0"), nil
 }
-

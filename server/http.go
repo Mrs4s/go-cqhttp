@@ -354,6 +354,11 @@ func (s *httpServer) OcrImage(c *gin.Context) {
 	c.JSON(200, s.bot.CQOcrImage(img))
 }
 
+func (s *httpServer) GetWordSlices(c *gin.Context) {
+	content := getParam(c, "content")
+	c.JSON(200, s.bot.CQGetWordSlices(content))
+}
+
 func (s *httpServer) SetGroupPortrait(c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	file := getParam(c, "file")
@@ -517,5 +522,8 @@ var httpApi = map[string]func(s *httpServer, c *gin.Context){
 	},
 	".ocr_image": func(s *httpServer, c *gin.Context) {
 		s.OcrImage(c)
+	},
+	".get_word_slices": func(s *httpServer, c *gin.Context) {
+		s.GetWordSlices(c)
 	},
 }

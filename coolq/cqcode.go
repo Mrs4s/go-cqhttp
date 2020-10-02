@@ -361,9 +361,9 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 		t, _ := strconv.ParseInt(d["qq"], 10, 64)
 		id, _ := strconv.Atoi(d["id"])
 		if id < 0 || id >= 9 {
-			return nil,errors.New("invalid gift id")
+			return nil, errors.New("invalid gift id")
 		}
-		return &GiftElement{Target: t,GiftId: GiftId[id]}, nil
+		return &GiftElement{Target: t, GiftId: GiftId[id]}, nil
 	case "record":
 		if !group {
 			return nil, errors.New("private voice unsupported now")
