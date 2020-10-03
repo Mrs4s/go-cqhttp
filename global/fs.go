@@ -94,3 +94,16 @@ func FindFile(f, cache, PATH string) (data []byte, err error) {
 	}
 	return
 }
+
+func DelFile(path string) bool {
+	err := os.Remove(path)
+	if err != nil {
+		// 删除失败
+		log.Error(err)
+		return false
+	} else {
+		// 删除成功
+		log.Info(path + "删除成功")
+		return true
+	}
+}

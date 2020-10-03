@@ -5,6 +5,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/hex"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -21,6 +22,7 @@ import (
 type httpServer struct {
 	engine *gin.Engine
 	bot    *coolq.CQBot
+	Http *http.Server
 }
 
 type httpClient struct {
@@ -79,13 +81,23 @@ func (s *httpServer) Run(addr, authToken string, bot *coolq.CQBot) {
 
 	go func() {
 		log.Infof("CQ HTTP 服务器已启动: %v", addr)
-		err := s.engine.Run(addr)
-		if err != nil {
+		s.Http=&http.Server{
+			Addr:addr,
+			Handler:s.engine,
+		}
+		if err := s.Http.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Error(err)
 			log.Infof("请检查端口是否被占用.")
 			time.Sleep(time.Second * 5)
 			os.Exit(1)
 		}
+		//err := s.engine.Run(addr)
+		//if err != nil {
+		//	log.Error(err)
+		//	log.Infof("请检查端口是否被占用.")
+		//	time.Sleep(time.Second * 5)
+		//	os.Exit(1)
+		//}
 	}()
 }
 
@@ -528,4 +540,17 @@ var httpApi = map[string]func(s *httpServer, c *gin.Context){
 	".get_word_slices": func(s *httpServer, c *gin.Context) {
 		s.GetWordSlices(c)
 	},
+}
+
+func (s *httpServer) ShutDown() {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := s.Http.Shutdown(ctx); err != nil {
+		log.Fatal("http Server Shutdown:", err)
+	}
+	select {
+	case <-ctx.Done():
+		log.Println("timeout of 5 seconds.")
+	}
+	log.Println("http Server exiting")
 }
