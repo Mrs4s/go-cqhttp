@@ -17,6 +17,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"os/signal"
 	"strconv"
 	"strings"
 	"time"
@@ -69,12 +70,21 @@ func (s *webServer) Run(addr string, cli *client.QQClient) *coolq.CQBot {
 	s.engine.Any("/admin/:action", s.admin)
 
 	go func() {
-		log.Infof("Admin API 服务器已启动: %v", addr)
-		err := s.engine.Run(addr)
-		if err != nil {
-			log.Error(err)
-			log.Infof("请检查端口是否被占用.")
-			time.Sleep(time.Second * 5)
+		//开启端口监听
+		if s.Conf.WebUi.Enabled {
+			log.Infof("Admin API 服务器已启动: %v", addr)
+			err := s.engine.Run(addr)
+			if err != nil {
+				log.Error(err)
+				log.Infof("请检查端口是否被占用.")
+				time.Sleep(time.Second * 5)
+				os.Exit(1)
+			}
+		} else {
+			//关闭端口监听
+			c := make(chan os.Signal, 1)
+			signal.Notify(c, os.Interrupt, os.Kill)
+			<-c
 			os.Exit(1)
 		}
 	}()
@@ -99,7 +109,7 @@ func (s *webServer) Dologin() {
 				img, _, _ := image.Decode(bytes.NewReader(rsp.CaptchaImage))
 				fmt.Println(asciiart.New("image", img).Art)
 				if conf.WebUi.WebInput {
-					log.Warn("请输入验证码 (captcha.jpg)： (http://127.0.0.1/admin/web_write 输入)")
+					log.Warnf("请输入验证码 (captcha.jpg)： (http://%s:%d/admin/do_web_write 输入)", conf.WebUi.Host, conf.WebUi.WebUiPort)
 					text = <-WebInput
 				} else {
 					log.Warn("请输入验证码 (captcha.jpg)： (Enter 提交)")
@@ -111,7 +121,7 @@ func (s *webServer) Dologin() {
 			case client.UnsafeDeviceError:
 				log.Warnf("账号已开启设备锁，请前往 -> %v <- 验证并重启Bot.", rsp.VerifyUrl)
 				if conf.WebUi.WebInput {
-					log.Infof(" (http://127.0.0.1/admin/web_write 确认后继续)....")
+					log.Infof(" (http://%s:%d/admin/do_web_write 确认后继续)....", conf.WebUi.Host, conf.WebUi.WebUiPort)
 					text = <-WebInput
 				} else {
 					log.Infof(" 按 Enter 继续....")
