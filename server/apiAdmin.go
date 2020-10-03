@@ -69,7 +69,7 @@ func (s *webServer) Run(addr string, cli *client.QQClient) *coolq.CQBot {
 	s.engine.Any("/admin/:action", s.admin)
 
 	go func() {
-		log.Infof("miraigo adminapi 服务器已启动: %v", addr)
+		log.Infof("Admin API 服务器已启动: %v", addr)
 		err := s.engine.Run(addr)
 		if err != nil {
 			log.Error(err)
@@ -118,6 +118,7 @@ func (s *webServer) Dologin() {
 					_, _ = s.Console.ReadString('\n')
 				}
 				log.Info(text)
+				os.Exit(0)
 				return
 			case client.OtherLoginError, client.UnknownLoginError:
 				log.Fatalf("登录失败: %v", rsp.ErrorMessage)
