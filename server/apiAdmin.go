@@ -17,6 +17,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"os/signal"
 	"strconv"
 	"strings"
 	"time"
@@ -69,12 +70,21 @@ func (s *webServer) Run(addr string, cli *client.QQClient) *coolq.CQBot {
 	s.engine.Any("/admin/:action", s.admin)
 
 	go func() {
-		log.Infof("Admin API 服务器已启动: %v", addr)
-		err := s.engine.Run(addr)
-		if err != nil {
-			log.Error(err)
-			log.Infof("请检查端口是否被占用.")
-			time.Sleep(time.Second * 5)
+		//开启端口监听
+		if s.Conf.WebUi.Enabled{
+			log.Infof("Admin API 服务器已启动: %v", addr)
+			err := s.engine.Run(addr)
+			if err != nil {
+				log.Error(err)
+				log.Infof("请检查端口是否被占用.")
+				time.Sleep(time.Second * 5)
+				os.Exit(1)
+			}
+		}else{
+			//关闭端口监听
+			c := make(chan os.Signal, 1)
+			signal.Notify(c, os.Interrupt, os.Kill)
+			<-c
 			os.Exit(1)
 		}
 	}()
