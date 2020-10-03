@@ -102,6 +102,17 @@ func (bot *CQBot) CQGetGroupMemberInfo(groupId, userId int64) MSG {
 	return OK(convertGroupMemberInfo(groupId, member))
 }
 
+func (bot *CQBot) CQGetWordSlices(content string) MSG {
+	slices, err := bot.Client.GetWordSegmentation(content)
+	if err != nil {
+		return Failed(100)
+	}
+	for i := 0; i < len(slices); i++ {
+		slices[i] = strings.ReplaceAll(slices[i], "\u0000", "")
+	}
+	return OK(MSG{"slices": slices})
+}
+
 // https://cqhttp.cc/docs/4.15/#/API?id=send_group_msg-%E5%8F%91%E9%80%81%E7%BE%A4%E6%B6%88%E6%81%AF
 func (bot *CQBot) CQSendGroupMessage(groupId int64, i interface{}, autoEscape bool) MSG {
 	var str string

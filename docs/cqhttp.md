@@ -287,6 +287,22 @@ Type: `cardimage`
 [CQ:cardimage,file=https://i.pixiv.cat/img-master/img/2020/03/25/00/00/08/80334602_p0_master1200.jpg]
 ```
 
+### 文本转语音
+
+> 注意：通过TX的TTS接口，采用的音源与登录账号的性别有关
+
+Type: `tts`
+
+范围: **发送(仅群聊)**
+
+参数:
+
+| 参数名 | 类型   | 说明        |
+| ------ | ------ | ----------- |
+| text     | string  | 内容 |
+
+示例: `[CQ:tts,text=这是一条测试消息]`
+
 ## API
 
 ### 设置群名
@@ -418,7 +434,21 @@ Type: `cardimage`
 | `group_id` | int64          | 群号                         |
 | `messages` | forward node[] | 自定义转发消息, 具体看CQCode |
 
-### 
+### 获取中文分词
+
+终结点: `/.get_word_slices`  
+
+**参数** 
+
+| 字段         | 类型   | 说明   |
+| ------------ | ------ | ------ |
+| `content` | string | 内容 |
+
+**响应数据**
+
+| 字段       | 类型              | 说明     |
+| ---------- | ----------------- | -------- |
+| `slices` |      string[]       | 词组 |
 
 ## 事件
 
