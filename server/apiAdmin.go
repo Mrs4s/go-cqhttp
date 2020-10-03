@@ -109,7 +109,7 @@ func (s *webServer) Dologin() {
 				img, _, _ := image.Decode(bytes.NewReader(rsp.CaptchaImage))
 				fmt.Println(asciiart.New("image", img).Art)
 				if conf.WebUi.WebInput {
-					log.Warnf("请输入验证码 (captcha.jpg)： (http://%s:%d/admin/web_write 输入)", conf.WebUi.Host, conf.WebUi.WebUiPort)
+					log.Warnf("请输入验证码 (captcha.jpg)： (http://%s:%d/admin/do_web_write 输入)", conf.WebUi.Host, conf.WebUi.WebUiPort)
 					text = <-WebInput
 				} else {
 					log.Warn("请输入验证码 (captcha.jpg)： (Enter 提交)")
@@ -121,7 +121,7 @@ func (s *webServer) Dologin() {
 			case client.UnsafeDeviceError:
 				log.Warnf("账号已开启设备锁，请前往 -> %v <- 验证并重启Bot.", rsp.VerifyUrl)
 				if conf.WebUi.WebInput {
-					log.Infof(" (http://%s:%d/admin/web_write 确认后继续)....", conf.WebUi.Host, conf.WebUi.WebUiPort)
+					log.Infof(" (http://%s:%d/admin/do_web_write 确认后继续)....", conf.WebUi.Host, conf.WebUi.WebUiPort)
 					text = <-WebInput
 				} else {
 					log.Infof(" 按 Enter 继续....")
