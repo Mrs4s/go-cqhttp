@@ -35,6 +35,7 @@ type JsonConfig struct {
 	PostMessageFormat   string                        `json:"post_message_format"`
 	Debug               bool                          `json:"debug"`
 	LogLevel            string                        `json:"log_level"`
+	WebUi               *GoCqWebUi                    `json:"web_ui"`
 }
 
 type CQHttpApiConfig struct {
@@ -76,6 +77,13 @@ type GoCQReverseWebsocketConfig struct {
 	ReverseApiUrl            string `json:"reverse_api_url"`
 	ReverseEventUrl          string `json:"reverse_event_url"`
 	ReverseReconnectInterval uint16 `json:"reverse_reconnect_interval"`
+}
+
+type GoCqWebUi struct {
+	Enabled   bool   `json:"enabled"`
+	Host      string `json:"host"`
+	WebUiPort uint64 `json:"web_ui_port"`
+	WebInput  bool   `json:"web_input"`
 }
 
 func DefaultConfig() *JsonConfig {
@@ -120,6 +128,12 @@ func DefaultConfig() *JsonConfig {
 				ReverseEventUrl:          "ws://you_websocket_event.server",
 				ReverseReconnectInterval: 3000,
 			},
+		},
+		WebUi: &GoCqWebUi{
+			Enabled:   true,
+			Host:      "0.0.0.0",
+			WebInput:  false,
+			WebUiPort: 9999,
 		},
 	}
 }
