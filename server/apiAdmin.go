@@ -139,7 +139,6 @@ func (s *webServer) Dologin() {
 	if conf.PostMessageFormat != "string" && conf.PostMessageFormat != "array" {
 		log.Warnf("post_message_format 配置错误, 将自动使用 string")
 		coolq.SetMessageFormat("string")
-		return
 	} else {
 		coolq.SetMessageFormat(conf.PostMessageFormat)
 	}
