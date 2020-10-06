@@ -50,7 +50,7 @@ var HttpuriAdmin = map[string]func(s *webServer, c *gin.Context){
 	"do_config_ws":      AdminDoConfigWs,      //修改config.json的正向ws部分
 	"do_config_reverse": AdminDoConfigReverse, //修改config.json 中的反向ws部分
 	"do_config_json":    AdminDoConfigJson,    //直接修改 config.json配置
-	"get_config_json":   AdminDoConfigJson,    //拉取 当前的config.json配置
+	"get_config_json":   AdminGetConfigJson,   //拉取 当前的config.json配置
 }
 
 func Failed(code int, msg string) coolq.MSG {
@@ -149,7 +149,6 @@ func (s *webServer) Dologin() {
 	if conf.PostMessageFormat != "string" && conf.PostMessageFormat != "array" {
 		log.Warnf("post_message_format 配置错误, 将自动使用 string")
 		coolq.SetMessageFormat("string")
-		return
 	} else {
 		coolq.SetMessageFormat(conf.PostMessageFormat)
 	}
