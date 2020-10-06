@@ -157,6 +157,7 @@ func (s *webServer) Dologin() {
 	}
 	log.Info("正在加载事件过滤器.")
 	global.BootFilter()
+	global.InitCodec()
 	coolq.IgnoreInvalidCQCode = conf.IgnoreInvalidCQCode
 	coolq.ForceFragmented = conf.ForceFragmented
 	log.Info("资源初始化完成, 开始处理信息.")
