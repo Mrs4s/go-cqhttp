@@ -22,7 +22,7 @@ import (
 type httpServer struct {
 	engine *gin.Engine
 	bot    *coolq.CQBot
-	Http *http.Server
+	Http   *http.Server
 }
 
 type httpClient struct {
@@ -81,9 +81,9 @@ func (s *httpServer) Run(addr, authToken string, bot *coolq.CQBot) {
 
 	go func() {
 		log.Infof("CQ HTTP 服务器已启动: %v", addr)
-		s.Http=&http.Server{
-			Addr:addr,
-			Handler:s.engine,
+		s.Http = &http.Server{
+			Addr:    addr,
+			Handler: s.engine,
 		}
 		if err := s.Http.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Error(err)

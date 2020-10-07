@@ -369,6 +369,7 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 			return nil, errors.New("private voice unsupported now")
 		}
 		data, err := bot.Client.GetTts(d["text"])
+		ioutil.WriteFile("tts.silk", data, 777)
 		if err != nil {
 			return nil, err
 		}
@@ -383,7 +384,10 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 			return nil, err
 		}
 		if !global.IsAMRorSILK(data) {
-			return nil, errors.New("unsupported voice file format (please use AMR file for now)")
+			data, err = global.Encoder(data)
+			if err != nil {
+				return nil, err
+			}
 		}
 		return &message.VoiceElement{Data: data}, nil
 	case "face":
