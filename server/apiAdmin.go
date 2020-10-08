@@ -130,33 +130,33 @@ func (s *webServer) Dologin() {
 				rsp, err = cli.SubmitCaptcha(strings.ReplaceAll(text, "\n", ""), rsp.CaptchaSign)
 				global.DelFile("captcha.jpg")
 				continue
-			case client.SNSNeededError:
+			case client.SMSNeededError:
 				log.Warnf("账号已开启设备锁, 按下 Enter 向手机 %v 发送短信验证码.", rsp.SMSPhone)
 				_, _ = s.Console.ReadString('\n')
-				if !cli.RequestSNS() {
+				if !cli.RequestSMS() {
 					log.Warnf("发送验证码失败，可能是请求过于频繁.")
 					time.Sleep(time.Second * 5)
 					os.Exit(0)
 				}
 				log.Warn("请输入短信验证码： (Enter 提交)")
 				text, _ = s.Console.ReadString('\n')
-				rsp, err = cli.SubmitSNS(strings.ReplaceAll(strings.ReplaceAll(text, "\n", ""), "\r", ""))
+				rsp, err = cli.SubmitSMS(strings.ReplaceAll(strings.ReplaceAll(text, "\n", ""), "\r", ""))
 				continue
-			case client.SNSOrVerifyNeededError:
+			case client.SMSOrVerifyNeededError:
 				log.Warnf("账号已开启设备锁，请选择验证方式:")
 				log.Warnf("1. 向手机 %v 发送短信验证码", rsp.SMSPhone)
 				log.Warnf("2. 使用手机QQ扫码验证.")
 				log.Warn("请输入(1 - 2): ")
 				text, _ = s.Console.ReadString('\n')
 				if strings.Contains(text, "1") {
-					if !cli.RequestSNS() {
+					if !cli.RequestSMS() {
 						log.Warnf("发送验证码失败，可能是请求过于频繁.")
 						time.Sleep(time.Second * 5)
 						os.Exit(0)
 					}
 					log.Warn("请输入短信验证码： (Enter 提交)")
 					text, _ = s.Console.ReadString('\n')
-					rsp, err = cli.SubmitSNS(strings.ReplaceAll(strings.ReplaceAll(text, "\n", ""), "\r", ""))
+					rsp, err = cli.SubmitSMS(strings.ReplaceAll(strings.ReplaceAll(text, "\n", ""), "\r", ""))
 					continue
 				}
 				log.Warnf("请前往 -> %v <- 验证并重启Bot.", rsp.VerifyUrl)
