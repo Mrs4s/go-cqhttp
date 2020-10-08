@@ -98,12 +98,24 @@ func (s *webServer) Dologin() {
 	s.Console = bufio.NewReader(os.Stdin)
 	conf := GetConf()
 	cli := s.Cli
+	cli.AllowSlider = true
 	rsp, err := cli.Login()
 	for {
 		global.Check(err)
 		var text string
 		if !rsp.Success {
 			switch rsp.Error {
+			case client.SliderNeededError:
+				if client.SystemDeviceInfo.Protocol == client.AndroidPhone {
+					log.Warnf("警告: Android Phone 强制要求暂不支持得滑条验证码, 请开启设备锁或切换到Android Pad协议验证通过后再使用Phone协议.")
+					log.Infof("按 Enter 继续....")
+					_, _ = s.Console.ReadString('\n')
+					os.Exit(0)
+				}
+				cli.AllowSlider = false
+				cli.Disconnect()
+				rsp, err = cli.Login()
+				continue
 			case client.NeedCaptcha:
 				_ = ioutil.WriteFile("captcha.jpg", rsp.CaptchaImage, 0644)
 				img, _, _ := image.Decode(bytes.NewReader(rsp.CaptchaImage))
@@ -118,6 +130,40 @@ func (s *webServer) Dologin() {
 				rsp, err = cli.SubmitCaptcha(strings.ReplaceAll(text, "\n", ""), rsp.CaptchaSign)
 				global.DelFile("captcha.jpg")
 				continue
+			case client.SNSNeededError:
+				log.Warnf("账号已开启设备锁, 按下 Enter 向手机 %v 发送短信验证码.", rsp.SMSPhone)
+				_, _ = s.Console.ReadString('\n')
+				if !cli.RequestSNS() {
+					log.Warnf("发送验证码失败，可能是请求过于频繁.")
+					time.Sleep(time.Second * 5)
+					os.Exit(0)
+				}
+				log.Warn("请输入短信验证码： (Enter 提交)")
+				text, _ = s.Console.ReadString('\n')
+				rsp, err = cli.SubmitSNS(strings.ReplaceAll(strings.ReplaceAll(text, "\n", ""), "\r", ""))
+				continue
+			case client.SNSOrVerifyNeededError:
+				log.Warnf("账号已开启设备锁，请选择验证方式:")
+				log.Warnf("1. 向手机 %v 发送短信验证码", rsp.SMSPhone)
+				log.Warnf("2. 使用手机QQ扫码验证.")
+				log.Warn("请输入(1 - 2): ")
+				text, _ = s.Console.ReadString('\n')
+				if strings.Contains(text, "1") {
+					if !cli.RequestSNS() {
+						log.Warnf("发送验证码失败，可能是请求过于频繁.")
+						time.Sleep(time.Second * 5)
+						os.Exit(0)
+					}
+					log.Warn("请输入短信验证码： (Enter 提交)")
+					text, _ = s.Console.ReadString('\n')
+					rsp, err = cli.SubmitSNS(strings.ReplaceAll(strings.ReplaceAll(text, "\n", ""), "\r", ""))
+					continue
+				}
+				log.Warnf("请前往 -> %v <- 验证并重启Bot.", rsp.VerifyUrl)
+				log.Infof(" 按 Enter 继续....")
+				_, _ = s.Console.ReadString('\n')
+				os.Exit(0)
+				return
 			case client.UnsafeDeviceError:
 				log.Warnf("账号已开启设备锁，请前往 -> %v <- 验证并重启Bot.", rsp.VerifyUrl)
 				if conf.WebUi.WebInput {
@@ -131,7 +177,10 @@ func (s *webServer) Dologin() {
 				os.Exit(0)
 				return
 			case client.OtherLoginError, client.UnknownLoginError:
-				log.Fatalf("登录失败: %v", rsp.ErrorMessage)
+				log.Warnf("登录失败: %v", rsp.ErrorMessage)
+				log.Infof(" 按 Enter 继续....")
+				_, _ = s.Console.ReadString('\n')
+				os.Exit(0)
 				return
 			}
 		}
