@@ -23,7 +23,7 @@ require (
 	github.com/tebeka/strftime v0.1.5 // indirect
 	github.com/tidwall/gjson v1.6.1
 	github.com/ugorji/go v1.1.10 // indirect
-	github.com/wdvxdr1123/go-silk v0.0.0-20201006020916-0398076200ea
+	github.com/wdvxdr1123/go-silk v0.0.0-20201007123416-b982fd3d91d6
 	github.com/xujiajun/nutsdb v0.5.0
 	github.com/yinghau76/go-ascii-art v0.0.0-20190517192627-e7f465a30189
 	golang.org/x/crypto v0.0.0-20201002170205-7f63de1d35b0 // indirect

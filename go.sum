@@ -105,6 +105,8 @@ github.com/ugorji/go/codec v1.1.10 h1:otofY/FAoRTMVqlVeDv/Kpm04D13lfJdrDqPbc3axg
 github.com/ugorji/go/codec v1.1.10/go.mod h1:jdPQoxvTq1mb8XV6RmofOz5UgNKV2czR6xvxXGwy1Bo=
 github.com/wdvxdr1123/go-silk v0.0.0-20201006020916-0398076200ea h1:OqkIV1VL5xm88jhXLaPHRJroeRknxN3EApcAVlNIIOw=
 github.com/wdvxdr1123/go-silk v0.0.0-20201006020916-0398076200ea/go.mod h1:5q9LFlBr+yX/J8Jd/9wHdXwkkjFkNyQIS7kX2Lgx/Zs=
+github.com/wdvxdr1123/go-silk v0.0.0-20201007123416-b982fd3d91d6 h1:lX18MCdNzT2zIi7K02x4C5cPkDXpL+wCb1YTAMXjLWQ=
+github.com/wdvxdr1123/go-silk v0.0.0-20201007123416-b982fd3d91d6/go.mod h1:5q9LFlBr+yX/J8Jd/9wHdXwkkjFkNyQIS7kX2Lgx/Zs=
 github.com/xujiajun/gorouter v1.2.0/go.mod h1:yJrIta+bTNpBM/2UT8hLOaEAFckO+m/qmR3luMIQygM=
 github.com/xujiajun/mmap-go v1.0.1 h1:7Se7ss1fLPPRW+ePgqGpCkfGIZzJV6JPq9Wq9iv/WHc=
 github.com/xujiajun/mmap-go v1.0.1/go.mod h1:CNN6Sw4SL69Sui00p0zEzcZKbt+5HtEnYUsc6BKKRMg=
