@@ -107,7 +107,7 @@ func (s *webServer) Dologin() {
 			switch rsp.Error {
 			case client.SliderNeededError:
 				if client.SystemDeviceInfo.Protocol == client.AndroidPhone {
-					log.Warnf("警告: Android Phone 强制要求暂不支持得滑条验证码, 请开启设备锁或切换到Android Pad协议验证通过后再使用Phone协议.")
+					log.Warnf("警告: Android Phone 强制要求暂不支持的滑条验证码, 请开启设备锁或切换到Watch协议验证通过后再使用.")
 					log.Infof("按 Enter 继续....")
 					_, _ = s.Console.ReadString('\n')
 					os.Exit(0)
