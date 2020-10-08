@@ -66,6 +66,7 @@ func NewQQBot(cli *client.QQClient, conf *global.JsonConfig) *CQBot {
 	bot.Client.OnGroupMemberJoined(bot.memberJoinEvent)
 	bot.Client.OnGroupMemberLeaved(bot.memberLeaveEvent)
 	bot.Client.OnGroupMemberPermissionChanged(bot.memberPermissionChangedEvent)
+	bot.Client.OnGroupMemberCardUpdated(bot.memberCardUpdatedEvent)
 	bot.Client.OnNewFriendRequest(bot.friendRequestEvent)
 	bot.Client.OnNewFriendAdded(bot.friendAddedEvent)
 	bot.Client.OnGroupInvited(bot.groupInvitedEvent)

@@ -520,3 +520,20 @@ Type: `tts`
 | `sub_type` | string | `honor` | 提示类型 |
 | `user_id`     | int64  |                | 成员id |
 | `honor_type` | string | `talkative:龙王` `performer:群聊之火` `emotion:快乐源泉` | 荣誉类型 |
+
+#### 群成员名片更新
+
+> 注意: 此事件不保证时效性，仅在收到消息时校验卡片
+
+**上报数据**
+
+| 字段          | 类型   | 可能的值       | 说明           |
+| ------------- | ------ | -------------- | -------------- |
+| `post_type`   | string | `notice`       | 上报类型       |
+| `notice_type` | string | `group_card` | 消息类型       |
+| `group_id` | int64 |  | 群号 |
+| `user_id`     | int64  |                | 成员id |
+| `card_new`     | int64  |                | 新名片 |
+| `card_old`     | int64  |                | 旧名片 |
+
+> PS: 当名片为空时 `card_xx` 字段为空字符串, 并不是昵称

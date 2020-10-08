@@ -310,6 +310,20 @@ func (bot *CQBot) memberPermissionChangedEvent(c *client.QQClient, e *client.Mem
 	})
 }
 
+func (bot *CQBot) memberCardUpdatedEvent(c *client.QQClient, e *client.MemberCardUpdatedEvent) {
+	log.Infof("群 %v 的 %v 更新了名片 %v -> %v", formatGroupName(e.Group), formatMemberName(e.Member), e.OldCard, e.Member.CardName)
+	bot.dispatchEventMessage(MSG{
+		"post_type":   "notice",
+		"notice_type": "group_card",
+		"group_id":    e.Group.Code,
+		"user_id":     e.Member.Uin,
+		"card_new":    e.Member.CardName,
+		"card_old":    e.OldCard,
+		"time":        time.Now().Unix(),
+		"self_id":     c.Uin,
+	})
+}
+
 func (bot *CQBot) memberJoinEvent(c *client.QQClient, e *client.MemberJoinGroupEvent) {
 	log.Infof("新成员 %v 进入了群 %v.", formatMemberName(e.Member), formatGroupName(e.Group))
 	bot.dispatchEventMessage(bot.groupIncrease(e.Group.Code, 0, e.Member.Uin))
