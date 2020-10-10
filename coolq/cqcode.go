@@ -449,9 +449,6 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 			if d["content"] != "" {
 				content = d["content"]
 			}
-			if purl == "" {
-				purl = "https://www.baidu.com" // fix vip song
-			}
 			return &QQMusicElement{MusicElement: MusicElement{
 				Title:      name,
 				Summary:    content,

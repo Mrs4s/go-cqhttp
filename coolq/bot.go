@@ -153,7 +153,11 @@ func (bot *CQBot) SendGroupMessage(groupId int64, m *message.SendingMessage) int
 			return 0
 		}
 		if i, ok := elem.(*QQMusicElement); ok {
-			ret, err := bot.Client.SendGroupRichMessage(groupId, 100497308, 1, 4, client.RichClientInfo{
+			var msgStyle uint32 = 4
+			if i.MusicUrl == "" {
+				msgStyle = 0 // fix vip song
+			}
+			ret, err := bot.Client.SendGroupRichMessage(groupId, 100497308, 1, msgStyle, client.RichClientInfo{
 				Platform:    1,
 				SdkVersion:  "0.0.0",
 				PackageName: "com.tencent.qqmusic",
