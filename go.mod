@@ -3,7 +3,7 @@ module github.com/Mrs4s/go-cqhttp
 go 1.14
 
 require (
-	github.com/Mrs4s/MiraiGo v0.0.0-20201005155759-f9b3c399e5e0
+	github.com/Mrs4s/MiraiGo v0.0.0-20201008134448-b53aaceaa1b4
 	github.com/fastly/go-utils v0.0.0-20180712184237-d95a45783239 // indirect
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-playground/validator/v10 v10.4.0 // indirect
@@ -23,7 +23,7 @@ require (
 	github.com/tebeka/strftime v0.1.5 // indirect
 	github.com/tidwall/gjson v1.6.1
 	github.com/ugorji/go v1.1.10 // indirect
-	github.com/wdvxdr1123/go-silk v0.0.0-20201006020916-0398076200ea
+	github.com/wdvxdr1123/go-silk v0.0.0-20201007123416-b982fd3d91d6
 	github.com/xujiajun/nutsdb v0.5.0
 	github.com/yinghau76/go-ascii-art v0.0.0-20190517192627-e7f465a30189
 	golang.org/x/crypto v0.0.0-20201002170205-7f63de1d35b0 // indirect
