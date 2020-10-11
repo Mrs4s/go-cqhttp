@@ -362,12 +362,48 @@ func (bot *CQBot) ConvertObjectMessage(m gjson.Result, group bool) (r []message.
 	return
 }
 
-func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.IMessageElement, error) {
+func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m message.IMessageElement, err error) {
 	switch t {
 	case "text":
 		return message.NewText(d["text"]), nil
 	case "image":
-		return bot.makeImageElem(t, d, group)
+		img,err := bot.makeImageElem(d, group)
+		if err != nil{
+			return nil, err
+		}
+		tp := d["type"]
+		if tp != "show" && tp != "flash" {
+			return img, nil
+		}
+		if i, ok := img.(*message.ImageElement); ok { // 秀图，闪照什么的就直接传了吧
+			if group {
+				img, err = bot.Client.UploadGroupImage(1, i.Data)
+			} else {
+				img, err = bot.Client.UploadPrivateImage(1, i.Data)
+			}
+			if err != nil {
+				return nil, err
+			}
+		}
+		switch tp {
+		case "flash":
+			if i, ok := img.(*message.GroupImageElement); ok{
+				return &message.GroupFlashPicElement{GroupImageElement: *i},nil
+			}
+			if i, ok := img.(*message.FriendImageElement); ok{
+				return &message.FriendFlashPicElement{FriendImageElement: *i},nil
+			}
+		case "show":
+			id, _ := strconv.ParseInt(d["id"], 10, 64)
+			if id < 40000 || id >= 40006 {
+				id = 40000
+			}
+			if i, ok := img.(*message.GroupImageElement); ok{
+				return &message.GroupShowPicElement{GroupImageElement: *i,EffectId: int32(id)},nil
+			}
+			return img,nil // 私聊还没做
+		}
+
 	case "poke":
 		if !group {
 			return nil, errors.New("todo") // TODO: private poke
@@ -388,6 +424,12 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 		if !group {
 			return nil, errors.New("private voice unsupported now")
 		}
+		defer func() {
+			if r := recover();r != nil {
+				m = nil
+				err = errors.New("tts 转换失败")
+			}
+		}()
 		data, err := bot.Client.GetTts(d["text"])
 		ioutil.WriteFile("tts.silk", data, 777)
 		if err != nil {
@@ -529,7 +571,7 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 		if maxheight == 0 {
 			maxheight = 1000
 		}
-		img, err := bot.makeImageElem(t, d, group)
+		img, err := bot.makeImageElem(d, group)
 		if err != nil {
 			return nil, errors.New("send cardimage faild")
 		}
@@ -537,6 +579,7 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (message.
 	default:
 		return nil, errors.New("unsupported cq code: " + t)
 	}
+	return nil, nil
 }
 
 func CQCodeEscapeText(raw string) string {
@@ -568,7 +611,7 @@ func CQCodeUnescapeValue(content string) string {
 }
 
 // 图片 elem 生成器，单独拎出来，用于公用
-func (bot *CQBot) makeImageElem(t string, d map[string]string, group bool) (message.IMessageElement, error) {
+func (bot *CQBot) makeImageElem(d map[string]string, group bool) (message.IMessageElement, error) {
 	f := d["file"]
 	if strings.HasPrefix(f, "http") || strings.HasPrefix(f, "https") {
 		cache := d["cache"]
@@ -616,7 +659,7 @@ func (bot *CQBot) makeImageElem(t string, d map[string]string, group bool) (mess
 		rawPath += ".cqimg"
 	}
 	if !global.PathExists(rawPath) && d["url"] != "" {
-		return bot.ToElement(t, map[string]string{"file": d["url"]}, group)
+		return bot.makeImageElem(map[string]string{"file": d["url"]}, group)
 	}
 	if global.PathExists(rawPath) {
 		b, err := ioutil.ReadFile(rawPath)
@@ -652,7 +695,7 @@ func (bot *CQBot) makeImageElem(t string, d map[string]string, group bool) (mess
 		}
 		if size == 0 {
 			if url != "" {
-				return bot.ToElement(t, map[string]string{"file": url}, group)
+				return bot.makeImageElem(map[string]string{"file": url}, group)
 			}
 			return nil, errors.New("img size is 0")
 		}
@@ -663,7 +706,7 @@ func (bot *CQBot) makeImageElem(t string, d map[string]string, group bool) (mess
 			rsp, err := bot.Client.QueryGroupImage(1, hash, size)
 			if err != nil {
 				if url != "" {
-					return bot.ToElement(t, map[string]string{"file": url}, group)
+					return bot.makeImageElem(map[string]string{"file": url}, group)
 				}
 				return nil, err
 			}
@@ -672,7 +715,7 @@ func (bot *CQBot) makeImageElem(t string, d map[string]string, group bool) (mess
 		rsp, err := bot.Client.QueryFriendImage(1, hash, size)
 		if err != nil {
 			if url != "" {
-				return bot.ToElement(t, map[string]string{"file": url}, group)
+				return bot.makeImageElem(map[string]string{"file": url}, group)
 			}
 			return nil, err
 		}
