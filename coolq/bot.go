@@ -59,21 +59,26 @@ func NewQQBot(cli *client.QQClient, conf *global.JsonConfig) *CQBot {
 	bot.Client.OnTempMessage(bot.tempMessageEvent)
 	bot.Client.OnGroupMuted(bot.groupMutedEvent)
 	bot.Client.OnGroupMessageRecalled(bot.groupRecallEvent)
+	bot.Client.OnGroupNotify(bot.groupNotifyEvent)
 	bot.Client.OnFriendMessageRecalled(bot.friendRecallEvent)
 	bot.Client.OnJoinGroup(bot.joinGroupEvent)
 	bot.Client.OnLeaveGroup(bot.leaveGroupEvent)
 	bot.Client.OnGroupMemberJoined(bot.memberJoinEvent)
 	bot.Client.OnGroupMemberLeaved(bot.memberLeaveEvent)
 	bot.Client.OnGroupMemberPermissionChanged(bot.memberPermissionChangedEvent)
+	bot.Client.OnGroupMemberCardUpdated(bot.memberCardUpdatedEvent)
 	bot.Client.OnNewFriendRequest(bot.friendRequestEvent)
 	bot.Client.OnNewFriendAdded(bot.friendAddedEvent)
 	bot.Client.OnGroupInvited(bot.groupInvitedEvent)
 	bot.Client.OnUserWantJoinGroup(bot.groupJoinReqEvent)
 	go func() {
 		i := conf.HeartbeatInterval
-		if i < 1 {
+		if i < 0 {
 			log.Warn("警告: 心跳功能已关闭，若非预期，请检查配置文件。")
 			return
+		}
+		if i == 0 {
+			i = 5
 		}
 		for {
 			time.Sleep(time.Second * i)
@@ -134,6 +139,56 @@ func (bot *CQBot) SendGroupMessage(groupId int64, m *message.SendingMessage) int
 			}
 			newElem = append(newElem, gv)
 			continue
+		}
+		if i, ok := elem.(*PokeElement); ok {
+			if group := bot.Client.FindGroup(groupId); group != nil {
+				if mem := group.FindMember(i.Target); mem != nil {
+					mem.Poke()
+					return 0
+				}
+			}
+		}
+		if i, ok := elem.(*GiftElement); ok {
+			bot.Client.SendGroupGift(uint64(groupId), uint64(i.Target), i.GiftId)
+			return 0
+		}
+		if i, ok := elem.(*QQMusicElement); ok {
+			ret, err := bot.Client.SendGroupRichMessage(groupId, 100497308, 1, 4, client.RichClientInfo{
+				Platform:    1,
+				SdkVersion:  "0.0.0",
+				PackageName: "com.tencent.qqmusic",
+				Signature:   "cbd27cd7c861227d013a25b2d10f0799",
+			}, &message.RichMessage{
+				Title:      i.Title,
+				Summary:    i.Summary,
+				Url:        i.Url,
+				PictureUrl: i.PictureUrl,
+				MusicUrl:   i.MusicUrl,
+			})
+			if err != nil {
+				log.Warnf("警告: 群 %v 富文本消息发送失败: %v", groupId, err)
+				return -1
+			}
+			return bot.InsertGroupMessage(ret)
+		}
+		if i, ok := elem.(*CloudMusicElement); ok {
+			ret, err := bot.Client.SendGroupRichMessage(groupId, 100495085, 1, 4, client.RichClientInfo{
+				Platform:    1,
+				SdkVersion:  "0.0.0",
+				PackageName: "com.netease.cloudmusic",
+				Signature:   "da6b069da1e2982db3e386233f68d76d",
+			}, &message.RichMessage{
+				Title:      i.Title,
+				Summary:    i.Summary,
+				Url:        i.Url,
+				PictureUrl: i.PictureUrl,
+				MusicUrl:   i.MusicUrl,
+			})
+			if err != nil {
+				log.Warnf("警告: 群 %v 富文本消息发送失败: %v", groupId, err)
+				return -1
+			}
+			return bot.InsertGroupMessage(ret)
 		}
 		newElem = append(newElem, elem)
 	}
@@ -223,7 +278,7 @@ func (bot *CQBot) Release() {
 
 func (bot *CQBot) dispatchEventMessage(m MSG) {
 	payload := gjson.Parse(m.ToJson())
-	filter := global.GetFilter()
+	filter := global.EventFilter
 	if filter != nil && (*filter).Eval(payload) == false {
 		log.Debug("Event filtered!")
 		return

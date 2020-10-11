@@ -18,6 +18,68 @@ Type : `reply`
 
 示例: `[CQ:reply,id=123456]`
 
+### 红包
+
+Type: `redbag`
+
+范围: **接收**
+
+参数:
+
+| 参数名 | 类型   | 说明        |
+| ------ | ------ | ----------- |
+| title  | string | 祝福语/口令 |
+
+示例: `[CQ:redbag,title=恭喜发财]`
+
+### 戳一戳
+
+> 注意：发送戳一戳消息无法撤回，返回的 `message id`  恒定为 `0`
+
+Type: `poke`
+
+范围: **发送(仅群聊)**
+
+参数:
+
+| 参数名 | 类型   | 说明        |
+| ------ | ------ | ----------- |
+| qq     | int64  | 需要戳的成员 |
+
+示例: `[CQ:poke,qq=123456]`
+
+### 礼物
+
+> 注意：仅支持免费礼物,发送群礼物消息无法撤回,返回的 `message id`  恒定为 `0`
+
+Type: `gift`
+
+范围: **发送(仅群聊,接收的时候不是CQ码)**
+
+参数:
+
+| 参数名  |类型     | 说明       |
+| ------ | ------ | -----------|
+| qq     | int64  | 接收礼物的成员 |
+| id     | int    | 礼物的类型  |
+
+目前支持的礼物ID:
+
+| id |类型       |
+| ---| ---------|
+| 0  | 甜Wink   | 
+| 1  | 快乐肥宅水| 
+| 2  | 幸运手链  | 
+| 3  | 卡布奇诺  | 
+| 4  | 猫咪手表  | 
+| 5  | 绒绒手套  | 
+| 6  | 彩虹糖果  | 
+| 7  | 坚强     |
+| 8  | 告白话筒  |
+
+
+示例: `[CQ:gift,qq=123456,id=8]`
+
  ### 合并转发
 
 Type: `forward`
@@ -123,7 +185,7 @@ Type: `node`
 
 Type: `xml`
 
-范围: **发送**
+范围: **发送/接收**
 
 参数:
 
@@ -134,9 +196,12 @@ Type: `xml`
 
 示例: `[CQ:xml,data=xxxx]`
 
-####一些xml样例
-####ps:重要：xml中的value部分，记得html实体化处理后，再打加入到cq码中
+#### 一些xml样例
+
+#### ps:重要：xml中的value部分，记得html实体化处理后，再打加入到cq码中
+
 #### qq音乐
+
 ```xml
 <?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="2" templateID="1" action="web" brief="&#91;分享&#93; 十年" sourceMsgId="0" url="https://i.y.qq.com/v8/playsong.html?_wv=1&amp;songid=4830342&amp;souce=qqshare&amp;source=qqshare&amp;ADTAG=qqshare" flag="0" adverSign="0" multiMsgFlag="0" ><item layout="2"><audio cover="http://imgcache.qq.com/music/photo/album_500/26/500_albumpic_89526_0.jpg" src="http://ws.stream.qqmusic.qq.com/C400003mAan70zUy5O.m4a?guid=1535153710&amp;vkey=D5315B8C0603653592AD4879A8A3742177F59D582A7A86546E24DD7F282C3ACF81526C76E293E57EA1E42CF19881C561275D919233333ADE&amp;uin=&amp;fromtag=3" /><title>十年</title><summary>陈奕迅</summary></item><source name="QQ音乐" icon="https://i.gtimg.cn/open/app_icon/01/07/98/56/1101079856_100_m.png" url="http://web.p.qq.com/qqmpmobile/aio/app.html?id=1101079856" action="app"  a_actionData="com.tencent.qqmusic" i_actionData="tencent1101079856://" appid="1101079856" /></msg>
 ```
@@ -165,6 +230,78 @@ Type: `xml`
 </msg>
 ```
 
+### json消息支持
+
+Type: `json`
+
+范围: **发送/接收**
+
+参数:
+
+| 参数名 | 类型   | 说明                                                         |
+| ------ | ------ | ------------------------------------------------------------ |
+| data     | string | json内容，json的所有字符串记得实体化处理|
+| resid     | int32 | 默认不填为0，走小程序通道，填了走富文本通道发送|
+
+json中的字符串需要进行转义：
+
+>","=>`&#44;`、
+
+>"&"=> `&amp;`、
+
+>"["=>`&#91;`、
+
+>"]"=>`&#93;`、
+
+否则无法正确得到解析
+
+示例json 的cq码：
+```test
+[CQ:json,data={"app":"com.tencent.miniapp"&#44;"desc":""&#44;"view":"notification"&#44;"ver":"0.0.0.1"&#44;"prompt":"&#91;应用&#93;"&#44;"appID":""&#44;"sourceName":""&#44;"actionData":""&#44;"actionData_A":""&#44;"sourceUrl":""&#44;"meta":{"notification":{"appInfo":{"appName":"全国疫情数据统计"&#44;"appType":4&#44;"appid":1109659848&#44;"iconUrl":"http:\/\/gchat.qpic.cn\/gchatpic_new\/719328335\/-2010394141-6383A777BEB79B70B31CE250142D740F\/0"}&#44;"data":&#91;{"title":"确诊"&#44;"value":"80932"}&#44;{"title":"今日确诊"&#44;"value":"28"}&#44;{"title":"疑似"&#44;"value":"72"}&#44;{"title":"今日疑似"&#44;"value":"5"}&#44;{"title":"治愈"&#44;"value":"60197"}&#44;{"title":"今日治愈"&#44;"value":"1513"}&#44;{"title":"死亡"&#44;"value":"3140"}&#44;{"title":"今**亡"&#44;"value":"17"}&#93;&#44;"title":"中国加油，武汉加油"&#44;"button":&#91;{"name":"病毒：SARS-CoV-2，其导致疾病命名 COVID-19"&#44;"action":""}&#44;{"name":"传染源：新冠肺炎的患者。无症状感染者也可能成为传染源。"&#44;"action":""}&#93;&#44;"emphasis_keyword":""}}&#44;"text":""&#44;"sourceAd":""}]
+```
+
+
+### cardimage 一种xml的图片消息（装逼大图）
+
+ps: xml 接口的消息都存在风控风险，请自行兼容发送失败后的处理（可以失败后走普通图片模式）
+
+Type: `cardimage`
+
+范围: **发送**
+
+参数:
+
+| 参数名 | 类型   | 说明                                                         |
+| ------ | ------ | ------------------------------------------------------------ |
+| file     | string | 和image的file字段对齐，支持也是一样的|
+| minwidth     | int64 | 默认不填为400，最小width|
+| minheight     | int64 | 默认不填为400，最小height|
+| maxwidth     | int64 | 默认不填为500，最大width|
+| maxheight     | int64 | 默认不填为1000，最大height|
+| source     | string | 分享来源的名称，可以留空|
+| icon     | string | 分享来源的icon图标url，可以留空|
+
+
+示例cardimage 的cq码：
+```test
+[CQ:cardimage,file=https://i.pixiv.cat/img-master/img/2020/03/25/00/00/08/80334602_p0_master1200.jpg]
+```
+
+### 文本转语音
+
+> 注意：通过TX的TTS接口，采用的音源与登录账号的性别有关
+
+Type: `tts`
+
+范围: **发送(仅群聊)**
+
+参数:
+
+| 参数名 | 类型   | 说明        |
+| ------ | ------ | ----------- |
+| text     | string  | 内容 |
+
+示例: `[CQ:tts,text=这是一条测试消息]`
 
 ## API
 
@@ -177,7 +314,29 @@ Type: `xml`
 | 字段     | 类型   | 说明 |
 | -------- | ------ | ---- |
 | group_id | int64  | 群号 |
-| name     | string | 新名 |
+| group_name     | string | 新名 |
+
+### 设置群头像
+
+终结点: `/set_group_portrait`  
+
+**参数** 
+
+| 字段     | 类型   | 说明 |
+| -------- | ------ | ---- |
+| group_id | int64  | 群号 |
+| file     | string | 图片文件名 |
+| cache |  int | 表示是否使用已缓存的文件 |
+
+[1]`file` 参数支持以下几种格式：
+
+- 绝对路径，例如 `file:///C:\\Users\Richard\Pictures\1.png`，格式使用 [`file` URI](https://tools.ietf.org/html/rfc8089)
+- 网络 URL，例如 `http://i1.piimg.com/567571/fdd6e7b6d93f1ef0.jpg`
+- Base64 编码，例如 `base64://iVBORw0KGgoAAAANSUhEUgAAABQAAAAVCAIAAADJt1n/AAAAKElEQVQ4EWPk5+RmIBcwkasRpG9UM4mhNxpgowFGMARGEwnBIEJVAAAdBgBNAZf+QAAAAABJRU5ErkJggg==`
+
+[2]`cache`参数: 通过网络 URL 发送时有效，`1`表示使用缓存，`0`关闭关闭缓存，默认 为`1`
+
+[3] 目前这个API在登录一段时间后因cookie失效而失效，请考虑后使用
 
 ### 获取图片信息
 
@@ -275,7 +434,21 @@ Type: `xml`
 | `group_id` | int64          | 群号                         |
 | `messages` | forward node[] | 自定义转发消息, 具体看CQCode |
 
-### 
+### 获取中文分词
+
+终结点: `/.get_word_slices`  
+
+**参数** 
+
+| 字段         | 类型   | 说明   |
+| ------------ | ------ | ------ |
+| `content` | string | 内容 |
+
+**响应数据**
+
+| 字段       | 类型              | 说明     |
+| ---------- | ----------------- | -------- |
+| `slices` |      string[]       | 词组 |
 
 ## 事件
 
@@ -303,3 +476,64 @@ Type: `xml`
 | `user_id`     | int64  |                | 好友id        |
 | `message_id`  | int64  |                | 被撤回的消息id |
 
+#### 群内戳一戳
+
+> 注意：此事件无法在平板和手表协议上触发
+
+**上报数据**
+
+| 字段          | 类型   | 可能的值       | 说明           |
+| ------------- | ------ | -------------- | -------------- |
+| `post_type`   | string | `notice`       | 上报类型       |
+| `notice_type` | string | `notify` | 消息类型       |
+| `group_id` | int64 |  | 群号 |
+| `sub_type` | string | `poke` | 提示类型 |
+| `user_id`     | int64  |                | 发送者id    |
+| `target_id` | int64 | | 被戳者id |
+
+#### 群红包运气王提示
+
+> 注意：此事件无法在平板和手表协议上触发
+
+**上报数据**
+
+| 字段          | 类型   | 可能的值       | 说明           |
+| ------------- | ------ | -------------- | -------------- |
+| `post_type`   | string | `notice`       | 上报类型       |
+| `notice_type` | string | `notify` | 消息类型       |
+| `group_id` | int64 |  | 群号 |
+| `sub_type` | string | `lucky_king` | 提示类型 |
+| `user_id`     | int64  |                | 红包发送者id |
+| `target_id` | int64 | | 运气王id |
+
+#### 群成员荣誉变更提示
+
+> 注意：此事件无法在平板和手表协议上触发
+
+**上报数据**
+
+| 字段          | 类型   | 可能的值       | 说明           |
+| ------------- | ------ | -------------- | -------------- |
+| `post_type`   | string | `notice`       | 上报类型       |
+| `notice_type` | string | `notify` | 消息类型       |
+| `group_id` | int64 |  | 群号 |
+| `sub_type` | string | `honor` | 提示类型 |
+| `user_id`     | int64  |                | 成员id |
+| `honor_type` | string | `talkative:龙王` `performer:群聊之火` `emotion:快乐源泉` | 荣誉类型 |
+
+#### 群成员名片更新
+
+> 注意: 此事件不保证时效性，仅在收到消息时校验卡片
+
+**上报数据**
+
+| 字段          | 类型   | 可能的值       | 说明           |
+| ------------- | ------ | -------------- | -------------- |
+| `post_type`   | string | `notice`       | 上报类型       |
+| `notice_type` | string | `group_card` | 消息类型       |
+| `group_id` | int64 |  | 群号 |
+| `user_id`     | int64  |                | 成员id |
+| `card_new`     | int64  |                | 新名片 |
+| `card_old`     | int64  |                | 旧名片 |
+
+> PS: 当名片为空时 `card_xx` 字段为空字符串, 并不是昵称

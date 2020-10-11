@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -123,6 +124,14 @@ func (c *websocketClient) connectEvent() {
 		}
 		return
 	}
+
+	handshake := fmt.Sprintf(`{"meta_event_type":"lifecycle","post_type":"meta_event","self_id":%d,"sub_type":"connect","time":%d}`,
+		c.bot.Client.Uin, time.Now().Unix())
+	err = conn.WriteMessage(websocket.TextMessage, []byte(handshake))
+	if err != nil {
+		log.Warnf("反向Websocket 握手时出现错误: %v", err)
+	}
+
 	log.Infof("已连接到反向Websocket Event服务器 %v", c.conf.ReverseEventUrl)
 	c.eventConn = &websocketConn{Conn: conn}
 }
@@ -146,6 +155,14 @@ func (c *websocketClient) connectUniversal() {
 		}
 		return
 	}
+
+	handshake := fmt.Sprintf(`{"meta_event_type":"lifecycle","post_type":"meta_event","self_id":%d,"sub_type":"connect","time":%d}`,
+		c.bot.Client.Uin, time.Now().Unix())
+	err = conn.WriteMessage(websocket.TextMessage, []byte(handshake))
+	if err != nil {
+		log.Warnf("反向Websocket 握手时出现错误: %v", err)
+	}
+
 	wrappedConn := &websocketConn{Conn: conn}
 	go c.listenApi(wrappedConn, true)
 	c.universalConn = wrappedConn
@@ -206,20 +223,12 @@ func (c *websocketClient) onBotPushEvent(m coolq.MSG) {
 
 func (s *websocketServer) event(w http.ResponseWriter, r *http.Request) {
 	if s.token != "" {
-		if auth := r.URL.Query().Get("access_token"); auth != s.token && auth != "" {
-			log.Warnf("已拒绝 %v 的 Websocket 请求: Token错误", r.RemoteAddr)
-			w.WriteHeader(401)
-			return
-		} else if auth := strings.SplitN(r.Header.Get("Authorization"), " ", 2); len(auth) == 2 {
-			if auth[1] != s.token {
-				log.Warnf("已拒绝 %v 的 Websocket 请求: Token错误", r.RemoteAddr)
+		if auth := r.URL.Query().Get("access_token"); auth != s.token {
+			if auth := strings.SplitN(r.Header.Get("Authorization"), " ", 2); len(auth) != 2 || auth[1] != s.token {
+				log.Warnf("已拒绝 %v 的 Websocket 请求: Token鉴权失败", r.RemoteAddr)
 				w.WriteHeader(401)
 				return
 			}
-		} else {
-			log.Warnf("已拒绝 %v 的 Websocket 请求: 空Token或传入格式错误", r.RemoteAddr)
-			w.WriteHeader(401)
-			return
 		}
 	}
 	c, err := upgrader.Upgrade(w, r, nil)
@@ -245,20 +254,12 @@ func (s *websocketServer) event(w http.ResponseWriter, r *http.Request) {
 
 func (s *websocketServer) api(w http.ResponseWriter, r *http.Request) {
 	if s.token != "" {
-		if auth := r.URL.Query().Get("access_token"); auth != s.token && auth != "" {
-			log.Warnf("已拒绝 %v 的 Websocket 请求: Token错误", r.RemoteAddr)
-			w.WriteHeader(401)
-			return
-		} else if auth := strings.SplitN(r.Header.Get("Authorization"), " ", 2); len(auth) == 2 {
-			if auth[1] != s.token {
-				log.Warnf("已拒绝 %v 的 Websocket 请求: Token错误", r.RemoteAddr)
+		if auth := r.URL.Query().Get("access_token"); auth != s.token {
+			if auth := strings.SplitN(r.Header.Get("Authorization"), " ", 2); len(auth) != 2 || auth[1] != s.token {
+				log.Warnf("已拒绝 %v 的 Websocket 请求: Token鉴权失败", r.RemoteAddr)
 				w.WriteHeader(401)
 				return
 			}
-		} else {
-			log.Warnf("已拒绝 %v 的 Websocket 请求: 空Token或传入格式错误", r.RemoteAddr)
-			w.WriteHeader(401)
-			return
 		}
 	}
 	c, err := upgrader.Upgrade(w, r, nil)
@@ -273,20 +274,12 @@ func (s *websocketServer) api(w http.ResponseWriter, r *http.Request) {
 
 func (s *websocketServer) any(w http.ResponseWriter, r *http.Request) {
 	if s.token != "" {
-		if auth := r.URL.Query().Get("access_token"); auth != s.token && auth != "" {
-			log.Warnf("已拒绝 %v 的 Websocket 请求: Token错误", r.RemoteAddr)
-			w.WriteHeader(401)
-			return
-		} else if auth := strings.SplitN(r.Header.Get("Authorization"), " ", 2); len(auth) == 2 {
-			if auth[1] != s.token {
-				log.Warnf("已拒绝 %v 的 Websocket 请求: Token错误", r.RemoteAddr)
+		if auth := r.URL.Query().Get("access_token"); auth != s.token {
+			if auth := strings.SplitN(r.Header.Get("Authorization"), " ", 2); len(auth) != 2 || auth[1] != s.token {
+				log.Warnf("已拒绝 %v 的 Websocket 请求: Token鉴权失败", r.RemoteAddr)
 				w.WriteHeader(401)
 				return
 			}
-		} else {
-			log.Warnf("已拒绝 %v 的 Websocket 请求: 空Token或传入格式错误", r.RemoteAddr)
-			w.WriteHeader(401)
-			return
 		}
 	}
 	c, err := upgrader.Upgrade(w, r, nil)
@@ -300,7 +293,6 @@ func (s *websocketServer) any(w http.ResponseWriter, r *http.Request) {
 		c.Close()
 		return
 	}
-
 	log.Infof("接受 Websocket 连接: %v (/)", r.RemoteAddr)
 	conn := &websocketConn{Conn: c}
 	s.eventConn = append(s.eventConn, conn)
@@ -328,7 +320,7 @@ func (c *websocketConn) handleRequest(bot *coolq.CQBot, payload []byte) {
 			c.Close()
 		}
 	}()
-
+	global.RateLimit(context.Background())
 	j := gjson.ParseBytes(payload)
 	t := strings.ReplaceAll(j.Get("action").Str, "_async", "")
 	log.Debugf("WS接收到API调用: %v 参数: %v", t, j.Get("params").Raw)
@@ -381,12 +373,11 @@ var wsApi = map[string]func(*coolq.CQBot, gjson.Result) coolq.MSG{
 		return bot.CQGetGroupInfo(p.Get("group_id").Int())
 	},
 	"get_group_member_list": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
-		return bot.CQGetGroupMemberList(p.Get("group_id").Int())
+		return bot.CQGetGroupMemberList(p.Get("group_id").Int(), p.Get("no_cache").Bool())
 	},
 	"get_group_member_info": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		return bot.CQGetGroupMemberInfo(
 			p.Get("group_id").Int(), p.Get("user_id").Int(),
-			p.Get("no_cache").Bool(),
 		)
 	},
 	"send_msg": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
@@ -461,7 +452,18 @@ var wsApi = map[string]func(*coolq.CQBot, gjson.Result) coolq.MSG{
 		}())
 	},
 	"set_group_name": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
-		return bot.CQSetGroupName(p.Get("group_id").Int(), p.Get("name").Str)
+		return bot.CQSetGroupName(p.Get("group_id").Int(), p.Get("group_name").Str)
+	},
+	"set_group_admin": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
+		return bot.CQSetGroupAdmin(p.Get("group_id").Int(), p.Get("user_id").Int(), func() bool {
+			if p.Get("enable").Exists() {
+				return p.Get("enable").Bool()
+			}
+			return true
+		}())
+	},
+	"_send_group_notice": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
+		return bot.CQSetGroupMemo(p.Get("group_id").Int(), p.Get("content").Str)
 	},
 	"set_group_leave": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		return bot.CQSetGroupLeave(p.Get("group_id").Int())
@@ -484,11 +486,29 @@ var wsApi = map[string]func(*coolq.CQBot, gjson.Result) coolq.MSG{
 	"can_send_record": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		return bot.CQCanSendRecord()
 	},
+	"get_stranger_info": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
+		return bot.CQGetStrangerInfo(p.Get("user_id").Int())
+	},
 	"get_status": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		return bot.CQGetStatus()
 	},
 	"get_version_info": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		return bot.CQGetVersionInfo()
+	},
+	"_get_vip_info": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
+		return bot.CQGetVipInfo(p.Get("user_id").Int())
+	},
+	"reload_event_filter": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
+		return bot.CQReloadEventFilter()
+	},
+	".ocr_image": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
+		return bot.CQOcrImage(p.Get("image").Str)
+	},
+	".get_word_slices": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
+		return bot.CQGetWordSlices(p.Get("content").Str)
+	},
+	"set_group_portrait": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
+		return bot.CQSetGroupPortrait(p.Get("group_id").Int(), p.Get("file").String(), p.Get("cache").String())
 	},
 	".handle_quick_operation": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		return bot.CQHandleQuickOperation(p.Get("context"), p.Get("operation"))

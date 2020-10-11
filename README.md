@@ -80,13 +80,14 @@
 | ------------------------------------------------------------ |
 | [私聊信息](https://cqhttp.cc/docs/4.15/#/Post?id=私聊消息)   |
 | [群消息](https://cqhttp.cc/docs/4.15/#/Post?id=群消息)       |
-| [群消息撤回(拓展Event)](docs/cqhttp.md#群消息撤回)             |
-| [好友消息撤回(拓展Event)](docs/cqhttp.md#好友消息撤回)             |
+| [群消息撤回(拓展Event)](docs/cqhttp.md#群消息撤回)           |
+| [好友消息撤回(拓展Event)](docs/cqhttp.md#好友消息撤回)       |
+| [群内提示事件(拓展Event)(龙王等事件)](docs/cqhttp.md#群内戳一戳)           |
 | [群管理员变动](https://cqhttp.cc/docs/4.15/#/Post?id=群管理员变动) |
 | [群成员减少](https://cqhttp.cc/docs/4.15/#/Post?id=群成员减少) |
 | [群成员增加](https://cqhttp.cc/docs/4.15/#/Post?id=群成员增加) |
 | [群禁言](https://cqhttp.cc/docs/4.15/#/Post?id=群禁言)       |
-| [群文件上传](https://cqhttp.cc/docs/4.15/#/Post?id=群文件上传)|
+| [群文件上传](https://cqhttp.cc/docs/4.15/#/Post?id=群文件上传) |
 | [加好友请求](https://cqhttp.cc/docs/4.15/#/Post?id=加好友请求) |
 | [加群请求/邀请](https://cqhttp.cc/docs/4.15/#/Post?id=加群请求／邀请) |
 

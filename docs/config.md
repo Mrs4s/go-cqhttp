@@ -22,10 +22,15 @@ go-cqhttp 支持导入CQHTTP的配置文件, 具体步骤为:
 	"password_encrypted": "",
 	"enable_db": true,
 	"access_token": "",
-    "relogin": {
-        "enabled": true,
-        "relogin_delay": 3,
-        "max_relogin_times": 0
+	"relogin": {
+		"enabled": true,
+		"relogin_delay": 3,
+		"max_relogin_times": 0
+	},
+    "_rate_limit": {
+		"enabled": false,
+		"frequency": 1,
+		"bucket_size": 1
     },
 	"post_message_format": "string",
 	"ignore_invalid_cqcode": false,
@@ -66,10 +71,13 @@ go-cqhttp 支持导入CQHTTP的配置文件, 具体步骤为:
 | relogin              | bool     | 是否自动重新登录                                                     |
 | relogin_delay        | int      | 重登录延时（秒）                                                     |
 | max_relogin_times    | uint     | 最大重登录次数，若0则不设置上限                                        |
+| _rate_limit          | bool     | 是否启用API调用限速                                                  |
+| frequency            | float64  | 1s内能调用API的次数                                                  |
+| bucket_size          | int      | 令牌桶的大小，默认为1，修改此值可允许一定程度内连续调用api                 |
 | post_message_format  | string   | 上报信息类型                                                        |
 | ignore_invalid_cqcode| bool     | 是否忽略错误的CQ码                                                   |
 | force_fragmented     | bool     | 是否强制分片发送群长消息                                              |
-| heartbeat_interval   | int64    | 心跳间隔时间，单位秒，若0则关闭心跳                                     |
+| heartbeat_interval   | int64    | 心跳间隔时间，单位秒。小于0则关闭心跳，等于0使用默认值(5秒)        |
 | http_config          | object   | HTTP API配置                                                       |
 | ws_config            | object   | Websocket API 配置                                                 |
 | ws_reverse_servers   | object[] | 反向 Websocket API 配置                                             |
@@ -79,6 +87,31 @@ go-cqhttp 支持导入CQHTTP的配置文件, 具体步骤为:
 > 解密后密码将储存在内存中，用于自动重连等功能. 所以此加密并不能防止内存读取.
 > 解密密钥在使用完成后并不会留存在内存中, 所以可用相对简单的字符串作为密钥
 
-> 注2: 分片发送为原酷Q发送长消息的老方案, 发送速度更优/兼容性更好。关闭后将优先使用新方案, 能发送更长的消息, 但发送速度更慢，在部分老客户端将无法解析.
+> 注2: 分片发送为原酷Q发送长消息的老方案, 发送速度更优/兼容性更好，但在有发言频率限制的群里，可能无法发送。关闭后将优先使用新方案, 能发送更长的消息, 但发送速度更慢，在部分老客户端将无法解析.
 
 > 注3：关闭心跳服务可能引起断线，请谨慎关闭
+
+## 设备信息
+
+默认生成的设备信息如下所示: 
+
+``` json
+{
+	"protocol": 0,
+	"display": "xxx",
+	"finger_print": "xxx",
+	"boot_id": "xxx",
+	"proc_version": "xxx",
+	"imei": "xxx"
+}
+```
+
+在大部分情况下 我们只需要关心 `protocol` 字段: 
+
+| 值   | 类型          | 限制                                                  |
+| ---- | ------------- | ----------------------------------------------------- |
+| 0    | Android Pad   | 无法接收 `group_notify` 事件、无法接收口令红包        |
+| 1    | Android Phone | 无                                                    |
+| 2    | Android Watch | 除了 `Android Pad` 有的限制外还包括: 无法接收撤回消息 |
+
+> 注意, 根据协议的不同, 各类消息有所限制
