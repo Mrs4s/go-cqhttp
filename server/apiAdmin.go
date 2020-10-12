@@ -96,6 +96,10 @@ func (s *webServer) Run(addr string, cli *client.QQClient) *coolq.CQBot {
 
 func (s *webServer) Dologin() {
 	s.Console = bufio.NewReader(os.Stdin)
+	readLine := func() (str string) {
+		_, _ = fmt.Scanf("%s", &str)
+		return
+	}
 	conf := GetConf()
 	cli := s.Cli
 	cli.AllowSlider = true
@@ -109,7 +113,7 @@ func (s *webServer) Dologin() {
 				if client.SystemDeviceInfo.Protocol == client.AndroidPhone {
 					log.Warnf("警告: Android Phone 强制要求暂不支持的滑条验证码, 请开启设备锁或切换到Watch协议验证通过后再使用.")
 					log.Infof("按 Enter 继续....")
-					_, _ = s.Console.ReadString('\n')
+					readLine()
 					os.Exit(0)
 				}
 				cli.AllowSlider = false
@@ -125,7 +129,7 @@ func (s *webServer) Dologin() {
 					text = <-WebInput
 				} else {
 					log.Warn("请输入验证码 (captcha.jpg)： (Enter 提交)")
-					text, _ = s.Console.ReadString('\n')
+					text = readLine()
 				}
 				rsp, err = cli.SubmitCaptcha(strings.ReplaceAll(text, "\n", ""), rsp.CaptchaSign)
 				global.DelFile("captcha.jpg")
@@ -139,7 +143,7 @@ func (s *webServer) Dologin() {
 					os.Exit(0)
 				}
 				log.Warn("请输入短信验证码： (Enter 提交)")
-				text, _ = s.Console.ReadString('\n')
+				text = readLine()
 				rsp, err = cli.SubmitSMS(strings.ReplaceAll(strings.ReplaceAll(text, "\n", ""), "\r", ""))
 				continue
 			case client.SMSOrVerifyNeededError:
@@ -155,13 +159,13 @@ func (s *webServer) Dologin() {
 						os.Exit(0)
 					}
 					log.Warn("请输入短信验证码： (Enter 提交)")
-					text, _ = s.Console.ReadString('\n')
+					text = readLine()
 					rsp, err = cli.SubmitSMS(strings.ReplaceAll(strings.ReplaceAll(text, "\n", ""), "\r", ""))
 					continue
 				}
 				log.Warnf("请前往 -> %v <- 验证并重启Bot.", rsp.VerifyUrl)
 				log.Infof("按 Enter 继续....")
-				_, _ = s.Console.ReadString('\n')
+				readLine()
 				os.Exit(0)
 				return
 			case client.UnsafeDeviceError:
@@ -171,7 +175,7 @@ func (s *webServer) Dologin() {
 					text = <-WebInput
 				} else {
 					log.Infof("按 Enter 继续....")
-					_, _ = s.Console.ReadString('\n')
+					readLine()
 				}
 				log.Info(text)
 				os.Exit(0)
@@ -179,7 +183,7 @@ func (s *webServer) Dologin() {
 			case client.OtherLoginError, client.UnknownLoginError:
 				log.Warnf("登录失败: %v", rsp.ErrorMessage)
 				log.Infof("按 Enter 继续....")
-				_, _ = s.Console.ReadString('\n')
+				readLine()
 				os.Exit(0)
 				return
 			}
