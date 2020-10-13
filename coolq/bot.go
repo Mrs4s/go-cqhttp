@@ -217,6 +217,40 @@ func (bot *CQBot) SendPrivateMessage(target int64, m *message.SendingMessage) in
 			newElem = append(newElem, fm)
 			continue
 		}
+		if i, ok := elem.(*QQMusicElement); ok {
+			var msgStyle uint32 = 4
+			if i.MusicUrl == "" {
+				msgStyle = 0 // fix vip song
+			}
+			bot.Client.SendFriendRichMessage(target, 100497308, 1, msgStyle, client.RichClientInfo{
+				Platform:    1,
+				SdkVersion:  "0.0.0",
+				PackageName: "com.tencent.qqmusic",
+				Signature:   "cbd27cd7c861227d013a25b2d10f0799",
+			}, &message.RichMessage{
+				Title:      i.Title,
+				Summary:    i.Summary,
+				Url:        i.Url,
+				PictureUrl: i.PictureUrl,
+				MusicUrl:   i.MusicUrl,
+			})
+			return 0
+		}
+		if i, ok := elem.(*CloudMusicElement); ok {
+			bot.Client.SendFriendRichMessage(target, 100495085, 1, 4, client.RichClientInfo{
+				Platform:    1,
+				SdkVersion:  "0.0.0",
+				PackageName: "com.netease.cloudmusic",
+				Signature:   "da6b069da1e2982db3e386233f68d76d",
+			}, &message.RichMessage{
+				Title:      i.Title,
+				Summary:    i.Summary,
+				Url:        i.Url,
+				PictureUrl: i.PictureUrl,
+				MusicUrl:   i.MusicUrl,
+			})
+			return 0
+		}
 		newElem = append(newElem, elem)
 	}
 	m.Elements = newElem
