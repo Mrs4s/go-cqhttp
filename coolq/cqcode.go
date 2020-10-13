@@ -367,8 +367,8 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m messag
 	case "text":
 		return message.NewText(d["text"]), nil
 	case "image":
-		img,err := bot.makeImageElem(d, group)
-		if err != nil{
+		img, err := bot.makeImageElem(d, group)
+		if err != nil {
 			return nil, err
 		}
 		tp := d["type"]
@@ -387,21 +387,21 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m messag
 		}
 		switch tp {
 		case "flash":
-			if i, ok := img.(*message.GroupImageElement); ok{
-				return &message.GroupFlashPicElement{GroupImageElement: *i},nil
+			if i, ok := img.(*message.GroupImageElement); ok {
+				return &message.GroupFlashPicElement{GroupImageElement: *i}, nil
 			}
-			if i, ok := img.(*message.FriendImageElement); ok{
-				return &message.FriendFlashPicElement{FriendImageElement: *i},nil
+			if i, ok := img.(*message.FriendImageElement); ok {
+				return &message.FriendFlashPicElement{FriendImageElement: *i}, nil
 			}
 		case "show":
 			id, _ := strconv.ParseInt(d["id"], 10, 64)
 			if id < 40000 || id >= 40006 {
 				id = 40000
 			}
-			if i, ok := img.(*message.GroupImageElement); ok{
-				return &message.GroupShowPicElement{GroupImageElement: *i,EffectId: int32(id)},nil
+			if i, ok := img.(*message.GroupImageElement); ok {
+				return &message.GroupShowPicElement{GroupImageElement: *i, EffectId: int32(id)}, nil
 			}
-			return img,nil // 私聊还没做
+			return img, nil // 私聊还没做
 		}
 
 	case "poke":
@@ -425,7 +425,7 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m messag
 			return nil, errors.New("private voice unsupported now")
 		}
 		defer func() {
-			if r := recover();r != nil {
+			if r := recover(); r != nil {
 				m = nil
 				err = errors.New("tts 转换失败")
 			}
@@ -524,6 +524,24 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m messag
 			}}, nil
 		}
 		if d["type"] == "custom" {
+			if d["subtype"] == "qq" {
+				return &QQMusicElement{MusicElement{
+					Title:      d["title"],
+					Summary:    d["content"],
+					Url:        d["url"],
+					PictureUrl: d["image"],
+					MusicUrl:   d["purl"],
+				}}, nil
+			}
+			if d["subtype"] == "163" {
+				return &CloudMusicElement{MusicElement{
+					Title:      d["title"],
+					Summary:    d["content"],
+					Url:        d["url"],
+					PictureUrl: d["image"],
+					MusicUrl:   d["purl"],
+				}}, nil
+			}
 			xml := fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="2" templateID="1" action="web" brief="[分享] %s" sourceMsgId="0" url="%s" flag="0" adverSign="0" multiMsgFlag="0"><item layout="2"><audio cover="%s" src="%s"/><title>%s</title><summary>%s</summary></item><source name="音乐" icon="https://i.gtimg.cn/open/app_icon/01/07/98/56/1101079856_100_m.png" url="http://web.p.qq.com/qqmpmobile/aio/app.html?id=1101079856" action="app" a_actionData="com.tencent.qqmusic" i_actionData="tencent1101079856://" appid="1101079856" /></msg>`,
 				d["title"], d["url"], d["image"], d["audio"], d["title"], d["content"])
 			return &message.ServiceElement{
