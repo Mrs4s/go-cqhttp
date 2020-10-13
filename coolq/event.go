@@ -278,6 +278,26 @@ func (bot *CQBot) friendRecallEvent(c *client.QQClient, e *client.FriendMessageR
 	})
 }
 
+func (bot *CQBot) offlineFileEvent(c *client.QQClient, e *client.OfflineFileEvent) {
+	f := c.FindFriend(e.Sender)
+	if f == nil {
+		return
+	}
+	log.Infof("好友 %v(%v) 发送了离线文件 %v", f.Nickname, f.Uin, e.FileName)
+	bot.dispatchEventMessage(MSG{
+		"post_type":   "notice",
+		"notice_type": "offline_file",
+		"user_id":     e.Sender,
+		"file": MSG{
+			"name": e.FileName,
+			"size": e.FileSize,
+			"url":  e.DownloadUrl,
+		},
+		"self_id": c.Uin,
+		"time":    time.Now().Unix(),
+	})
+}
+
 func (bot *CQBot) joinGroupEvent(c *client.QQClient, group *client.GroupInfo) {
 	log.Infof("Bot进入了群 %v.", formatGroupName(group))
 	bot.dispatchEventMessage(bot.groupIncrease(group.Code, 0, c.Uin))
