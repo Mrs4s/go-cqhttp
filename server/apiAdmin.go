@@ -77,7 +77,9 @@ func (s *webServer) Run(addr string, cli *client.QQClient) *coolq.CQBot {
 			if err != nil {
 				log.Error(err)
 				log.Infof("请检查端口是否被占用.")
-				time.Sleep(time.Second * 5)
+				c := make(chan os.Signal, 1)
+				signal.Notify(c, os.Interrupt, os.Kill)
+				<-c
 				os.Exit(1)
 			}
 		} else {
