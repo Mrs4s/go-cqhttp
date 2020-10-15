@@ -501,7 +501,7 @@ var httpApi = map[string]func(s *httpServer, c *gin.Context){
 	"get_forward_msg": func(s *httpServer, c *gin.Context) {
 		s.GetForwardMessage(c)
 	},
-	"get_group_msg": func(s *httpServer, c *gin.Context) {
+	"get_msg": func(s *httpServer, c *gin.Context) {
 		s.GetGroupMessage(c)
 	},
 	"get_group_honor_info": func(s *httpServer, c *gin.Context) {
