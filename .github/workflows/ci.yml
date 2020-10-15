@@ -19,7 +19,7 @@ jobs:
         goarch: ["386", amd64, arm, arm64]
         exclude: 
           - goos: darwin
-            goarch: arm
+            goarch: arm, arm64
       fail-fast: true
 
     steps:
