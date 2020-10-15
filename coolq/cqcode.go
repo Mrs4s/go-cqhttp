@@ -573,27 +573,27 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m messag
 	case "cardimage":
 		source := d["source"]
 		icon := d["icon"]
-		minwidth, _ := strconv.ParseInt(d["minwidth"], 10, 64)
-		if minwidth == 0 {
-			minwidth = 200
+		minWidth, _ := strconv.ParseInt(d["minwidth"], 10, 64)
+		if minWidth == 0 {
+			minWidth = 200
 		}
-		minheight, _ := strconv.ParseInt(d["minheight"], 10, 64)
-		if minheight == 0 {
-			minheight = 200
+		minHeight, _ := strconv.ParseInt(d["minheight"], 10, 64)
+		if minHeight == 0 {
+			minHeight = 200
 		}
-		maxwidth, _ := strconv.ParseInt(d["maxwidth"], 10, 64)
-		if maxwidth == 0 {
-			maxwidth = 500
+		maxWidth, _ := strconv.ParseInt(d["maxwidth"], 10, 64)
+		if maxWidth == 0 {
+			maxWidth = 500
 		}
-		maxheight, _ := strconv.ParseInt(d["maxheight"], 10, 64)
-		if maxheight == 0 {
-			maxheight = 1000
+		maxHeight, _ := strconv.ParseInt(d["maxheight"], 10, 64)
+		if maxHeight == 0 {
+			maxHeight = 1000
 		}
 		img, err := bot.makeImageElem(d, group)
 		if err != nil {
 			return nil, errors.New("send cardimage faild")
 		}
-		return bot.SendNewPic(img, source, icon, minwidth, minheight, maxwidth, maxheight, group)
+		return bot.SendNewPic(img, source, icon, minWidth, minHeight, maxWidth, maxHeight, group)
 	default:
 		return nil, errors.New("unsupported cq code: " + t)
 	}
