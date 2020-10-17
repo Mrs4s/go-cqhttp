@@ -376,7 +376,6 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m messag
 			return nil, err
 		}
 		tp := d["type"]
-		fmt.Println(tp)
 		if tp != "show" && tp != "flash" {
 			return img, nil
 		}
