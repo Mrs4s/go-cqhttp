@@ -99,7 +99,7 @@ func (s *webServer) Run(addr string, cli *client.QQClient) *coolq.CQBot {
 func (s *webServer) Dologin() {
 	s.Console = bufio.NewReader(os.Stdin)
 	readLine := func() (str string) {
-		_, _ = fmt.Scanf("%s", &str)
+		str, _ = s.Console.ReadString('\n')
 		return
 	}
 	conf := GetConf()
