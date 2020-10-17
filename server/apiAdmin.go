@@ -165,13 +165,12 @@ func (s *webServer) Dologin() {
 					rsp, err = cli.SubmitSMS(strings.ReplaceAll(strings.ReplaceAll(text, "\n", ""), "\r", ""))
 					continue
 				}
-				log.Warnf("请前往 -> %v <- 验证并重启Bot.", rsp.VerifyUrl)
-				log.Infof("按 Enter 继续....")
+				log.Warnf("请前往 -> %v <- 验证后按 Enter 继续.", rsp.VerifyUrl)
 				readLine()
-				os.Exit(0)
-				return
+				rsp, err = cli.Login()
+				continue
 			case client.UnsafeDeviceError:
-				log.Warnf("账号已开启设备锁，请前往 -> %v <- 验证并重启Bot.", rsp.VerifyUrl)
+				log.Warnf("账号已开启设备锁，请前往 -> %v <- 验证并按 Enter 继续.", rsp.VerifyUrl)
 				if conf.WebUi.WebInput {
 					log.Infof(" (http://%s:%d/admin/do_web_write 确认后继续)....", conf.WebUi.Host, conf.WebUi.WebUiPort)
 					text = <-WebInput
@@ -180,8 +179,8 @@ func (s *webServer) Dologin() {
 					readLine()
 				}
 				log.Info(text)
-				os.Exit(0)
-				return
+				rsp, err = cli.Login()
+				continue
 			case client.OtherLoginError, client.UnknownLoginError:
 				log.Warnf("登录失败: %v", rsp.ErrorMessage)
 				log.Infof("按 Enter 继续....")
