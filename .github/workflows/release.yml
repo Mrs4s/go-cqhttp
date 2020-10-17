@@ -26,5 +26,6 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           goos: ${{ matrix.goos }}
           goarch: ${{ matrix.goarch }}
+          goversion: "https://golang.org/dl/go1.15.3.linux-amd64.tar.gz"
           ldflags: -w -s -X "github.com/Mrs4s/go-cqhttp/coolq.Version=${{ env.RELEASE_VERSION }}"
           
