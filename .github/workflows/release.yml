@@ -13,7 +13,9 @@ jobs:
         goarch: ["386", amd64, arm]
         exclude: 
           - goos: darwin
-            goarch: [arm, "386"]
+            goarch: arm
+          - goos: darwin
+            goarch: "386"
             
     steps:
       - uses: actions/checkout@v2
