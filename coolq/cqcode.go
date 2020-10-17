@@ -269,7 +269,7 @@ func (bot *CQBot) ConvertStringMessage(m string, group bool) (r []message.IMessa
 		for _, p := range ps {
 			d[p[1]] = CQCodeUnescapeValue(p[2])
 		}
-		if t == "reply" && group {
+		if t == "reply" {
 			if len(r) > 0 {
 				if _, ok := r[0].(*message.ReplyElement); ok {
 					log.Warnf("警告: 一条信息只能包含一个 Reply 元素.")
@@ -278,7 +278,7 @@ func (bot *CQBot) ConvertStringMessage(m string, group bool) (r []message.IMessa
 			}
 			mid, err := strconv.Atoi(d["id"])
 			if err == nil {
-				org := bot.GetGroupMessage(int32(mid))
+				org := bot.GetMessage(int32(mid))
 				if org != nil {
 					r = append([]message.IMessageElement{
 						&message.ReplyElement{
@@ -322,7 +322,7 @@ func (bot *CQBot) ConvertObjectMessage(m gjson.Result, group bool) (r []message.
 			}
 			mid, err := strconv.Atoi(e.Get("data").Get("id").Str)
 			if err == nil {
-				org := bot.GetGroupMessage(int32(mid))
+				org := bot.GetMessage(int32(mid))
 				if org != nil {
 					r = append([]message.IMessageElement{
 						&message.ReplyElement{
@@ -367,8 +367,8 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m messag
 	case "text":
 		return message.NewText(d["text"]), nil
 	case "image":
-		img,err := bot.makeImageElem(d, group)
-		if err != nil{
+		img, err := bot.makeImageElem(d, group)
+		if err != nil {
 			return nil, err
 		}
 		tp := d["type"]
@@ -387,21 +387,21 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m messag
 		}
 		switch tp {
 		case "flash":
-			if i, ok := img.(*message.GroupImageElement); ok{
-				return &message.GroupFlashPicElement{GroupImageElement: *i},nil
+			if i, ok := img.(*message.GroupImageElement); ok {
+				return &message.GroupFlashPicElement{GroupImageElement: *i}, nil
 			}
-			if i, ok := img.(*message.FriendImageElement); ok{
-				return &message.FriendFlashPicElement{FriendImageElement: *i},nil
+			if i, ok := img.(*message.FriendImageElement); ok {
+				return &message.FriendFlashPicElement{FriendImageElement: *i}, nil
 			}
 		case "show":
 			id, _ := strconv.ParseInt(d["id"], 10, 64)
 			if id < 40000 || id >= 40006 {
 				id = 40000
 			}
-			if i, ok := img.(*message.GroupImageElement); ok{
-				return &message.GroupShowPicElement{GroupImageElement: *i,EffectId: int32(id)},nil
+			if i, ok := img.(*message.GroupImageElement); ok {
+				return &message.GroupShowPicElement{GroupImageElement: *i, EffectId: int32(id)}, nil
 			}
-			return img,nil // 私聊还没做
+			return img, nil // 私聊还没做
 		}
 
 	case "poke":
@@ -421,11 +421,8 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m messag
 		}
 		return &GiftElement{Target: t, GiftId: GiftId[id]}, nil
 	case "tts":
-		if !group {
-			return nil, errors.New("private voice unsupported now")
-		}
 		defer func() {
-			if r := recover();r != nil {
+			if r := recover(); r != nil {
 				m = nil
 				err = errors.New("tts 转换失败")
 			}
@@ -437,9 +434,6 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m messag
 		}
 		return &message.VoiceElement{Data: data}, nil
 	case "record":
-		if !group {
-			return nil, errors.New("private voice unsupported now")
-		}
 		f := d["file"]
 		data, err := global.FindFile(f, d["cache"], global.VOICE_PATH)
 		if err != nil {
@@ -524,6 +518,24 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m messag
 			}}, nil
 		}
 		if d["type"] == "custom" {
+			if d["subtype"] == "qq" {
+				return &QQMusicElement{MusicElement{
+					Title:      d["title"],
+					Summary:    d["content"],
+					Url:        d["url"],
+					PictureUrl: d["image"],
+					MusicUrl:   d["purl"],
+				}}, nil
+			}
+			if d["subtype"] == "163" {
+				return &CloudMusicElement{MusicElement{
+					Title:      d["title"],
+					Summary:    d["content"],
+					Url:        d["url"],
+					PictureUrl: d["image"],
+					MusicUrl:   d["purl"],
+				}}, nil
+			}
 			xml := fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="2" templateID="1" action="web" brief="[分享] %s" sourceMsgId="0" url="%s" flag="0" adverSign="0" multiMsgFlag="0"><item layout="2"><audio cover="%s" src="%s"/><title>%s</title><summary>%s</summary></item><source name="音乐" icon="https://i.gtimg.cn/open/app_icon/01/07/98/56/1101079856_100_m.png" url="http://web.p.qq.com/qqmpmobile/aio/app.html?id=1101079856" action="app" a_actionData="com.tencent.qqmusic" i_actionData="tencent1101079856://" appid="1101079856" /></msg>`,
 				d["title"], d["url"], d["image"], d["audio"], d["title"], d["content"])
 			return &message.ServiceElement{
@@ -555,27 +567,27 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m messag
 	case "cardimage":
 		source := d["source"]
 		icon := d["icon"]
-		minwidth, _ := strconv.ParseInt(d["minwidth"], 10, 64)
-		if minwidth == 0 {
-			minwidth = 200
+		minWidth, _ := strconv.ParseInt(d["minwidth"], 10, 64)
+		if minWidth == 0 {
+			minWidth = 200
 		}
-		minheight, _ := strconv.ParseInt(d["minheight"], 10, 64)
-		if minheight == 0 {
-			minheight = 200
+		minHeight, _ := strconv.ParseInt(d["minheight"], 10, 64)
+		if minHeight == 0 {
+			minHeight = 200
 		}
-		maxwidth, _ := strconv.ParseInt(d["maxwidth"], 10, 64)
-		if maxwidth == 0 {
-			maxwidth = 500
+		maxWidth, _ := strconv.ParseInt(d["maxwidth"], 10, 64)
+		if maxWidth == 0 {
+			maxWidth = 500
 		}
-		maxheight, _ := strconv.ParseInt(d["maxheight"], 10, 64)
-		if maxheight == 0 {
-			maxheight = 1000
+		maxHeight, _ := strconv.ParseInt(d["maxheight"], 10, 64)
+		if maxHeight == 0 {
+			maxHeight = 1000
 		}
 		img, err := bot.makeImageElem(d, group)
 		if err != nil {
 			return nil, errors.New("send cardimage faild")
 		}
-		return bot.SendNewPic(img, source, icon, minwidth, minheight, maxwidth, maxheight, group)
+		return bot.SendNewPic(img, source, icon, minWidth, minHeight, maxWidth, maxHeight, group)
 	default:
 		return nil, errors.New("unsupported cq code: " + t)
 	}
@@ -725,7 +737,7 @@ func (bot *CQBot) makeImageElem(d map[string]string, group bool) (message.IMessa
 }
 
 //SendNewPic 一种xml 方式发送的群消息图片
-func (bot *CQBot) SendNewPic(elem message.IMessageElement, source string, icon string, minwidth int64, minheigt int64, maxwidth int64, maxheight int64, group bool) (*message.ServiceElement, error) {
+func (bot *CQBot) SendNewPic(elem message.IMessageElement, source string, icon string, minWidth int64, minHeight int64, maxWidth int64, maxHeight int64, group bool) (*message.ServiceElement, error) {
 	var xml string
 	xml = ""
 	if i, ok := elem.(*message.ImageElement); ok {
@@ -735,7 +747,7 @@ func (bot *CQBot) SendNewPic(elem message.IMessageElement, source string, icon s
 				log.Warnf("警告: 好友消息 %v 消息图片上传失败: %v", 1, err)
 				return nil, err
 			}
-			xml = fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="5" templateID="12345" action="" brief="&#91;分享&#93;我看到一张很赞的图片，分享给你，快来看！" sourceMsgId="0" url="%s" flag="0" adverSign="0" multiMsgFlag="0"><item layout="0" advertiser_id="0" aid="0"><image uuid="%x" md5="%x" GroupFiledid="0" filesize="%d" local_path="%s" minWidth="%d" minHeight="%d" maxWidth="%d" maxHeight="%d" /></item><source name="%s" icon="%s" action="" appid="-1" /></msg>`, "", gm.Md5, gm.Md5, len(i.Data), "", minwidth, minheigt, maxwidth, maxheight, source, icon)
+			xml = fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="5" templateID="12345" action="" brief="&#91;分享&#93;我看到一张很赞的图片，分享给你，快来看！" sourceMsgId="0" url="%s" flag="0" adverSign="0" multiMsgFlag="0"><item layout="0" advertiser_id="0" aid="0"><image uuid="%x" md5="%x" GroupFiledid="0" filesize="%d" local_path="%s" minWidth="%d" minHeight="%d" maxWidth="%d" maxHeight="%d" /></item><source name="%s" icon="%s" action="" appid="-1" /></msg>`, "", gm.Md5, gm.Md5, len(i.Data), "", minWidth, minHeight, maxWidth, maxHeight, source, icon)
 
 		} else {
 			gm, err := bot.Client.UploadGroupImage(1, i.Data)
@@ -743,14 +755,14 @@ func (bot *CQBot) SendNewPic(elem message.IMessageElement, source string, icon s
 				log.Warnf("警告: 群 %v 消息图片上传失败: %v", 1, err)
 				return nil, err
 			}
-			xml = fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="5" templateID="12345" action="" brief="&#91;分享&#93;我看到一张很赞的图片，分享给你，快来看！" sourceMsgId="0" url="%s" flag="0" adverSign="0" multiMsgFlag="0"><item layout="0" advertiser_id="0" aid="0"><image uuid="%x" md5="%x" GroupFiledid="0" filesize="%d" local_path="%s" minWidth="%d" minHeight="%d" maxWidth="%d" maxHeight="%d" /></item><source name="%s" icon="%s" action="" appid="-1" /></msg>`, "", gm.Md5, gm.Md5, len(i.Data), "", minwidth, minheigt, maxwidth, maxheight, source, icon)
+			xml = fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="5" templateID="12345" action="" brief="&#91;分享&#93;我看到一张很赞的图片，分享给你，快来看！" sourceMsgId="0" url="%s" flag="0" adverSign="0" multiMsgFlag="0"><item layout="0" advertiser_id="0" aid="0"><image uuid="%x" md5="%x" GroupFiledid="0" filesize="%d" local_path="%s" minWidth="%d" minHeight="%d" maxWidth="%d" maxHeight="%d" /></item><source name="%s" icon="%s" action="" appid="-1" /></msg>`, "", gm.Md5, gm.Md5, len(i.Data), "", minWidth, minHeight, maxWidth, maxHeight, source, icon)
 		}
 	}
 	if i, ok := elem.(*message.GroupImageElement); ok {
-		xml = fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="5" templateID="12345" action="" brief="&#91;分享&#93;我看到一张很赞的图片，分享给你，快来看！" sourceMsgId="0" url="%s" flag="0" adverSign="0" multiMsgFlag="0"><item layout="0" advertiser_id="0" aid="0"><image uuid="%x" md5="%x" GroupFiledid="0" filesize="%d" local_path="%s" minWidth="%d" minHeight="%d" maxWidth="%d" maxHeight="%d" /></item><source name="%s" icon="%s" action="" appid="-1" /></msg>`, "", i.Md5, i.Md5, 0, "", minwidth, minheigt, maxwidth, maxheight, source, icon)
+		xml = fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="5" templateID="12345" action="" brief="&#91;分享&#93;我看到一张很赞的图片，分享给你，快来看！" sourceMsgId="0" url="%s" flag="0" adverSign="0" multiMsgFlag="0"><item layout="0" advertiser_id="0" aid="0"><image uuid="%x" md5="%x" GroupFiledid="0" filesize="%d" local_path="%s" minWidth="%d" minHeight="%d" maxWidth="%d" maxHeight="%d" /></item><source name="%s" icon="%s" action="" appid="-1" /></msg>`, "", i.Md5, i.Md5, 0, "", minWidth, minHeight, maxWidth, maxHeight, source, icon)
 	}
 	if i, ok := elem.(*message.FriendImageElement); ok {
-		xml = fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="5" templateID="12345" action="" brief="&#91;分享&#93;我看到一张很赞的图片，分享给你，快来看！" sourceMsgId="0" url="%s" flag="0" adverSign="0" multiMsgFlag="0"><item layout="0" advertiser_id="0" aid="0"><image uuid="%x" md5="%x" GroupFiledid="0" filesize="%d" local_path="%s" minWidth="%d" minHeight="%d" maxWidth="%d" maxHeight="%d" /></item><source name="%s" icon="%s" action="" appid="-1" /></msg>`, "", i.Md5, i.Md5, 0, "", minwidth, minheigt, maxwidth, maxheight, source, icon)
+		xml = fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="5" templateID="12345" action="" brief="&#91;分享&#93;我看到一张很赞的图片，分享给你，快来看！" sourceMsgId="0" url="%s" flag="0" adverSign="0" multiMsgFlag="0"><item layout="0" advertiser_id="0" aid="0"><image uuid="%x" md5="%x" GroupFiledid="0" filesize="%d" local_path="%s" minWidth="%d" minHeight="%d" maxWidth="%d" maxHeight="%d" /></item><source name="%s" icon="%s" action="" appid="-1" /></msg>`, "", i.Md5, i.Md5, 0, "", minWidth, minHeight, maxWidth, maxHeight, source, icon)
 	}
 	if xml != "" {
 		log.Warn(xml)

@@ -14,12 +14,14 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        # build and publish in parallel: linux/386, linux/amd64, windows/386, windows/amd64, darwin/386, darwin/amd64 
+        # build and publish in parallel: linux/386, linux/amd64, windows/386, windows/amd64, darwin/amd64
         goos: [linux, windows, darwin]
         goarch: ["386", amd64, arm]
         exclude: 
           - goos: darwin
             goarch: arm
+          - goos: darwin
+            goarch: "386"
       fail-fast: true
 
     steps:
@@ -28,7 +30,7 @@ jobs:
     - name: Setup Go environment
       uses: actions/setup-go@v2.1.1
       with:
-        go-version: 1.14
+        go-version: 1.15
     
     - name: Build binary file
       env:

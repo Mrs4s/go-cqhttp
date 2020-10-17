@@ -189,7 +189,7 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupId int64, m gjson.Result) MSG {
 		ts.Add(time.Second)
 		if e.Get("data.id").Exists() {
 			i, _ := strconv.Atoi(e.Get("data.id").Str)
-			m := bot.GetGroupMessage(int32(i))
+			m := bot.GetMessage(int32(i))
 			if m != nil {
 				sender := m["sender"].(message.Sender)
 				nodes = append(nodes, &message.ForwardNode{
@@ -412,11 +412,19 @@ func (bot *CQBot) CQProcessGroupRequest(flag, subType, reason string, approve bo
 
 // https://cqhttp.cc/docs/4.15/#/API?id=delete_msg-%E6%92%A4%E5%9B%9E%E6%B6%88%E6%81%AF
 func (bot *CQBot) CQDeleteMessage(messageId int32) MSG {
-	msg := bot.GetGroupMessage(messageId)
+	msg := bot.GetMessage(messageId)
 	if msg == nil {
 		return Failed(100)
 	}
-	bot.Client.RecallGroupMessage(msg["group"].(int64), msg["message-id"].(int32), msg["internal-id"].(int32))
+	if _, ok := msg["group"]; ok {
+		bot.Client.RecallGroupMessage(msg["group"].(int64), msg["message-id"].(int32), msg["internal-id"].(int32))
+	} else {
+		if msg["sender"].(message.Sender).Uin != bot.Client.Uin {
+			log.Warnf("撤回 %v 失败: 好友会话无法撤回对方消息.")
+			return Failed(100)
+		}
+		bot.Client.RecallPrivateMessage(msg["target"].(int64), int64(msg["time"].(int32)), msg["message-id"].(int32), msg["internal-id"].(int32))
+	}
 	return OK(nil)
 }
 
@@ -638,15 +646,17 @@ func (bot *CQBot) CQGetForwardMessage(resId string) MSG {
 	})
 }
 
-func (bot *CQBot) CQGetGroupMessage(messageId int32) MSG {
-	msg := bot.GetGroupMessage(messageId)
+func (bot *CQBot) CQGetMessage(messageId int32) MSG {
+	msg := bot.GetMessage(messageId)
 	if msg == nil {
 		return Failed(100)
 	}
 	sender := msg["sender"].(message.Sender)
+	_, group := msg["group"]
 	return OK(MSG{
 		"message_id": messageId,
 		"real_id":    msg["message-id"],
+		"group":      group,
 		"sender": MSG{
 			"user_id":  sender.Uin,
 			"nickname": sender.Nickname,

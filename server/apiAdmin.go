@@ -77,7 +77,9 @@ func (s *webServer) Run(addr string, cli *client.QQClient) *coolq.CQBot {
 			if err != nil {
 				log.Error(err)
 				log.Infof("请检查端口是否被占用.")
-				time.Sleep(time.Second * 5)
+				c := make(chan os.Signal, 1)
+				signal.Notify(c, os.Interrupt, os.Kill)
+				<-c
 				os.Exit(1)
 			}
 		} else {
@@ -96,6 +98,10 @@ func (s *webServer) Run(addr string, cli *client.QQClient) *coolq.CQBot {
 
 func (s *webServer) Dologin() {
 	s.Console = bufio.NewReader(os.Stdin)
+	readLine := func() (str string) {
+		str, _ = s.Console.ReadString('\n')
+		return
+	}
 	conf := GetConf()
 	cli := s.Cli
 	cli.AllowSlider = true
@@ -109,7 +115,7 @@ func (s *webServer) Dologin() {
 				if client.SystemDeviceInfo.Protocol == client.AndroidPhone {
 					log.Warnf("警告: Android Phone 强制要求暂不支持的滑条验证码, 请开启设备锁或切换到Watch协议验证通过后再使用.")
 					log.Infof("按 Enter 继续....")
-					_, _ = s.Console.ReadString('\n')
+					readLine()
 					os.Exit(0)
 				}
 				cli.AllowSlider = false
@@ -125,21 +131,21 @@ func (s *webServer) Dologin() {
 					text = <-WebInput
 				} else {
 					log.Warn("请输入验证码 (captcha.jpg)： (Enter 提交)")
-					text, _ = s.Console.ReadString('\n')
+					text = readLine()
 				}
 				rsp, err = cli.SubmitCaptcha(strings.ReplaceAll(text, "\n", ""), rsp.CaptchaSign)
 				global.DelFile("captcha.jpg")
 				continue
 			case client.SMSNeededError:
 				log.Warnf("账号已开启设备锁, 按下 Enter 向手机 %v 发送短信验证码.", rsp.SMSPhone)
-				_, _ = s.Console.ReadString('\n')
+				readLine()
 				if !cli.RequestSMS() {
 					log.Warnf("发送验证码失败，可能是请求过于频繁.")
 					time.Sleep(time.Second * 5)
 					os.Exit(0)
 				}
 				log.Warn("请输入短信验证码： (Enter 提交)")
-				text, _ = s.Console.ReadString('\n')
+				text = readLine()
 				rsp, err = cli.SubmitSMS(strings.ReplaceAll(strings.ReplaceAll(text, "\n", ""), "\r", ""))
 				continue
 			case client.SMSOrVerifyNeededError:
@@ -147,7 +153,7 @@ func (s *webServer) Dologin() {
 				log.Warnf("1. 向手机 %v 发送短信验证码", rsp.SMSPhone)
 				log.Warnf("2. 使用手机QQ扫码验证.")
 				log.Warn("请输入(1 - 2): ")
-				text, _ = s.Console.ReadString('\n')
+				text = readLine()
 				if strings.Contains(text, "1") {
 					if !cli.RequestSMS() {
 						log.Warnf("发送验证码失败，可能是请求过于频繁.")
@@ -155,13 +161,13 @@ func (s *webServer) Dologin() {
 						os.Exit(0)
 					}
 					log.Warn("请输入短信验证码： (Enter 提交)")
-					text, _ = s.Console.ReadString('\n')
+					text = readLine()
 					rsp, err = cli.SubmitSMS(strings.ReplaceAll(strings.ReplaceAll(text, "\n", ""), "\r", ""))
 					continue
 				}
 				log.Warnf("请前往 -> %v <- 验证并重启Bot.", rsp.VerifyUrl)
 				log.Infof("按 Enter 继续....")
-				_, _ = s.Console.ReadString('\n')
+				readLine()
 				os.Exit(0)
 				return
 			case client.UnsafeDeviceError:
@@ -171,7 +177,7 @@ func (s *webServer) Dologin() {
 					text = <-WebInput
 				} else {
 					log.Infof("按 Enter 继续....")
-					_, _ = s.Console.ReadString('\n')
+					readLine()
 				}
 				log.Info(text)
 				os.Exit(0)
@@ -179,7 +185,7 @@ func (s *webServer) Dologin() {
 			case client.OtherLoginError, client.UnknownLoginError:
 				log.Warnf("登录失败: %v", rsp.ErrorMessage)
 				log.Infof("按 Enter 继续....")
-				_, _ = s.Console.ReadString('\n')
+				readLine()
 				os.Exit(0)
 				return
 			}

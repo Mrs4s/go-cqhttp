@@ -234,9 +234,9 @@ func (s *httpServer) GetImage(c *gin.Context) {
 	c.JSON(200, s.bot.CQGetImage(file))
 }
 
-func (s *httpServer) GetGroupMessage(c *gin.Context) {
+func (s *httpServer) GetMessage(c *gin.Context) {
 	mid, _ := strconv.ParseInt(getParam(c, "message_id"), 10, 32)
-	c.JSON(200, s.bot.CQGetGroupMessage(int32(mid)))
+	c.JSON(200, s.bot.CQGetMessage(int32(mid)))
 }
 
 func (s *httpServer) GetGroupHonorInfo(c *gin.Context) {
@@ -501,8 +501,8 @@ var httpApi = map[string]func(s *httpServer, c *gin.Context){
 	"get_forward_msg": func(s *httpServer, c *gin.Context) {
 		s.GetForwardMessage(c)
 	},
-	"get_group_msg": func(s *httpServer, c *gin.Context) {
-		s.GetGroupMessage(c)
+	"get_msg": func(s *httpServer, c *gin.Context) {
+		s.GetMessage(c)
 	},
 	"get_group_honor_info": func(s *httpServer, c *gin.Context) {
 		s.GetGroupHonorInfo(c)

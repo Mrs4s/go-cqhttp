@@ -35,6 +35,10 @@
 - [CQ:reply]
 - [CQ:forward]
 - [CQ:node]
+- [CQ:gift]
+- [CQ:redbag]
+- [CQ:tts]
+- [CQ:music]
 
 </details>
 
