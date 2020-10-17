@@ -218,6 +218,15 @@ func (bot *CQBot) SendPrivateMessage(target int64, m *message.SendingMessage) in
 			newElem = append(newElem, fm)
 			continue
 		}
+		if i, ok := elem.(*message.VoiceElement); ok {
+			fv, err := bot.Client.UploadPrivatePtt(target, i.Data)
+			if err != nil {
+				log.Warnf("警告: 好友 %v 消息语音上传失败: %v", target, err)
+				continue
+			}
+			newElem = append(newElem, fv)
+			continue
+		}
 		if i, ok := elem.(*QQMusicElement); ok {
 			var msgStyle uint32 = 4
 			if i.MusicUrl == "" {

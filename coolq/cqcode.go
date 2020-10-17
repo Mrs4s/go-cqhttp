@@ -421,9 +421,6 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m messag
 		}
 		return &GiftElement{Target: t, GiftId: GiftId[id]}, nil
 	case "tts":
-		if !group {
-			return nil, errors.New("private voice unsupported now")
-		}
 		defer func() {
 			if r := recover(); r != nil {
 				m = nil
@@ -437,9 +434,6 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m messag
 		}
 		return &message.VoiceElement{Data: data}, nil
 	case "record":
-		if !group {
-			return nil, errors.New("private voice unsupported now")
-		}
 		f := d["file"]
 		data, err := global.FindFile(f, d["cache"], global.VOICE_PATH)
 		if err != nil {
