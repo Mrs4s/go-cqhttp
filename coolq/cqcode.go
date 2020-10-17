@@ -51,6 +51,10 @@ type CloudMusicElement struct {
 	MusicElement
 }
 
+type MiguMusicElement struct {
+	MusicElement
+}
+
 func (e *GiftElement) Type() message.ElementType {
 	return message.At
 }
@@ -372,6 +376,7 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m messag
 			return nil, err
 		}
 		tp := d["type"]
+		fmt.Println(tp)
 		if tp != "show" && tp != "flash" {
 			return img, nil
 		}
@@ -529,6 +534,15 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m messag
 			}
 			if d["subtype"] == "163" {
 				return &CloudMusicElement{MusicElement{
+					Title:      d["title"],
+					Summary:    d["content"],
+					Url:        d["url"],
+					PictureUrl: d["image"],
+					MusicUrl:   d["purl"],
+				}}, nil
+			}
+			if d["subtype"] == "migu" {
+				return &MiguMusicElement{MusicElement{
 					Title:      d["title"],
 					Summary:    d["content"],
 					Url:        d["url"],

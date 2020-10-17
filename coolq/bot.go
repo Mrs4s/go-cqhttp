@@ -190,6 +190,25 @@ func (bot *CQBot) SendGroupMessage(groupId int64, m *message.SendingMessage) int
 			}
 			return bot.InsertGroupMessage(ret)
 		}
+		if i, ok := elem.(*MiguMusicElement); ok {
+			ret, err := bot.Client.SendGroupRichMessage(groupId, 1101053067, 1, 4, client.RichClientInfo{
+				Platform:    1,
+				SdkVersion:  "0.0.0",
+				PackageName: "cmccwm.mobilemusic",
+				Signature:   "6cdc72a439cef99a3418d2a78aa28c73",
+			}, &message.RichMessage{
+				Title:      i.Title,
+				Summary:    i.Summary,
+				Url:        i.Url,
+				PictureUrl: i.PictureUrl,
+				MusicUrl:   i.MusicUrl,
+			})
+			if err != nil {
+				log.Warnf("警告: 群 %v 富文本消息发送失败: %v", groupId, err)
+				return -1
+			}
+			return bot.InsertGroupMessage(ret)
+		}
 		newElem = append(newElem, elem)
 	}
 	m.Elements = newElem
@@ -247,6 +266,21 @@ func (bot *CQBot) SendPrivateMessage(target int64, m *message.SendingMessage) in
 				SdkVersion:  "0.0.0",
 				PackageName: "com.netease.cloudmusic",
 				Signature:   "da6b069da1e2982db3e386233f68d76d",
+			}, &message.RichMessage{
+				Title:      i.Title,
+				Summary:    i.Summary,
+				Url:        i.Url,
+				PictureUrl: i.PictureUrl,
+				MusicUrl:   i.MusicUrl,
+			})
+			return 0
+		}
+		if i, ok := elem.(*MiguMusicElement); ok {
+			bot.Client.SendFriendRichMessage(target, 1101053067, 1, 4, client.RichClientInfo{
+				Platform:    1,
+				SdkVersion:  "0.0.0",
+				PackageName: "cmccwm.mobilemusic",
+				Signature:   "6cdc72a439cef99a3418d2a78aa28c73",
 			}, &message.RichMessage{
 				Title:      i.Title,
 				Summary:    i.Summary,
