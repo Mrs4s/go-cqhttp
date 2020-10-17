@@ -31,18 +31,22 @@ func ToFormattedMessage(e []message.IMessageElement, code int64, raw ...bool) (r
 
 func (bot *CQBot) privateMessageEvent(c *client.QQClient, m *message.PrivateMessage) {
 	bot.checkMedia(m.Elements)
-	cqm := ToStringMessage(m.Elements, 0, true)
+	cqm := ToStringMessage(m.Elements, m.Sender.Uin, true)
 	if !m.Sender.IsFriend {
 		bot.oneWayMsgCache.Store(m.Sender.Uin, "")
 	}
-	log.Infof("收到好友 %v(%v) 的消息: %v", m.Sender.DisplayName(), m.Sender.Uin, cqm)
+	id := m.Id
+	if bot.db != nil {
+		id = bot.InsertPrivateMessage(m)
+	}
+	log.Infof("收到好友 %v(%v) 的消息: %v (%v)", m.Sender.DisplayName(), m.Sender.Uin, cqm, id)
 	fm := MSG{
 		"post_type":    "message",
 		"message_type": "private",
 		"sub_type":     "friend",
-		"message_id":   ToGlobalId(m.Sender.Uin, m.Id),
+		"message_id":   id,
 		"user_id":      m.Sender.Uin,
-		"message":      ToFormattedMessage(m.Elements, 0, false),
+		"message":      ToFormattedMessage(m.Elements, m.Sender.Uin, false),
 		"raw_message":  cqm,
 		"font":         0,
 		"self_id":      c.Uin,

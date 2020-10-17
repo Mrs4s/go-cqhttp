@@ -47,16 +47,6 @@ func NewQQBot(cli *client.QQClient, conf *global.JsonConfig) *CQBot {
 			log.Fatalf("打开数据库失败, 如果频繁遇到此问题请清理 data/db 文件夹或关闭数据库功能。")
 		}
 		bot.db = db
-		/*
-			opt := nutsdb.DefaultOptions
-			opt.Dir = path.Join("data", "db")
-			opt.EntryIdxMode = nutsdb.HintBPTSparseIdxMode
-			db, err := nutsdb.Open(opt)
-			if err != nil {
-				log.Fatalf("打开数据库失败, 如果频繁遇到此问题请清理 data/db 文件夹或关闭数据库功能。")
-			}
-			bot.db = db
-		*/
 		gob.Register(message.Sender{})
 		log.Info("信息数据库初始化完成.")
 	} else {
@@ -108,7 +98,7 @@ func (bot *CQBot) OnEventPush(f func(m MSG)) {
 	bot.events = append(bot.events, f)
 }
 
-func (bot *CQBot) GetGroupMessage(mid int32) MSG {
+func (bot *CQBot) GetMessage(mid int32) MSG {
 	if bot.db != nil {
 		m := MSG{}
 		data, err := bot.db.Get(binary.ToBytes(mid), nil)
@@ -270,26 +260,26 @@ func (bot *CQBot) SendPrivateMessage(target int64, m *message.SendingMessage) in
 	}
 	m.Elements = newElem
 	var id int32 = -1
-	if bot.Client.FindFriend(target) != nil {
+	if bot.Client.FindFriend(target) != nil { // 双向好友
 		msg := bot.Client.SendPrivateMessage(target, m)
 		if msg != nil {
-			id = msg.Id
+			id = bot.InsertPrivateMessage(msg)
 		}
-	} else if code, ok := bot.tempMsgCache.Load(target); ok {
+	} else if code, ok := bot.tempMsgCache.Load(target); ok { // 临时会话
 		msg := bot.Client.SendTempMessage(code.(int64), target, m)
 		if msg != nil {
 			id = msg.Id
 		}
-	} else if _, ok := bot.oneWayMsgCache.Load(target); ok {
+	} else if _, ok := bot.oneWayMsgCache.Load(target); ok { // 单向好友
 		msg := bot.Client.SendPrivateMessage(target, m)
 		if msg != nil {
-			id = msg.Id
+			id = bot.InsertPrivateMessage(msg)
 		}
 	}
 	if id == -1 {
 		return -1
 	}
-	return ToGlobalId(target, id)
+	return id
 }
 
 func (bot *CQBot) InsertGroupMessage(m *message.GroupMessage) int32 {
@@ -303,6 +293,30 @@ func (bot *CQBot) InsertGroupMessage(m *message.GroupMessage) int32 {
 		"message":     ToStringMessage(m.Elements, m.GroupCode, true),
 	}
 	id := ToGlobalId(m.GroupCode, m.Id)
+	if bot.db != nil {
+		buf := new(bytes.Buffer)
+		if err := gob.NewEncoder(buf).Encode(val); err != nil {
+			log.Warnf("记录聊天数据时出现错误: %v", err)
+			return -1
+		}
+		if err := bot.db.Put(binary.ToBytes(id), binary.GZipCompress(buf.Bytes()), nil); err != nil {
+			log.Warnf("记录聊天数据时出现错误: %v", err)
+			return -1
+		}
+	}
+	return id
+}
+
+func (bot *CQBot) InsertPrivateMessage(m *message.PrivateMessage) int32 {
+	val := MSG{
+		"message-id":  m.Id,
+		"internal-id": m.InternalId,
+		"target":      m.Target,
+		"sender":      m.Sender,
+		"time":        m.Time,
+		"message":     ToStringMessage(m.Elements, m.Sender.Uin, true),
+	}
+	id := ToGlobalId(m.Sender.Uin, m.Id)
 	if bot.db != nil {
 		buf := new(bytes.Buffer)
 		if err := gob.NewEncoder(buf).Encode(val); err != nil {

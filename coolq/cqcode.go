@@ -269,7 +269,7 @@ func (bot *CQBot) ConvertStringMessage(m string, group bool) (r []message.IMessa
 		for _, p := range ps {
 			d[p[1]] = CQCodeUnescapeValue(p[2])
 		}
-		if t == "reply" && group {
+		if t == "reply" {
 			if len(r) > 0 {
 				if _, ok := r[0].(*message.ReplyElement); ok {
 					log.Warnf("警告: 一条信息只能包含一个 Reply 元素.")
@@ -278,7 +278,7 @@ func (bot *CQBot) ConvertStringMessage(m string, group bool) (r []message.IMessa
 			}
 			mid, err := strconv.Atoi(d["id"])
 			if err == nil {
-				org := bot.GetGroupMessage(int32(mid))
+				org := bot.GetMessage(int32(mid))
 				if org != nil {
 					r = append([]message.IMessageElement{
 						&message.ReplyElement{
@@ -322,7 +322,7 @@ func (bot *CQBot) ConvertObjectMessage(m gjson.Result, group bool) (r []message.
 			}
 			mid, err := strconv.Atoi(e.Get("data").Get("id").Str)
 			if err == nil {
-				org := bot.GetGroupMessage(int32(mid))
+				org := bot.GetMessage(int32(mid))
 				if org != nil {
 					r = append([]message.IMessageElement{
 						&message.ReplyElement{
