@@ -662,7 +662,7 @@ func (bot *CQBot) CQGetMessage(messageId int32) MSG {
 			"nickname": sender.Nickname,
 		},
 		"time":    msg["time"],
-		"content": msg["message"],
+		"message": msg["message"],
 	})
 }
 
