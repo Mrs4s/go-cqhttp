@@ -324,7 +324,7 @@ func (bot *CQBot) ConvertObjectMessage(m gjson.Result, group bool) (r []message.
 					return
 				}
 			}
-			mid, err := strconv.Atoi(e.Get("data").Get("id").Str)
+			mid, err := strconv.Atoi(e.Get("data").Get("id").String())
 			if err == nil {
 				org := bot.GetMessage(int32(mid))
 				if org != nil {
@@ -342,7 +342,7 @@ func (bot *CQBot) ConvertObjectMessage(m gjson.Result, group bool) (r []message.
 		}
 		d := make(map[string]string)
 		e.Get("data").ForEach(func(key, value gjson.Result) bool {
-			d[key.Str] = value.Str
+			d[key.Str] = value.String()
 			return true
 		})
 		elem, err := bot.ToElement(t, d, group)
