@@ -271,12 +271,16 @@ func (bot *CQBot) groupNotifyEvent(c *client.QQClient, e client.IGroupNotifyEven
 func (bot *CQBot) friendRecallEvent(c *client.QQClient, e *client.FriendMessageRecalledEvent) {
 	f := c.FindFriend(e.FriendUin)
 	gid := ToGlobalId(e.FriendUin, e.MessageId)
-	log.Infof("好友 %v(%v) 撤回了消息: %v", f.Nickname, f.Uin, gid)
+	if f != nil {
+		log.Infof("好友 %v(%v) 撤回了消息: %v", f.Nickname, f.Uin, gid)
+	} else {
+		log.Infof("好友 %v 撤回了消息: %v", e.FriendUin, gid)
+	}
 	bot.dispatchEventMessage(MSG{
 		"post_type":   "notice",
 		"notice_type": "friend_recall",
 		"self_id":     c.Uin,
-		"user_id":     f.Uin,
+		"user_id":     e.FriendUin,
 		"time":        e.Time,
 		"message_id":  gid,
 	})
