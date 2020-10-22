@@ -137,6 +137,7 @@ func (c *httpClient) onBotPushEvent(m coolq.MSG) {
 		log.Warnf("上报Event数据 %v 到 %v 失败: %v", m.ToJson(), c.addr, err)
 		return
 	}
+	log.Debugf("上报Event数据 %v 到 %v", m.ToJson(), c.addr)
 	if gjson.Valid(res) {
 		c.bot.CQHandleQuickOperation(gjson.Parse(m.ToJson()), gjson.Parse(res))
 	}
