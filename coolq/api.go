@@ -666,6 +666,15 @@ func (bot *CQBot) CQGetMessage(messageId int32) MSG {
 	})
 }
 
+func (bot *CQBot) CQGetGroupSystemMessages() MSG {
+	msg, err := bot.Client.GetGroupSystemMessages()
+	if err != nil {
+		log.Warnf("获取群系统消息失败: %v", err)
+		return Failed(100)
+	}
+	return OK(msg)
+}
+
 func (bot *CQBot) CQCanSendImage() MSG {
 	return OK(MSG{"yes": true})
 }

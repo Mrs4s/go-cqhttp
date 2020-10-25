@@ -318,6 +318,10 @@ func (s *httpServer) GetForwardMessage(c *gin.Context) {
 	c.JSON(200, s.bot.CQGetForwardMessage(resId))
 }
 
+func (s *httpServer) GetGroupSystemMessage(c *gin.Context) {
+	c.JSON(200, s.bot.CQGetGroupSystemMessages())
+}
+
 func (s *httpServer) DeleteMessage(c *gin.Context) {
 	mid, _ := strconv.ParseInt(getParam(c, "message_id"), 10, 32)
 	c.JSON(200, s.bot.CQDeleteMessage(int32(mid)))
@@ -504,6 +508,9 @@ var httpApi = map[string]func(s *httpServer, c *gin.Context){
 	},
 	"get_msg": func(s *httpServer, c *gin.Context) {
 		s.GetMessage(c)
+	},
+	"get_group_system_msg": func(s *httpServer, c *gin.Context) {
+		s.GetGroupSystemMessage(c)
 	},
 	"get_group_honor_info": func(s *httpServer, c *gin.Context) {
 		s.GetGroupHonorInfo(c)
