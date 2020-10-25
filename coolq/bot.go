@@ -211,6 +211,10 @@ func (bot *CQBot) SendGroupMessage(groupId int64, m *message.SendingMessage) int
 		}
 		newElem = append(newElem, elem)
 	}
+	if len(newElem) == 0 {
+		log.Warnf("群消息发送失败: 消息为空.")
+		return -1
+	}
 	m.Elements = newElem
 	ret := bot.Client.SendGroupMessage(groupId, m, ForceFragmented)
 	if ret == nil || ret.Id == -1 {
