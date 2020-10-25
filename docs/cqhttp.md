@@ -500,6 +500,45 @@ Type: `tts`
  | `coordinates` |      vector2       | 坐标 |
  
 
+### 获取群系统消息
+
+终结点: `/get_group_system_msg`
+
+**响应数据**
+
+ | 字段       | 类型              | 说明     |
+ | ---------- | ----------------- | -------- |
+ | `invited_requests` |      InvitedRequest[]       | 邀请消息列表 |
+ | `join_requests` |      JoinRequest[]        | 进群消息列表 |
+ 
+ > 注意: 如果列表不存在任何消息, 将返回 `null`
+ 
+ **InvitedRequest**
+ 
+  | 字段       | 类型              | 说明     |
+  | ---------- | ----------------- | -------- |
+  | `request_id` |      int64       | 请求ID |
+  | `invitor_uin` |      int64        | 邀请者 |
+  | `invitor_nick` |      string       | 邀请者昵称 |
+  | `group_id` | int64        | 群号 |
+  | `group_name` | string | 群名 |
+  | `checked` | bool | 是否已被处理|
+  | `actor` | int64 | 处理者, 未处理为0 |
+  
+  **JoinRequest**
+  
+  | 字段       | 类型              | 说明     |
+  | ---------- | ----------------- | -------- |
+  | `request_id` |      int64       | 请求ID |
+  | `requester_uin` |      int64        | 请求者ID |
+  | `requester_nick` |      string       | 请求者昵称 |
+  | `message` |      string       | 验证消息 |
+  | `group_id` | int64        | 群号 |
+  | `group_name` | string | 群名 |
+  | `checked` | bool | 是否已被处理|
+  | `actor` | int64 | 处理者, 未处理为0 |
+  
+
 
 ## 事件
 
