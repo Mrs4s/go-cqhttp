@@ -23,13 +23,11 @@ import (
 type CQBot struct {
 	Client *client.QQClient
 
-	events          []func(MSG)
-	db              *leveldb.DB
-	friendReqCache  sync.Map
-	invitedReqCache sync.Map
-	joinReqCache    sync.Map
-	tempMsgCache    sync.Map
-	oneWayMsgCache  sync.Map
+	events         []func(MSG)
+	db             *leveldb.DB
+	friendReqCache sync.Map
+	tempMsgCache   sync.Map
+	oneWayMsgCache sync.Map
 }
 
 type MSG map[string]interface{}
