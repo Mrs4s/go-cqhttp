@@ -380,9 +380,9 @@ Type: `tts`
 | `filename` | string | 图片文件原名   |
 | `url`      | string | 图片下载地址   |
 
-### 获取群消息
+### 获取消息
 
-终结点: `/get_group_msg` 
+终结点: `/get_msg` 
 
 参数
 
@@ -398,7 +398,7 @@ Type: `tts`
 | `real_id`    | int32   | 消息真实id |
 | `sender`     | object  | 发送者     |
 | `time`       | int32   | 发送时间   |
-| `content`    | message | 消息内容   |
+| `message`    | message | 消息内容   |
 
 ### 获取合并转发内容
 
