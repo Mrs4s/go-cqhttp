@@ -296,6 +296,10 @@ func (bot *CQBot) SendPrivateMessage(target int64, m *message.SendingMessage) in
 		}
 		newElem = append(newElem, elem)
 	}
+	if len(newElem) == 0 {
+		log.Warnf("好友消息发送失败: 消息为空.")
+		return -1
+	}
 	m.Elements = newElem
 	var id int32 = -1
 	if bot.Client.FindFriend(target) != nil { // 双向好友
