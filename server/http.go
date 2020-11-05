@@ -5,6 +5,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/hex"
+	"github.com/guonaihong/gout/dataflow"
 	"net/http"
 	"os"
 	"strconv"
@@ -132,7 +133,13 @@ func (c *httpClient) onBotPushEvent(m coolq.MSG) {
 		return h
 	}()).SetTimeout(time.Second * time.Duration(c.timeout)).F().Retry().Attempt(5).
 		WaitTime(time.Millisecond * 500).MaxWaitTime(time.Second * 5).
-		Do()
+		Func(func(con *dataflow.Context) error {
+			if con.Error != nil {
+				log.Warnf("上报Event到 HTTP 服务器 %v 时出现错误: %v 将重试.", c.addr, con.Error)
+				return con.Error
+			}
+			return nil
+		}).Do()
 	if err != nil {
 		log.Warnf("上报Event数据 %v 到 %v 失败: %v", m.ToJson(), c.addr, err)
 		return
