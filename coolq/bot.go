@@ -214,6 +214,7 @@ func (bot *CQBot) SendGroupMessage(groupId int64, m *message.SendingMessage) int
 		return -1
 	}
 	m.Elements = newElem
+	bot.checkMedia(newElem)
 	ret := bot.Client.SendGroupMessage(groupId, m, ForceFragmented)
 	if ret == nil || ret.Id == -1 {
 		log.Warnf("群消息发送失败: 账号可能被风控.")
@@ -299,6 +300,7 @@ func (bot *CQBot) SendPrivateMessage(target int64, m *message.SendingMessage) in
 		return -1
 	}
 	m.Elements = newElem
+	bot.checkMedia(newElem)
 	var id int32 = -1
 	if bot.Client.FindFriend(target) != nil { // 双向好友
 		msg := bot.Client.SendPrivateMessage(target, m)
