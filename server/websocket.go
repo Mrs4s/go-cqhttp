@@ -498,6 +498,18 @@ var wsApi = map[string]func(*coolq.CQBot, gjson.Result) coolq.MSG{
 	"get_group_system_msg": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		return bot.CQGetGroupSystemMessages()
 	},
+	"get_group_file_system_info": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
+		return bot.CQGetGroupFileSystemInfo(p.Get("group_id").Int())
+	},
+	"get_group_root_files": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
+		return bot.CQGetGroupRootFiles(p.Get("group_id").Int())
+	},
+	"get_group_files_by_folder": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
+		return bot.CQGetGroupFilesByFolderId(p.Get("group_id").Int(), p.Get("folder_id").Str)
+	},
+	"get_group_file_url": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
+		return bot.CQGetGroupFileUrl(p.Get("group_id").Int(), p.Get("file_id").Str, int32(p.Get("busid").Int()))
+	},
 	"_get_vip_info": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		return bot.CQGetVipInfo(p.Get("user_id").Int())
 	},

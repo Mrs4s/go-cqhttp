@@ -102,6 +102,59 @@ func (bot *CQBot) CQGetGroupMemberInfo(groupId, userId int64) MSG {
 	return OK(convertGroupMemberInfo(groupId, member))
 }
 
+func (bot *CQBot) CQGetGroupFileSystemInfo(groupId int64) MSG {
+	fs, err := bot.Client.GetGroupFileSystem(groupId)
+	if err != nil {
+		log.Errorf("获取群 %v 文件系统信息失败: %v", groupId, err)
+		return Failed(100)
+	}
+	return OK(fs)
+}
+
+func (bot *CQBot) CQGetGroupRootFiles(groupId int64) MSG {
+	fs, err := bot.Client.GetGroupFileSystem(groupId)
+	if err != nil {
+		log.Errorf("获取群 %v 文件系统信息失败: %v", groupId, err)
+		return Failed(100)
+	}
+	files, folders, err := fs.Root()
+	if err != nil {
+		log.Errorf("获取群 %v 根目录文件失败: %v", groupId, err)
+		return Failed(100)
+	}
+	return OK(MSG{
+		"files":   files,
+		"folders": folders,
+	})
+}
+
+func (bot *CQBot) CQGetGroupFilesByFolderId(groupId int64, folderId string) MSG {
+	fs, err := bot.Client.GetGroupFileSystem(groupId)
+	if err != nil {
+		log.Errorf("获取群 %v 文件系统信息失败: %v", groupId, err)
+		return Failed(100)
+	}
+	files, folders, err := fs.GetFilesByFolder(folderId)
+	if err != nil {
+		log.Errorf("获取群 %v 根目录 %v 子文件失败: %v", groupId, folderId, err)
+		return Failed(100)
+	}
+	return OK(MSG{
+		"files":   files,
+		"folders": folders,
+	})
+}
+
+func (bot *CQBot) CQGetGroupFileUrl(groupId int64, fileId string, busId int32) MSG {
+	url := bot.Client.GetGroupFileUrl(groupId, fileId, busId)
+	if url == "" {
+		return Failed(100)
+	}
+	return OK(MSG{
+		"url": url,
+	})
+}
+
 func (bot *CQBot) CQGetWordSlices(content string) MSG {
 	slices, err := bot.Client.GetWordSegmentation(content)
 	if err != nil {

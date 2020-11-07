@@ -191,6 +191,29 @@ func (s *httpServer) GetGroupMemberInfo(c *gin.Context) {
 	c.JSON(200, s.bot.CQGetGroupMemberInfo(gid, uid))
 }
 
+func (s *httpServer) GetGroupFileSystemInfo(c *gin.Context) {
+	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
+	c.JSON(200, s.bot.CQGetGroupFileSystemInfo(gid))
+}
+
+func (s *httpServer) GetGroupRootFiles(c *gin.Context) {
+	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
+	c.JSON(200, s.bot.CQGetGroupRootFiles(gid))
+}
+
+func (s *httpServer) GetGroupFilesByFolderId(c *gin.Context) {
+	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
+	folderId := getParam(c, "folder_id")
+	c.JSON(200, s.bot.CQGetGroupFilesByFolderId(gid, folderId))
+}
+
+func (s *httpServer) GetGroupFileUrl(c *gin.Context) {
+	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
+	fid := getParam(c, "file_id")
+	busid, _ := strconv.ParseInt(getParam(c, "busid"), 10, 32)
+	c.JSON(200, s.bot.CQGetGroupFileUrl(gid, fid, int32(busid)))
+}
+
 func (s *httpServer) SendMessage(c *gin.Context) {
 	if getParam(c, "message_type") == "private" {
 		s.SendPrivateMessage(c)
@@ -458,6 +481,18 @@ var httpApi = map[string]func(s *httpServer, c *gin.Context){
 	},
 	"get_group_member_info": func(s *httpServer, c *gin.Context) {
 		s.GetGroupMemberInfo(c)
+	},
+	"get_group_file_system_info": func(s *httpServer, c *gin.Context) {
+		s.GetGroupFileSystemInfo(c)
+	},
+	"get_group_root_files": func(s *httpServer, c *gin.Context) {
+		s.GetGroupRootFiles(c)
+	},
+	"get_group_files_by_folder": func(s *httpServer, c *gin.Context) {
+		s.GetGroupFilesByFolderId(c)
+	},
+	"get_group_file_url": func(s *httpServer, c *gin.Context) {
+		s.GetGroupFileUrl(c)
 	},
 	"send_msg": func(s *httpServer, c *gin.Context) {
 		s.SendMessage(c)
