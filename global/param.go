@@ -2,6 +2,9 @@ package global
 
 import (
 	"github.com/tidwall/gjson"
+	"math"
+	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -47,4 +50,23 @@ func EnsureBool(p interface{}, defaultVal bool) bool {
 		return false
 	}
 	return defaultVal
+}
+
+// VersionNameCompare 检查版本名是否需要更新, 仅适用于 go-cqhttp 的版本命名规则
+// 例: v0.9.29-fix2 == v0.9.29-fix2 -> false
+// v0.9.29-fix1 < v0.9.29-fix2 -> true
+// v0.9.29-fix2 > v0.9.29-fix1 -> false
+// v0.9.29-fix2 < v0.9.30 -> true
+func VersionNameCompare(current, remote string) bool {
+	sp := regexp.MustCompile(`[0-9]\d*`)
+	cur := sp.FindAllStringSubmatch(current, -1)
+	re := sp.FindAllStringSubmatch(remote, -1)
+	for i := 0; i < int(math.Min(float64(len(cur)), float64(len(re)))); i++ {
+		curSub, _ := strconv.Atoi(cur[i][0])
+		reSub, _ := strconv.Atoi(re[i][0])
+		if curSub < reSub {
+			return true
+		}
+	}
+	return len(cur) < len(re)
 }
