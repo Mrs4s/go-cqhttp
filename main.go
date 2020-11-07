@@ -245,7 +245,7 @@ func main() {
 		conf.WebUi.WebUiPort = 9999
 	}
 	if conf.WebUi.Host == "" {
-		conf.WebUi.Host = "0.0.0.0"
+		conf.WebUi.Host = "127.0.0.1"
 	}
 	confErr := conf.Save("config.json")
 	if confErr != nil {
