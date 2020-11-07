@@ -538,7 +538,109 @@ Type: `tts`
   | `checked` | bool | 是否已被处理|
   | `actor` | int64 | 处理者, 未处理为0 |
   
+### 获取群文件系统信息
 
+终结点: `/get_group_file_system_info`
+
+**参数** 
+ 
+ | 字段         | 类型   | 说明   |
+ | ------------ | ------ | ------ |
+ | `group_id` | int64 | 群号 |
+
+**响应数据**
+
+ | 字段       | 类型              | 说明     |
+ | ---------- | ----------------- | -------- |
+ | `file_count` |      int32       | 文件总数 |
+ | `limit_count` |      int32        | 文件上限 |
+ | `used_space` |      int64        | 已使用空间 |
+ | `total_space` |      int64        | 空间上限 |
+
+### 获取群根目录文件列表
+
+> `File` 和 `Folder` 对象信息请参考最下方
+
+终结点: `/get_group_root_files`
+
+**参数** 
+ 
+ | 字段         | 类型   | 说明   |
+ | ------------ | ------ | ------ |
+ | `group_id` | int64 | 群号 |
+ 
+**响应数据**
+
+ | 字段       | 类型              | 说明     |
+ | ---------- | ----------------- | -------- |
+ | `files` |      File[]       | 文件列表 |
+ | `folders` |      Folder[]        | 文件夹列表 |
+ 
+### 获取群子目录文件列表
+
+> `File` 和 `Folder` 对象信息请参考最下方
+
+终结点: `/get_group_files_by_folder`
+
+**参数** 
+ 
+ | 字段         | 类型   | 说明   |
+ | ------------ | ------ | ------ |
+ | `group_id` | int64 | 群号 |
+ | `folder_id` | string | 文件夹ID 参考 `Folder` 对象 |
+ 
+**响应数据**
+
+ | 字段       | 类型              | 说明     |
+ | ---------- | ----------------- | -------- |
+ | `files` |      File[]       | 文件列表 |
+ | `folders` |      Folder[]        | 文件夹列表 |
+ 
+### 获取群文件资源链接
+
+> `File` 和 `Folder` 对象信息请参考最下方
+
+终结点: `/get_group_file_url`
+
+**参数** 
+ 
+ | 字段         | 类型   | 说明   |
+ | ------------ | ------ | ------ |
+ | `group_id` | int64 | 群号 |
+ | `file_id` | string | 文件ID 参考 `File` 对象 |
+ | `busid` | int32 | 文件类型 参考 `File` 对象 |
+ 
+**响应数据**
+
+ | 字段       | 类型              | 说明     |
+ | ---------- | ----------------- | -------- |
+ | `url` |      string       | 文件下载链接 |
+ 
+ **File**
+
+  | 字段       | 类型              | 说明     |
+  | ---------- | ----------------- | -------- |
+  | `file_id` |      string       | 文件ID |
+  | `file_name` |      string        | 文件名 |
+  | `busid` |      int32       | 文件类型 |
+  | `file_size` | int64        | 文件大小 |
+  | `upload_time` | int64 | 上传时间 |
+  | `dead_time` | int64 | 过期时间,永久文件恒为0 |
+  | `modify_time` | int64 | 最后修改时间 |
+  | `download_times` | int32 | 下载次数 |
+  | `uploader` | int64 | 上传者ID |
+  | `uploader_name` | string | 上传者名字 |
+  
+ **Folder**
+
+  | 字段       | 类型              | 说明     |
+  | ---------- | ----------------- | -------- |
+  | `folder_id` |      string       | 文件夹ID |
+  | `folder_name` |      string        | 文件名 |
+  | `create_time` | int64 | 创建时间 |
+  | `creator` | int64 | 创建者 |
+  | `creator_name` | string | 创建者名字 |
+  | `total_file_count` | int32 | 子文件数量 |
 
 ## 事件
 
