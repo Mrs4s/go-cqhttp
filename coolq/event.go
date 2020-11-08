@@ -167,13 +167,24 @@ func (bot *CQBot) tempMessageEvent(c *client.QQClient, m *message.TempMessage) {
 
 func (bot *CQBot) groupMutedEvent(c *client.QQClient, e *client.GroupMuteEvent) {
 	g := c.FindGroup(e.GroupCode)
-	if e.Time > 0 {
-		log.Infof("群 %v 内 %v 被 %v 禁言了 %v秒.",
-			formatGroupName(g), formatMemberName(g.FindMember(e.TargetUin)), formatMemberName(g.FindMember(e.OperatorUin)), e.Time)
+	if e.TargetUin == 0 {
+		if e.Time != 0 {
+			log.Infof("群 %v 被 %v 开启全员禁言.",
+				formatGroupName(g), formatMemberName(g.FindMember(e.OperatorUin)))
+		} else {
+			log.Infof("群 %v 被 %v 解除全员禁言.",
+				formatGroupName(g), formatMemberName(g.FindMember(e.OperatorUin)))
+		}
 	} else {
-		log.Infof("群 %v 内 %v 被 %v 解除禁言.",
-			formatGroupName(g), formatMemberName(g.FindMember(e.TargetUin)), formatMemberName(g.FindMember(e.OperatorUin)))
+		if e.Time > 0 {
+			log.Infof("群 %v 内 %v 被 %v 禁言了 %v 秒.",
+				formatGroupName(g), formatMemberName(g.FindMember(e.TargetUin)), formatMemberName(g.FindMember(e.OperatorUin)), e.Time)
+		} else {
+			log.Infof("群 %v 内 %v 被 %v 解除禁言.",
+				formatGroupName(g), formatMemberName(g.FindMember(e.TargetUin)), formatMemberName(g.FindMember(e.OperatorUin)))
+		}
 	}
+
 	bot.dispatchEventMessage(MSG{
 		"post_type":   "notice",
 		"duration":    e.Time,
@@ -184,10 +195,10 @@ func (bot *CQBot) groupMutedEvent(c *client.QQClient, e *client.GroupMuteEvent) 
 		"user_id":     e.TargetUin,
 		"time":        time.Now().Unix(),
 		"sub_type": func() string {
-			if e.Time > 0 {
-				return "ban"
+			if e.Time == 0 {
+				return "lift_ban"
 			}
-			return "lift_ban"
+			return "ban"
 		}(),
 	})
 }
