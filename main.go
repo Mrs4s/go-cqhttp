@@ -95,7 +95,7 @@ func main() {
 	console := bufio.NewReader(os.Stdin)
 
 	arg := os.Args
-	if len(arg) >1 && arg[1] ==  "update"{
+	if len(arg) > 1 && arg[1] == "update" {
 		if len(arg) > 2 {
 			selfUpdate(arg[2])
 		} else {

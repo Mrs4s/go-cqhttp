@@ -42,7 +42,7 @@ func NewQQBot(cli *client.QQClient, conf *global.JsonConfig) *CQBot {
 		p := path.Join("data", "leveldb")
 		db, err := leveldb.OpenFile(p, nil)
 		if err != nil {
-			log.Fatalf("打开数据库失败, 如果频繁遇到此问题请清理 data/db 文件夹或关闭数据库功能。")
+			log.Fatalf("打开数据库失败, 如果频繁遇到此问题请清理 data/leveldb 文件夹或关闭数据库功能。")
 		}
 		bot.db = db
 		gob.Register(message.Sender{})

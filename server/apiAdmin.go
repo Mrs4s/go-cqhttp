@@ -406,6 +406,7 @@ func (s *webServer) ReloadServer() {
 
 // 热重启
 func AdminDoRestart(s *webServer, c *gin.Context) {
+	s.bot.Release()
 	s.bot = nil
 	s.Cli = nil
 	s.DoReLogin()
