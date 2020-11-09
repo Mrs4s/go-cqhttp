@@ -11,16 +11,20 @@ import (
 	"github.com/tidwall/gjson"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"os/signal"
 	"path"
+	"runtime"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
+	"github.com/getlantern/go-update"
 	"github.com/lestrrat-go/file-rotatelogs"
 	"github.com/rifflock/lfshook"
 	log "github.com/sirupsen/logrus"
@@ -89,6 +93,16 @@ func init() {
 
 func main() {
 	console := bufio.NewReader(os.Stdin)
+
+	arg := os.Args
+	if len(arg) >1 && arg[1] ==  "update"{
+		if len(arg) > 2 {
+			selfUpdate(arg[2])
+		} else {
+			selfUpdate("")
+		}
+	}
+
 	var conf *global.JsonConfig
 	if global.PathExists("config.json") || os.Getenv("UIN") == "" {
 		conf = global.Load("config.json")
@@ -308,4 +322,72 @@ func checkUpdate() {
 		return
 	}
 	log.Infof("检查更新完成. 当前已运行最新版本.")
+}
+
+func selfUpdate(imageUrl string) {
+	console := bufio.NewReader(os.Stdin)
+	readLine := func() (str string) {
+		str, _ = console.ReadString('\n')
+		return
+	}
+	log.Infof("正在检查更新.")
+	var res string
+	if err := gout.GET("https://api.github.com/repos/Mrs4s/go-cqhttp/releases").BindBody(&res).Do(); err != nil {
+		log.Warnf("检查更新失败: %v", err)
+		return
+	}
+	detail := gjson.Parse(res)
+	if len(detail.Array()) < 1 {
+		return
+	}
+	info := detail.Array()[0]
+	version := info.Get("tag_name").Str
+	if coolq.Version != version {
+		log.Info("当前最新版本为 ", version)
+		log.Warn("是否更新(y/N): ")
+		r := strings.TrimSpace(readLine())
+
+		doUpdate := func() {
+			log.Info("正在更新,请稍等...")
+			url := fmt.Sprintf(
+				"%v/Mrs4s/go-cqhttp/releases/download/%v/go-cqhttp-%v-%v-%v",
+				func() string {
+					if imageUrl != "" {
+						return imageUrl
+					}
+					return "https://github.com"
+				}(),
+				version,
+				version,
+				runtime.GOOS,
+				runtime.GOARCH,
+			)
+			if runtime.GOOS == "windows" {
+				url = url + ".exe"
+			}
+			resp, err := http.Get(url)
+			if err != nil {
+				fmt.Println(err)
+				log.Error("更新失败!")
+				return
+			}
+			wc := global.WriteCounter{}
+			err, _ = update.New().FromStream(io.TeeReader(resp.Body, &wc))
+			fmt.Println()
+			if err != nil {
+				log.Error("更新失败!")
+				return
+			}
+			log.Info("更新完成！")
+		}
+
+		if r == "y" || r == "Y" {
+			doUpdate()
+		} else {
+			log.Warn("已取消更新！")
+		}
+	}
+	log.Info("按 Enter 继续....")
+	readLine()
+	os.Exit(0)
 }
