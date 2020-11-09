@@ -167,13 +167,24 @@ func (bot *CQBot) tempMessageEvent(c *client.QQClient, m *message.TempMessage) {
 
 func (bot *CQBot) groupMutedEvent(c *client.QQClient, e *client.GroupMuteEvent) {
 	g := c.FindGroup(e.GroupCode)
-	if e.Time > 0 {
-		log.Infof("群 %v 内 %v 被 %v 禁言了 %v秒.",
-			formatGroupName(g), formatMemberName(g.FindMember(e.TargetUin)), formatMemberName(g.FindMember(e.OperatorUin)), e.Time)
+	if e.TargetUin == 0 {
+		if e.Time != 0 {
+			log.Infof("群 %v 被 %v 开启全员禁言.",
+				formatGroupName(g), formatMemberName(g.FindMember(e.OperatorUin)))
+		} else {
+			log.Infof("群 %v 被 %v 解除全员禁言.",
+				formatGroupName(g), formatMemberName(g.FindMember(e.OperatorUin)))
+		}
 	} else {
-		log.Infof("群 %v 内 %v 被 %v 解除禁言.",
-			formatGroupName(g), formatMemberName(g.FindMember(e.TargetUin)), formatMemberName(g.FindMember(e.OperatorUin)))
+		if e.Time > 0 {
+			log.Infof("群 %v 内 %v 被 %v 禁言了 %v 秒.",
+				formatGroupName(g), formatMemberName(g.FindMember(e.TargetUin)), formatMemberName(g.FindMember(e.OperatorUin)), e.Time)
+		} else {
+			log.Infof("群 %v 内 %v 被 %v 解除禁言.",
+				formatGroupName(g), formatMemberName(g.FindMember(e.TargetUin)), formatMemberName(g.FindMember(e.OperatorUin)))
+		}
 	}
+
 	bot.dispatchEventMessage(MSG{
 		"post_type":   "notice",
 		"duration":    e.Time,
@@ -184,10 +195,10 @@ func (bot *CQBot) groupMutedEvent(c *client.QQClient, e *client.GroupMuteEvent) 
 		"user_id":     e.TargetUin,
 		"time":        time.Now().Unix(),
 		"sub_type": func() string {
-			if e.Time > 0 {
-				return "ban"
+			if e.Time == 0 {
+				return "lift_ban"
 			}
-			return "lift_ban"
+			return "ban"
 		}(),
 	})
 }
@@ -271,12 +282,16 @@ func (bot *CQBot) groupNotifyEvent(c *client.QQClient, e client.IGroupNotifyEven
 func (bot *CQBot) friendRecallEvent(c *client.QQClient, e *client.FriendMessageRecalledEvent) {
 	f := c.FindFriend(e.FriendUin)
 	gid := ToGlobalId(e.FriendUin, e.MessageId)
-	log.Infof("好友 %v(%v) 撤回了消息: %v", f.Nickname, f.Uin, gid)
+	if f != nil {
+		log.Infof("好友 %v(%v) 撤回了消息: %v", f.Nickname, f.Uin, gid)
+	} else {
+		log.Infof("好友 %v 撤回了消息: %v", e.FriendUin, gid)
+	}
 	bot.dispatchEventMessage(MSG{
 		"post_type":   "notice",
 		"notice_type": "friend_recall",
 		"self_id":     c.Uin,
-		"user_id":     f.Uin,
+		"user_id":     e.FriendUin,
 		"time":        e.Time,
 		"message_id":  gid,
 	})
@@ -392,7 +407,6 @@ func (bot *CQBot) friendAddedEvent(c *client.QQClient, e *client.NewFriendEvent)
 func (bot *CQBot) groupInvitedEvent(c *client.QQClient, e *client.GroupInvitedRequest) {
 	log.Infof("收到来自群 %v(%v) 内用户 %v(%v) 的加群邀请.", e.GroupName, e.GroupCode, e.InvitorNick, e.InvitorUin)
 	flag := strconv.FormatInt(e.RequestId, 10)
-	bot.invitedReqCache.Store(flag, e)
 	bot.dispatchEventMessage(MSG{
 		"post_type":    "request",
 		"request_type": "group",
@@ -409,7 +423,6 @@ func (bot *CQBot) groupInvitedEvent(c *client.QQClient, e *client.GroupInvitedRe
 func (bot *CQBot) groupJoinReqEvent(c *client.QQClient, e *client.UserJoinGroupRequest) {
 	log.Infof("群 %v(%v) 收到来自用户 %v(%v) 的加群请求.", e.GroupName, e.GroupCode, e.RequesterNick, e.RequesterUin)
 	flag := strconv.FormatInt(e.RequestId, 10)
-	bot.joinReqCache.Store(flag, e)
 	bot.dispatchEventMessage(MSG{
 		"post_type":    "request",
 		"request_type": "group",
@@ -476,6 +489,26 @@ func (bot *CQBot) checkMedia(e []message.IMessageElement) {
 				}), 0644)
 			}
 			i.Filename = filename
+		case *message.GroupImageElement:
+			filename := hex.EncodeToString(i.Md5) + ".image"
+			if !global.PathExists(path.Join(global.IMAGE_PATH, filename)) {
+				_ = ioutil.WriteFile(path.Join(global.IMAGE_PATH, filename), binary.NewWriterF(func(w *binary.Writer) {
+					w.Write(i.Md5)
+					w.WriteUInt32(uint32(i.Size))
+					w.WriteString(filename)
+					w.WriteString(i.Url)
+				}), 0644)
+			}
+		case *message.FriendImageElement:
+			filename := hex.EncodeToString(i.Md5) + ".image"
+			if !global.PathExists(path.Join(global.IMAGE_PATH, filename)) {
+				_ = ioutil.WriteFile(path.Join(global.IMAGE_PATH, filename), binary.NewWriterF(func(w *binary.Writer) {
+					w.Write(i.Md5)
+					w.WriteUInt32(uint32(0)) // 发送时会调用url, 大概没事
+					w.WriteString(filename)
+					w.WriteString(i.Url)
+				}), 0644)
+			}
 		case *message.VoiceElement:
 			i.Name = strings.ReplaceAll(i.Name, "{", "")
 			i.Name = strings.ReplaceAll(i.Name, "}", "")

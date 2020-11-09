@@ -5,6 +5,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/hex"
+	"github.com/guonaihong/gout/dataflow"
 	"net/http"
 	"os"
 	"strconv"
@@ -132,11 +133,18 @@ func (c *httpClient) onBotPushEvent(m coolq.MSG) {
 		return h
 	}()).SetTimeout(time.Second * time.Duration(c.timeout)).F().Retry().Attempt(5).
 		WaitTime(time.Millisecond * 500).MaxWaitTime(time.Second * 5).
-		Do()
+		Func(func(con *dataflow.Context) error {
+			if con.Error != nil {
+				log.Warnf("上报Event到 HTTP 服务器 %v 时出现错误: %v 将重试.", c.addr, con.Error)
+				return con.Error
+			}
+			return nil
+		}).Do()
 	if err != nil {
 		log.Warnf("上报Event数据 %v 到 %v 失败: %v", m.ToJson(), c.addr, err)
 		return
 	}
+	log.Debugf("上报Event数据 %v 到 %v", m.ToJson(), c.addr)
 	if gjson.Valid(res) {
 		c.bot.CQHandleQuickOperation(gjson.Parse(m.ToJson()), gjson.Parse(res))
 	}
@@ -181,6 +189,29 @@ func (s *httpServer) GetGroupMemberInfo(c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	uid, _ := strconv.ParseInt(getParam(c, "user_id"), 10, 64)
 	c.JSON(200, s.bot.CQGetGroupMemberInfo(gid, uid))
+}
+
+func (s *httpServer) GetGroupFileSystemInfo(c *gin.Context) {
+	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
+	c.JSON(200, s.bot.CQGetGroupFileSystemInfo(gid))
+}
+
+func (s *httpServer) GetGroupRootFiles(c *gin.Context) {
+	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
+	c.JSON(200, s.bot.CQGetGroupRootFiles(gid))
+}
+
+func (s *httpServer) GetGroupFilesByFolderId(c *gin.Context) {
+	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
+	folderId := getParam(c, "folder_id")
+	c.JSON(200, s.bot.CQGetGroupFilesByFolderId(gid, folderId))
+}
+
+func (s *httpServer) GetGroupFileUrl(c *gin.Context) {
+	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
+	fid := getParam(c, "file_id")
+	busid, _ := strconv.ParseInt(getParam(c, "busid"), 10, 32)
+	c.JSON(200, s.bot.CQGetGroupFileUrl(gid, fid, int32(busid)))
 }
 
 func (s *httpServer) SendMessage(c *gin.Context) {
@@ -317,6 +348,10 @@ func (s *httpServer) GetForwardMessage(c *gin.Context) {
 	c.JSON(200, s.bot.CQGetForwardMessage(resId))
 }
 
+func (s *httpServer) GetGroupSystemMessage(c *gin.Context) {
+	c.JSON(200, s.bot.CQGetGroupSystemMessages())
+}
+
 func (s *httpServer) DeleteMessage(c *gin.Context) {
 	mid, _ := strconv.ParseInt(getParam(c, "message_id"), 10, 32)
 	c.JSON(200, s.bot.CQDeleteMessage(int32(mid)))
@@ -447,6 +482,18 @@ var httpApi = map[string]func(s *httpServer, c *gin.Context){
 	"get_group_member_info": func(s *httpServer, c *gin.Context) {
 		s.GetGroupMemberInfo(c)
 	},
+	"get_group_file_system_info": func(s *httpServer, c *gin.Context) {
+		s.GetGroupFileSystemInfo(c)
+	},
+	"get_group_root_files": func(s *httpServer, c *gin.Context) {
+		s.GetGroupRootFiles(c)
+	},
+	"get_group_files_by_folder": func(s *httpServer, c *gin.Context) {
+		s.GetGroupFilesByFolderId(c)
+	},
+	"get_group_file_url": func(s *httpServer, c *gin.Context) {
+		s.GetGroupFileUrl(c)
+	},
 	"send_msg": func(s *httpServer, c *gin.Context) {
 		s.SendMessage(c)
 	},
@@ -503,6 +550,9 @@ var httpApi = map[string]func(s *httpServer, c *gin.Context){
 	},
 	"get_msg": func(s *httpServer, c *gin.Context) {
 		s.GetMessage(c)
+	},
+	"get_group_system_msg": func(s *httpServer, c *gin.Context) {
+		s.GetGroupSystemMessage(c)
 	},
 	"get_group_honor_info": func(s *httpServer, c *gin.Context) {
 		s.GetGroupHonorInfo(c)

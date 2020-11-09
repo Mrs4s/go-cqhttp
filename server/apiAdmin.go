@@ -183,7 +183,11 @@ func (s *webServer) Dologin() {
 				os.Exit(0)
 				return
 			case client.OtherLoginError, client.UnknownLoginError:
-				log.Warnf("登录失败: %v", rsp.ErrorMessage)
+				msg := rsp.ErrorMessage
+				if strings.Contains(msg, "版本") {
+					msg = "密码错误或账号被冻结"
+				}
+				log.Warnf("登录失败: %v", msg)
 				log.Infof("按 Enter 继续....")
 				readLine()
 				os.Exit(0)
@@ -225,8 +229,7 @@ func (s *webServer) Dologin() {
 					log.Warn("Bot已登录")
 					return
 				}
-				if conf.ReLogin.MaxReloginTimes == 0 {
-				} else if times > conf.ReLogin.MaxReloginTimes {
+				if times > conf.ReLogin.MaxReloginTimes && conf.ReLogin.MaxReloginTimes != 0 {
 					break
 				}
 				log.Warnf("Bot已离线 (%v)，将在 %v 秒后尝试重连. 重连次数：%v",

@@ -23,13 +23,11 @@ import (
 type CQBot struct {
 	Client *client.QQClient
 
-	events          []func(MSG)
-	db              *leveldb.DB
-	friendReqCache  sync.Map
-	invitedReqCache sync.Map
-	joinReqCache    sync.Map
-	tempMsgCache    sync.Map
-	oneWayMsgCache  sync.Map
+	events         []func(MSG)
+	db             *leveldb.DB
+	friendReqCache sync.Map
+	tempMsgCache   sync.Map
+	oneWayMsgCache sync.Map
 }
 
 type MSG map[string]interface{}
@@ -211,7 +209,12 @@ func (bot *CQBot) SendGroupMessage(groupId int64, m *message.SendingMessage) int
 		}
 		newElem = append(newElem, elem)
 	}
+	if len(newElem) == 0 {
+		log.Warnf("群消息发送失败: 消息为空.")
+		return -1
+	}
 	m.Elements = newElem
+	bot.checkMedia(newElem)
 	ret := bot.Client.SendGroupMessage(groupId, m, ForceFragmented)
 	if ret == nil || ret.Id == -1 {
 		log.Warnf("群消息发送失败: 账号可能被风控.")
@@ -292,7 +295,12 @@ func (bot *CQBot) SendPrivateMessage(target int64, m *message.SendingMessage) in
 		}
 		newElem = append(newElem, elem)
 	}
+	if len(newElem) == 0 {
+		log.Warnf("好友消息发送失败: 消息为空.")
+		return -1
+	}
 	m.Elements = newElem
+	bot.checkMedia(newElem)
 	var id int32 = -1
 	if bot.Client.FindFriend(target) != nil { // 双向好友
 		msg := bot.Client.SendPrivateMessage(target, m)

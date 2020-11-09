@@ -131,7 +131,7 @@ func DefaultConfig() *JsonConfig {
 		},
 		WebUi: &GoCqWebUi{
 			Enabled:   true,
-			Host:      "0.0.0.0",
+			Host:      "127.0.0.1",
 			WebInput:  false,
 			WebUiPort: 9999,
 		},

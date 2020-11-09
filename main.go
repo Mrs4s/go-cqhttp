@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Mrs4s/go-cqhttp/server"
+	"github.com/guonaihong/gout"
+	"github.com/tidwall/gjson"
 	"io"
 	"io/ioutil"
 	"os"
@@ -245,7 +247,7 @@ func main() {
 		conf.WebUi.WebUiPort = 9999
 	}
 	if conf.WebUi.Host == "" {
-		conf.WebUi.Host = "0.0.0.0"
+		conf.WebUi.Host = "127.0.0.1"
 	}
 	confErr := conf.Save("config.json")
 	if confErr != nil {
@@ -253,6 +255,7 @@ func main() {
 	}
 	b := server.WebServer.Run(fmt.Sprintf("%s:%d", conf.WebUi.Host, conf.WebUi.WebUiPort), cli)
 	c := server.Console
+	go checkUpdate()
 	signal.Notify(c, os.Interrupt, os.Kill)
 	<-c
 	b.Release()
@@ -281,4 +284,28 @@ func DecryptPwd(ePwd string, key []byte) string {
 		panic("密钥错误")
 	}
 	return string(tea.Decrypt(encrypted))
+}
+
+func checkUpdate() {
+	log.Infof("正在检查更新.")
+	if coolq.Version == "unknown" {
+		log.Warnf("检查更新失败: 使用的 Actions 测试版或自编译版本.")
+		return
+	}
+	var res string
+	if err := gout.GET("https://api.github.com/repos/Mrs4s/go-cqhttp/releases").BindBody(&res).Do(); err != nil {
+		log.Warnf("检查更新失败: %v", err)
+		return
+	}
+	detail := gjson.Parse(res)
+	if len(detail.Array()) < 1 {
+		return
+	}
+	info := detail.Array()[0]
+	if global.VersionNameCompare(coolq.Version, info.Get("tag_name").Str) {
+		log.Infof("当前有更新的 go-cqhttp 可供更新, 请前往 https://github.com/Mrs4s/go-cqhttp/releases 下载.")
+		log.Infof("当前版本: %v 最新版本: %v", coolq.Version, info.Get("tag_name").Str)
+		return
+	}
+	log.Infof("检查更新完成. 当前已运行最新版本.")
 }
