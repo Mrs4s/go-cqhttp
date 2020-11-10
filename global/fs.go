@@ -6,6 +6,8 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
+	"fmt"
+	"github.com/dustin/go-humanize"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/url"
@@ -106,4 +108,20 @@ func DelFile(path string) bool {
 		log.Info(path + "删除成功")
 		return true
 	}
+}
+
+type WriteCounter struct {
+	Total uint64
+}
+
+func (wc *WriteCounter) Write(p []byte) (int, error) {
+	n := len(p)
+	wc.Total += uint64(n)
+	wc.PrintProgress()
+	return n, nil
+}
+
+func (wc WriteCounter) PrintProgress() {
+	fmt.Printf("\r%s", strings.Repeat(" ", 35))
+	fmt.Printf("\rDownloading... %s complete", humanize.Bytes(wc.Total))
 }
