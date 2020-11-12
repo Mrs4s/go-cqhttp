@@ -33,6 +33,7 @@ type JsonConfig struct {
 	WSConfig            *GoCQWebsocketConfig          `json:"ws_config"`
 	ReverseServers      []*GoCQReverseWebsocketConfig `json:"ws_reverse_servers"`
 	PostMessageFormat   string                        `json:"post_message_format"`
+	UseSSOAddress       bool                          `json:"use_sso_address"`
 	Debug               bool                          `json:"debug"`
 	LogLevel            string                        `json:"log_level"`
 	WebUi               *GoCqWebUi                    `json:"web_ui"`

@@ -358,8 +358,13 @@ func (s *webServer) DoReLogin() { // TODO: 协议层的 ReLogin
 			log.Debug("Protocol -> " + e.Message)
 		}
 	})
-	cli.OnServerUpdated(func(bot *client.QQClient, e *client.ServerUpdatedEvent) {
+	cli.OnServerUpdated(func(bot *client.QQClient, e *client.ServerUpdatedEvent) bool {
+		if !conf.UseSSOAddress {
+			log.Infof("收到服务器地址更新通知, 根据配置文件已忽略.")
+			return false
+		}
 		log.Infof("收到服务器地址更新通知, 将在下一次重连时应用. ")
+		return true
 	})
 	s.Cli = cli
 	s.Dologin()
