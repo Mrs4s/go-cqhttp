@@ -310,7 +310,12 @@ func (bot *CQBot) ConvertStringMessage(m string, group bool) (r []message.IMessa
 			}
 			continue
 		}
-		r = append(r, elem)
+		switch i := elem.(type) {
+		case message.IMessageElement:
+			r = append(r, i)
+		case []message.IMessageElement:
+			r = append(r, i...)
+		}
 	}
 	if si != len(m) {
 		r = append(r, message.NewText(CQCodeUnescapeText(m[si:])))
@@ -354,7 +359,13 @@ func (bot *CQBot) ConvertObjectMessage(m gjson.Result, group bool) (r []message.
 			log.Warnf("转换CQ码到MiraiGo Element时出现错误: %v 将忽略本段CQ码.", err)
 			return
 		}
-		r = append(r, elem)
+		switch i := elem.(type) {
+		case message.IMessageElement:
+			r = append(r, i)
+		case []message.IMessageElement:
+			r = append(r, i...)
+		}
+
 	}
 	if m.Type == gjson.String {
 		return bot.ConvertStringMessage(m.Str, group)
@@ -370,7 +381,10 @@ func (bot *CQBot) ConvertObjectMessage(m gjson.Result, group bool) (r []message.
 	return
 }
 
-func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m message.IMessageElement, err error) {
+// ToElement 将解码后的CQCode转换为Element.
+// 返回 interface{} 存在三种类型
+// message.IMessageElement []message.IMessageElement nil
+func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m interface{}, err error) {
 	switch t {
 	case "text":
 		return message.NewText(d["text"]), nil
@@ -604,7 +618,7 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m messag
 		if err != nil {
 			return nil, errors.New("send cardimage faild")
 		}
-		return bot.SendNewPic(img, source, icon, minWidth, minHeight, maxWidth, maxHeight, group)
+		return bot.makeShowPic(img, source, icon, minWidth, minHeight, maxWidth, maxHeight, group)
 	default:
 		return nil, errors.New("unsupported cq code: " + t)
 	}
@@ -753,10 +767,10 @@ func (bot *CQBot) makeImageElem(d map[string]string, group bool) (message.IMessa
 	return nil, errors.New("invalid image")
 }
 
-//SendNewPic 一种xml 方式发送的群消息图片
-func (bot *CQBot) SendNewPic(elem message.IMessageElement, source string, icon string, minWidth int64, minHeight int64, maxWidth int64, maxHeight int64, group bool) (*message.ServiceElement, error) {
-	var xml string
-	xml = ""
+//makeShowPic 一种xml 方式发送的群消息图片
+func (bot *CQBot) makeShowPic(elem message.IMessageElement, source string, icon string, minWidth int64, minHeight int64, maxWidth int64, maxHeight int64, group bool) ([]message.IMessageElement, error) {
+	xml := ""
+	var suf message.IMessageElement
 	if i, ok := elem.(*message.ImageElement); ok {
 		if group == false {
 			gm, err := bot.Client.UploadPrivateImage(1, i.Data)
@@ -764,27 +778,32 @@ func (bot *CQBot) SendNewPic(elem message.IMessageElement, source string, icon s
 				log.Warnf("警告: 好友消息 %v 消息图片上传失败: %v", 1, err)
 				return nil, err
 			}
+			suf = gm
 			xml = fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="5" templateID="12345" action="" brief="&#91;分享&#93;我看到一张很赞的图片，分享给你，快来看！" sourceMsgId="0" url="%s" flag="0" adverSign="0" multiMsgFlag="0"><item layout="0" advertiser_id="0" aid="0"><image uuid="%x" md5="%x" GroupFiledid="0" filesize="%d" local_path="%s" minWidth="%d" minHeight="%d" maxWidth="%d" maxHeight="%d" /></item><source name="%s" icon="%s" action="" appid="-1" /></msg>`, "", gm.Md5, gm.Md5, len(i.Data), "", minWidth, minHeight, maxWidth, maxHeight, source, icon)
-
 		} else {
 			gm, err := bot.Client.UploadGroupImage(1, i.Data)
 			if err != nil {
 				log.Warnf("警告: 群 %v 消息图片上传失败: %v", 1, err)
 				return nil, err
 			}
+			suf = gm
 			xml = fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="5" templateID="12345" action="" brief="&#91;分享&#93;我看到一张很赞的图片，分享给你，快来看！" sourceMsgId="0" url="%s" flag="0" adverSign="0" multiMsgFlag="0"><item layout="0" advertiser_id="0" aid="0"><image uuid="%x" md5="%x" GroupFiledid="0" filesize="%d" local_path="%s" minWidth="%d" minHeight="%d" maxWidth="%d" maxHeight="%d" /></item><source name="%s" icon="%s" action="" appid="-1" /></msg>`, "", gm.Md5, gm.Md5, len(i.Data), "", minWidth, minHeight, maxWidth, maxHeight, source, icon)
 		}
 	}
+
 	if i, ok := elem.(*message.GroupImageElement); ok {
 		xml = fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="5" templateID="12345" action="" brief="&#91;分享&#93;我看到一张很赞的图片，分享给你，快来看！" sourceMsgId="0" url="%s" flag="0" adverSign="0" multiMsgFlag="0"><item layout="0" advertiser_id="0" aid="0"><image uuid="%x" md5="%x" GroupFiledid="0" filesize="%d" local_path="%s" minWidth="%d" minHeight="%d" maxWidth="%d" maxHeight="%d" /></item><source name="%s" icon="%s" action="" appid="-1" /></msg>`, "", i.Md5, i.Md5, 0, "", minWidth, minHeight, maxWidth, maxHeight, source, icon)
+		suf = i
 	}
 	if i, ok := elem.(*message.FriendImageElement); ok {
 		xml = fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="5" templateID="12345" action="" brief="&#91;分享&#93;我看到一张很赞的图片，分享给你，快来看！" sourceMsgId="0" url="%s" flag="0" adverSign="0" multiMsgFlag="0"><item layout="0" advertiser_id="0" aid="0"><image uuid="%x" md5="%x" GroupFiledid="0" filesize="%d" local_path="%s" minWidth="%d" minHeight="%d" maxWidth="%d" maxHeight="%d" /></item><source name="%s" icon="%s" action="" appid="-1" /></msg>`, "", i.Md5, i.Md5, 0, "", minWidth, minHeight, maxWidth, maxHeight, source, icon)
+		suf = i
 	}
 	if xml != "" {
-		log.Warn(xml)
-		XmlMsg := message.NewRichXml(xml, 5)
-		return XmlMsg, nil
+		//log.Warn(xml)
+		ret := []message.IMessageElement{suf}
+		ret = append(ret, message.NewRichXml(xml, 5))
+		return ret, nil
 	}
-	return nil, errors.New("发送xml图片消息失败")
+	return nil, errors.New("生成xml图片消息失败")
 }
