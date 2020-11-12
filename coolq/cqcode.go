@@ -1,9 +1,11 @@
 package coolq
 
 import (
+	"bytes"
 	"crypto/md5"
 	"encoding/base64"
 	"encoding/hex"
+	xml2 "encoding/xml"
 	"errors"
 	"fmt"
 	"github.com/Mrs4s/MiraiGo/binary"
@@ -568,7 +570,7 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m interf
 				}}, nil
 			}
 			xml := fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="2" templateID="1" action="web" brief="[分享] %s" sourceMsgId="0" url="%s" flag="0" adverSign="0" multiMsgFlag="0"><item layout="2"><audio cover="%s" src="%s"/><title>%s</title><summary>%s</summary></item><source name="音乐" icon="https://i.gtimg.cn/open/app_icon/01/07/98/56/1101079856_100_m.png" url="http://web.p.qq.com/qqmpmobile/aio/app.html?id=1101079856" action="app" a_actionData="com.tencent.qqmusic" i_actionData="tencent1101079856://" appid="1101079856" /></msg>`,
-				url.PathEscape(d["title"]), d["url"], d["image"], d["audio"], url.PathEscape(d["title"]), url.PathEscape(d["content"]))
+				XmlEscape(d["title"]), d["url"], d["image"], d["audio"], XmlEscape(d["title"]), XmlEscape(d["content"]))
 			return &message.ServiceElement{
 				Id:      60,
 				Content: xml,
@@ -623,6 +625,12 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m interf
 		return nil, errors.New("unsupported cq code: " + t)
 	}
 	return nil, nil
+}
+
+func XmlEscape(c string) string {
+	buf := new(bytes.Buffer)
+	_ = xml2.EscapeText(buf, []byte(c))
+	return buf.String()
 }
 
 func CQCodeEscapeText(raw string) string {
