@@ -239,6 +239,7 @@ func (s *webServer) Dologin() {
 				rsp, err := cli.Login()
 				if err != nil {
 					log.Errorf("重连失败: %v", err)
+					cli.Disconnect()
 					continue
 				}
 				if !rsp.Success {
