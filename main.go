@@ -226,8 +226,8 @@ func main() {
 	log.Info("开始尝试登录并同步消息...")
 	log.Infof("使用协议: %v", func() string {
 		switch client.SystemDeviceInfo.Protocol {
-		case client.AndroidPad:
-			return "Android Pad"
+		case client.IPad:
+			return "iPad"
 		case client.AndroidPhone:
 			return "Android Phone"
 		case client.AndroidWatch:
@@ -246,6 +246,14 @@ func main() {
 			log.Debug("Protocol -> " + e.Message)
 		}
 	})
+	if global.PathExists("address.txt") {
+		log.Infof("检测到 address.txt 文件. 将覆盖目标IP.")
+		addr := global.ReadAddrFile("address.txt")
+		if len(addr) > 0 {
+			cli.SetCustomServer(addr)
+		}
+		log.Infof("读取到 %v 个自定义地址.", len(addr))
+	}
 	cli.OnServerUpdated(func(bot *client.QQClient, e *client.ServerUpdatedEvent) bool {
 		if !conf.UseSSOAddress {
 			log.Infof("收到服务器地址更新通知, 根据配置文件已忽略.")

@@ -10,10 +10,12 @@ import (
 	"github.com/dustin/go-humanize"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
+	"net"
 	"net/url"
 	"os"
 	"path"
 	"runtime"
+	"strconv"
 	"strings"
 )
 
@@ -108,6 +110,24 @@ func DelFile(path string) bool {
 		log.Info(path + "删除成功")
 		return true
 	}
+}
+
+func ReadAddrFile(path string) []*net.TCPAddr {
+	d, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil
+	}
+	str := string(d)
+	lines := strings.Split(str, "\n")
+	var ret []*net.TCPAddr
+	for _, l := range lines {
+		ip := strings.Split(l, ":")
+		if len(ip) == 2 {
+			port, _ := strconv.Atoi(ip[1])
+			ret = append(ret, &net.TCPAddr{IP: net.ParseIP(ip[0]), Port: port})
+		}
+	}
+	return ret
 }
 
 type WriteCounter struct {

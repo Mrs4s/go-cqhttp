@@ -807,7 +807,7 @@ func (bot *CQBot) CQGetVersionInfo() MSG {
 		"version":                    Version,
 		"protocol": func() int {
 			switch client.SystemDeviceInfo.Protocol {
-			case client.AndroidPad:
+			case client.IPad:
 				return 0
 			case client.AndroidPhone:
 				return 1
