@@ -226,8 +226,8 @@ func main() {
 	log.Info("开始尝试登录并同步消息...")
 	log.Infof("使用协议: %v", func() string {
 		switch client.SystemDeviceInfo.Protocol {
-		case client.AndroidPad:
-			return "Android Pad"
+		case client.IPad:
+			return "iPad"
 		case client.AndroidPhone:
 			return "Android Phone"
 		case client.AndroidWatch:
