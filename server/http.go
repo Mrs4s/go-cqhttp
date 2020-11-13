@@ -161,78 +161,78 @@ func (s *httpServer) HandleActions(c *gin.Context) {
 	}
 }
 
-func (s *httpServer) GetLoginInfo(c *gin.Context) {
+func GetLoginInfo(s *httpServer, c *gin.Context) {
 	c.JSON(200, s.bot.CQGetLoginInfo())
 }
 
-func (s *httpServer) GetFriendList(c *gin.Context) {
+func GetFriendList(s *httpServer, c *gin.Context) {
 	c.JSON(200, s.bot.CQGetFriendList())
 }
 
-func (s *httpServer) GetGroupList(c *gin.Context) {
+func GetGroupList(s *httpServer, c *gin.Context) {
 	nc := getParamOrDefault(c, "no_cache", "false")
 	c.JSON(200, s.bot.CQGetGroupList(nc == "true"))
 }
 
-func (s *httpServer) GetGroupInfo(c *gin.Context) {
+func GetGroupInfo(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	c.JSON(200, s.bot.CQGetGroupInfo(gid))
 }
 
-func (s *httpServer) GetGroupMemberList(c *gin.Context) {
+func GetGroupMemberList(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	nc := getParamOrDefault(c, "no_cache", "false")
 	c.JSON(200, s.bot.CQGetGroupMemberList(gid, nc == "true"))
 }
 
-func (s *httpServer) GetGroupMemberInfo(c *gin.Context) {
+func GetGroupMemberInfo(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	uid, _ := strconv.ParseInt(getParam(c, "user_id"), 10, 64)
 	c.JSON(200, s.bot.CQGetGroupMemberInfo(gid, uid))
 }
 
-func (s *httpServer) GetGroupFileSystemInfo(c *gin.Context) {
+func GetGroupFileSystemInfo(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	c.JSON(200, s.bot.CQGetGroupFileSystemInfo(gid))
 }
 
-func (s *httpServer) GetGroupRootFiles(c *gin.Context) {
+func GetGroupRootFiles(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	c.JSON(200, s.bot.CQGetGroupRootFiles(gid))
 }
 
-func (s *httpServer) GetGroupFilesByFolderId(c *gin.Context) {
+func GetGroupFilesByFolderId(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	folderId := getParam(c, "folder_id")
 	c.JSON(200, s.bot.CQGetGroupFilesByFolderId(gid, folderId))
 }
 
-func (s *httpServer) GetGroupFileUrl(c *gin.Context) {
+func GetGroupFileUrl(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	fid := getParam(c, "file_id")
 	busid, _ := strconv.ParseInt(getParam(c, "busid"), 10, 32)
 	c.JSON(200, s.bot.CQGetGroupFileUrl(gid, fid, int32(busid)))
 }
 
-func (s *httpServer) SendMessage(c *gin.Context) {
+func SendMessage(s *httpServer, c *gin.Context) {
 	if getParam(c, "message_type") == "private" {
-		s.SendPrivateMessage(c)
+		SendPrivateMessage(s, c)
 		return
 	}
 	if getParam(c, "message_type") == "group" {
-		s.SendGroupMessage(c)
+		SendGroupMessage(s, c)
 		return
 	}
 	if getParam(c, "group_id") != "" {
-		s.SendGroupMessage(c)
+		SendGroupMessage(s, c)
 		return
 	}
 	if getParam(c, "user_id") != "" {
-		s.SendPrivateMessage(c)
+		SendPrivateMessage(s, c)
 	}
 }
 
-func (s *httpServer) SendPrivateMessage(c *gin.Context) {
+func SendPrivateMessage(s *httpServer, c *gin.Context) {
 	uid, _ := strconv.ParseInt(getParam(c, "user_id"), 10, 64)
 	msg, t := getParamWithType(c, "message")
 	autoEscape := global.EnsureBool(getParam(c, "auto_escape"), false)
@@ -243,7 +243,7 @@ func (s *httpServer) SendPrivateMessage(c *gin.Context) {
 	c.JSON(200, s.bot.CQSendPrivateMessage(uid, msg, autoEscape))
 }
 
-func (s *httpServer) SendGroupMessage(c *gin.Context) {
+func SendGroupMessage(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	msg, t := getParamWithType(c, "message")
 	autoEscape := global.EnsureBool(getParam(c, "auto_escape"), false)
@@ -254,34 +254,34 @@ func (s *httpServer) SendGroupMessage(c *gin.Context) {
 	c.JSON(200, s.bot.CQSendGroupMessage(gid, msg, autoEscape))
 }
 
-func (s *httpServer) SendGroupForwardMessage(c *gin.Context) {
+func SendGroupForwardMessage(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	msg := getParam(c, "messages")
 	c.JSON(200, s.bot.CQSendGroupForwardMessage(gid, gjson.Parse(msg)))
 }
 
-func (s *httpServer) GetImage(c *gin.Context) {
+func GetImage(s *httpServer, c *gin.Context) {
 	file := getParam(c, "file")
 	c.JSON(200, s.bot.CQGetImage(file))
 }
 
-func (s *httpServer) GetMessage(c *gin.Context) {
+func GetMessage(s *httpServer, c *gin.Context) {
 	mid, _ := strconv.ParseInt(getParam(c, "message_id"), 10, 32)
 	c.JSON(200, s.bot.CQGetMessage(int32(mid)))
 }
 
-func (s *httpServer) GetGroupHonorInfo(c *gin.Context) {
+func GetGroupHonorInfo(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	c.JSON(200, s.bot.CQGetGroupHonorInfo(gid, getParam(c, "type")))
 }
 
-func (s *httpServer) ProcessFriendRequest(c *gin.Context) {
+func ProcessFriendRequest(s *httpServer, c *gin.Context) {
 	flag := getParam(c, "flag")
 	approve := getParamOrDefault(c, "approve", "true")
 	c.JSON(200, s.bot.CQProcessFriendRequest(flag, approve == "true"))
 }
 
-func (s *httpServer) ProcessGroupRequest(c *gin.Context) {
+func ProcessGroupRequest(s *httpServer, c *gin.Context) {
 	flag := getParam(c, "flag")
 	subType := getParam(c, "sub_type")
 	if subType == "" {
@@ -291,103 +291,103 @@ func (s *httpServer) ProcessGroupRequest(c *gin.Context) {
 	c.JSON(200, s.bot.CQProcessGroupRequest(flag, subType, getParam(c, "reason"), approve == "true"))
 }
 
-func (s *httpServer) SetGroupCard(c *gin.Context) {
+func SetGroupCard(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	uid, _ := strconv.ParseInt(getParam(c, "user_id"), 10, 64)
 	c.JSON(200, s.bot.CQSetGroupCard(gid, uid, getParam(c, "card")))
 }
 
-func (s *httpServer) SetSpecialTitle(c *gin.Context) {
+func SetSpecialTitle(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	uid, _ := strconv.ParseInt(getParam(c, "user_id"), 10, 64)
 	c.JSON(200, s.bot.CQSetGroupSpecialTitle(gid, uid, getParam(c, "special_title")))
 }
 
-func (s *httpServer) SetGroupKick(c *gin.Context) {
+func SetGroupKick(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	uid, _ := strconv.ParseInt(getParam(c, "user_id"), 10, 64)
 	msg := getParam(c, "message")
 	c.JSON(200, s.bot.CQSetGroupKick(gid, uid, msg))
 }
 
-func (s *httpServer) SetGroupBan(c *gin.Context) {
+func SetGroupBan(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	uid, _ := strconv.ParseInt(getParam(c, "user_id"), 10, 64)
 	i, _ := strconv.ParseInt(getParamOrDefault(c, "duration", "1800"), 10, 64)
 	c.JSON(200, s.bot.CQSetGroupBan(gid, uid, uint32(i)))
 }
 
-func (s *httpServer) SetWholeBan(c *gin.Context) {
+func SetWholeBan(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	c.JSON(200, s.bot.CQSetGroupWholeBan(gid, getParamOrDefault(c, "enable", "true") == "true"))
 }
 
-func (s *httpServer) SetGroupName(c *gin.Context) {
+func SetGroupName(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	c.JSON(200, s.bot.CQSetGroupName(gid, getParam(c, "group_name")))
 }
 
-func (s *httpServer) SetGroupAdmin(c *gin.Context) {
+func SetGroupAdmin(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	uid, _ := strconv.ParseInt(getParam(c, "user_id"), 10, 64)
 	c.JSON(200, s.bot.CQSetGroupAdmin(gid, uid, getParamOrDefault(c, "enable", "true") == "true"))
 }
 
-func (s *httpServer) SendGroupNotice(c *gin.Context) {
+func SendGroupNotice(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	c.JSON(200, s.bot.CQSetGroupMemo(gid, getParam(c, "content")))
 }
 
-func (s *httpServer) SetGroupLeave(c *gin.Context) {
+func SetGroupLeave(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	c.JSON(200, s.bot.CQSetGroupLeave(gid))
 }
 
-func (s *httpServer) GetForwardMessage(c *gin.Context) {
+func GetForwardMessage(s *httpServer, c *gin.Context) {
 	resId := getParam(c, "message_id")
 	c.JSON(200, s.bot.CQGetForwardMessage(resId))
 }
 
-func (s *httpServer) GetGroupSystemMessage(c *gin.Context) {
+func GetGroupSystemMessage(s *httpServer, c *gin.Context) {
 	c.JSON(200, s.bot.CQGetGroupSystemMessages())
 }
 
-func (s *httpServer) DeleteMessage(c *gin.Context) {
+func DeleteMessage(s *httpServer, c *gin.Context) {
 	mid, _ := strconv.ParseInt(getParam(c, "message_id"), 10, 32)
 	c.JSON(200, s.bot.CQDeleteMessage(int32(mid)))
 }
 
-func (s *httpServer) CanSendImage(c *gin.Context) {
+func CanSendImage(s *httpServer, c *gin.Context) {
 	c.JSON(200, s.bot.CQCanSendImage())
 }
 
-func (s *httpServer) CanSendRecord(c *gin.Context) {
+func CanSendRecord(s *httpServer, c *gin.Context) {
 	c.JSON(200, s.bot.CQCanSendRecord())
 }
 
-func (s *httpServer) GetStatus(c *gin.Context) {
+func GetStatus(s *httpServer, c *gin.Context) {
 	c.JSON(200, s.bot.CQGetStatus())
 }
 
-func (s *httpServer) GetVersionInfo(c *gin.Context) {
+func GetVersionInfo(s *httpServer, c *gin.Context) {
 	c.JSON(200, s.bot.CQGetVersionInfo())
 }
 
-func (s *httpServer) ReloadEventFilter(c *gin.Context) {
+func ReloadEventFilter(s *httpServer, c *gin.Context) {
 	c.JSON(200, s.bot.CQReloadEventFilter())
 }
 
-func (s *httpServer) GetVipInfo(c *gin.Context) {
+func GetVipInfo(s *httpServer, c *gin.Context) {
 	uid, _ := strconv.ParseInt(getParam(c, "user_id"), 10, 64)
 	c.JSON(200, s.bot.CQGetVipInfo(uid))
 }
 
-func (s *httpServer) GetStrangerInfo(c *gin.Context) {
+func GetStrangerInfo(s *httpServer, c *gin.Context) {
 	uid, _ := strconv.ParseInt(getParam(c, "user_id"), 10, 64)
 	c.JSON(200, s.bot.CQGetStrangerInfo(uid))
 }
 
-func (s *httpServer) HandleQuickOperation(c *gin.Context) {
+func HandleQuickOperation(s *httpServer, c *gin.Context) {
 	if c.Request.Method != "POST" {
 		c.AbortWithStatus(404)
 		return
@@ -398,17 +398,17 @@ func (s *httpServer) HandleQuickOperation(c *gin.Context) {
 	}
 }
 
-func (s *httpServer) OcrImage(c *gin.Context) {
+func OcrImage(s *httpServer, c *gin.Context) {
 	img := getParam(c, "image")
 	c.JSON(200, s.bot.CQOcrImage(img))
 }
 
-func (s *httpServer) GetWordSlices(c *gin.Context) {
+func GetWordSlices(s *httpServer, c *gin.Context) {
 	content := getParam(c, "content")
 	c.JSON(200, s.bot.CQGetWordSlices(content))
 }
 
-func (s *httpServer) SetGroupPortrait(c *gin.Context) {
+func SetGroupPortrait(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	file := getParam(c, "file")
 	cache := getParam(c, "cache")
@@ -464,132 +464,48 @@ func getParamWithType(c *gin.Context, k string) (string, gjson.Type) {
 }
 
 var httpApi = map[string]func(s *httpServer, c *gin.Context){
-	"get_login_info": func(s *httpServer, c *gin.Context) {
-		s.GetLoginInfo(c)
-	},
-	"get_friend_list": func(s *httpServer, c *gin.Context) {
-		s.GetFriendList(c)
-	},
-	"get_group_list": func(s *httpServer, c *gin.Context) {
-		s.GetGroupList(c)
-	},
-	"get_group_info": func(s *httpServer, c *gin.Context) {
-		s.GetGroupInfo(c)
-	},
-	"get_group_member_list": func(s *httpServer, c *gin.Context) {
-		s.GetGroupMemberList(c)
-	},
-	"get_group_member_info": func(s *httpServer, c *gin.Context) {
-		s.GetGroupMemberInfo(c)
-	},
-	"get_group_file_system_info": func(s *httpServer, c *gin.Context) {
-		s.GetGroupFileSystemInfo(c)
-	},
-	"get_group_root_files": func(s *httpServer, c *gin.Context) {
-		s.GetGroupRootFiles(c)
-	},
-	"get_group_files_by_folder": func(s *httpServer, c *gin.Context) {
-		s.GetGroupFilesByFolderId(c)
-	},
-	"get_group_file_url": func(s *httpServer, c *gin.Context) {
-		s.GetGroupFileUrl(c)
-	},
-	"send_msg": func(s *httpServer, c *gin.Context) {
-		s.SendMessage(c)
-	},
-	"send_group_msg": func(s *httpServer, c *gin.Context) {
-		s.SendGroupMessage(c)
-	},
-	"send_group_forward_msg": func(s *httpServer, c *gin.Context) {
-		s.SendGroupForwardMessage(c)
-	},
-	"send_private_msg": func(s *httpServer, c *gin.Context) {
-		s.SendPrivateMessage(c)
-	},
-	"delete_msg": func(s *httpServer, c *gin.Context) {
-		s.DeleteMessage(c)
-	},
-	"set_friend_add_request": func(s *httpServer, c *gin.Context) {
-		s.ProcessFriendRequest(c)
-	},
-	"set_group_add_request": func(s *httpServer, c *gin.Context) {
-		s.ProcessGroupRequest(c)
-	},
-	"set_group_card": func(s *httpServer, c *gin.Context) {
-		s.SetGroupCard(c)
-	},
-	"set_group_special_title": func(s *httpServer, c *gin.Context) {
-		s.SetSpecialTitle(c)
-	},
-	"set_group_kick": func(s *httpServer, c *gin.Context) {
-		s.SetGroupKick(c)
-	},
-	"set_group_ban": func(s *httpServer, c *gin.Context) {
-		s.SetGroupBan(c)
-	},
-	"set_group_whole_ban": func(s *httpServer, c *gin.Context) {
-		s.SetWholeBan(c)
-	},
-	"set_group_name": func(s *httpServer, c *gin.Context) {
-		s.SetGroupName(c)
-	},
-	"set_group_admin": func(s *httpServer, c *gin.Context) {
-		s.SetGroupAdmin(c)
-	},
-	"_send_group_notice": func(s *httpServer, c *gin.Context) {
-		s.SendGroupNotice(c)
-	},
-	"set_group_leave": func(s *httpServer, c *gin.Context) {
-		s.SetGroupLeave(c)
-	},
-	"get_image": func(s *httpServer, c *gin.Context) {
-		s.GetImage(c)
-	},
-	"get_forward_msg": func(s *httpServer, c *gin.Context) {
-		s.GetForwardMessage(c)
-	},
-	"get_msg": func(s *httpServer, c *gin.Context) {
-		s.GetMessage(c)
-	},
-	"get_group_system_msg": func(s *httpServer, c *gin.Context) {
-		s.GetGroupSystemMessage(c)
-	},
-	"get_group_honor_info": func(s *httpServer, c *gin.Context) {
-		s.GetGroupHonorInfo(c)
-	},
-	"can_send_image": func(s *httpServer, c *gin.Context) {
-		s.CanSendImage(c)
-	},
-	"can_send_record": func(s *httpServer, c *gin.Context) {
-		s.CanSendRecord(c)
-	},
-	"get_status": func(s *httpServer, c *gin.Context) {
-		s.GetStatus(c)
-	},
-	"get_version_info": func(s *httpServer, c *gin.Context) {
-		s.GetVersionInfo(c)
-	},
-	"_get_vip_info": func(s *httpServer, c *gin.Context) {
-		s.GetVipInfo(c)
-	},
-	"get_stranger_info": func(s *httpServer, c *gin.Context) {
-		s.GetStrangerInfo(c)
-	},
-	"reload_event_filter": func(s *httpServer, c *gin.Context) {
-		s.ReloadEventFilter(c)
-	},
-	"set_group_portrait": func(s *httpServer, c *gin.Context) {
-		s.SetGroupPortrait(c)
-	},
-	".handle_quick_operation": func(s *httpServer, c *gin.Context) {
-		s.HandleQuickOperation(c)
-	},
-	".ocr_image": func(s *httpServer, c *gin.Context) {
-		s.OcrImage(c)
-	},
-	".get_word_slices": func(s *httpServer, c *gin.Context) {
-		s.GetWordSlices(c)
-	},
+	"get_login_info":             GetLoginInfo,
+	"get_friend_list":            GetFriendList,
+	"get_group_list":             GetGroupList,
+	"get_group_info":             GetGroupInfo,
+	"get_group_member_list":      GetGroupMemberList,
+	"get_group_member_info":      GetGroupMemberInfo,
+	"get_group_file_system_info": GetGroupFileSystemInfo,
+	"get_group_root_files":       GetGroupRootFiles,
+	"get_group_files_by_folder":  GetGroupFilesByFolderId,
+	"get_group_file_url":         GetGroupFileUrl,
+	"send_msg":                   SendMessage,
+	"send_group_msg":             SendGroupMessage,
+	"send_group_forward_msg":     SendGroupForwardMessage,
+	"send_private_msg":           SendPrivateMessage,
+	"delete_msg":                 DeleteMessage,
+	"set_friend_add_request":     ProcessFriendRequest,
+	"set_group_add_request":      ProcessGroupRequest,
+	"set_group_card":             SetGroupCard,
+	"set_group_special_title":    SetSpecialTitle,
+	"set_group_kick":             SetGroupKick,
+	"set_group_ban":              SetGroupBan,
+	"set_group_whole_ban":        SetWholeBan,
+	"set_group_name":             SetGroupName,
+	"set_group_admin":            SetGroupAdmin,
+	"_send_group_notice":         SendGroupNotice,
+	"set_group_leave":            SetGroupLeave,
+	"get_image":                  GetImage,
+	"get_forward_msg":            GetForwardMessage,
+	"get_msg":                    GetMessage,
+	"get_group_system_msg":       GetGroupSystemMessage,
+	"get_group_honor_info":       GetGroupHonorInfo,
+	"can_send_image":             CanSendImage,
+	"can_send_record":            CanSendRecord,
+	"get_status":                 GetStatus,
+	"get_version_info":           GetVersionInfo,
+	"_get_vip_info":              GetVipInfo,
+	"get_stranger_info":          GetStrangerInfo,
+	"reload_event_filter":        ReloadEventFilter,
+	"set_group_portrait":         SetGroupPortrait,
+	".handle_quick_operation":    HandleQuickOperation,
+	".ocr_image":                 OcrImage,
+	".get_word_slices":           GetWordSlices,
 }
 
 func (s *httpServer) ShutDown() {
