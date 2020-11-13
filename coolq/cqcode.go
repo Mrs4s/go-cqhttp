@@ -65,7 +65,7 @@ func (e *MusicElement) Type() message.ElementType {
 	return message.Service
 }
 
-var GiftId = []message.GroupGift{
+var GiftId = [...]message.GroupGift{
 	message.SweetWink,
 	message.HappyCola,
 	message.LuckyBracelet,
@@ -75,6 +75,11 @@ var GiftId = []message.GroupGift{
 	message.RainbowCandy,
 	message.Stronger,
 	message.LoveMicrophone,
+	message.HoldingYourHand,
+	message.CuteCat,
+	message.MysteryMask,
+	message.ImBusy,
+	message.LoveMask,
 }
 
 func (e *PokeElement) Type() message.ElementType {
@@ -440,7 +445,7 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m interf
 		}
 		t, _ := strconv.ParseInt(d["qq"], 10, 64)
 		id, _ := strconv.Atoi(d["id"])
-		if id < 0 || id >= 9 {
+		if id < 0 || id >= 14 {
 			return nil, errors.New("invalid gift id")
 		}
 		return &GiftElement{Target: t, GiftId: GiftId[id]}, nil
