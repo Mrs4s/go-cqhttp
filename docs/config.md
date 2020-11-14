@@ -115,6 +115,7 @@ go-cqhttp 支持导入CQHTTP的配置文件, 具体步骤为:
 | 0    | iPad          | 无                                                    |
 | 1    | Android Phone | 无                                                    |
 | 2    | Android Watch | 无法接收 `group_notify` 事件、无法接收口令红包、无法接收撤回消息 |
+| 3    | MacOS         | 无                                                     |
 
 > 注意, 根据协议的不同, 各类消息有所限制
 

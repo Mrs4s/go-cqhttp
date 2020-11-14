@@ -232,6 +232,8 @@ func main() {
 			return "Android Phone"
 		case client.AndroidWatch:
 			return "Android Watch"
+		case client.MacOS:
+			return "MacOS"
 		}
 		return "未知"
 	}())

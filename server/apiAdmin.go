@@ -346,6 +346,8 @@ func (s *webServer) DoReLogin() { // TODO: 协议层的 ReLogin
 			return "Android Phone"
 		case client.AndroidWatch:
 			return "Android Watch"
+		case client.MacOS:
+			return "MacOS"
 		}
 		return "未知"
 	}())
