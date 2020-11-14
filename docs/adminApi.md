@@ -69,7 +69,7 @@ method: `POST` formdata
 
 | 参数名 | 类型   | 说明        |
 | ------ | ------ | ----------- |
-| input     | string  | 输入的类容 |
+| input     | string  | 输入的内容 |
 
 返回：
 
