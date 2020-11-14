@@ -220,7 +220,7 @@ func (bot *CQBot) groupRecallEvent(c *client.QQClient, e *client.GroupMessageRec
 	})
 }
 
-func (bot *CQBot) groupNotifyEvent(c *client.QQClient, e client.IGroupNotifyEvent) {
+func (bot *CQBot) groupNotifyEvent(c *client.QQClient, e client.INotifyEvent) {
 	group := c.FindGroup(e.From())
 	switch notify := e.(type) {
 	case *client.GroupPokeNotifyEvent:
@@ -275,6 +275,24 @@ func (bot *CQBot) groupNotifyEvent(c *client.QQClient, e client.IGroupNotifyEven
 					return "ERROR"
 				}
 			}(),
+		})
+	}
+}
+
+func (bot *CQBot) friendNotifyEvent(c *client.QQClient, e client.INotifyEvent) {
+	friend := c.FindFriend(e.From())
+	switch notify := e.(type) {
+	case *client.FriendPokeNotifyEvent:
+		log.Infof("好友 %v 戳了戳你.", friend.Nickname)
+		bot.dispatchEventMessage(MSG{
+			"post_type":   "notice",
+			"notice_type": "notify",
+			"sub_type":    "poke",
+			"self_id":     c.Uin,
+			"user_id":     notify.Sender,
+			"sender_id":   notify.Sender,
+			"target_id":   notify.Receiver,
+			"time":        time.Now().Unix(),
 		})
 	}
 }

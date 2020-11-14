@@ -434,9 +434,6 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m interf
 		}
 
 	case "poke":
-		if !group {
-			return nil, errors.New("todo") // TODO: private poke
-		}
 		t, _ := strconv.ParseInt(d["qq"], 10, 64)
 		return &PokeElement{Target: t}, nil
 	case "gift":

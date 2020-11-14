@@ -56,6 +56,7 @@ func NewQQBot(cli *client.QQClient, conf *global.JsonConfig) *CQBot {
 	bot.Client.OnGroupMuted(bot.groupMutedEvent)
 	bot.Client.OnGroupMessageRecalled(bot.groupRecallEvent)
 	bot.Client.OnGroupNotify(bot.groupNotifyEvent)
+	bot.Client.OnFriendNotify(bot.friendNotifyEvent)
 	bot.Client.OnFriendMessageRecalled(bot.friendRecallEvent)
 	bot.Client.OnReceivedOfflineFile(bot.offlineFileEvent)
 	bot.Client.OnJoinGroup(bot.joinGroupEvent)
@@ -234,6 +235,10 @@ func (bot *CQBot) SendPrivateMessage(target int64, m *message.SendingMessage) in
 			}
 			newElem = append(newElem, fm)
 			continue
+		}
+		if i, ok := elem.(*PokeElement); ok {
+			bot.Client.SendFriendPoke(i.Target)
+			return 0
 		}
 		if i, ok := elem.(*message.VoiceElement); ok {
 			fv, err := bot.Client.UploadPrivatePtt(target, i.Data)
