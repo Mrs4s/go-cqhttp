@@ -121,7 +121,7 @@ func ReadAddrFile(path string) []*net.TCPAddr {
 	lines := strings.Split(str, "\n")
 	var ret []*net.TCPAddr
 	for _, l := range lines {
-		ip := strings.Split(l, ":")
+		ip := strings.Split(strings.TrimSpace(l), ":")
 		if len(ip) == 2 {
 			port, _ := strconv.Atoi(ip[1])
 			ret = append(ret, &net.TCPAddr{IP: net.ParseIP(ip[0]), Port: port})
