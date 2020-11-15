@@ -516,12 +516,11 @@ func (bot *CQBot) CQSetGroupAdmin(groupId, userId int64, enable bool) MSG {
 }
 
 func (bot *CQBot) CQGetVipInfo(userId int64) MSG {
-	msg := MSG{}
 	vip, err := bot.Client.GetVipInfo(userId)
 	if err != nil {
 		return Failed(100)
 	}
-	msg = MSG{
+	msg := MSG{
 		"user_id":          vip.Uin,
 		"nickname":         vip.Name,
 		"level":            vip.Level,
