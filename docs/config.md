@@ -36,6 +36,7 @@ go-cqhttp 支持导入CQHTTP的配置文件, 具体步骤为:
 	"ignore_invalid_cqcode": false,
 	"force_fragmented": true,
 	"heartbeat_interval": 5,
+    "use_sso_address": false,
 	"http_config": {
 		"enabled": true,
 		"host": "0.0.0.0",
@@ -77,6 +78,7 @@ go-cqhttp 支持导入CQHTTP的配置文件, 具体步骤为:
 | post_message_format  | string   | 上报信息类型                                                        |
 | ignore_invalid_cqcode| bool     | 是否忽略错误的CQ码                                                   |
 | force_fragmented     | bool     | 是否强制分片发送群长消息                                              |
+| use_sso_address      | bool     | 是否使用服务器下发的地址                                              |
 | heartbeat_interval   | int64    | 心跳间隔时间，单位秒。小于0则关闭心跳，等于0使用默认值(5秒)        |
 | http_config          | object   | HTTP API配置                                                       |
 | ws_config            | object   | Websocket API 配置                                                 |
@@ -110,8 +112,21 @@ go-cqhttp 支持导入CQHTTP的配置文件, 具体步骤为:
 
 | 值   | 类型          | 限制                                                  |
 | ---- | ------------- | ----------------------------------------------------- |
-| 0    | Android Pad   | 无法接收 `group_notify` 事件、无法接收口令红包        |
+| 0    | iPad          | 无                                                    |
 | 1    | Android Phone | 无                                                    |
-| 2    | Android Watch | 除了 `Android Pad` 有的限制外还包括: 无法接收撤回消息 |
+| 2    | Android Watch | 无法接收 `group_notify` 事件、无法接收口令红包、无法接收撤回消息 |
+| 3    | MacOS         | 无                                                     |
 
 > 注意, 根据协议的不同, 各类消息有所限制
+
+## 自定义服务器IP
+
+> 某些海外服务器使用默认地址可能会存在链路问题，此功能可以指定 go-cqhttp 连接哪些地址以达到最优化.
+
+将文件 `address.txt` 创建到 `go-cqhttp` 工作目录, 并键入 `IP:PORT` 以换行符为分割即可.
+
+示例:
+````
+1.1.1.1:53
+1.1.2.2:8899
+````

@@ -35,6 +35,10 @@
 - [CQ:reply]
 - [CQ:forward]
 - [CQ:node]
+- [CQ:gift]
+- [CQ:redbag]
+- [CQ:tts]
+- [CQ:music]
 
 </details>
 
@@ -64,7 +68,7 @@
 | /set_group_leave         | [退出群组](https://cqhttp.cc/docs/4.15/#/API?id=set_group_leave-退出群组) |
 | /set_group_name          | 设置群组名(拓展API)                                         |
 | /get_image               | 获取图片信息(拓展API)                                        |
-| /get_group_msg           | 获取群组消息(拓展API)                                        |
+| /get_msg                 | [获取消息]()                                        | <!-- TODO 来人补个链接-->
 | /can_send_image          | [检查是否可以发送图片](https://cqhttp.cc/docs/4.15/#/API?id=can_send_image-检查是否可以发送图片) |
 | /can_send_record         | [检查是否可以发送语音](https://cqhttp.cc/docs/4.15/#/API?id=can_send_record-检查是否可以发送语音) |
 | /get_status              | [获取插件运行状态](https://cqhttp.cc/docs/4.15/#/API?id=get_status-获取插件运行状态) |

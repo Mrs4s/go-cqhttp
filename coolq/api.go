@@ -102,6 +102,59 @@ func (bot *CQBot) CQGetGroupMemberInfo(groupId, userId int64) MSG {
 	return OK(convertGroupMemberInfo(groupId, member))
 }
 
+func (bot *CQBot) CQGetGroupFileSystemInfo(groupId int64) MSG {
+	fs, err := bot.Client.GetGroupFileSystem(groupId)
+	if err != nil {
+		log.Errorf("获取群 %v 文件系统信息失败: %v", groupId, err)
+		return Failed(100)
+	}
+	return OK(fs)
+}
+
+func (bot *CQBot) CQGetGroupRootFiles(groupId int64) MSG {
+	fs, err := bot.Client.GetGroupFileSystem(groupId)
+	if err != nil {
+		log.Errorf("获取群 %v 文件系统信息失败: %v", groupId, err)
+		return Failed(100)
+	}
+	files, folders, err := fs.Root()
+	if err != nil {
+		log.Errorf("获取群 %v 根目录文件失败: %v", groupId, err)
+		return Failed(100)
+	}
+	return OK(MSG{
+		"files":   files,
+		"folders": folders,
+	})
+}
+
+func (bot *CQBot) CQGetGroupFilesByFolderId(groupId int64, folderId string) MSG {
+	fs, err := bot.Client.GetGroupFileSystem(groupId)
+	if err != nil {
+		log.Errorf("获取群 %v 文件系统信息失败: %v", groupId, err)
+		return Failed(100)
+	}
+	files, folders, err := fs.GetFilesByFolder(folderId)
+	if err != nil {
+		log.Errorf("获取群 %v 根目录 %v 子文件失败: %v", groupId, folderId, err)
+		return Failed(100)
+	}
+	return OK(MSG{
+		"files":   files,
+		"folders": folders,
+	})
+}
+
+func (bot *CQBot) CQGetGroupFileUrl(groupId int64, fileId string, busId int32) MSG {
+	url := bot.Client.GetGroupFileUrl(groupId, fileId, busId)
+	if url == "" {
+		return Failed(100)
+	}
+	return OK(MSG{
+		"url": url,
+	})
+}
+
 func (bot *CQBot) CQGetWordSlices(content string) MSG {
 	slices, err := bot.Client.GetWordSegmentation(content)
 	if err != nil {
@@ -189,7 +242,7 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupId int64, m gjson.Result) MSG {
 		ts.Add(time.Second)
 		if e.Get("data.id").Exists() {
 			i, _ := strconv.Atoi(e.Get("data.id").Str)
-			m := bot.GetGroupMessage(int32(i))
+			m := bot.GetMessage(int32(i))
 			if m != nil {
 				sender := m["sender"].(message.Sender)
 				nodes = append(nodes, &message.ForwardNode{
@@ -384,39 +437,61 @@ func (bot *CQBot) CQProcessFriendRequest(flag string, approve bool) MSG {
 
 // https://cqhttp.cc/docs/4.15/#/API?id=set_group_add_request-%E5%A4%84%E7%90%86%E5%8A%A0%E7%BE%A4%E8%AF%B7%E6%B1%82%EF%BC%8F%E9%82%80%E8%AF%B7
 func (bot *CQBot) CQProcessGroupRequest(flag, subType, reason string, approve bool) MSG {
+	msgs, err := bot.Client.GetGroupSystemMessages()
+	if err != nil {
+		log.Errorf("获取群系统消息失败: %v", err)
+		return Failed(100)
+	}
 	if subType == "add" {
-		req, ok := bot.joinReqCache.Load(flag)
-		if !ok {
-			return Failed(100)
+		for _, req := range msgs.JoinRequests {
+			if strconv.FormatInt(req.RequestId, 10) == flag {
+				if req.Checked {
+					log.Errorf("处理群系统消息失败: 无法操作已处理的消息.")
+					return Failed(100)
+				}
+				if approve {
+					req.Accept()
+				} else {
+					req.Reject(false, reason)
+				}
+				return OK(nil)
+			}
 		}
-		bot.joinReqCache.Delete(flag)
-		if approve {
-			req.(*client.UserJoinGroupRequest).Accept()
-		} else {
-			req.(*client.UserJoinGroupRequest).Reject(false, reason)
+	} else {
+		for _, req := range msgs.InvitedRequests {
+			if strconv.FormatInt(req.RequestId, 10) == flag {
+				if req.Checked {
+					log.Errorf("处理群系统消息失败: 无法操作已处理的消息.")
+					return Failed(100)
+				}
+				if approve {
+					req.Accept()
+				} else {
+					req.Reject(false, reason)
+				}
+				return OK(nil)
+			}
 		}
-		return OK(nil)
 	}
-	req, ok := bot.invitedReqCache.Load(flag)
-	if ok {
-		bot.invitedReqCache.Delete(flag)
-		if approve {
-			req.(*client.GroupInvitedRequest).Accept()
-		} else {
-			req.(*client.GroupInvitedRequest).Reject(false, reason)
-		}
-		return OK(nil)
-	}
+	log.Errorf("处理群系统消息失败: 消息 %v 不存在.", flag)
 	return Failed(100)
 }
 
 // https://cqhttp.cc/docs/4.15/#/API?id=delete_msg-%E6%92%A4%E5%9B%9E%E6%B6%88%E6%81%AF
 func (bot *CQBot) CQDeleteMessage(messageId int32) MSG {
-	msg := bot.GetGroupMessage(messageId)
+	msg := bot.GetMessage(messageId)
 	if msg == nil {
 		return Failed(100)
 	}
-	bot.Client.RecallGroupMessage(msg["group"].(int64), msg["message-id"].(int32), msg["internal-id"].(int32))
+	if _, ok := msg["group"]; ok {
+		bot.Client.RecallGroupMessage(msg["group"].(int64), msg["message-id"].(int32), msg["internal-id"].(int32))
+	} else {
+		if msg["sender"].(message.Sender).Uin != bot.Client.Uin {
+			log.Warnf("撤回 %v 失败: 好友会话无法撤回对方消息.")
+			return Failed(100)
+		}
+		bot.Client.RecallPrivateMessage(msg["target"].(int64), int64(msg["time"].(int32)), msg["message-id"].(int32), msg["internal-id"].(int32))
+	}
 	return OK(nil)
 }
 
@@ -638,22 +713,33 @@ func (bot *CQBot) CQGetForwardMessage(resId string) MSG {
 	})
 }
 
-func (bot *CQBot) CQGetGroupMessage(messageId int32) MSG {
-	msg := bot.GetGroupMessage(messageId)
+func (bot *CQBot) CQGetMessage(messageId int32) MSG {
+	msg := bot.GetMessage(messageId)
 	if msg == nil {
 		return Failed(100)
 	}
 	sender := msg["sender"].(message.Sender)
+	_, group := msg["group"]
 	return OK(MSG{
 		"message_id": messageId,
 		"real_id":    msg["message-id"],
+		"group":      group,
 		"sender": MSG{
 			"user_id":  sender.Uin,
 			"nickname": sender.Nickname,
 		},
 		"time":    msg["time"],
-		"content": msg["message"],
+		"message": msg["message"],
 	})
+}
+
+func (bot *CQBot) CQGetGroupSystemMessages() MSG {
+	msg, err := bot.Client.GetGroupSystemMessages()
+	if err != nil {
+		log.Warnf("获取群系统消息失败: %v", err)
+		return Failed(100)
+	}
+	return OK(msg)
 }
 
 func (bot *CQBot) CQCanSendImage() MSG {
@@ -665,7 +751,7 @@ func (bot *CQBot) CQCanSendRecord() MSG {
 }
 
 func (bot *CQBot) CQOcrImage(imageId string) MSG {
-	img, err := bot.makeImageElem("image", map[string]string{"file": imageId}, true)
+	img, err := bot.makeImageElem(map[string]string{"file": imageId}, true)
 	if err != nil {
 		log.Warnf("load image error: %v", err)
 		return Failed(100)
@@ -721,7 +807,7 @@ func (bot *CQBot) CQGetVersionInfo() MSG {
 		"version":                    Version,
 		"protocol": func() int {
 			switch client.SystemDeviceInfo.Protocol {
-			case client.AndroidPad:
+			case client.IPad:
 				return 0
 			case client.AndroidPhone:
 				return 1

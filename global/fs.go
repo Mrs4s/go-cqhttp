@@ -6,12 +6,16 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
+	"fmt"
+	"github.com/dustin/go-humanize"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
+	"net"
 	"net/url"
 	"os"
 	"path"
 	"runtime"
+	"strconv"
 	"strings"
 )
 
@@ -106,4 +110,38 @@ func DelFile(path string) bool {
 		log.Info(path + "删除成功")
 		return true
 	}
+}
+
+func ReadAddrFile(path string) []*net.TCPAddr {
+	d, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil
+	}
+	str := string(d)
+	lines := strings.Split(str, "\n")
+	var ret []*net.TCPAddr
+	for _, l := range lines {
+		ip := strings.Split(strings.TrimSpace(l), ":")
+		if len(ip) == 2 {
+			port, _ := strconv.Atoi(ip[1])
+			ret = append(ret, &net.TCPAddr{IP: net.ParseIP(ip[0]), Port: port})
+		}
+	}
+	return ret
+}
+
+type WriteCounter struct {
+	Total uint64
+}
+
+func (wc *WriteCounter) Write(p []byte) (int, error) {
+	n := len(p)
+	wc.Total += uint64(n)
+	wc.PrintProgress()
+	return n, nil
+}
+
+func (wc WriteCounter) PrintProgress() {
+	fmt.Printf("\r%s", strings.Repeat(" ", 35))
+	fmt.Printf("\rDownloading... %s complete", humanize.Bytes(wc.Total))
 }

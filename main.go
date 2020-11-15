@@ -7,18 +7,24 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Mrs4s/go-cqhttp/server"
+	"github.com/guonaihong/gout"
+	"github.com/tidwall/gjson"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"os/signal"
 	"path"
+	"runtime"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
+	"github.com/getlantern/go-update"
 	"github.com/lestrrat-go/file-rotatelogs"
 	"github.com/rifflock/lfshook"
 	log "github.com/sirupsen/logrus"
@@ -87,6 +93,16 @@ func init() {
 
 func main() {
 	console := bufio.NewReader(os.Stdin)
+
+	arg := os.Args
+	if len(arg) > 1 && arg[1] == "update" {
+		if len(arg) > 2 {
+			selfUpdate(arg[2])
+		} else {
+			selfUpdate("")
+		}
+	}
+
 	var conf *global.JsonConfig
 	if global.PathExists("config.json") || os.Getenv("UIN") == "" {
 		conf = global.Load("config.json")
@@ -210,12 +226,14 @@ func main() {
 	log.Info("开始尝试登录并同步消息...")
 	log.Infof("使用协议: %v", func() string {
 		switch client.SystemDeviceInfo.Protocol {
-		case client.AndroidPad:
-			return "Android Pad"
+		case client.IPad:
+			return "iPad"
 		case client.AndroidPhone:
 			return "Android Phone"
 		case client.AndroidWatch:
 			return "Android Watch"
+		case client.MacOS:
+			return "MacOS"
 		}
 		return "未知"
 	}())
@@ -230,8 +248,21 @@ func main() {
 			log.Debug("Protocol -> " + e.Message)
 		}
 	})
-	cli.OnServerUpdated(func(bot *client.QQClient, e *client.ServerUpdatedEvent) {
+	if global.PathExists("address.txt") {
+		log.Infof("检测到 address.txt 文件. 将覆盖目标IP.")
+		addr := global.ReadAddrFile("address.txt")
+		if len(addr) > 0 {
+			cli.SetCustomServer(addr)
+		}
+		log.Infof("读取到 %v 个自定义地址.", len(addr))
+	}
+	cli.OnServerUpdated(func(bot *client.QQClient, e *client.ServerUpdatedEvent) bool {
+		if !conf.UseSSOAddress {
+			log.Infof("收到服务器地址更新通知, 根据配置文件已忽略.")
+			return false
+		}
 		log.Infof("收到服务器地址更新通知, 将在下一次重连时应用. ")
+		return true
 	})
 	if conf.WebUi == nil {
 		conf.WebUi = &global.GoCqWebUi{
@@ -245,7 +276,7 @@ func main() {
 		conf.WebUi.WebUiPort = 9999
 	}
 	if conf.WebUi.Host == "" {
-		conf.WebUi.Host = "0.0.0.0"
+		conf.WebUi.Host = "127.0.0.1"
 	}
 	confErr := conf.Save("config.json")
 	if confErr != nil {
@@ -253,6 +284,7 @@ func main() {
 	}
 	b := server.WebServer.Run(fmt.Sprintf("%s:%d", conf.WebUi.Host, conf.WebUi.WebUiPort), cli)
 	c := server.Console
+	go checkUpdate()
 	signal.Notify(c, os.Interrupt, os.Kill)
 	<-c
 	b.Release()
@@ -281,4 +313,96 @@ func DecryptPwd(ePwd string, key []byte) string {
 		panic("密钥错误")
 	}
 	return string(tea.Decrypt(encrypted))
+}
+
+func checkUpdate() {
+	log.Infof("正在检查更新.")
+	if coolq.Version == "unknown" {
+		log.Warnf("检查更新失败: 使用的 Actions 测试版或自编译版本.")
+		return
+	}
+	var res string
+	if err := gout.GET("https://api.github.com/repos/Mrs4s/go-cqhttp/releases").BindBody(&res).Do(); err != nil {
+		log.Warnf("检查更新失败: %v", err)
+		return
+	}
+	detail := gjson.Parse(res)
+	if len(detail.Array()) < 1 {
+		return
+	}
+	info := detail.Array()[0]
+	if global.VersionNameCompare(coolq.Version, info.Get("tag_name").Str) {
+		log.Infof("当前有更新的 go-cqhttp 可供更新, 请前往 https://github.com/Mrs4s/go-cqhttp/releases 下载.")
+		log.Infof("当前版本: %v 最新版本: %v", coolq.Version, info.Get("tag_name").Str)
+		return
+	}
+	log.Infof("检查更新完成. 当前已运行最新版本.")
+}
+
+func selfUpdate(imageUrl string) {
+	console := bufio.NewReader(os.Stdin)
+	readLine := func() (str string) {
+		str, _ = console.ReadString('\n')
+		return
+	}
+	log.Infof("正在检查更新.")
+	var res string
+	if err := gout.GET("https://api.github.com/repos/Mrs4s/go-cqhttp/releases").BindBody(&res).Do(); err != nil {
+		log.Warnf("检查更新失败: %v", err)
+		return
+	}
+	detail := gjson.Parse(res)
+	if len(detail.Array()) < 1 {
+		return
+	}
+	info := detail.Array()[0]
+	version := info.Get("tag_name").Str
+	if coolq.Version != version {
+		log.Info("当前最新版本为 ", version)
+		log.Warn("是否更新(y/N): ")
+		r := strings.TrimSpace(readLine())
+
+		doUpdate := func() {
+			log.Info("正在更新,请稍等...")
+			url := fmt.Sprintf(
+				"%v/Mrs4s/go-cqhttp/releases/download/%v/go-cqhttp-%v-%v-%v",
+				func() string {
+					if imageUrl != "" {
+						return imageUrl
+					}
+					return "https://github.com"
+				}(),
+				version,
+				version,
+				runtime.GOOS,
+				runtime.GOARCH,
+			)
+			if runtime.GOOS == "windows" {
+				url = url + ".exe"
+			}
+			resp, err := http.Get(url)
+			if err != nil {
+				fmt.Println(err)
+				log.Error("更新失败!")
+				return
+			}
+			wc := global.WriteCounter{}
+			err, _ = update.New().FromStream(io.TeeReader(resp.Body, &wc))
+			fmt.Println()
+			if err != nil {
+				log.Error("更新失败!")
+				return
+			}
+			log.Info("更新完成！")
+		}
+
+		if r == "y" || r == "Y" {
+			doUpdate()
+		} else {
+			log.Warn("已取消更新！")
+		}
+	}
+	log.Info("按 Enter 继续....")
+	readLine()
+	os.Exit(0)
 }
