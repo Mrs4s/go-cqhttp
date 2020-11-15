@@ -104,7 +104,7 @@ func ToArrayMessage(e []message.IMessageElement, code int64, raw ...bool) (r []M
 	}
 	for _, elem := range e {
 		m := MSG{}
-		swiadd tch o := elem.(type) {
+		switch o := elem.(type) {
 		case *message.TextElement:
 			m = MSG{
 				"type": "text",
