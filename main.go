@@ -98,7 +98,7 @@ func init() {
 func main() {
 	console := bufio.NewReader(os.Stdin)
 	var strKey string
-	var isRestart bool = false
+	var isFastStart bool = false
 	arg := os.Args
 	fmt.Println(arg)
 	if len(arg) > 1 {
@@ -116,8 +116,8 @@ func main() {
 					b = append(b, 13, 10)
 					strKey = string(b[:])
 				}
-			case "restart":
-				isRestart = true
+			case "faststart":
+				isFastStart = true
 			}
 		}
 	}
@@ -256,7 +256,7 @@ func main() {
 		key := md5.Sum([]byte(strKey))
 		conf.Password = DecryptPwd(conf.PasswordEncrypted, key[:])
 	}
-	if !isRestart {
+	if !isFastStart {
 		log.Info("Bot将在5秒后登录并开始信息处理, 按 Ctrl+C 取消.")
 		time.Sleep(time.Second * 5)
 	}
@@ -464,7 +464,7 @@ func restart(Args []string) {
 		if err != nil {
 			log.Errorf("重启失败:%s", err.Error())
 		}
-		Args = append([]string{"/c", "start ", path, "restart"}, Args[1:]...)
+		Args = append([]string{"/c", "start ", path, "faststart"}, Args[1:]...)
 		cmd = &exec.Cmd{
 			Path:   "cmd.exe",
 			Args:   Args,
@@ -472,6 +472,7 @@ func restart(Args []string) {
 			Stdout: os.Stdout,
 		}
 	} else {
+		Args = append(Args, "faststart")
 		cmd = &exec.Cmd{
 			Path:   Args[0],
 			Args:   Args,
