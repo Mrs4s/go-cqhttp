@@ -5,7 +5,6 @@ import (
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/hex"
-	"fmt"
 	"net/http"
 	"os"
 	"strconv"
