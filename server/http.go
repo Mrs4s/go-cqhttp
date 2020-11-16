@@ -5,6 +5,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/hex"
+	"fmt"
 	"net/http"
 	"os"
 	"strconv"
@@ -346,21 +347,13 @@ func SetGroupLeave(s *httpServer, c *gin.Context) {
 }
 
 func SetRestart(s *httpServer, c *gin.Context) {
-	d, t := getParamWithType(c, "delay")
-	if t == gjson.Null {
-		d = "0"
-	}
-	delay, err := strconv.ParseInt(d, 10, 64)
-	if err != nil || delay < 0 {
-		c.JSON(200, Failed(100, "Invalid delay"))
-		return
-	}
+	delay, _ := strconv.ParseInt(getParam(c, "delay"), 10, 64)
 	c.JSON(200, coolq.MSG{"data": nil, "retcode": 0, "status": "async"})
 	go func(delay int64) {
 		var del *time.Duration = (*time.Duration)(unsafe.Pointer(&delay))
 		time.Sleep(*del * time.Millisecond)
 		Restart <- struct{}{}
-	}(delay * time.Hour.Milliseconds())
+	}(delay)
 
 }
 

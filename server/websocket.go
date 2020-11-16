@@ -485,13 +485,13 @@ var wsApi = map[string]func(*coolq.CQBot, gjson.Result) coolq.MSG{
 		var delay int64 = 0
 		delay = p.Get("delay").Int()
 		if delay < 0 {
-			return Failed(100, "Invalid delay")
+			delay = 0
 		}
 		defer func(delay int64) {
 			var del *time.Duration = (*time.Duration)(unsafe.Pointer(&delay))
-			time.Sleep(*del * time.Millisecond)
+			time.Sleep(*del * time.Microsecond)
 			Restart <- struct{}{}
-		}(delay * time.Hour.Milliseconds())
+		}(delay)
 		return coolq.MSG{"data": nil, "retcode": 0, "status": "async"}
 
 	},
