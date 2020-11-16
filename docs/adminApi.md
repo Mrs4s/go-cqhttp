@@ -99,6 +99,25 @@ method: `POST`
 {"data": {}, "retcode": 0, "status": "ok"}
 ```
 
+### admin/do_process_restart
+
+> 冷重启
+
+method: `POST`
+
+
+参数:
+
+| 参数名 | 类型 | 说明 |
+| ------ | ---- | ---- |
+| 无     |      |      |
+
+返回：
+
+```json
+{"data": {}, "retcode": 0, "status": "ok"}
+```
+
 ### admin/do_config_base
 
 > 基础配置
