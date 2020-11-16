@@ -100,7 +100,6 @@ func main() {
 	var strKey string
 	var isFastStart bool = false
 	arg := os.Args
-	fmt.Println(arg)
 	if len(arg) > 1 {
 		for i := range arg {
 			switch arg[i] {
