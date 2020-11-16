@@ -14,6 +14,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"path"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
@@ -97,6 +98,7 @@ func init() {
 func main() {
 	console := bufio.NewReader(os.Stdin)
 	var strKey string
+	var isRestart bool = false
 	arg := os.Args
 	fmt.Println(arg)
 	if len(arg) > 1 {
@@ -113,8 +115,9 @@ func main() {
 					b := []byte(arg[i+1])
 					b = append(b, 13, 10)
 					strKey = string(b[:])
-					fmt.Println(b)
 				}
+			case "restart":
+				isRestart = true
 			}
 		}
 	}
@@ -253,8 +256,10 @@ func main() {
 		key := md5.Sum([]byte(strKey))
 		conf.Password = DecryptPwd(conf.PasswordEncrypted, key[:])
 	}
-	log.Info("Bot将在5秒后登录并开始信息处理, 按 Ctrl+C 取消.")
-	time.Sleep(time.Second * 5)
+	if !isRestart {
+		log.Info("Bot将在5秒后登录并开始信息处理, 按 Ctrl+C 取消.")
+		time.Sleep(time.Second * 5)
+	}
 	log.Info("开始尝试登录并同步消息...")
 	log.Infof("使用协议: %v", func() string {
 		switch client.SystemDeviceInfo.Protocol {
@@ -323,15 +328,10 @@ func main() {
 	case <-c:
 		b.Release()
 	case <-r:
-		b.Release()
-		cmd := &exec.Cmd{
-			Path:   arg[0],
-			Args:   arg[1:],
-			Stderr: os.Stderr,
-			Stdout: os.Stdout,
-		}
+		log.Info("正在重启中...")
 		server.HttpServer.ShutDown()
-		cmd.Start()
+		defer b.Release()
+		restart(arg)
 	}
 }
 
@@ -450,4 +450,34 @@ func selfUpdate(imageUrl string) {
 	log.Info("按 Enter 继续....")
 	readLine()
 	os.Exit(0)
+}
+
+func restart(Args []string) {
+	cmd := &exec.Cmd{}
+	if runtime.GOOS == "windows" {
+		file, err := exec.LookPath(Args[0])
+		if err != nil {
+			log.Errorf("重启失败:%s", err.Error())
+			return
+		}
+		path, err := filepath.Abs(file)
+		if err != nil {
+			log.Errorf("重启失败:%s", err.Error())
+		}
+		Args = append([]string{"/c", "start ", path, "restart"}, Args[1:]...)
+		cmd = &exec.Cmd{
+			Path:   "cmd.exe",
+			Args:   Args,
+			Stderr: os.Stderr,
+			Stdout: os.Stdout,
+		}
+	} else {
+		cmd = &exec.Cmd{
+			Path:   Args[0],
+			Args:   Args,
+			Stderr: os.Stderr,
+			Stdout: os.Stdout,
+		}
+	}
+	cmd.Start()
 }
