@@ -106,7 +106,7 @@ func main() {
 			switch arg[i] {
 			case "update":
 				if len(arg) > i+1 {
-					selfUpdate(arg[i+2])
+					selfUpdate(arg[i+1])
 				} else {
 					selfUpdate("")
 				}
