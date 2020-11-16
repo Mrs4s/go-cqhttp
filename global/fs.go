@@ -7,8 +7,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/dustin/go-humanize"
-	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net"
 	"net/url"
@@ -17,6 +15,9 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+
+	"github.com/dustin/go-humanize"
+	log "github.com/sirupsen/logrus"
 )
 
 var (

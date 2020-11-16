@@ -8,11 +8,6 @@ import (
 	xml2 "encoding/xml"
 	"errors"
 	"fmt"
-	"github.com/Mrs4s/MiraiGo/binary"
-	"github.com/Mrs4s/MiraiGo/message"
-	"github.com/Mrs4s/go-cqhttp/global"
-	log "github.com/sirupsen/logrus"
-	"github.com/tidwall/gjson"
 	"io/ioutil"
 	"net/url"
 	"path"
@@ -20,6 +15,12 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+
+	"github.com/Mrs4s/MiraiGo/binary"
+	"github.com/Mrs4s/MiraiGo/message"
+	"github.com/Mrs4s/go-cqhttp/global"
+	log "github.com/sirupsen/logrus"
+	"github.com/tidwall/gjson"
 )
 
 var matchReg = regexp.MustCompile(`\[CQ:\w+?.*?]`)

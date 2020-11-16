@@ -5,12 +5,14 @@ import (
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/hex"
-	"github.com/guonaihong/gout/dataflow"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+	"unsafe"
+
+	"github.com/guonaihong/gout/dataflow"
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
@@ -343,6 +345,25 @@ func SetGroupLeave(s *httpServer, c *gin.Context) {
 	c.JSON(200, s.bot.CQSetGroupLeave(gid))
 }
 
+func SetRestart(s *httpServer, c *gin.Context) {
+	d, t := getParamWithType(c, "delay")
+	if t == gjson.Null {
+		d = "0"
+	}
+	delay, err := strconv.ParseInt(d, 10, 64)
+	if err != nil || delay < 0 {
+		c.JSON(200, Failed(100, "Invalid delay"))
+		return
+	}
+	c.JSON(200, coolq.MSG{"data": nil, "retcode": 0, "status": "async"})
+	go func(delay int64) {
+		var del *time.Duration = (*time.Duration)(unsafe.Pointer(&delay))
+		time.Sleep(*del * time.Millisecond)
+		Restart <- struct{}{}
+	}(delay * time.Hour.Milliseconds())
+
+}
+
 func GetForwardMessage(s *httpServer, c *gin.Context) {
 	resId := getParam(c, "message_id")
 	c.JSON(200, s.bot.CQGetForwardMessage(resId))
@@ -488,6 +509,7 @@ var httpApi = map[string]func(s *httpServer, c *gin.Context){
 	"set_group_whole_ban":        SetWholeBan,
 	"set_group_name":             SetGroupName,
 	"set_group_admin":            SetGroupAdmin,
+	"set_restart":                SetRestart,
 	"_send_group_notice":         SendGroupNotice,
 	"set_group_leave":            SetGroupLeave,
 	"get_image":                  GetImage,

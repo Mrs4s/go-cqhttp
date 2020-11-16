@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unsafe"
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
@@ -479,6 +480,20 @@ var wsApi = map[string]func(*coolq.CQBot, gjson.Result) coolq.MSG{
 	},
 	"get_group_honor_info": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		return bot.CQGetGroupHonorInfo(p.Get("group_id").Int(), p.Get("type").Str)
+	},
+	"set_restart": func(c *coolq.CQBot, p gjson.Result) coolq.MSG {
+		var delay int64 = 0
+		delay = p.Get("delay").Int()
+		if delay < 0 {
+			return Failed(100, "Invalid delay")
+		}
+		defer func(delay int64) {
+			var del *time.Duration = (*time.Duration)(unsafe.Pointer(&delay))
+			time.Sleep(*del * time.Millisecond)
+			Restart <- struct{}{}
+		}(delay * time.Hour.Milliseconds())
+		return coolq.MSG{"data": nil, "retcode": 0, "status": "async"}
+
 	},
 	"can_send_image": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		return bot.CQCanSendImage()

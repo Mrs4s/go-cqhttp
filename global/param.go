@@ -1,11 +1,12 @@
 package global
 
 import (
-	"github.com/tidwall/gjson"
 	"math"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/tidwall/gjson"
 )
 
 var trueSet = map[string]struct{}{

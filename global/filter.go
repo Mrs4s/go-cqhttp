@@ -1,11 +1,12 @@
 package global
 
 import (
-	log "github.com/sirupsen/logrus"
-	"github.com/tidwall/gjson"
 	"io/ioutil"
 	"regexp"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
+	"github.com/tidwall/gjson"
 )
 
 type Filter interface {
