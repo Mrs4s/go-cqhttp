@@ -183,6 +183,16 @@ func ToArrayMessage(e []message.IMessageElement, code int64, raw ...bool) (r []M
 					"data": map[string]string{"file": o.Filename, "url": o.Url},
 				}
 			}
+		case *message.GroupFlashImgElement:
+			return []MSG{MSG{
+				"type": "image",
+				"data": map[string]string{"file": o.Filename, "type": "flash"},
+			}}
+		case *message.FriendFlashImgElement:
+			return []MSG{MSG{
+				"type": "image",
+				"data": map[string]string{"file": o.Filename, "type": "flash"},
+			}}
 		case *message.ServiceElement:
 			if isOk := strings.Contains(o.Content, "<?xml"); isOk {
 				m = MSG{
@@ -255,6 +265,10 @@ func ToStringMessage(e []message.IMessageElement, code int64, raw ...bool) (r st
 			r += fmt.Sprintf("[CQ:image,file=%s]", hex.EncodeToString(o.Md5)+".image")
 		case *message.FriendImageElement:
 			r += fmt.Sprintf("[CQ:image,file=%s]", hex.EncodeToString(o.Md5)+".image")
+		case *message.GroupFlashImgElement:
+			return fmt.Sprintf("[CQ:image,type=flash,file=%s]", o.Filename)
+		case *message.FriendFlashImgElement:
+			return fmt.Sprintf("[CQ:image,type=flash,file=%s]", o.Filename)
 		case *message.ServiceElement:
 			if isOk := strings.Contains(o.Content, "<?xml"); isOk {
 				r += fmt.Sprintf(`[CQ:xml,data=%s,resid=%d]`, CQCodeEscapeValue(o.Content), o.Id)

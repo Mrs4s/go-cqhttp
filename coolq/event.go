@@ -528,6 +528,28 @@ func (bot *CQBot) checkMedia(e []message.IMessageElement) {
 					w.WriteString(i.Url)
 				}), 0644)
 			}
+		case *message.GroupFlashImgElement:
+			filename := hex.EncodeToString(i.Md5) + ".image"
+			if !global.PathExists(path.Join(global.IMAGE_PATH, filename)) {
+				_ = ioutil.WriteFile(path.Join(global.IMAGE_PATH, filename), binary.NewWriterF(func(w *binary.Writer) {
+					w.Write(i.Md5)
+					w.WriteUInt32(uint32(i.Size))
+					w.WriteString(i.Filename)
+					w.WriteString("")
+				}), 0644)
+			}
+			i.Filename = filename
+		case *message.FriendFlashImgElement:
+			filename := hex.EncodeToString(i.Md5) + ".image"
+			if !global.PathExists(path.Join(global.IMAGE_PATH, filename)) {
+				_ = ioutil.WriteFile(path.Join(global.IMAGE_PATH, filename), binary.NewWriterF(func(w *binary.Writer) {
+					w.Write(i.Md5)
+					w.WriteUInt32(uint32(i.Size))
+					w.WriteString(i.Filename)
+					w.WriteString("")
+				}), 0644)
+			}
+			i.Filename = filename
 		case *message.VoiceElement:
 			i.Name = strings.ReplaceAll(i.Name, "{", "")
 			i.Name = strings.ReplaceAll(i.Name, "}", "")
