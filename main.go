@@ -328,7 +328,6 @@ func main() {
 		b.Release()
 	case <-r:
 		log.Info("正在重启中...")
-		server.HttpServer.ShutDown()
 		defer b.Release()
 		restart(arg)
 	}
