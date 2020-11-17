@@ -3,7 +3,7 @@ module github.com/Mrs4s/go-cqhttp
 go 1.14
 
 require (
-	github.com/Mrs4s/MiraiGo v0.0.0-20201114160242-6b9dd7feaa20
+	github.com/Mrs4s/MiraiGo v0.0.0-20201117124530-0a7e4ea55756
 	github.com/dustin/go-humanize v1.0.0
 	github.com/fastly/go-utils v0.0.0-20180712184237-d95a45783239 // indirect
 	github.com/getlantern/go-update v0.0.0-20190510022740-79c495ab728c
