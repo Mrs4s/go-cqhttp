@@ -117,7 +117,7 @@ enable ws?(Y/n)
 
 *注：可以使用*`go env -w GOPROXY=https://goproxy.cn,direct`*来加速国内依赖安装速度*
 
-*注：此时构建后的文件名为*`main`(Linux)或`main.exe`(Windows)
+*注：此时构建后的文件名为*`go-cqhttp`(Linux)或`go-cqhttp.exe`(Windows)
 
 ## 更新
 

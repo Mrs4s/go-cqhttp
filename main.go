@@ -2,33 +2,37 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"crypto/md5"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/Mrs4s/go-cqhttp/server"
-	"github.com/guonaihong/gout"
-	"github.com/tidwall/gjson"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
+	"os/exec"
 	"os/signal"
 	"path"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Mrs4s/go-cqhttp/server"
+	"github.com/guonaihong/gout"
+	"github.com/tidwall/gjson"
 
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/getlantern/go-update"
-	"github.com/lestrrat-go/file-rotatelogs"
+	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"github.com/rifflock/lfshook"
 	log "github.com/sirupsen/logrus"
-	"github.com/t-tomalak/logrus-easy-formatter"
+	easy "github.com/t-tomalak/logrus-easy-formatter"
 )
 
 func init() {
@@ -93,13 +97,27 @@ func init() {
 
 func main() {
 	console := bufio.NewReader(os.Stdin)
-
+	var strKey string
+	var isFastStart bool = false
 	arg := os.Args
-	if len(arg) > 1 && arg[1] == "update" {
-		if len(arg) > 2 {
-			selfUpdate(arg[2])
-		} else {
-			selfUpdate("")
+	if len(arg) > 1 {
+		for i := range arg {
+			switch arg[i] {
+			case "update":
+				if len(arg) > i+1 {
+					selfUpdate(arg[i+1])
+				} else {
+					selfUpdate("")
+				}
+			case "key":
+				if len(arg) > i+1 {
+					b := []byte(arg[i+1])
+					b = append(b, 13, 10)
+					strKey = string(b[:])
+				}
+			case "faststart":
+				isFastStart = true
+			}
 		}
 	}
 
@@ -216,13 +234,31 @@ func main() {
 		}
 	}
 	if conf.PasswordEncrypted != "" {
-		log.Infof("密码加密已启用, 请输入Key对密码进行解密以继续: (Enter 提交)")
-		strKey, _ := console.ReadString('\n')
+		if strKey == "" {
+			log.Infof("密码加密已启用, 请输入Key对密码进行解密以继续: (Enter 提交)")
+			ctx := context.Background()
+			go func(ctx context.Context) {
+				select {
+				case <-ctx.Done():
+					return
+				case <-time.After(time.Second * 45):
+					log.Infof("解密key输入超时")
+					time.Sleep(3 * time.Second)
+					os.Exit(0)
+				}
+			}(ctx)
+			strKey, _ = console.ReadString('\n')
+			ctx.Done()
+		} else {
+			log.Infof("密码加密已启用, 使用运行时传递的参数进行解密，按 Ctrl+C 取消.")
+		}
 		key := md5.Sum([]byte(strKey))
 		conf.Password = DecryptPwd(conf.PasswordEncrypted, key[:])
 	}
-	log.Info("Bot将在5秒后登录并开始信息处理, 按 Ctrl+C 取消.")
-	time.Sleep(time.Second * 5)
+	if !isFastStart {
+		log.Info("Bot将在5秒后登录并开始信息处理, 按 Ctrl+C 取消.")
+		time.Sleep(time.Second * 5)
+	}
 	log.Info("开始尝试登录并同步消息...")
 	log.Infof("使用协议: %v", func() string {
 		switch client.SystemDeviceInfo.Protocol {
@@ -284,10 +320,18 @@ func main() {
 	}
 	b := server.WebServer.Run(fmt.Sprintf("%s:%d", conf.WebUi.Host, conf.WebUi.WebUiPort), cli)
 	c := server.Console
+	r := server.Restart
 	go checkUpdate()
 	signal.Notify(c, os.Interrupt, os.Kill)
-	<-c
-	b.Release()
+	select {
+	case <-c:
+		b.Release()
+	case <-r:
+		log.Info("正在重启中...")
+		server.HttpServer.ShutDown()
+		defer b.Release()
+		restart(arg)
+	}
 }
 
 func EncryptPwd(pwd string, key []byte) string {
@@ -405,4 +449,35 @@ func selfUpdate(imageUrl string) {
 	log.Info("按 Enter 继续....")
 	readLine()
 	os.Exit(0)
+}
+
+func restart(Args []string) {
+	cmd := &exec.Cmd{}
+	if runtime.GOOS == "windows" {
+		file, err := exec.LookPath(Args[0])
+		if err != nil {
+			log.Errorf("重启失败:%s", err.Error())
+			return
+		}
+		path, err := filepath.Abs(file)
+		if err != nil {
+			log.Errorf("重启失败:%s", err.Error())
+		}
+		Args = append([]string{"/c", "start ", path, "faststart"}, Args[1:]...)
+		cmd = &exec.Cmd{
+			Path:   "cmd.exe",
+			Args:   Args,
+			Stderr: os.Stderr,
+			Stdout: os.Stdout,
+		}
+	} else {
+		Args = append(Args, "faststart")
+		cmd = &exec.Cmd{
+			Path:   Args[0],
+			Args:   Args,
+			Stderr: os.Stderr,
+			Stdout: os.Stdout,
+		}
+	}
+	cmd.Start()
 }

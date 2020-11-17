@@ -5,11 +5,12 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
-	"github.com/syndtr/goleveldb/leveldb"
 	"hash/crc32"
 	"path"
 	"sync"
 	"time"
+
+	"github.com/syndtr/goleveldb/leveldb"
 
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/client"

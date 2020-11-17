@@ -480,6 +480,19 @@ var wsApi = map[string]func(*coolq.CQBot, gjson.Result) coolq.MSG{
 	"get_group_honor_info": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		return bot.CQGetGroupHonorInfo(p.Get("group_id").Int(), p.Get("type").Str)
 	},
+	"set_restart": func(c *coolq.CQBot, p gjson.Result) coolq.MSG {
+		var delay int64 = 0
+		delay = p.Get("delay").Int()
+		if delay < 0 {
+			delay = 0
+		}
+		defer func(delay int64) {
+			time.Sleep(time.Duration(delay) * time.Millisecond)
+			Restart <- struct{}{}
+		}(delay)
+		return coolq.MSG{"data": nil, "retcode": 0, "status": "async"}
+
+	},
 	"can_send_image": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		return bot.CQCanSendImage()
 	},

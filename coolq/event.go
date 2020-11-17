@@ -2,16 +2,17 @@ package coolq
 
 import (
 	"encoding/hex"
-	"github.com/Mrs4s/MiraiGo/binary"
-	"github.com/Mrs4s/MiraiGo/client"
-	"github.com/Mrs4s/MiraiGo/message"
-	"github.com/Mrs4s/go-cqhttp/global"
-	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"path"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Mrs4s/MiraiGo/binary"
+	"github.com/Mrs4s/MiraiGo/client"
+	"github.com/Mrs4s/MiraiGo/message"
+	"github.com/Mrs4s/go-cqhttp/global"
+	log "github.com/sirupsen/logrus"
 )
 
 var format = "string"

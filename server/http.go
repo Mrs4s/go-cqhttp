@@ -5,12 +5,13 @@ import (
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/hex"
-	"github.com/guonaihong/gout/dataflow"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/guonaihong/gout/dataflow"
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
@@ -343,6 +344,16 @@ func SetGroupLeave(s *httpServer, c *gin.Context) {
 	c.JSON(200, s.bot.CQSetGroupLeave(gid))
 }
 
+func SetRestart(s *httpServer, c *gin.Context) {
+	delay, _ := strconv.ParseInt(getParam(c, "delay"), 10, 64)
+	c.JSON(200, coolq.MSG{"data": nil, "retcode": 0, "status": "async"})
+	go func(delay int64) {
+		time.Sleep(time.Duration(delay) * time.Millisecond)
+		Restart <- struct{}{}
+	}(delay)
+
+}
+
 func GetForwardMessage(s *httpServer, c *gin.Context) {
 	resId := getParam(c, "message_id")
 	c.JSON(200, s.bot.CQGetForwardMessage(resId))
@@ -488,6 +499,7 @@ var httpApi = map[string]func(s *httpServer, c *gin.Context){
 	"set_group_whole_ban":        SetWholeBan,
 	"set_group_name":             SetGroupName,
 	"set_group_admin":            SetGroupAdmin,
+	"set_restart":                SetRestart,
 	"_send_group_notice":         SendGroupNotice,
 	"set_group_leave":            SetGroupLeave,
 	"get_image":                  GetImage,

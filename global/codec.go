@@ -4,11 +4,12 @@ import (
 	"crypto/md5"
 	"errors"
 	"fmt"
-	log "github.com/sirupsen/logrus"
-	"github.com/wdvxdr1123/go-silk/silk"
 	"io/ioutil"
 	"path"
 	"sync"
+
+	log "github.com/sirupsen/logrus"
+	"github.com/wdvxdr1123/go-silk/silk"
 )
 
 var codec silk.Encoder
