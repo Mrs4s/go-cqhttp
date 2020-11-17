@@ -10,7 +10,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"unsafe"
 
 	"github.com/guonaihong/gout/dataflow"
 
@@ -349,8 +348,7 @@ func SetRestart(s *httpServer, c *gin.Context) {
 	delay, _ := strconv.ParseInt(getParam(c, "delay"), 10, 64)
 	c.JSON(200, coolq.MSG{"data": nil, "retcode": 0, "status": "async"})
 	go func(delay int64) {
-		var del *time.Duration = (*time.Duration)(unsafe.Pointer(&delay))
-		time.Sleep(*del * time.Millisecond)
+		time.Sleep(time.Duration(delay) * time.Millisecond)
 		Restart <- struct{}{}
 	}(delay)
 
