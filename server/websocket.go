@@ -487,7 +487,7 @@ var wsApi = map[string]func(*coolq.CQBot, gjson.Result) coolq.MSG{
 			delay = 0
 		}
 		defer func(delay int64) {
-			time.Sleep(time.Duration(delay) * time.Milliseconds)
+			time.Sleep(time.Duration(delay) * time.Millisecond)
 			Restart <- struct{}{}
 		}(delay)
 		return coolq.MSG{"data": nil, "retcode": 0, "status": "async"}
