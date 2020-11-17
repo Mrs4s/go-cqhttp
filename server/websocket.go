@@ -8,7 +8,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"unsafe"
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
@@ -488,8 +487,7 @@ var wsApi = map[string]func(*coolq.CQBot, gjson.Result) coolq.MSG{
 			delay = 0
 		}
 		defer func(delay int64) {
-			var del *time.Duration = (*time.Duration)(unsafe.Pointer(&delay))
-			time.Sleep(*del * time.Microsecond)
+			time.Sleep(time.Duration(delay) * time.Milliseconds)
 			Restart <- struct{}{}
 		}(delay)
 		return coolq.MSG{"data": nil, "retcode": 0, "status": "async"}
