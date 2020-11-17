@@ -196,7 +196,7 @@ func ToArrayMessage(e []message.IMessageElement, code int64, raw ...bool) (r []M
 				}
 			}
 		default:
-			return
+			continue
 		}
 		r = append(r, m)
 	}
