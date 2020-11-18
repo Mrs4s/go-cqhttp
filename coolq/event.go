@@ -2,16 +2,17 @@ package coolq
 
 import (
 	"encoding/hex"
-	"github.com/Mrs4s/MiraiGo/binary"
-	"github.com/Mrs4s/MiraiGo/client"
-	"github.com/Mrs4s/MiraiGo/message"
-	"github.com/Mrs4s/go-cqhttp/global"
-	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"path"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Mrs4s/MiraiGo/binary"
+	"github.com/Mrs4s/MiraiGo/client"
+	"github.com/Mrs4s/MiraiGo/message"
+	"github.com/Mrs4s/go-cqhttp/global"
+	log "github.com/sirupsen/logrus"
 )
 
 var format = "string"
@@ -220,7 +221,7 @@ func (bot *CQBot) groupRecallEvent(c *client.QQClient, e *client.GroupMessageRec
 	})
 }
 
-func (bot *CQBot) groupNotifyEvent(c *client.QQClient, e client.IGroupNotifyEvent) {
+func (bot *CQBot) groupNotifyEvent(c *client.QQClient, e client.INotifyEvent) {
 	group := c.FindGroup(e.From())
 	switch notify := e.(type) {
 	case *client.GroupPokeNotifyEvent:
@@ -275,6 +276,24 @@ func (bot *CQBot) groupNotifyEvent(c *client.QQClient, e client.IGroupNotifyEven
 					return "ERROR"
 				}
 			}(),
+		})
+	}
+}
+
+func (bot *CQBot) friendNotifyEvent(c *client.QQClient, e client.INotifyEvent) {
+	friend := c.FindFriend(e.From())
+	switch notify := e.(type) {
+	case *client.FriendPokeNotifyEvent:
+		log.Infof("好友 %v 戳了戳你.", friend.Nickname)
+		bot.dispatchEventMessage(MSG{
+			"post_type":   "notice",
+			"notice_type": "notify",
+			"sub_type":    "poke",
+			"self_id":     c.Uin,
+			"user_id":     notify.Sender,
+			"sender_id":   notify.Sender,
+			"target_id":   notify.Receiver,
+			"time":        time.Now().Unix(),
 		})
 	}
 }
@@ -509,6 +528,28 @@ func (bot *CQBot) checkMedia(e []message.IMessageElement) {
 					w.WriteString(i.Url)
 				}), 0644)
 			}
+		case *message.GroupFlashImgElement:
+			filename := hex.EncodeToString(i.Md5) + ".image"
+			if !global.PathExists(path.Join(global.IMAGE_PATH, filename)) {
+				_ = ioutil.WriteFile(path.Join(global.IMAGE_PATH, filename), binary.NewWriterF(func(w *binary.Writer) {
+					w.Write(i.Md5)
+					w.WriteUInt32(uint32(i.Size))
+					w.WriteString(i.Filename)
+					w.WriteString("")
+				}), 0644)
+			}
+			i.Filename = filename
+		case *message.FriendFlashImgElement:
+			filename := hex.EncodeToString(i.Md5) + ".image"
+			if !global.PathExists(path.Join(global.IMAGE_PATH, filename)) {
+				_ = ioutil.WriteFile(path.Join(global.IMAGE_PATH, filename), binary.NewWriterF(func(w *binary.Writer) {
+					w.Write(i.Md5)
+					w.WriteUInt32(uint32(i.Size))
+					w.WriteString(i.Filename)
+					w.WriteString("")
+				}), 0644)
+			}
+			i.Filename = filename
 		case *message.VoiceElement:
 			i.Name = strings.ReplaceAll(i.Name, "{", "")
 			i.Name = strings.ReplaceAll(i.Name, "}", "")

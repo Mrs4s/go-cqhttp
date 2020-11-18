@@ -7,8 +7,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/dustin/go-humanize"
-	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net"
 	"net/url"
@@ -17,6 +15,9 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+
+	"github.com/dustin/go-humanize"
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -121,7 +122,7 @@ func ReadAddrFile(path string) []*net.TCPAddr {
 	lines := strings.Split(str, "\n")
 	var ret []*net.TCPAddr
 	for _, l := range lines {
-		ip := strings.Split(l, ":")
+		ip := strings.Split(strings.TrimSpace(l), ":")
 		if len(ip) == 2 {
 			port, _ := strconv.Atoi(ip[1])
 			ret = append(ret, &net.TCPAddr{IP: net.ParseIP(ip[0]), Port: port})

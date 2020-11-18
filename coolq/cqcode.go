@@ -8,11 +8,6 @@ import (
 	xml2 "encoding/xml"
 	"errors"
 	"fmt"
-	"github.com/Mrs4s/MiraiGo/binary"
-	"github.com/Mrs4s/MiraiGo/message"
-	"github.com/Mrs4s/go-cqhttp/global"
-	log "github.com/sirupsen/logrus"
-	"github.com/tidwall/gjson"
 	"io/ioutil"
 	"net/url"
 	"path"
@@ -20,6 +15,12 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+
+	"github.com/Mrs4s/MiraiGo/binary"
+	"github.com/Mrs4s/MiraiGo/message"
+	"github.com/Mrs4s/go-cqhttp/global"
+	log "github.com/sirupsen/logrus"
+	"github.com/tidwall/gjson"
 )
 
 var matchReg = regexp.MustCompile(`\[CQ:\w+?.*?]`)
@@ -182,6 +183,16 @@ func ToArrayMessage(e []message.IMessageElement, code int64, raw ...bool) (r []M
 					"data": map[string]string{"file": o.Filename, "url": o.Url},
 				}
 			}
+		case *message.GroupFlashImgElement:
+			return []MSG{MSG{
+				"type": "image",
+				"data": map[string]string{"file": o.Filename, "type": "flash"},
+			}}
+		case *message.FriendFlashImgElement:
+			return []MSG{MSG{
+				"type": "image",
+				"data": map[string]string{"file": o.Filename, "type": "flash"},
+			}}
 		case *message.ServiceElement:
 			if isOk := strings.Contains(o.Content, "<?xml"); isOk {
 				m = MSG{
@@ -254,6 +265,10 @@ func ToStringMessage(e []message.IMessageElement, code int64, raw ...bool) (r st
 			r += fmt.Sprintf("[CQ:image,file=%s]", hex.EncodeToString(o.Md5)+".image")
 		case *message.FriendImageElement:
 			r += fmt.Sprintf("[CQ:image,file=%s]", hex.EncodeToString(o.Md5)+".image")
+		case *message.GroupFlashImgElement:
+			return fmt.Sprintf("[CQ:image,type=flash,file=%s]", o.Filename)
+		case *message.FriendFlashImgElement:
+			return fmt.Sprintf("[CQ:image,type=flash,file=%s]", o.Filename)
 		case *message.ServiceElement:
 			if isOk := strings.Contains(o.Content, "<?xml"); isOk {
 				r += fmt.Sprintf(`[CQ:xml,data=%s,resid=%d]`, CQCodeEscapeValue(o.Content), o.Id)
@@ -434,9 +449,6 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m interf
 		}
 
 	case "poke":
-		if !group {
-			return nil, errors.New("todo") // TODO: private poke
-		}
 		t, _ := strconv.ParseInt(d["qq"], 10, 64)
 		return &PokeElement{Target: t}, nil
 	case "gift":

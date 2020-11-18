@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"compress/gzip"
 	"fmt"
-	"github.com/tidwall/gjson"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/tidwall/gjson"
 )
 
 var client = &http.Client{

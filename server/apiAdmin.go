@@ -6,13 +6,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/Mrs4s/MiraiGo/client"
-	"github.com/Mrs4s/go-cqhttp/coolq"
-	"github.com/Mrs4s/go-cqhttp/global"
-	"github.com/gin-gonic/gin"
-	log "github.com/sirupsen/logrus"
-	"github.com/tidwall/gjson"
-	"github.com/yinghau76/go-ascii-art"
 	"image"
 	"io/ioutil"
 	"net/http"
@@ -21,11 +14,21 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Mrs4s/MiraiGo/client"
+	"github.com/Mrs4s/go-cqhttp/coolq"
+	"github.com/Mrs4s/go-cqhttp/global"
+	"github.com/gin-gonic/gin"
+	log "github.com/sirupsen/logrus"
+	"github.com/tidwall/gjson"
+	asciiart "github.com/yinghau76/go-ascii-art"
 )
 
 var WebInput = make(chan string, 1) //长度1，用于阻塞
 
 var Console = make(chan os.Signal, 1)
+
+var Restart = make(chan struct{}, 1)
 
 var JsonConfig *global.JsonConfig
 
@@ -41,16 +44,17 @@ var WebServer = &webServer{}
 
 // admin 子站的 路由映射
 var HttpuriAdmin = map[string]func(s *webServer, c *gin.Context){
-	"do_restart":        AdminDoRestart,       //热重启
-	"get_web_write":     AdminWebWrite,        //获取是否验证码输入
-	"do_web_write":      AdminDoWebWrite,      //web上进行输入操作
-	"do_restart_docker": AdminDoRestartDocker, //直接停止（依赖supervisord/docker）重新拉起
-	"do_config_base":    AdminDoConfigBase,    //修改config.json中的基础部分
-	"do_config_http":    AdminDoConfigHttp,    //修改config.json的http部分
-	"do_config_ws":      AdminDoConfigWs,      //修改config.json的正向ws部分
-	"do_config_reverse": AdminDoConfigReverse, //修改config.json 中的反向ws部分
-	"do_config_json":    AdminDoConfigJson,    //直接修改 config.json配置
-	"get_config_json":   AdminGetConfigJson,   //拉取 当前的config.json配置
+	"do_restart":         AdminDoRestart,       //热重启
+	"do_process_restart": AdminProcessRestart,  //进程重启
+	"get_web_write":      AdminWebWrite,        //获取是否验证码输入
+	"do_web_write":       AdminDoWebWrite,      //web上进行输入操作
+	"do_restart_docker":  AdminDoRestartDocker, //直接停止（依赖supervisord/docker）重新拉起
+	"do_config_base":     AdminDoConfigBase,    //修改config.json中的基础部分
+	"do_config_http":     AdminDoConfigHttp,    //修改config.json的http部分
+	"do_config_ws":       AdminDoConfigWs,      //修改config.json的正向ws部分
+	"do_config_reverse":  AdminDoConfigReverse, //修改config.json 中的反向ws部分
+	"do_config_json":     AdminDoConfigJson,    //直接修改 config.json配置
+	"get_config_json":    AdminGetConfigJson,   //拉取 当前的config.json配置
 }
 
 func Failed(code int, msg string) coolq.MSG {
@@ -346,6 +350,8 @@ func (s *webServer) DoReLogin() { // TODO: 协议层的 ReLogin
 			return "Android Phone"
 		case client.AndroidWatch:
 			return "Android Watch"
+		case client.MacOS:
+			return "MacOS"
 		}
 		return "未知"
 	}())
@@ -419,6 +425,12 @@ func AdminDoRestart(s *webServer, c *gin.Context) {
 	s.DoReLogin()
 	c.JSON(200, coolq.OK(coolq.MSG{}))
 	return
+}
+
+// 进程重启
+func AdminProcessRestart(s *webServer, c *gin.Context) {
+	Restart <- struct{}{}
+	c.JSON(200, coolq.OK(coolq.MSG{}))
 }
 
 // 冷重启
