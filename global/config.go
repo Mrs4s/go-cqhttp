@@ -1,13 +1,16 @@
 package global
 
 import (
-	"encoding/json"
 	"os"
 	"strconv"
 	"time"
 
+	"github.com/hjson/hjson-go"
+	jsoniter "github.com/json-iterator/go"
 	log "github.com/sirupsen/logrus"
 )
+
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 type JsonConfig struct {
 	Uin               int64  `json:"uin"`
@@ -144,19 +147,28 @@ func Load(p string) *JsonConfig {
 		log.Warnf("尝试加载配置文件 %v 失败: 文件不存在", p)
 		return nil
 	}
-	c := JsonConfig{}
-	err := json.Unmarshal([]byte(ReadAllText(p)), &c)
+	var dat map[string]interface{}
+	var c = JsonConfig{}
+	err := hjson.Unmarshal([]byte(ReadAllText(p)), &dat)
+	if err == nil {
+		b, _ := json.Marshal(dat)
+		err = json.Unmarshal(b, &c)
+	}
 	if err != nil {
 		log.Warnf("尝试加载配置文件 %v 时出现错误: %v", p, err)
 		log.Infoln("原文件已备份")
-		os.Rename(p, p+".backup"+strconv.FormatInt(time.Now().Unix(), 10))
+		_ = os.Rename(p, p+".backup"+strconv.FormatInt(time.Now().Unix(), 10))
 		return nil
 	}
 	return &c
 }
 
 func (c *JsonConfig) Save(p string) error {
-	data, err := json.MarshalIndent(c, "", "\t")
+	data, err := hjson.MarshalWithOptions(c, hjson.EncoderOptions{
+		Eol: "\n",
+		BracesSameLine: true,
+		IndentBy: "    ",
+	})
 	if err != nil {
 		return err
 	}

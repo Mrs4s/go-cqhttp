@@ -20,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Set RELEASE_VERSION env
-        run: echo ::set-env name=RELEASE_VERSION::${GITHUB_REF:10}
+        run: echo "RELEASE_VERSION=${GITHUB_REF:10}" >> $GITHUB_ENV
       - uses: pcrbot/go-release-action@master
         env:
           CGO_ENABLED: 0

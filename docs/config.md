@@ -1,6 +1,6 @@
 # 配置
 
-go-cqhttp 包含 `config.json` 和 `device.json` 两个配置文件, 其中 `config.json` 为运行配置 `device.json` 为虚拟设备信息.
+go-cqhttp 包含 `config.hjson` 和 `device.json` 两个配置文件, 其中 `config.json` 为运行配置 `device.json` 为虚拟设备信息.
 
 ## 从原CQHTTP导入配置
 
@@ -112,10 +112,10 @@ go-cqhttp 支持导入CQHTTP的配置文件, 具体步骤为:
 
 | 值  | 类型          | 限制                                                             |
 | --- | ------------- | ---------------------------------------------------------------- |
-| 0   | iPad          | 无                                                               |
-| 1   | Android Phone | 无                                                               |
-| 2   | Android Watch | 无法接收 `group_notify` 事件、无法接收口令红包、无法接收撤回消息 |
-| 3   | MacOS         | 无                                                               |
+| 0   | iPad          | 无                                                                        |
+| 1   | Android Phone | 无法接收新版表情如 `/吃瓜 /汪汪`, 会自动转换为字符串                            |
+| 2   | Android Watch | 除`Android Phone`的限制外, 无法接收 `notify` 事件、无法接收口令红包、无法接收撤回消息 |
+| 3   | MacOS         | 无                                                                             |
 
 > 注意, 根据协议的不同, 各类消息有所限制
 
