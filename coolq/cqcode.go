@@ -184,12 +184,12 @@ func ToArrayMessage(e []message.IMessageElement, code int64, raw ...bool) (r []M
 				}
 			}
 		case *message.GroupFlashImgElement:
-			return []MSG{MSG{
+			return []MSG{{
 				"type": "image",
 				"data": map[string]string{"file": o.Filename, "type": "flash"},
 			}}
 		case *message.FriendFlashImgElement:
-			return []MSG{MSG{
+			return []MSG{{
 				"type": "image",
 				"data": map[string]string{"file": o.Filename, "type": "flash"},
 			}}
