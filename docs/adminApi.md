@@ -8,7 +8,7 @@
 
 | 参数名       | 类型   | 说明                        |
 | ------------ | ------ | --------------------------- |
-| access_token | string | 校验口令，config.json中配置 |
+| access_token | string | 校验口令，config.hjson中配置 |
 
 
 
@@ -209,7 +209,7 @@ method: `POST` formdata
 
 ### admin/do_config_json
 
-> 直接修改 config.json配置
+> 直接修改 config.hjson配置
 
 method: `POST` formdata
 
@@ -217,7 +217,7 @@ method: `POST` formdata
 
 | 参数名 | 类型   | 说明                                |
 | ------ | ------ | ----------------------------------- |
-| json   | string | 完整的config.json的配合，json字符串 |
+| json   | string | 完整的config.hjson的配合，json字符串 |
 
 
 返回：
@@ -228,7 +228,7 @@ method: `POST` formdata
 
 ### admin/get_config_json
 
-> 获取当前 config.json配置
+> 获取当前 config.hjson配置
 
 method: `GET`
 
@@ -247,5 +247,5 @@ method: `GET`
 
 | 参数名 | 类型   | 说明                                |
 | ------ | ------ | ----------------------------------- |
-| config | string | 完整的config.json的配合，json字符串 |
+| config | string | 完整的config.hjson的配合，json字符串 |
 

@@ -5,7 +5,6 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -29,11 +28,14 @@ import (
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/getlantern/go-update"
+	jsoniter "github.com/json-iterator/go"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"github.com/rifflock/lfshook"
 	log "github.com/sirupsen/logrus"
 	easy "github.com/t-tomalak/logrus-easy-formatter"
 )
+
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 func init() {
 	log.SetFormatter(&easy.Formatter{
@@ -66,7 +68,7 @@ func init() {
 	}
 	if global.PathExists("cqhttp.json") {
 		log.Info("发现 cqhttp.json 将在五秒后尝试导入配置，按 Ctrl+C 取消.")
-		log.Warn("警告: 该操作会删除 cqhttp.json 并覆盖 config.json 文件.")
+		log.Warn("警告: 该操作会删除 cqhttp.json 并覆盖 config.hjson 文件.")
 		time.Sleep(time.Second * 5)
 		conf := global.CQHttpApiConfig{}
 		if err := json.Unmarshal([]byte(global.ReadAllText("cqhttp.json")), &conf); err != nil {
@@ -88,8 +90,8 @@ func init() {
 			goConf.ReverseServers[0].ReverseEventUrl = conf.WSReverseEventUrl
 			goConf.ReverseServers[0].ReverseReconnectInterval = conf.WSReverseReconnectInterval
 		}
-		if err := goConf.Save("config.json"); err != nil {
-			log.Fatalf("保存 config.json 时出现错误: %v", err)
+		if err := goConf.Save("config.hjson"); err != nil {
+			log.Fatalf("保存 config.hjson 时出现错误: %v", err)
 		}
 		_ = os.Remove("cqhttp.json")
 	}
@@ -122,8 +124,10 @@ func main() {
 	}
 
 	var conf *global.JsonConfig
-	if global.PathExists("config.json") || os.Getenv("UIN") == "" {
+	if global.PathExists("config.json") {
 		conf = global.Load("config.json")
+		_ = conf.Save("config.hjson")
+		_ = os.Remove("config.json")
 	} else if os.Getenv("UIN") != "" {
 		log.Infof("将从环境变量加载配置.")
 		uin, _ := strconv.ParseInt(os.Getenv("UIN"), 10, 64)
@@ -149,19 +153,21 @@ func main() {
 		if post != "" {
 			conf.HttpConfig.PostUrls[post] = os.Getenv("HTTP_SECRET")
 		}
+	} else {
+		conf = global.Load("config.hjson")
 	}
 	if conf == nil {
-		err := global.DefaultConfig().Save("config.json")
+		err := global.DefaultConfig().Save("config.hjson")
 		if err != nil {
 			log.Fatalf("创建默认配置文件时出现错误: %v", err)
 			return
 		}
-		log.Infof("默认配置文件已生成, 请编辑 config.json 后重启程序.")
+		log.Infof("默认配置文件已生成, 请编辑 config.hjson 后重启程序.")
 		time.Sleep(time.Second * 5)
 		return
 	}
 	if conf.Uin == 0 || (conf.Password == "" && conf.PasswordEncrypted == "") {
-		log.Warnf("请修改 config.json 以添加账号密码.")
+		log.Warnf("请修改 config.hjson 以添加账号密码.")
 		time.Sleep(time.Second * 5)
 		return
 	}
@@ -228,7 +234,7 @@ func main() {
 		if encrypted := EncryptPwd(conf.Password, key[:]); encrypted != "" {
 			conf.Password = ""
 			conf.PasswordEncrypted = encrypted
-			_ = conf.Save("config.json")
+			_ = conf.Save("config.hjson")
 		} else {
 			log.Warnf("加密时出现问题.")
 		}
@@ -314,7 +320,7 @@ func main() {
 	if conf.WebUi.Host == "" {
 		conf.WebUi.Host = "127.0.0.1"
 	}
-	confErr := conf.Save("config.json")
+	confErr := conf.Save("config.hjson")
 	if confErr != nil {
 		log.Error("保存配置文件失败")
 	}
