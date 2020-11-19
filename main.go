@@ -319,10 +319,6 @@ func main() {
 	if conf.WebUi.Host == "" {
 		conf.WebUi.Host = "127.0.0.1"
 	}
-	confErr := conf.Save("config.hjson")
-	if confErr != nil {
-		log.Error("保存配置文件失败")
-	}
 	b := server.WebServer.Run(fmt.Sprintf("%s:%d", conf.WebUi.Host, conf.WebUi.WebUiPort), cli)
 	c := server.Console
 	r := server.Restart
