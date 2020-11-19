@@ -156,7 +156,7 @@ func main() {
 		conf = global.Load("config.hjson")
 	}
 	if conf == nil {
-		err := global.DefaultConfig().Save("config.hjson")
+		err := global.WriteAllText("config.hjson", global.DefaultConfigWithComments)
 		if err != nil {
 			log.Fatalf("创建默认配置文件时出现错误: %v", err)
 			return

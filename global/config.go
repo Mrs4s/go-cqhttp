@@ -12,6 +12,127 @@ import (
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
+var DefaultConfigWithComments = `
+/*
+    go-cqhttp 默认配置文件
+*/
+
+{
+    // QQ号
+    uin: 0
+    // QQ密码
+    password: ""
+    // 是否启用密码加密
+    encrypt_password: false
+    // 加密后的密码, 如未启用密码加密将为空, 请勿随意修改.
+    password_encrypted: ""
+    // 是否启用内置数据库
+    // 启用将会增加10-20MB的内存占用和一定的磁盘空间
+    // 关闭将无法使用 撤回 回复 get_msg 等上下文相关功能
+    enable_db: true
+    // 访问密钥, 强烈推荐在公网的服务器设置
+    access_token: ""
+    // 重连设置
+    relogin: {
+        // 是否启用自动重连
+        // 如不启用掉线后将不会自动重连
+        enabled: true
+        // 重连延迟, 单位秒
+        relogin_delay: 3
+        // 最大重连次数, 0为无限制
+        max_relogin_times: 0
+    }
+    // API限速设置
+    // 该设置为全局生效
+    // 原 cqhttp 虽然启用了 rate_limit 后缀, 但是基本没插件适配
+    // 目前该限速设置为令牌桶算法, 请参考: 
+    // https://baike.baidu.com/item/%E4%BB%A4%E7%89%8C%E6%A1%B6%E7%AE%97%E6%B3%95/6597000?fr=aladdin
+    _rate_limit: {
+        // 是否启用限速
+        enabled: false
+        // 令牌回复频率, 单位秒
+        frequency: 1
+        // 令牌桶大小
+        bucket_size: 1
+    }
+    // 是否忽略无效的CQ码
+    // 如果为假将原样发送
+    ignore_invalid_cqcode: false
+    // 是否强制分片发送消息
+    // 分片发送将会带来更快的速度
+    // 但是兼容性会有些问题
+    force_fragmented: false
+    // 心跳频率, 单位秒
+    // -1 为关闭心跳
+    heartbeat_interval: 0
+    // HTTP设置
+    http_config: {
+        // 是否启用正向HTTP服务器
+        enabled: true
+        // 服务端监听地址
+        host: 0.0.0.0
+        // 服务端监听端口
+        port: 5700
+        // 反向HTTP超时时间, 单位秒
+        // 最小值为5，小于5将会忽略本项设置
+        timeout: 0
+        // 反向HTTP POST地址列表
+        // 格式: 
+        // {
+        //    地址: secret
+        // }
+        post_urls: {}
+    }
+    // 正向WS设置
+    ws_config: {
+        // 是否启用正向WS服务器
+        enabled: true
+        // 正向WS服务器监听地址
+        host: 0.0.0.0
+        // 正向WS服务器监听端口
+        port: 6700
+    }
+    // 反向WS设置
+    ws_reverse_servers: [
+        // 可以添加多个反向WS推送
+        {
+            // 是否启用该推送
+            enabled: false
+            // 反向WS Universal 地址
+            // 注意 设置了此项地址后下面两项将会被忽略
+            reverse_url: ws://you_websocket_universal.server
+            // 反向WS API 地址
+            reverse_api_url: ws://you_websocket_api.server
+            // 反向WS Event 地址
+            reverse_event_url: ws://you_websocket_event.server
+            // 重连间隔 单位毫秒
+            reverse_reconnect_interval: 3000
+        }
+    ]
+    // 上报数据类型
+    // 可选: string array
+    post_message_format: string
+    // 是否使用服务器下发的新地址进行重连
+    // 注意, 此设置可能导致在海外服务器上连接情况更差
+    use_sso_address: false
+    // 是否启用 DEBUG
+    debug: false
+    // 日志等级
+    log_level: ""
+    // WebUi 设置
+    web_ui: {
+        // 是否启用 WebUi
+        enabled: true
+        // 监听地址
+        host: 127.0.0.1
+        // 监听端口
+        web_ui_port: 9999
+        // 是否接收来自web的输入
+        web_input: false
+    }
+}
+`
+
 type JsonConfig struct {
 	Uin               int64  `json:"uin"`
 	Password          string `json:"password"`
@@ -165,13 +286,12 @@ func Load(p string) *JsonConfig {
 
 func (c *JsonConfig) Save(p string) error {
 	data, err := hjson.MarshalWithOptions(c, hjson.EncoderOptions{
-		Eol: "\n",
+		Eol:            "\n",
 		BracesSameLine: true,
-		IndentBy: "    ",
+		IndentBy:       "    ",
 	})
 	if err != nil {
 		return err
 	}
-	WriteAllText(p, string(data))
-	return nil
+	return WriteAllText(p, string(data))
 }

@@ -43,8 +43,8 @@ func ReadAllText(path string) string {
 	return string(b)
 }
 
-func WriteAllText(path, text string) {
-	_ = ioutil.WriteFile(path, []byte(text), 0644)
+func WriteAllText(path, text string) error {
+	return ioutil.WriteFile(path, []byte(text), 0644)
 }
 
 func Check(err error) {
