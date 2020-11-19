@@ -103,6 +103,8 @@ enable ws?(Y/n)
 
 如果出现`{"data":{"message_id":balabala},"retcode":0,"status":"ok"}`则证明已经成功配置HTTP
 
+*注：请 连 中括号 也替换掉，就像这样：*`http://127.0.0.1:5700/send_private_msg?user_id=10001&message=ffeecoishp`
+
 # 进阶指南
 
 ## 如何自己构建
@@ -117,13 +119,11 @@ enable ws?(Y/n)
 
 *注：可以使用*`go env -w GOPROXY=https://goproxy.cn,direct`*来加速国内依赖安装速度*
 
-*注：此时构建后的文件名为*`go-cqhttp`(Linux)或`go-cqhttp.exe`(Windows)
-
 ## 更新
 
 ### 方法一
 
-从[release] (https://github.com/Mrs4s/go-cqhttp/releases)界面下载最新版本的go-cqhttp
+从[release](https://github.com/Mrs4s/go-cqhttp/releases)界面下载最新版本的go-cqhttp
 并替换之前的版本
 
 ### 方法二
