@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"context"
 	"crypto/md5"
 	"encoding/base64"
 	"fmt"
@@ -242,19 +241,19 @@ func main() {
 	if conf.PasswordEncrypted != "" {
 		if strKey == "" {
 			log.Infof("密码加密已启用, 请输入Key对密码进行解密以继续: (Enter 提交)")
-			ctx := context.Background()
-			go func(ctx context.Context) {
+			cancel := make(chan struct{}, 1)
+			go func() {
 				select {
-				case <-ctx.Done():
+				case <-cancel:
 					return
 				case <-time.After(time.Second * 45):
 					log.Infof("解密key输入超时")
 					time.Sleep(3 * time.Second)
 					os.Exit(0)
 				}
-			}(ctx)
+			}()
 			strKey, _ = console.ReadString('\n')
-			ctx.Done()
+			cancel <- struct{}{}
 		} else {
 			log.Infof("密码加密已启用, 使用运行时传递的参数进行解密，按 Ctrl+C 取消.")
 		}
@@ -334,7 +333,6 @@ func main() {
 		b.Release()
 	case <-r:
 		log.Info("正在重启中...")
-		server.HttpServer.ShutDown()
 		defer b.Release()
 		restart(arg)
 	}
