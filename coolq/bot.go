@@ -3,7 +3,6 @@ package coolq
 import (
 	"bytes"
 	"encoding/gob"
-	"encoding/json"
 	"fmt"
 	"hash/crc32"
 	"path"
@@ -17,9 +16,12 @@ import (
 	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/Mrs4s/go-cqhttp/global"
 
+	jsoniter "github.com/json-iterator/go"
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 )
+
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 type CQBot struct {
 	Client *client.QQClient

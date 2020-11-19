@@ -28,8 +28,8 @@
 
 1.  双击`go-cqhttp.exe`此时将提示
 ```
-[WARNING]: 尝试加载配置文件 config.json 失败: 文件不存在
-[INFO]: 默认配置文件已生成,请编辑 config.json 后重启程序.
+[WARNING]: 尝试加载配置文件 config.hjson 失败: 文件不存在
+[INFO]: 默认配置文件已生成,请编辑 config.hjson 后重启程序.
 ```
 2. 参照[config.md](https://github.com/Mrs4s/go-cqhttp/blob/master/docs/config.md)和你所用到的插件的 `README` 填入参数
 3. 再次双击`go-cqhttp.exe`
@@ -79,8 +79,8 @@ enable ws?(Y/n)
 2. `cd`到解压目录
 3. 输入 `./go-cqhttp`，`Enter`运行 ，此时将提示
 ```
-[WARNING]: 尝试加载配置文件 config.json 失败: 文件不存在
-[INFO]: 默认配置文件已生成,请编辑 config.json 后重启程序.
+[WARNING]: 尝试加载配置文件 config.hjson 失败: 文件不存在
+[INFO]: 默认配置文件已生成,请编辑 config.hjson 后重启程序.
 ```
 
 4. 参照[config.md](https://github.com/Mrs4s/go-cqhttp/blob/master/docs/config.md)和你所用到的插件的 `README` 填入参数

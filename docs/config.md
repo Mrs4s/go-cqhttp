@@ -1,6 +1,6 @@
 # 配置
 
-go-cqhttp 包含 `config.json` 和 `device.json` 两个配置文件, 其中 `config.json` 为运行配置 `device.json` 为虚拟设备信息.
+go-cqhttp 包含 `config.hjson` 和 `device.json` 两个配置文件, 其中 `config.json` 为运行配置 `device.json` 为虚拟设备信息.
 
 ## 从原CQHTTP导入配置
 
