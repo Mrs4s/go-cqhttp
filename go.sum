@@ -4,6 +4,8 @@ github.com/Mrs4s/MiraiGo v0.0.0-20201117154121-989187125900 h1:xnx3dH7hgZ/Z4k33E
 github.com/Mrs4s/MiraiGo v0.0.0-20201117154121-989187125900/go.mod h1:pAsWtMIwqkBXr5DkUpTIHoWQJNduVnX9WSBPmPvkuCs=
 github.com/Mrs4s/MiraiGo v0.0.0-20201118132221-03652b042534 h1:MM4fnTZhMzvRZaR7EaYfoWYhoBinqxYCwVigdRbzfLI=
 github.com/Mrs4s/MiraiGo v0.0.0-20201118132221-03652b042534/go.mod h1:pAsWtMIwqkBXr5DkUpTIHoWQJNduVnX9WSBPmPvkuCs=
+github.com/Mrs4s/MiraiGo v0.0.0-20201120010132-37b3821668be h1:Husock3Pds2ghVqly25LJu2E9kF7NbsMa/NCqmdNns4=
+github.com/Mrs4s/MiraiGo v0.0.0-20201120010132-37b3821668be/go.mod h1:pAsWtMIwqkBXr5DkUpTIHoWQJNduVnX9WSBPmPvkuCs=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
