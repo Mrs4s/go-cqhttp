@@ -1,11 +1,7 @@
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
-github.com/Mrs4s/MiraiGo v0.0.0-20201117154121-989187125900 h1:xnx3dH7hgZ/Z4k33EhKzBmQhwASJ5bvsorqPhO0DWbc=
-github.com/Mrs4s/MiraiGo v0.0.0-20201117154121-989187125900/go.mod h1:pAsWtMIwqkBXr5DkUpTIHoWQJNduVnX9WSBPmPvkuCs=
-github.com/Mrs4s/MiraiGo v0.0.0-20201118132221-03652b042534 h1:MM4fnTZhMzvRZaR7EaYfoWYhoBinqxYCwVigdRbzfLI=
-github.com/Mrs4s/MiraiGo v0.0.0-20201118132221-03652b042534/go.mod h1:pAsWtMIwqkBXr5DkUpTIHoWQJNduVnX9WSBPmPvkuCs=
-github.com/Mrs4s/MiraiGo v0.0.0-20201120010132-37b3821668be h1:Husock3Pds2ghVqly25LJu2E9kF7NbsMa/NCqmdNns4=
-github.com/Mrs4s/MiraiGo v0.0.0-20201120010132-37b3821668be/go.mod h1:pAsWtMIwqkBXr5DkUpTIHoWQJNduVnX9WSBPmPvkuCs=
+github.com/Mrs4s/MiraiGo v0.0.0-20201120060003-eaee349fe4f4 h1:6yT4mIrpQdmVWLTSWN8pjT7R6UI4eeC5UlswPQglXlU=
+github.com/Mrs4s/MiraiGo v0.0.0-20201120060003-eaee349fe4f4/go.mod h1:pAsWtMIwqkBXr5DkUpTIHoWQJNduVnX9WSBPmPvkuCs=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
@@ -78,7 +74,6 @@ github.com/gorilla/websocket v1.4.2 h1:+/TMaTYc4QFitKJxsQ7Yye35DkWvkdLcvGKqM+x0U
 github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/guonaihong/gout v0.1.3 h1:BIiV6nnsA+R6dIB1P33uhCM8+TVAG3zHrXGZad7hDc8=
 github.com/guonaihong/gout v0.1.3/go.mod h1:vXvv5Kxr70eM5wrp4F0+t9lnLWmq+YPW2GByll2f/EA=
-github.com/hjson/hjson-go v0.2.3 h1:KhG7/PSxTibbYOzFso5FoiX2gWePcANaCsvM1WE/bTo=
 github.com/hjson/hjson-go v3.1.0+incompatible h1:DY/9yE8ey8Zv22bY+mHV1uk2yRy0h8tKhZ77hEdi0Aw=
 github.com/hjson/hjson-go v3.1.0+incompatible/go.mod h1:qsetwF8NlsTsOTwZTApNlTCerV+b2GjYRRcIk4JMFio=
 github.com/hpcloud/tail v1.0.0 h1:nfCOvKYfkgYP8hkirhJocXT2+zOD8yUNjXaWfTlyFKI=

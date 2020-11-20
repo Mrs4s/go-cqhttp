@@ -308,7 +308,8 @@ func SetGroupKick(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	uid, _ := strconv.ParseInt(getParam(c, "user_id"), 10, 64)
 	msg := getParam(c, "message")
-	c.JSON(200, s.bot.CQSetGroupKick(gid, uid, msg))
+	block := getParamOrDefault(c, "reject_add_request", "false")
+	c.JSON(200, s.bot.CQSetGroupKick(gid, uid, msg, block == "true"))
 }
 
 func SetGroupBan(s *httpServer, c *gin.Context) {
