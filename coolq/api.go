@@ -382,10 +382,10 @@ func (bot *CQBot) CQSetGroupMemo(groupId int64, msg string) MSG {
 }
 
 // https://cqhttp.cc/docs/4.15/#/API?id=set_group_kick-%E7%BE%A4%E7%BB%84%E8%B8%A2%E4%BA%BA
-func (bot *CQBot) CQSetGroupKick(groupId, userId int64, msg string) MSG {
+func (bot *CQBot) CQSetGroupKick(groupId, userId int64, msg string, block bool) MSG {
 	if g := bot.Client.FindGroup(groupId); g != nil {
 		if m := g.FindMember(userId); m != nil {
-			m.Kick(msg)
+			m.Kick(msg, block)
 			return OK(nil)
 		}
 	}
@@ -639,7 +639,7 @@ func (bot *CQBot) CQHandleQuickOperation(context, operation gjson.Result) MSG {
 				bot.CQDeleteMessage(int32(context.Get("message_id").Int()))
 			}
 			if operation.Get("kick").Bool() && !isAnonymous {
-				bot.CQSetGroupKick(context.Get("group_id").Int(), context.Get("user_id").Int(), "")
+				bot.CQSetGroupKick(context.Get("group_id").Int(), context.Get("user_id").Int(), "", operation.Get("reject_add_request").Bool())
 			}
 			if operation.Get("ban").Bool() {
 				var duration uint32 = 30 * 60
