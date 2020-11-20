@@ -789,6 +789,7 @@ func (bot *CQBot) CQGetStatus() MSG {
 		"app_good":        true,
 		"online":          bot.Client.Online,
 		"good":            true,
+		"stat":            bot.Client.GetStatistics(),
 	})
 }
 
