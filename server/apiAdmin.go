@@ -77,7 +77,7 @@ func (s *webServer) Run(addr string, cli *client.QQClient) *coolq.CQBot {
 
 	go func() {
 		//开启端口监听
-		if s.Conf.WebUi.Enabled {
+		if s.Conf.WebUi != nil && s.Conf.WebUi.Enabled {
 			log.Infof("Admin API 服务器已启动: %v", addr)
 			err := s.engine.Run(addr)
 			if err != nil {
