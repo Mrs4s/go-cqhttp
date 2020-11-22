@@ -781,6 +781,7 @@ func (bot *CQBot) CQSetGroupPortrait(groupId int64, file, cache string) MSG {
 	return Failed(100)
 }
 
+// https://github.com/howmanybots/onebot/blob/master/v11/specs/api/public.md#get_status-%E8%8E%B7%E5%8F%96%E8%BF%90%E8%A1%8C%E7%8A%B6%E6%80%81
 func (bot *CQBot) CQGetStatus() MSG {
 	return OK(MSG{
 		"app_initialized": true,
@@ -788,7 +789,7 @@ func (bot *CQBot) CQGetStatus() MSG {
 		"plugins_good":    nil,
 		"app_good":        true,
 		"online":          bot.Client.Online,
-		"good":            true,
+		"good":            bot.Client.Online,
 		"stat":            bot.Client.GetStatistics(),
 	})
 }
