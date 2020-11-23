@@ -718,17 +718,24 @@ func (bot *CQBot) CQGetMessage(messageId int32) MSG {
 		return Failed(100)
 	}
 	sender := msg["sender"].(message.Sender)
-	_, group := msg["group"]
+	gid, isGroup := msg["group"]
+	raw := msg["message"].(string)
 	return OK(MSG{
 		"message_id": messageId,
 		"real_id":    msg["message-id"],
-		"group":      group,
+		"group":      isGroup,
+		"group_id":   gid,
 		"sender": MSG{
 			"user_id":  sender.Uin,
 			"nickname": sender.Nickname,
 		},
-		"time":    msg["time"],
-		"message": msg["message"],
+		"time": msg["time"],
+		"message": ToFormattedMessage(bot.ConvertStringMessage(raw, isGroup), func() int64 {
+			if isGroup {
+				return gid.(int64)
+			}
+			return sender.Uin
+		}(), false),
 	})
 }
 

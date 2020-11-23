@@ -183,6 +183,30 @@ func ToArrayMessage(e []message.IMessageElement, code int64, raw ...bool) (r []M
 					"data": map[string]string{"file": o.Filename, "url": o.Url},
 				}
 			}
+		case *message.GroupImageElement:
+			if ur {
+				m = MSG{
+					"type": "image",
+					"data": map[string]string{"file": hex.EncodeToString(o.Md5) + ".image"},
+				}
+			} else {
+				m = MSG{
+					"type": "image",
+					"data": map[string]string{"file": hex.EncodeToString(o.Md5) + ".image", "url": CQCodeEscapeText(o.Url)},
+				}
+			}
+		case *message.FriendImageElement:
+			if ur {
+				m = MSG{
+					"type": "image",
+					"data": map[string]string{"file": hex.EncodeToString(o.Md5) + ".image"},
+				}
+			} else {
+				m = MSG{
+					"type": "image",
+					"data": map[string]string{"file": hex.EncodeToString(o.Md5) + ".image", "url": CQCodeEscapeText(o.Url)},
+				}
+			}
 		case *message.GroupFlashImgElement:
 			return []MSG{{
 				"type": "image",
@@ -262,9 +286,17 @@ func ToStringMessage(e []message.IMessageElement, code int64, raw ...bool) (r st
 				r += fmt.Sprintf(`[CQ:image,file=%s,url=%s]`, o.Filename, CQCodeEscapeValue(o.Url))
 			}
 		case *message.GroupImageElement:
-			r += fmt.Sprintf("[CQ:image,file=%s]", hex.EncodeToString(o.Md5)+".image")
+			if ur {
+				r += fmt.Sprintf("[CQ:image,file=%s]", hex.EncodeToString(o.Md5)+".image")
+			} else {
+				r += fmt.Sprintf("[CQ:image,file=%s,url=%s]", hex.EncodeToString(o.Md5)+".image", CQCodeEscapeText(o.Url))
+			}
 		case *message.FriendImageElement:
-			r += fmt.Sprintf("[CQ:image,file=%s]", hex.EncodeToString(o.Md5)+".image")
+			if ur {
+				r += fmt.Sprintf("[CQ:image,file=%s]", hex.EncodeToString(o.Md5)+".image")
+			} else {
+				r += fmt.Sprintf("[CQ:image,file=%s,url=%s]", hex.EncodeToString(o.Md5)+".image", CQCodeEscapeText(o.Url))
+			}
 		case *message.GroupFlashImgElement:
 			return fmt.Sprintf("[CQ:image,type=flash,file=%s]", o.Filename)
 		case *message.FriendFlashImgElement:
