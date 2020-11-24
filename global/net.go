@@ -5,7 +5,9 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -14,7 +16,27 @@ import (
 
 var client = &http.Client{
 	Timeout: time.Second * 15,
+	Transport: &http.Transport{
+		Proxy: func(request *http.Request) (u *url.URL, e error) {
+			if Proxy == "" {
+				return http.ProxyFromEnvironment(request)
+			}
+			return url.Parse(Proxy)
+		},
+		DialContext: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+			DualStack: true,
+		}).DialContext,
+		ForceAttemptHTTP2:     true,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+	},
 }
+
+var Proxy string
 
 func GetBytes(url string) ([]byte, error) {
 	req, err := http.NewRequest("GET", url, nil)

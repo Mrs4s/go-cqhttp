@@ -319,6 +319,7 @@ func main() {
 	if conf.WebUi.Host == "" {
 		conf.WebUi.Host = "127.0.0.1"
 	}
+	global.Proxy = conf.ProxyRewrite
 	b := server.WebServer.Run(fmt.Sprintf("%s:%d", conf.WebUi.Host, conf.WebUi.WebUiPort), cli)
 	c := server.Console
 	r := server.Restart

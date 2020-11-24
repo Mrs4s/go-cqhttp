@@ -152,6 +152,7 @@ type JsonConfig struct {
 	} `json:"_rate_limit"`
 	IgnoreInvalidCQCode bool                          `json:"ignore_invalid_cqcode"`
 	ForceFragmented     bool                          `json:"force_fragmented"`
+	ProxyRewrite        string                        `json:"proxy_rewrite"`
 	HeartbeatInterval   time.Duration                 `json:"heartbeat_interval"`
 	HttpConfig          *GoCQHttpConfig               `json:"http_config"`
 	WSConfig            *GoCQWebsocketConfig          `json:"ws_config"`
