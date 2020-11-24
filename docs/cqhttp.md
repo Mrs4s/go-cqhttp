@@ -485,26 +485,26 @@ Type: `tts`
 终结点: `/.ocr_image` 
 
 **参数** 
- 
- | 字段    | 类型   | 说明   |
- | ------- | ------ | ------ |
- | `image` | string | 图片ID |
- 
+
+| 字段    | 类型   | 说明   |
+| ------- | ------ | ------ |
+| `image` | string | 图片ID |
+
 **响应数据**
- 
- | 字段       | 类型            | 说明    |
- | ---------- | --------------- | ------- |
- | `texts`    | TextDetection[] | OCR结果 |
- | `language` | string          | 语言    |
+
+| 字段       | 类型            | 说明    |
+| ---------- | --------------- | ------- |
+| `texts`    | TextDetection[] | OCR结果 |
+| `language` | string          | 语言    |
 
 **TextDetection**
 
- | 字段          | 类型    | 说明   |
- | ------------- | ------- | ------ |
- | `text`        | string  | 文本   |
- | `confidence`  | int32   | 置信度 |
- | `coordinates` | vector2 | 坐标   |
- 
+| 字段          | 类型    | 说明   |
+| ------------- | ------- | ------ |
+| `text`        | string  | 文本   |
+| `confidence`  | int32   | 置信度 |
+| `coordinates` | vector2 | 坐标   |
+
 
 ### 获取群系统消息
 
@@ -512,56 +512,56 @@ Type: `tts`
 
 **响应数据**
 
- | 字段               | 类型             | 说明         |
- | ------------------ | ---------------- | ------------ |
- | `invited_requests` | InvitedRequest[] | 邀请消息列表 |
- | `join_requests`    | JoinRequest[]    | 进群消息列表 |
- 
+| 字段               | 类型             | 说明         |
+| ------------------ | ---------------- | ------------ |
+| `invited_requests` | InvitedRequest[] | 邀请消息列表 |
+| `join_requests`    | JoinRequest[]    | 进群消息列表 |
+
  > 注意: 如果列表不存在任何消息, 将返回 `null`
- 
+
  **InvitedRequest**
- 
-  | 字段           | 类型   | 说明              |
-  | -------------- | ------ | ----------------- |
-  | `request_id`   | int64  | 请求ID            |
-  | `invitor_uin`  | int64  | 邀请者            |
-  | `invitor_nick` | string | 邀请者昵称        |
-  | `group_id`     | int64  | 群号              |
-  | `group_name`   | string | 群名              |
-  | `checked`      | bool   | 是否已被处理      |
-  | `actor`        | int64  | 处理者, 未处理为0 |
-  
+
+| 字段           | 类型   | 说明              |
+| -------------- | ------ | ----------------- |
+| `request_id`   | int64  | 请求ID            |
+| `invitor_uin`  | int64  | 邀请者            |
+| `invitor_nick` | string | 邀请者昵称        |
+| `group_id`     | int64  | 群号              |
+| `group_name`   | string | 群名              |
+| `checked`      | bool   | 是否已被处理      |
+| `actor`        | int64  | 处理者, 未处理为0 |
+
   **JoinRequest**
-  
-  | 字段             | 类型   | 说明              |
-  | ---------------- | ------ | ----------------- |
-  | `request_id`     | int64  | 请求ID            |
-  | `requester_uin`  | int64  | 请求者ID          |
-  | `requester_nick` | string | 请求者昵称        |
-  | `message`        | string | 验证消息          |
-  | `group_id`       | int64  | 群号              |
-  | `group_name`     | string | 群名              |
-  | `checked`        | bool   | 是否已被处理      |
-  | `actor`          | int64  | 处理者, 未处理为0 |
-  
+
+| 字段             | 类型   | 说明              |
+| ---------------- | ------ | ----------------- |
+| `request_id`     | int64  | 请求ID            |
+| `requester_uin`  | int64  | 请求者ID          |
+| `requester_nick` | string | 请求者昵称        |
+| `message`        | string | 验证消息          |
+| `group_id`       | int64  | 群号              |
+| `group_name`     | string | 群名              |
+| `checked`        | bool   | 是否已被处理      |
+| `actor`          | int64  | 处理者, 未处理为0 |
+
 ### 获取群文件系统信息
 
 终结点: `/get_group_file_system_info`
 
 **参数** 
- 
- | 字段       | 类型  | 说明 |
- | ---------- | ----- | ---- |
- | `group_id` | int64 | 群号 |
+
+| 字段       | 类型  | 说明 |
+| ---------- | ----- | ---- |
+| `group_id` | int64 | 群号 |
 
 **响应数据**
 
- | 字段          | 类型  | 说明       |
- | ------------- | ----- | ---------- |
- | `file_count`  | int32 | 文件总数   |
- | `limit_count` | int32 | 文件上限   |
- | `used_space`  | int64 | 已使用空间 |
- | `total_space` | int64 | 空间上限   |
+| 字段          | 类型  | 说明       |
+| ------------- | ----- | ---------- |
+| `file_count`  | int32 | 文件总数   |
+| `limit_count` | int32 | 文件上限   |
+| `used_space`  | int64 | 已使用空间 |
+| `total_space` | int64 | 空间上限   |
 
 ### 获取群根目录文件列表
 
@@ -570,18 +570,18 @@ Type: `tts`
 终结点: `/get_group_root_files`
 
 **参数** 
- 
- | 字段       | 类型  | 说明 |
- | ---------- | ----- | ---- |
- | `group_id` | int64 | 群号 |
- 
+
+| 字段       | 类型  | 说明 |
+| ---------- | ----- | ---- |
+| `group_id` | int64 | 群号 |
+
 **响应数据**
 
- | 字段      | 类型     | 说明       |
- | --------- | -------- | ---------- |
- | `files`   | File[]   | 文件列表   |
- | `folders` | Folder[] | 文件夹列表 |
- 
+| 字段      | 类型     | 说明       |
+| --------- | -------- | ---------- |
+| `files`   | File[]   | 文件列表   |
+| `folders` | Folder[] | 文件夹列表 |
+
 ### 获取群子目录文件列表
 
 > `File` 和 `Folder` 对象信息请参考最下方
@@ -589,19 +589,19 @@ Type: `tts`
 终结点: `/get_group_files_by_folder`
 
 **参数** 
- 
- | 字段        | 类型   | 说明                        |
- | ----------- | ------ | --------------------------- |
- | `group_id`  | int64  | 群号                        |
- | `folder_id` | string | 文件夹ID 参考 `Folder` 对象 |
- 
+
+| 字段        | 类型   | 说明                        |
+| ----------- | ------ | --------------------------- |
+| `group_id`  | int64  | 群号                        |
+| `folder_id` | string | 文件夹ID 参考 `Folder` 对象 |
+
 **响应数据**
 
- | 字段      | 类型     | 说明       |
- | --------- | -------- | ---------- |
- | `files`   | File[]   | 文件列表   |
- | `folders` | Folder[] | 文件夹列表 |
- 
+| 字段      | 类型     | 说明       |
+| --------- | -------- | ---------- |
+| `files`   | File[]   | 文件列表   |
+| `folders` | Folder[] | 文件夹列表 |
+
 ### 获取群文件资源链接
 
 > `File` 和 `Folder` 对象信息请参考最下方
@@ -609,44 +609,75 @@ Type: `tts`
 终结点: `/get_group_file_url`
 
 **参数** 
- 
- | 字段       | 类型   | 说明                      |
- | ---------- | ------ | ------------------------- |
- | `group_id` | int64  | 群号                      |
- | `file_id`  | string | 文件ID 参考 `File` 对象   |
- | `busid`    | int32  | 文件类型 参考 `File` 对象 |
- 
+
+| 字段       | 类型   | 说明                      |
+| ---------- | ------ | ------------------------- |
+| `group_id` | int64  | 群号                      |
+| `file_id`  | string | 文件ID 参考 `File` 对象   |
+| `busid`    | int32  | 文件类型 参考 `File` 对象 |
+
 **响应数据**
 
- | 字段  | 类型   | 说明         |
- | ----- | ------ | ------------ |
- | `url` | string | 文件下载链接 |
- 
+| 字段  | 类型   | 说明         |
+| ----- | ------ | ------------ |
+| `url` | string | 文件下载链接 |
+
  **File**
 
-  | 字段             | 类型   | 说明                   |
-  | ---------------- | ------ | ---------------------- |
-  | `file_id`        | string | 文件ID                 |
-  | `file_name`      | string | 文件名                 |
-  | `busid`          | int32  | 文件类型               |
-  | `file_size`      | int64  | 文件大小               |
-  | `upload_time`    | int64  | 上传时间               |
-  | `dead_time`      | int64  | 过期时间,永久文件恒为0 |
-  | `modify_time`    | int64  | 最后修改时间           |
-  | `download_times` | int32  | 下载次数               |
-  | `uploader`       | int64  | 上传者ID               |
-  | `uploader_name`  | string | 上传者名字             |
-  
+| 字段             | 类型   | 说明                   |
+| ---------------- | ------ | ---------------------- |
+| `file_id`        | string | 文件ID                 |
+| `file_name`      | string | 文件名                 |
+| `busid`          | int32  | 文件类型               |
+| `file_size`      | int64  | 文件大小               |
+| `upload_time`    | int64  | 上传时间               |
+| `dead_time`      | int64  | 过期时间,永久文件恒为0 |
+| `modify_time`    | int64  | 最后修改时间           |
+| `download_times` | int32  | 下载次数               |
+| `uploader`       | int64  | 上传者ID               |
+| `uploader_name`  | string | 上传者名字             |
+
  **Folder**
 
-  | 字段               | 类型   | 说明       |
-  | ------------------ | ------ | ---------- |
-  | `folder_id`        | string | 文件夹ID   |
-  | `folder_name`      | string | 文件名     |
-  | `create_time`      | int64  | 创建时间   |
-  | `creator`          | int64  | 创建者     |
-  | `creator_name`     | string | 创建者名字 |
-  | `total_file_count` | int32  | 子文件数量 |
+| 字段               | 类型   | 说明       |
+| ------------------ | ------ | ---------- |
+| `folder_id`        | string | 文件夹ID   |
+| `folder_name`      | string | 文件名     |
+| `create_time`      | int64  | 创建时间   |
+| `creator`          | int64  | 创建者     |
+| `creator_name`     | string | 创建者名字 |
+| `total_file_count` | int32  | 子文件数量 |
+
+### 获取状态
+
+终结点: `/get_status`
+
+**响应数据**
+
+| 字段            | 类型       | 说明                            |
+| --------------- | ---------- | ------------------------------- |
+| app_initialized | bool       | 原 `CQHTTP` 字段, 恒定为 `true` |
+| app_enabled     | bool       | 原 `CQHTTP` 字段, 恒定为 `true` |
+| plugins_good    | bool       | 原 `CQHTTP` 字段, 恒定为 `true` |
+| app_good        | bool       | 原 `CQHTTP` 字段, 恒定为 `true` |
+| online          | bool       | 表示BOT是否在线                 |
+| goold           | bool       | 同 `online`                     |
+| stat            | Statistics | 运行统计                        |
+
+**Statistics**
+
+
+| 字段             | 类型   | 说明             |
+| ---------------- | ------ | ---------------- |
+| packet_received  | uint64 | 收到的数据包总数 |
+| packet_sent      | uint64 | 发送的数据包总数 |
+| packet_lost      | uint32 | 数据包丢失总数   |
+| message_received | uint64 | 接受信息总数     |
+| message_sent     | uint64 | 发送信息总数     |
+| disconnect_times | uint32 | TCP链接断开次数  |
+| lost_times       | uint32 | 账号掉线次数     |
+
+> 注意: 所有统计信息都将在重启后重制
 
 ## 事件
 
