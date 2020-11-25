@@ -100,6 +100,7 @@ var DefaultConfigWithComments = `
             enabled: false
             // 反向WS Universal 地址
             // 注意 设置了此项地址后下面两项将会被忽略
+            // 留空请使用 ""
             reverse_url: ws://you_websocket_universal.server
             // 反向WS API 地址
             reverse_api_url: ws://you_websocket_api.server
