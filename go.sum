@@ -1,9 +1,7 @@
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
-github.com/Mrs4s/MiraiGo v0.0.0-20201123061252-c134dbea5052 h1:Y06UEVfcojtNDhsM/5kyfbqSbZgtstmIzM6gTBUULY0=
-github.com/Mrs4s/MiraiGo v0.0.0-20201123061252-c134dbea5052/go.mod h1:pAsWtMIwqkBXr5DkUpTIHoWQJNduVnX9WSBPmPvkuCs=
-github.com/Mrs4s/MiraiGo v0.0.0-20201125073606-b3233e604e03 h1:TGOIB6ZGLODcXn+/NJC0BPN0JwopqQmM3W/B7J/Lavw=
-github.com/Mrs4s/MiraiGo v0.0.0-20201125073606-b3233e604e03/go.mod h1:J1zaJWyeX7hQIPpOobqb8opxTNPbguotudPPrHJMoDM=
+github.com/Mrs4s/MiraiGo v0.0.0-20201125120914-ad8bcb63aaab h1:N6AhvWwKrzIVUy0m2D4Zp59+BH9jTCY6TKlMQW0Z1Lw=
+github.com/Mrs4s/MiraiGo v0.0.0-20201125120914-ad8bcb63aaab/go.mod h1:J1zaJWyeX7hQIPpOobqb8opxTNPbguotudPPrHJMoDM=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
@@ -122,7 +120,6 @@ github.com/syndtr/goleveldb v1.0.0 h1:fBdIW9lB4Iz0n9khmH8w27SJ3QEJ7+IgjPEwGSZiFd
 github.com/syndtr/goleveldb v1.0.0/go.mod h1:ZVVdQEZoIme9iO1Ch2Jdy24qqXrMMOU6lpPAyBWyWuQ=
 github.com/t-tomalak/logrus-easy-formatter v0.0.0-20190827215021-c074f06c5816 h1:J6v8awz+me+xeb/cUTotKgceAYouhIB3pjzgRd6IlGk=
 github.com/t-tomalak/logrus-easy-formatter v0.0.0-20190827215021-c074f06c5816/go.mod h1:tzym/CEb5jnFI+Q0k4Qq3+LvRF4gO3E2pxS8fHP8jcA=
-github.com/tidwall/gjson v1.6.1/go.mod h1:BaHyNc5bjzYkPqgLq7mdVzeiRtULKULXLgZFKsxEHI0=
 github.com/tidwall/gjson v1.6.3 h1:aHoiiem0dr7GHkW001T1SMTJ7X5PvyekH5WX0whWGnI=
 github.com/tidwall/gjson v1.6.3/go.mod h1:BaHyNc5bjzYkPqgLq7mdVzeiRtULKULXLgZFKsxEHI0=
 github.com/tidwall/match v1.0.1 h1:PnKP62LPNxHKTwvHHZZzdOAOCtsJTjo6dZLCwpKm5xc=
