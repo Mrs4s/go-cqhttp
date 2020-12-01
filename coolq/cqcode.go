@@ -316,65 +316,69 @@ func ToStringMessage(e []message.IMessageElement, code int64, raw ...bool) (r st
 }
 
 func (bot *CQBot) ConvertStringMessage(m string, group bool) (r []message.IMessageElement) {
-	i := matchReg.FindAllStringSubmatchIndex(m, -1)
-	si := 0
-	for _, idx := range i {
-		if idx[0] > si {
-			text := m[si:idx[0]]
-			r = append(r, message.NewText(CQCodeUnescapeText(text)))
-		}
-		code := m[idx[0]:idx[1]]
-		si = idx[1]
-		t := typeReg.FindAllStringSubmatch(code, -1)[0][1]
-		ps := paramReg.FindAllStringSubmatch(code, -1)
-		d := make(map[string]string)
-		for _, p := range ps {
-			d[p[1]] = CQCodeUnescapeValue(p[2])
-		}
-		if t == "reply" {
-			if len(r) > 0 {
-				if _, ok := r[0].(*message.ReplyElement); ok {
-					log.Warnf("警告: 一条信息只能包含一个 Reply 元素.")
-					continue
+	c := newCQCodeConverter(m, bot, group)
+	return c.convert()
+	/*
+		i := matchReg.FindAllStringSubmatchIndex(m, -1)
+		si := 0
+		for _, idx := range i {
+			if idx[0] > si {
+				text := m[si:idx[0]]
+				r = append(r, message.NewText(CQCodeUnescapeText(text)))
+			}
+			code := m[idx[0]:idx[1]]
+			si = idx[1]
+			t := typeReg.FindAllStringSubmatch(code, -1)[0][1]
+			ps := paramReg.FindAllStringSubmatch(code, -1)
+			d := make(map[string]string)
+			for _, p := range ps {
+				d[p[1]] = CQCodeUnescapeValue(p[2])
+			}
+			if t == "reply" {
+				if len(r) > 0 {
+					if _, ok := r[0].(*message.ReplyElement); ok {
+						log.Warnf("警告: 一条信息只能包含一个 Reply 元素.")
+						continue
+					}
+				}
+				mid, err := strconv.Atoi(d["id"])
+				if err == nil {
+					org := bot.GetMessage(int32(mid))
+					if org != nil {
+						r = append([]message.IMessageElement{
+							&message.ReplyElement{
+								ReplySeq: org["message-id"].(int32),
+								Sender:   org["sender"].(message.Sender).Uin,
+								Time:     org["time"].(int32),
+								Elements: bot.ConvertStringMessage(org["message"].(string), group),
+							},
+						}, r...)
+						continue
+					}
 				}
 			}
-			mid, err := strconv.Atoi(d["id"])
-			if err == nil {
-				org := bot.GetMessage(int32(mid))
-				if org != nil {
-					r = append([]message.IMessageElement{
-						&message.ReplyElement{
-							ReplySeq: org["message-id"].(int32),
-							Sender:   org["sender"].(message.Sender).Uin,
-							Time:     org["time"].(int32),
-							Elements: bot.ConvertStringMessage(org["message"].(string), group),
-						},
-					}, r...)
-					continue
+			elem, err := bot.ToElement(t, d, group)
+			if err != nil {
+				if !IgnoreInvalidCQCode {
+					log.Warnf("转换CQ码 %v 到MiraiGo Element时出现错误: %v 将原样发送.", code, err)
+					r = append(r, message.NewText(code))
+				} else {
+					log.Warnf("转换CQ码 %v 到MiraiGo Element时出现错误: %v 将忽略.", code, err)
 				}
+				continue
+			}
+			switch i := elem.(type) {
+			case message.IMessageElement:
+				r = append(r, i)
+			case []message.IMessageElement:
+				r = append(r, i...)
 			}
 		}
-		elem, err := bot.ToElement(t, d, group)
-		if err != nil {
-			if !IgnoreInvalidCQCode {
-				log.Warnf("转换CQ码 %v 到MiraiGo Element时出现错误: %v 将原样发送.", code, err)
-				r = append(r, message.NewText(code))
-			} else {
-				log.Warnf("转换CQ码 %v 到MiraiGo Element时出现错误: %v 将忽略.", code, err)
-			}
-			continue
+		if si != len(m) {
+			r = append(r, message.NewText(CQCodeUnescapeText(m[si:])))
 		}
-		switch i := elem.(type) {
-		case message.IMessageElement:
-			r = append(r, i)
-		case []message.IMessageElement:
-			r = append(r, i...)
-		}
-	}
-	if si != len(m) {
-		r = append(r, message.NewText(CQCodeUnescapeText(m[si:])))
-	}
-	return
+		return
+	*/
 }
 
 func (bot *CQBot) ConvertObjectMessage(m gjson.Result, group bool) (r []message.IMessageElement) {
