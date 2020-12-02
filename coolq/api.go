@@ -490,7 +490,7 @@ func (bot *CQBot) CQDeleteMessage(messageId int32) MSG {
 		}
 	} else {
 		if msg["sender"].(message.Sender).Uin != bot.Client.Uin {
-			log.Warnf("撤回 %v 失败: 好友会话无法撤回对方消息.")
+			log.Warnf("撤回 %v 失败: 好友会话无法撤回对方消息.", messageId)
 			return Failed(100, "CANNOT_RECALL_FRIEND_MSG", "无法撤回对方消息")
 		}
 		if err := bot.Client.RecallPrivateMessage(msg["target"].(int64), int64(msg["time"].(int32)), msg["message-id"].(int32), msg["internal-id"].(int32)); err != nil {

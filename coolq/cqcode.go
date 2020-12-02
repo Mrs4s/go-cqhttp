@@ -1,6 +1,7 @@
 package coolq
 
 import (
+	"bufio"
 	"bytes"
 	"crypto/md5"
 	"encoding/base64"
@@ -9,9 +10,9 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"net/url"
 	"path"
-	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -23,9 +24,11 @@ import (
 	"github.com/tidwall/gjson"
 )
 
+/*
 var matchReg = regexp.MustCompile(`\[CQ:\w+?.*?]`)
 var typeReg = regexp.MustCompile(`\[CQ:(\w+)`)
 var paramReg = regexp.MustCompile(`,([\w\-.]+?)=([^,\]]+)`)
+*/
 
 var IgnoreInvalidCQCode = false
 
@@ -315,70 +318,130 @@ func ToStringMessage(e []message.IMessageElement, code int64, raw ...bool) (r st
 	return
 }
 
-func (bot *CQBot) ConvertStringMessage(m string, group bool) (r []message.IMessageElement) {
-	c := newCQCodeConverter(m, bot, group)
-	return c.convert()
-	/*
-		i := matchReg.FindAllStringSubmatchIndex(m, -1)
-		si := 0
-		for _, idx := range i {
-			if idx[0] > si {
-				text := m[si:idx[0]]
-				r = append(r, message.NewText(CQCodeUnescapeText(text)))
+func (bot *CQBot) ConvertStringMessage(msg string, group bool) (r []message.IMessageElement) {
+	index := 0
+	stat := 0
+	rMsg := []rune(msg)
+	var tempText, cqCode []rune
+	hasNext := func() bool {
+		return index < len(rMsg)
+	}
+	next := func() rune {
+		r := rMsg[index]
+		index++
+		return r
+	}
+	move := func(steps int) {
+		index += steps
+	}
+	peekN := func(count int) string {
+		lastIdx := int(math.Min(float64(index+count), float64(len(rMsg))))
+		return string(rMsg[index:lastIdx])
+	}
+	isCQCodeBegin := func(r rune) bool {
+		return r == '[' && peekN(3) == "CQ:"
+	}
+	saveTempText := func() {
+		if len(tempText) != 0 {
+			r = append(r, message.NewText(CQCodeUnescapeValue(string(tempText))))
+		}
+		tempText = []rune{}
+		cqCode = []rune{}
+	}
+	saveCQCode := func() {
+		defer func() {
+			cqCode = []rune{}
+			tempText = []rune{}
+		}()
+		reader := strings.NewReader(string(cqCode))
+		buf := bufio.NewReader(reader)
+		t, _ := buf.ReadString(',')
+		t = t[0 : len(t)-1]
+		params := make(map[string]string)
+		for buf.Buffered() > 0 {
+			p, _ := buf.ReadString(',')
+			if strings.HasSuffix(p, ",") {
+				p = p[0 : len(p)-1]
 			}
-			code := m[idx[0]:idx[1]]
-			si = idx[1]
-			t := typeReg.FindAllStringSubmatch(code, -1)[0][1]
-			ps := paramReg.FindAllStringSubmatch(code, -1)
-			d := make(map[string]string)
-			for _, p := range ps {
-				d[p[1]] = CQCodeUnescapeValue(p[2])
-			}
-			if t == "reply" {
-				if len(r) > 0 {
-					if _, ok := r[0].(*message.ReplyElement); ok {
-						log.Warnf("警告: 一条信息只能包含一个 Reply 元素.")
-						continue
-					}
-				}
-				mid, err := strconv.Atoi(d["id"])
-				if err == nil {
-					org := bot.GetMessage(int32(mid))
-					if org != nil {
-						r = append([]message.IMessageElement{
-							&message.ReplyElement{
-								ReplySeq: org["message-id"].(int32),
-								Sender:   org["sender"].(message.Sender).Uin,
-								Time:     org["time"].(int32),
-								Elements: bot.ConvertStringMessage(org["message"].(string), group),
-							},
-						}, r...)
-						continue
-					}
-				}
-			}
-			elem, err := bot.ToElement(t, d, group)
-			if err != nil {
-				if !IgnoreInvalidCQCode {
-					log.Warnf("转换CQ码 %v 到MiraiGo Element时出现错误: %v 将原样发送.", code, err)
-					r = append(r, message.NewText(code))
-				} else {
-					log.Warnf("转换CQ码 %v 到MiraiGo Element时出现错误: %v 将忽略.", code, err)
-				}
+			p = strings.TrimSpace(p)
+			if p == "" {
 				continue
 			}
-			switch i := elem.(type) {
-			case message.IMessageElement:
-				r = append(r, i)
-			case []message.IMessageElement:
-				r = append(r, i...)
+			data := strings.SplitN(p, "=", 2)
+			if len(data) == 2 {
+				params[data[0]] = data[1]
+			} else {
+				params[p] = ""
 			}
 		}
-		if si != len(m) {
-			r = append(r, message.NewText(CQCodeUnescapeText(m[si:])))
+		if t == "reply" { // reply 特殊处理
+			if len(r) > 0 {
+				if _, ok := r[0].(*message.ReplyElement); ok {
+					log.Warnf("警告: 一条信息只能包含一个 Reply 元素.")
+					return
+				}
+			}
+			mid, err := strconv.Atoi(params["id"])
+			if err == nil {
+				org := bot.GetMessage(int32(mid))
+				if org != nil {
+					r = append([]message.IMessageElement{
+						&message.ReplyElement{
+							ReplySeq: org["message-id"].(int32),
+							Sender:   org["sender"].(message.Sender).Uin,
+							Time:     org["time"].(int32),
+							Elements: bot.ConvertStringMessage(org["message"].(string), group),
+						},
+					}, r...)
+					return
+				}
+			}
 		}
-		return
-	*/
+		elem, err := bot.ToElement(t, params, group)
+		if err != nil {
+			org := "[" + string(cqCode) + "]"
+			if !IgnoreInvalidCQCode {
+				log.Warnf("转换CQ码 %v 时出现错误: %v 将原样发送.", org, err)
+				r = append(r, message.NewText(org))
+			} else {
+				log.Warnf("转换CQ码 %v 时出现错误: %v 将忽略.", org, err)
+			}
+			return
+		}
+		switch i := elem.(type) {
+		case message.IMessageElement:
+			r = append(r, i)
+		case []message.IMessageElement:
+			r = append(r, i...)
+		}
+	}
+	for hasNext() {
+		ch := next()
+		switch stat {
+		case 0:
+			if isCQCodeBegin(ch) {
+				saveTempText()
+				tempText = append(tempText, []rune("[CQ:")...)
+				move(3)
+				stat = 1
+			} else {
+				tempText = append(tempText, ch)
+			}
+		case 1:
+			if isCQCodeBegin(ch) {
+				move(-1)
+				stat = 0
+			} else if ch == ']' {
+				saveCQCode()
+				stat = 0
+			} else {
+				cqCode = append(cqCode, ch)
+				tempText = append(tempText, ch)
+			}
+		}
+	}
+	saveTempText()
+	return
 }
 
 func (bot *CQBot) ConvertObjectMessage(m gjson.Result, group bool) (r []message.IMessageElement) {
@@ -634,14 +697,12 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m interf
 	case "xml":
 		resId := d["resid"]
 		template := CQCodeEscapeValue(d["data"])
-		//println(template)
 		i, _ := strconv.ParseInt(resId, 10, 64)
 		msg := message.NewRichXml(template, i)
 		return msg, nil
 	case "json":
 		resId := d["resid"]
 		i, _ := strconv.ParseInt(resId, 10, 64)
-		log.Warnf("json msg=%s", d["data"])
 		if i == 0 {
 			//默认情况下走小程序通道
 			msg := message.NewLightApp(CQCodeUnescapeValue(d["data"]))
