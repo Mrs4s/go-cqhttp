@@ -112,6 +112,7 @@ func (s *webServer) Dologin() {
 	cli := s.Cli
 	cli.AllowSlider = true
 	rsp, err := cli.Login()
+	count := 0
 	for {
 		global.Check(err)
 		var text string
@@ -192,6 +193,12 @@ func (s *webServer) Dologin() {
 				msg := rsp.ErrorMessage
 				if strings.Contains(msg, "版本") {
 					msg = "密码错误或账号被冻结"
+				}
+				if strings.Contains(msg, "上网环境") && count < 5 {
+					cli.Disconnect()
+					rsp, err = cli.Login()
+					count++
+					continue
 				}
 				log.Warnf("登录失败: %v", msg)
 				log.Infof("按 Enter 继续....")
