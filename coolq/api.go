@@ -481,7 +481,7 @@ func (bot *CQBot) CQProcessGroupRequest(flag, subType, reason string, approve bo
 func (bot *CQBot) CQDeleteMessage(messageId int32) MSG {
 	msg := bot.GetMessage(messageId)
 	if msg == nil {
-		return Failed(100)
+		return Failed(100, "MESSAGE_NOT_FOUND", "消息不存在")
 	}
 	if _, ok := msg["group"]; ok {
 		if err := bot.Client.RecallGroupMessage(msg["group"].(int64), msg["message-id"].(int32), msg["internal-id"].(int32)); err != nil {
