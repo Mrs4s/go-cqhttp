@@ -1,7 +1,6 @@
 package coolq
 
 import (
-	"bufio"
 	"bytes"
 	"crypto/md5"
 	"encoding/base64"
@@ -353,16 +352,14 @@ func (bot *CQBot) ConvertStringMessage(msg string, group bool) (r []message.IMes
 			cqCode = []rune{}
 			tempText = []rune{}
 		}()
-		reader := strings.NewReader(string(cqCode))
-		buf := bufio.NewReader(reader)
-		t, _ := buf.ReadString(',')
-		t = t[0 : len(t)-1]
+		s := strings.SplitN(string(cqCode), ",", -1)
+		if len(s) == 0 {
+			return
+		}
+		t := s[0]
 		params := make(map[string]string)
-		for buf.Buffered() > 0 {
-			p, _ := buf.ReadString(',')
-			if strings.HasSuffix(p, ",") {
-				p = p[0 : len(p)-1]
-			}
+		for i := 1; i < len(s); i++ {
+			p := s[i]
 			p = strings.TrimSpace(p)
 			if p == "" {
 				continue
