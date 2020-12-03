@@ -518,6 +518,7 @@ var httpApi = map[string]func(s *httpServer, c *gin.Context){
 	"set_group_portrait":         SetGroupPortrait,
 	".handle_quick_operation":    HandleQuickOperation,
 	".ocr_image":                 OcrImage,
+	"ocr_image":                  OcrImage,
 	".get_word_slices":           GetWordSlices,
 }
 
