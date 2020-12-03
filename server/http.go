@@ -177,7 +177,8 @@ func GetGroupList(s *httpServer, c *gin.Context) {
 
 func GetGroupInfo(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
-	c.JSON(200, s.bot.CQGetGroupInfo(gid))
+	nc := getParamOrDefault(c, "no_cache", "false")
+	c.JSON(200, s.bot.CQGetGroupInfo(gid, nc == "true"))
 }
 
 func GetGroupMemberList(s *httpServer, c *gin.Context) {
