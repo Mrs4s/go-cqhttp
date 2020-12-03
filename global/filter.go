@@ -1,6 +1,7 @@
 package global
 
 import (
+	"fmt"
 	"io/ioutil"
 	"regexp"
 	"strings"
@@ -9,8 +10,28 @@ import (
 	"github.com/tidwall/gjson"
 )
 
+type MSG map[string]interface{}
+
+func (m MSG) Get(s string) MSG {
+	if v,ok := m[s];ok {
+		if msg,ok := v.(MSG);ok {
+			return msg
+		}
+		return MSG{"__str__": v} // 用这个名字应该没问题吧
+	}
+	return MSG{}
+}
+
+func (m MSG) String() string {
+	if str,ok:=m["__str__"];ok {
+		return fmt.Sprint(str)
+	}
+	str, _ := json.MarshalToString(m)
+	return str
+}
+
 type Filter interface {
-	Eval(payload gjson.Result) bool
+	Eval(payload MSG) bool
 }
 
 type operationNode struct {
@@ -31,7 +52,7 @@ func notOperatorConstruct(argument gjson.Result) *NotOperator {
 	return op
 }
 
-func (op *NotOperator) Eval(payload gjson.Result) bool {
+func (op *NotOperator) Eval(payload MSG) bool {
 	return !op.operand.Eval(payload)
 }
 
@@ -70,7 +91,7 @@ func andOperatorConstruct(argument gjson.Result) *AndOperator {
 	return op
 }
 
-func (andOperator *AndOperator) Eval(payload gjson.Result) bool {
+func (andOperator *AndOperator) Eval(payload MSG) bool {
 	res := true
 	for _, operand := range andOperator.operands {
 
@@ -106,7 +127,7 @@ func orOperatorConstruct(argument gjson.Result) *OrOperator {
 	return op
 }
 
-func (op *OrOperator) Eval(payload gjson.Result) bool {
+func (op *OrOperator) Eval(payload MSG) bool {
 	res := false
 	for _, operand := range op.operands {
 		res = res || operand.Eval(payload)
@@ -127,7 +148,7 @@ func equalOperatorConstruct(argument gjson.Result) *EqualOperator {
 	return op
 }
 
-func (op *EqualOperator) Eval(payload gjson.Result) bool {
+func (op *EqualOperator) Eval(payload MSG) bool {
 	return payload.String() == op.operand
 }
 
@@ -141,7 +162,7 @@ func notEqualOperatorConstruct(argument gjson.Result) *NotEqualOperator {
 	return op
 }
 
-func (op *NotEqualOperator) Eval(payload gjson.Result) bool {
+func (op *NotEqualOperator) Eval(payload MSG) bool {
 	return !(payload.String() == op.operand)
 }
 
@@ -167,7 +188,7 @@ func inOperatorConstruct(argument gjson.Result) *InOperator {
 	return op
 }
 
-func (op *InOperator) Eval(payload gjson.Result) bool {
+func (op *InOperator) Eval(payload MSG) bool {
 	payloadStr := payload.String()
 	if op.operandArray != nil {
 		for _, value := range op.operandArray {
@@ -193,10 +214,7 @@ func containsOperatorConstruct(argument gjson.Result) *ContainsOperator {
 	return op
 }
 
-func (op *ContainsOperator) Eval(payload gjson.Result) bool {
-	if payload.IsObject() || payload.IsArray() {
-		return false
-	}
+func (op *ContainsOperator) Eval(payload MSG) bool {
 	return strings.Contains(payload.String(), op.operand)
 }
 
@@ -213,7 +231,7 @@ func regexOperatorConstruct(argument gjson.Result) *RegexOperator {
 	return op
 }
 
-func (op *RegexOperator) Eval(payload gjson.Result) bool {
+func (op *RegexOperator) Eval(payload MSG) bool {
 	matched := op.regex.MatchString(payload.String())
 	return matched
 }

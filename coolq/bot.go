@@ -18,7 +18,6 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 	log "github.com/sirupsen/logrus"
-	"github.com/tidwall/gjson"
 )
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
@@ -392,7 +391,7 @@ func (bot *CQBot) Release() {
 }
 
 func (bot *CQBot) dispatchEventMessage(m MSG) {
-	if global.EventFilter != nil && global.EventFilter.Eval(gjson.Parse(m.ToJson())) == false {
+	if global.EventFilter != nil && global.EventFilter.Eval(global.MSG(m)) == false {
 		log.Debug("Event filtered!")
 		return
 	}
