@@ -55,10 +55,17 @@ func (bot *CQBot) CQGetGroupList(noCache bool) MSG {
 }
 
 // https://cqhttp.cc/docs/4.15/#/API?id=get_group_info-%E8%8E%B7%E5%8F%96%E7%BE%A4%E4%BF%A1%E6%81%AF
-func (bot *CQBot) CQGetGroupInfo(groupId int64) MSG {
+func (bot *CQBot) CQGetGroupInfo(groupId int64, noCache bool) MSG {
 	group := bot.Client.FindGroup(groupId)
 	if group == nil {
 		return Failed(100, "GROUP_NOT_FOUND", "群聊不存在")
+	}
+	if noCache {
+		var err error
+		group, err = bot.Client.GetGroupInfo(groupId)
+		if err != nil {
+			return Failed(100, "GET_GROUP_INFO_API_ERROR", err.Error())
+		}
 	}
 	return OK(MSG{
 		"group_id":         group.Code,

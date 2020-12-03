@@ -370,7 +370,7 @@ var wsApi = map[string]func(*coolq.CQBot, gjson.Result) coolq.MSG{
 		return bot.CQGetGroupList(p.Get("no_cache").Bool())
 	},
 	"get_group_info": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
-		return bot.CQGetGroupInfo(p.Get("group_id").Int())
+		return bot.CQGetGroupInfo(p.Get("group_id").Int(), p.Get("no_cache").Bool())
 	},
 	"get_group_member_list": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		return bot.CQGetGroupMemberList(p.Get("group_id").Int(), p.Get("no_cache").Bool())
