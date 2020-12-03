@@ -392,22 +392,19 @@ func (bot *CQBot) Release() {
 }
 
 func (bot *CQBot) dispatchEventMessage(m MSG) {
-	payload := gjson.Parse(m.ToJson())
-	filter := global.EventFilter
-	if filter != nil && (*filter).Eval(payload) == false {
+	if global.EventFilter != nil && global.EventFilter.Eval(gjson.Parse(m.ToJson())) == false {
 		log.Debug("Event filtered!")
 		return
 	}
 	for _, f := range bot.events {
-		fn := f
-		go func() {
+		go func(fn func(MSG)) {
 			start := time.Now()
 			fn(m)
 			end := time.Now()
 			if end.Sub(start) > time.Second*5 {
 				log.Debugf("警告: 事件处理耗时超过 5 秒 (%v), 请检查应用是否有堵塞.", end.Sub(start))
 			}
-		}()
+		}(f)
 	}
 }
 
