@@ -369,7 +369,7 @@ func (bot *CQBot) ConvertStringMessage(msg string, group bool) (r []message.IMes
 			}
 			data := strings.SplitN(p, "=", 2)
 			if len(data) == 2 {
-				params[data[0]] = data[1]
+				params[data[0]] = CQCodeUnescapeValue(data[1])
 			} else {
 				params[p] = ""
 			}
