@@ -25,21 +25,6 @@
 | 40004 | 爱你 |
 | 40005 | 征友 |
 
-
-### 回复
-
-Type : `reply`
-
-范围: **发送/接收**
-
-参数:
-
-| 参数名 | 类型 | 说明                                  |
-| ------ | ---- | ------------------------------------- |
-| id     | int  | 回复时所引用的消息id, 必须为本群消息. |
-
-示例: `[CQ:reply,id=123456]`
-
 ### 红包
 
 Type: `redbag`
@@ -107,20 +92,6 @@ Type: `gift`
 
 
 示例: `[CQ:gift,qq=123456,id=8]`
-
- ### 合并转发
-
-Type: `forward`
-
-范围: **接收**
-
-参数:
-
-| 参数名 | 类型   | 说明                                                          |
-| ------ | ------ | ------------------------------------------------------------- |
-| id     | string | 合并转发ID, 需要通过 `/get_forward_msg` API获取转发的具体内容 |
-
-示例: `[CQ:forward,id=xxxx]`
 
 ### 合并转发消息节点
 
@@ -332,17 +303,6 @@ Type: `tts`
 示例: `[CQ:tts,text=这是一条测试消息]`
 
 ## API
-
-### 设置群名
-
-终结点: `/set_group_name`  
-
-**参数** 
-
-| 字段       | 类型   | 说明 |
-| ---------- | ------ | ---- |
-| group_id   | int64  | 群号 |
-| group_name | string | 新名 |
 
 ### 设置群头像
 
@@ -681,74 +641,19 @@ Type: `tts`
 
 ## 事件
 
-#### 群消息撤回
+#### 好友戳一戳
 
 **上报数据**
 
-| 字段          | 类型   | 可能的值       | 说明           |
-| ------------- | ------ | -------------- | -------------- |
-| `post_type`   | string | `notice`       | 上报类型       |
-| `notice_type` | string | `group_recall` | 消息类型       |
-| `group_id`    | int64  |                | 群号           |
-| `user_id`     | int64  |                | 消息发送者id   |
-| `operator_id` | int64  |                | 操作者id       |
-| `message_id`  | int64  |                | 被撤回的消息id |
-
-#### 好友消息撤回
-
-**上报数据**
-
-| 字段          | 类型   | 可能的值        | 说明           |
-| ------------- | ------ | --------------- | -------------- |
-| `post_type`   | string | `notice`        | 上报类型       |
-| `notice_type` | string | `friend_recall` | 消息类型       |
-| `user_id`     | int64  |                 | 好友id         |
-| `message_id`  | int64  |                 | 被撤回的消息id |
-
-#### 群内戳一戳
-
-> 注意：此事件无法在平板和手表协议上触发
-
-**上报数据**
-
-| 字段          | 类型   | 可能的值 | 说明     |
-| ------------- | ------ | -------- | -------- |
-| `post_type`   | string | `notice` | 上报类型 |
-| `notice_type` | string | `notify` | 消息类型 |
-| `group_id`    | int64  |          | 群号     |
-| `sub_type`    | string | `poke`   | 提示类型 |
-| `user_id`     | int64  |          | 发送者id |
-| `target_id`   | int64  |          | 被戳者id |
-
-#### 群红包运气王提示
-
-> 注意：此事件无法在平板和手表协议上触发
-
-**上报数据**
-
-| 字段          | 类型   | 可能的值     | 说明         |
-| ------------- | ------ | ------------ | ------------ |
-| `post_type`   | string | `notice`     | 上报类型     |
-| `notice_type` | string | `notify`     | 消息类型     |
-| `group_id`    | int64  |              | 群号         |
-| `sub_type`    | string | `lucky_king` | 提示类型     |
-| `user_id`     | int64  |              | 红包发送者id |
-| `target_id`   | int64  |              | 运气王id     |
-
-#### 群成员荣誉变更提示
-
-> 注意：此事件无法在平板和手表协议上触发
-
-**上报数据**
-
-| 字段          | 类型   | 可能的值                                                 | 说明     |
-| ------------- | ------ | -------------------------------------------------------- | -------- |
-| `post_type`   | string | `notice`                                                 | 上报类型 |
-| `notice_type` | string | `notify`                                                 | 消息类型 |
-| `group_id`    | int64  |                                                          | 群号     |
-| `sub_type`    | string | `honor`                                                  | 提示类型 |
-| `user_id`     | int64  |                                                          | 成员id   |
-| `honor_type`  | string | `talkative:龙王` `performer:群聊之火` `emotion:快乐源泉` | 荣誉类型 |
+| 字段          | 类型   | 可能的值     | 说明                  |
+| ------------- | ------ | ------------ | --------------------- |
+| `post_type`   | string | `notice`     | 上报类型              |
+| `notice_type` | string | `group_card` | 通知类型              |
+| `sub_type`    | string | `poke`       | 事件子类型            |
+| `self_id`     | int64  |              | 收到事件的机器人QQ 号 |
+| `user_id`     | int64  |              | 发送者QQ号            |
+| `target_id`   | int64  |              | 被戳者QQ号            |
+| `time`        | int64  |              | 事件发生的时间戳      |
 
 #### 群成员名片更新
 
@@ -756,14 +661,16 @@ Type: `tts`
 
 **上报数据**
 
-| 字段          | 类型   | 可能的值     | 说明     |
-| ------------- | ------ | ------------ | -------- |
-| `post_type`   | string | `notice`     | 上报类型 |
-| `notice_type` | string | `group_card` | 消息类型 |
-| `group_id`    | int64  |              | 群号     |
-| `user_id`     | int64  |              | 成员id   |
-| `card_new`    | int64  |              | 新名片   |
-| `card_old`    | int64  |              | 旧名片   |
+| 字段          | 类型   | 可能的值     | 说明                  |
+| ------------- | ------ | ------------ | --------------------- |
+| `post_type`   | string | `notice`     | 上报类型              |
+| `notice_type` | string | `group_card` | 消息类型              |
+| `group_id`    | int64  |              | 群号                  |
+| `user_id`     | int64  |              | 成员id                |
+| `card_new`    | int64  |              | 新名片                |
+| `card_old`    | int64  |              | 旧名片                |
+| `self_id`     | int64  |              | 收到事件的机器人QQ 号 |
+| `time`        | int64  |              | 事件发生的时间戳      |
 
 > PS: 当名片为空时 `card_xx` 字段为空字符串, 并不是昵称
 
@@ -771,12 +678,14 @@ Type: `tts`
 
 **上报数据**
 
-| 字段          | 类型   | 可能的值       | 说明     |
-| ------------- | ------ | -------------- | -------- |
-| `post_type`   | string | `notice`       | 上报类型 |
-| `notice_type` | string | `offline_file` | 消息类型 |
-| `user_id`     | int64  |                | 发送者id |
-| `file`        | object |                | 文件数据 |
+| 字段          | 类型   | 可能的值       | 说明                  |
+| ------------- | ------ | -------------- | --------------------- |
+| `post_type`   | string | `notice`       | 上报类型              |
+| `notice_type` | string | `offline_file` | 消息类型              |
+| `user_id`     | int64  |                | 发送者id              |
+| `self_id`     | int64  |                | 收到事件的机器人QQ 号 |
+| `time`        | int64  |                | 事件发生的时间戳      |
+| `file`        | object |                | 文件数据              |
 
 **file object**
 
