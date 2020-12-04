@@ -35,6 +35,7 @@ type httpClient struct {
 }
 
 var HttpServer = &httpServer{}
+var Debug = false
 
 func (s *httpServer) Run(addr, authToken string, bot *coolq.CQBot) {
 	gin.SetMode(gin.ReleaseMode)
@@ -93,13 +94,6 @@ func (s *httpServer) Run(addr, authToken string, bot *coolq.CQBot) {
 			time.Sleep(time.Second * 5)
 			os.Exit(1)
 		}
-		//err := s.engine.Run(addr)
-		//if err != nil {
-		//	log.Error(err)
-		//	log.Infof("请检查端口是否被占用.")
-		//	time.Sleep(time.Second * 5)
-		//	os.Exit(1)
-		//}
 	}()
 }
 

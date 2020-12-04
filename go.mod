@@ -8,6 +8,7 @@ require (
 	github.com/fastly/go-utils v0.0.0-20180712184237-d95a45783239 // indirect
 	github.com/getlantern/go-update v0.0.0-20190510022740-79c495ab728c
 	github.com/getlantern/golog v0.0.0-20201105130739-9586b8bde3a9 // indirect
+	github.com/gin-contrib/pprof v1.3.0
 	github.com/gin-gonic/gin v1.6.3
 	github.com/gorilla/websocket v1.4.2
 	github.com/guonaihong/gout v0.1.3

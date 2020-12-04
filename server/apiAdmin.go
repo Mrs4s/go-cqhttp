@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
+	"github.com/gin-contrib/pprof"
 	"image"
 	"io/ioutil"
 	"net/http"
@@ -74,6 +75,12 @@ func (s *webServer) Run(addr string, cli *client.QQClient) *coolq.CQBot {
 
 	//通用路由
 	s.engine.Any("/admin/:action", s.admin)
+
+	if Debug {
+		pprof.Register(s.engine)
+		log.Debugf("pprof 性能分析服务已启动在 http://%v/debug/pprof, 如果有任何性能问题请下载报告并提交给开发者", addr)
+		time.Sleep(time.Second * 3)
+	}
 
 	go func() {
 		//开启端口监听
