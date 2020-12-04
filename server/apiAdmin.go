@@ -204,6 +204,8 @@ func (s *webServer) Dologin() {
 					cli.Disconnect()
 					rsp, err = cli.Login()
 					count++
+					log.Warnf("错误: 当前上网环境异常. 将更换服务器并重试. 如果频繁遇到此问题请打开设备锁.")
+					time.Sleep(time.Second)
 					continue
 				}
 				log.Warnf("登录失败: %v", msg)
