@@ -318,6 +318,10 @@ func AuthMiddleWare() gin.HandlerFunc {
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(http.StatusNoContent)
 		}
+		if strings.Contains(c.Request.URL.Path, "debug") {
+			c.Next()
+			return
+		}
 		// 处理请求
 		if c.Request.Method != "GET" && c.Request.Method != "POST" {
 			log.Warnf("已拒绝客户端 %v 的请求: 方法错误", c.Request.RemoteAddr)
