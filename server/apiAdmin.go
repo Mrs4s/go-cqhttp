@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
+	"github.com/gin-contrib/pprof"
 	"image"
 	"io/ioutil"
 	"net/http"
@@ -78,6 +79,11 @@ func (s *webServer) Run(addr string, cli *client.QQClient) *coolq.CQBot {
 	go func() {
 		//开启端口监听
 		if s.Conf.WebUi != nil && s.Conf.WebUi.Enabled {
+			if Debug {
+				pprof.Register(s.engine)
+				log.Debugf("pprof 性能分析服务已启动在 http://%v/debug/pprof, 如果有任何性能问题请下载报告并提交给开发者", addr)
+				time.Sleep(time.Second * 3)
+			}
 			log.Infof("Admin API 服务器已启动: %v", addr)
 			err := s.engine.Run(addr)
 			if err != nil {
@@ -198,6 +204,8 @@ func (s *webServer) Dologin() {
 					cli.Disconnect()
 					rsp, err = cli.Login()
 					count++
+					log.Warnf("错误: 当前上网环境异常. 将更换服务器并重试. 如果频繁遇到此问题请打开设备锁.")
+					time.Sleep(time.Second)
 					continue
 				}
 				log.Warnf("登录失败: %v", msg)
@@ -309,6 +317,10 @@ func AuthMiddleWare() gin.HandlerFunc {
 		// 放行所有OPTIONS方法，因为有的模板是要请求两次的
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(http.StatusNoContent)
+		}
+		if strings.Contains(c.Request.URL.Path, "debug") {
+			c.Next()
+			return
 		}
 		// 处理请求
 		if c.Request.Method != "GET" && c.Request.Method != "POST" {

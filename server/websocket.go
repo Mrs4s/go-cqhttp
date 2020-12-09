@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"sync"
@@ -316,7 +317,7 @@ func (s *websocketServer) listenApi(c *websocketConn) {
 func (c *websocketConn) handleRequest(bot *coolq.CQBot, payload []byte) {
 	defer func() {
 		if err := recover(); err != nil {
-			log.Printf("处置WS命令时发生无法恢复的异常：%v", err)
+			log.Printf("处置WS命令时发生无法恢复的异常：%v\n%s", err, debug.Stack())
 			c.Close()
 		}
 	}()
