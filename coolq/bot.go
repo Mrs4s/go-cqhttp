@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"hash/crc32"
 	"path"
+	"runtime/debug"
 	"sync"
 	"time"
 
@@ -397,6 +398,11 @@ func (bot *CQBot) dispatchEventMessage(m MSG) {
 	}
 	for _, f := range bot.events {
 		go func(fn func(MSG)) {
+			defer func() {
+				if pan := recover(); pan != nil {
+					log.Warnf("处理事件 %v 时出现错误: %v \n%s", m, pan, debug.Stack())
+				}
+			}()
 			start := time.Now()
 			fn(m)
 			end := time.Now()
