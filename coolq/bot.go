@@ -222,7 +222,13 @@ func (bot *CQBot) SendGroupMessage(groupId int64, m *message.SendingMessage) int
 	ret := bot.Client.SendGroupMessage(groupId, m, ForceFragmented)
 	if ret == nil || ret.Id == -1 {
 		log.Warnf("群消息发送失败: 账号可能被风控.")
-		return -1
+		if !ForceFragmented {
+			log.Warnf("将尝试分片发送...")
+			ret = bot.Client.SendGroupMessage(groupId, m, true)
+		}
+		if ret == nil || ret.Id == -1 {
+			return -1
+		}
 	}
 	return bot.InsertGroupMessage(ret)
 }
