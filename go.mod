@@ -22,7 +22,7 @@ require (
 	github.com/syndtr/goleveldb v1.0.0
 	github.com/t-tomalak/logrus-easy-formatter v0.0.0-20190827215021-c074f06c5816
 	github.com/tidwall/gjson v1.6.3
-	github.com/wdvxdr1123/go-silk v0.0.0-20201203155442-67728040c843
+	github.com/wdvxdr1123/go-silk v0.0.0-20201210140933-bcdbcb2f1093
 	github.com/yinghau76/go-ascii-art v0.0.0-20190517192627-e7f465a30189
 	golang.org/x/time v0.0.0-20200630173020-3af7569d3a1e
 )
