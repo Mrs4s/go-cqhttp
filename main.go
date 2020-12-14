@@ -99,7 +99,7 @@ func init() {
 
 func main() {
 	var byteKey []byte
-	var isFastStart bool = false
+	var isFastStart = false
 	arg := os.Args
 	if len(arg) > 1 {
 		for i := range arg {
