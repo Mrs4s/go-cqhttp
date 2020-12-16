@@ -1,0 +1,11 @@
+version: "3"
+services:
+  cqhttp:
+    build: .
+    image: cqhttp
+    ports:
+      - 5700:5700
+      - 6700:6700
+    volumes:
+      - ./cqhttp.hjson:config.hjson
+      - ./device.json:device.json
