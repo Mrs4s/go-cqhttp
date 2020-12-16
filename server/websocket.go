@@ -536,6 +536,9 @@ var wsApi = map[string]func(*coolq.CQBot, gjson.Result) coolq.MSG{
 	"ocr_image": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		return bot.CQOcrImage(p.Get("image").Str)
 	},
+	"get_group_at_all_remain": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
+		return bot.CQGetAtAllRemain(p.Get("group_id").Int())
+	},
 	".get_word_slices": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		return bot.CQGetWordSlices(p.Get("content").Str)
 	},

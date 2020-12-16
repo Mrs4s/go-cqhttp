@@ -428,6 +428,17 @@ func (bot *CQBot) CQSetGroupLeave(groupId int64) MSG {
 	return Failed(100, "GROUP_NOT_FOUND", "群聊不存在")
 }
 
+func (bot *CQBot) CQGetAtAllRemain(groupId int64) MSG {
+	if g := bot.Client.FindGroup(groupId); g != nil {
+		i, err := bot.Client.GetAtAllRemain(groupId)
+		if err != nil {
+			return Failed(100, "GROUP_REMAIN_API_ERROR", err.Error())
+		}
+		return OK(i)
+	}
+	return Failed(100, "GROUP_NOT_FOUND", "群聊不存在")
+}
+
 // https://cqhttp.cc/docs/4.15/#/API?id=set_friend_add_request-%E5%A4%84%E7%90%86%E5%8A%A0%E5%A5%BD%E5%8F%8B%E8%AF%B7%E6%B1%82
 func (bot *CQBot) CQProcessFriendRequest(flag string, approve bool) MSG {
 	req, ok := bot.friendReqCache.Load(flag)

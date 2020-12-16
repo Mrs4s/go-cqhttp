@@ -394,6 +394,11 @@ func GetStrangerInfo(s *httpServer, c *gin.Context) {
 	c.JSON(200, s.bot.CQGetStrangerInfo(uid))
 }
 
+func GetGroupAtAllRemain(s *httpServer, c *gin.Context) {
+	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
+	c.JSON(200, s.bot.CQGetAtAllRemain(gid))
+}
+
 func HandleQuickOperation(s *httpServer, c *gin.Context) {
 	if c.Request.Method != "POST" {
 		c.AbortWithStatus(404)
@@ -514,6 +519,7 @@ var httpApi = map[string]func(s *httpServer, c *gin.Context){
 	".handle_quick_operation":    HandleQuickOperation,
 	".ocr_image":                 OcrImage,
 	"ocr_image":                  OcrImage,
+	"get_group_at_all_remain":    GetGroupAtAllRemain,
 	".get_word_slices":           GetWordSlices,
 }
 
