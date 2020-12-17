@@ -21,13 +21,17 @@ import (
 )
 
 var (
-	IMAGE_PATH = path.Join("data", "images")
-	VOICE_PATH = path.Join("data", "voices")
-	VIDEO_PATH = path.Join("data", "videos")
-	CACHE_PATH = path.Join("data", "cache")
+	IMAGE_PATH     = path.Join("data", "images")
+	IMAGE_PATH_OLD = path.Join("data", "image")
+	VOICE_PATH     = path.Join("data", "voices")
+	VOICE_PATH_OLD = path.Join("data", "record")
+	VIDEO_PATH     = path.Join("data", "videos")
+	CACHE_PATH     = path.Join("data", "cache")
 
 	HEADER_AMR  = []byte("#!AMR")
 	HEADER_SILK = []byte("\x02#!SILK_V3")
+
+	ErrSyntax = errors.New("syntax error")
 )
 
 func PathExists(path string) bool {
@@ -58,7 +62,7 @@ func IsAMRorSILK(b []byte) bool {
 }
 
 func FindFile(f, cache, PATH string) (data []byte, err error) {
-	data, err = nil, errors.New("syntax error")
+	data, err = nil, ErrSyntax
 	if strings.HasPrefix(f, "http") || strings.HasPrefix(f, "https") {
 		if cache == "" {
 			cache = "1"

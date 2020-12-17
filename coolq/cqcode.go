@@ -573,6 +573,9 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m interf
 	case "record":
 		f := d["file"]
 		data, err := global.FindFile(f, d["cache"], global.VOICE_PATH)
+		if err == global.ErrSyntax {
+			data, err = global.FindFile(f, d["cache"], global.VOICE_PATH_OLD)
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -817,6 +820,9 @@ func (bot *CQBot) makeImageElem(d map[string]string, group bool) (message.IMessa
 		return message.NewImage(b), nil
 	}
 	rawPath := path.Join(global.IMAGE_PATH, f)
+	if !global.PathExists(rawPath) && global.PathExists(path.Join(global.IMAGE_PATH_OLD, f)) {
+		rawPath = path.Join(global.IMAGE_PATH_OLD, f)
+	}
 	if !global.PathExists(rawPath) && global.PathExists(rawPath+".cqimg") {
 		rawPath += ".cqimg"
 	}
