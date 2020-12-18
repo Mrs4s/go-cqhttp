@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math"
+	"math/rand"
 	"net/url"
 	"path"
 	"runtime"
@@ -871,7 +872,7 @@ func (bot *CQBot) makeImageElem(d map[string]string, group bool) (message.IMessa
 			return nil, errors.New("invalid hash")
 		}
 		if group {
-			rsp, err := bot.Client.QueryGroupImage(1, hash, size)
+			rsp, err := bot.Client.QueryGroupImage(int64(rand.Uint32()), hash, size)
 			if err != nil {
 				if url != "" {
 					return bot.makeImageElem(map[string]string{"file": url}, group)
@@ -880,7 +881,7 @@ func (bot *CQBot) makeImageElem(d map[string]string, group bool) (message.IMessa
 			}
 			return rsp, nil
 		}
-		rsp, err := bot.Client.QueryFriendImage(1, hash, size)
+		rsp, err := bot.Client.QueryFriendImage(int64(rand.Uint32()), hash, size)
 		if err != nil {
 			if url != "" {
 				return bot.makeImageElem(map[string]string{"file": url}, group)
