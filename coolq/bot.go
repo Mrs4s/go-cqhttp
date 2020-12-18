@@ -88,7 +88,7 @@ func NewQQBot(cli *client.QQClient, conf *global.JsonConfig) *CQBot {
 				"self_id":         bot.Client.Uin,
 				"post_type":       "meta_event",
 				"meta_event_type": "heartbeat",
-				"status":          nil,
+				"status":          bot.CQGetStatus()["data"],
 				"interval":        1000 * i,
 			})
 		}
