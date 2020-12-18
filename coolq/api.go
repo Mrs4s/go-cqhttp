@@ -754,7 +754,8 @@ func (bot *CQBot) CQGetMessage(messageId int32) MSG {
 			"user_id":  sender.Uin,
 			"nickname": sender.Nickname,
 		},
-		"time": msg["time"],
+		"time":        msg["time"],
+		"message_raw": raw,
 		"message": ToFormattedMessage(bot.ConvertStringMessage(raw, isGroup), func() int64 {
 			if isGroup {
 				return gid.(int64)
