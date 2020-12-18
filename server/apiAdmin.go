@@ -239,6 +239,7 @@ func (s *webServer) Dologin() {
 	global.BootFilter()
 	global.InitCodec()
 	coolq.IgnoreInvalidCQCode = conf.IgnoreInvalidCQCode
+	coolq.SplitUrl = conf.FixUrl
 	coolq.ForceFragmented = conf.ForceFragmented
 	log.Info("资源初始化完成, 开始处理信息.")
 	log.Info("アトリは、高性能ですから!")

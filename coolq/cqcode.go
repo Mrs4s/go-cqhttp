@@ -31,6 +31,7 @@ var paramReg = regexp.MustCompile(`,([\w\-.]+?)=([^,\]]+)`)
 */
 
 var IgnoreInvalidCQCode = false
+var SplitUrl = false
 
 type PokeElement struct {
 	Target int64
@@ -343,7 +344,13 @@ func (bot *CQBot) ConvertStringMessage(msg string, group bool) (r []message.IMes
 	}
 	saveTempText := func() {
 		if len(tempText) != 0 {
-			r = append(r, message.NewText(CQCodeUnescapeValue(string(tempText))))
+			if SplitUrl {
+				for _, t := range global.SplitUrl(CQCodeUnescapeValue(string(tempText))) {
+					r = append(r, message.NewText(t))
+				}
+			} else {
+				r = append(r, message.NewText(CQCodeUnescapeValue(string(tempText))))
+			}
 		}
 		tempText = []rune{}
 		cqCode = []rune{}
@@ -506,6 +513,13 @@ func (bot *CQBot) ConvertObjectMessage(m gjson.Result, group bool) (r []message.
 func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m interface{}, err error) {
 	switch t {
 	case "text":
+		if SplitUrl {
+			var ret []message.IMessageElement
+			for _, text := range global.SplitUrl(d["text"]) {
+				ret = append(ret, message.NewText(text))
+			}
+			return ret, nil
+		}
 		return message.NewText(d["text"]), nil
 	case "image":
 		img, err := bot.makeImageElem(d, group)

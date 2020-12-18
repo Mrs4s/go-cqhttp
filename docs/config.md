@@ -78,6 +78,7 @@ go-cqhttp 支持导入CQHTTP的配置文件, 具体步骤为:
 | post_message_format   | string   | 上报信息类型                                                                             |
 | ignore_invalid_cqcode | bool     | 是否忽略错误的CQ码                                                                       |
 | force_fragmented      | bool     | 是否强制分片发送群长消息                                                                 |
+| fix_url               | bool     | 是否对链接的发送进行预处理, 可缓解链接信息被风控导致无法发送的情况, 但可能影响客户端着色(不影响内容)|
 | use_sso_address       | bool     | 是否使用服务器下发的地址                                                                 |
 | heartbeat_interval    | int64    | 心跳间隔时间，单位秒。小于0则关闭心跳，等于0使用默认值(5秒)                              |
 | http_config           | object   | HTTP API配置                                                                             |
@@ -112,10 +113,10 @@ go-cqhttp 支持导入CQHTTP的配置文件, 具体步骤为:
 
 | 值  | 类型          | 限制                                                             |
 | --- | ------------- | ---------------------------------------------------------------- |
-| 0   | iPad          | 无                                                                        |
-| 1   | Android Phone | 无法接收新版表情如 `/吃瓜 /汪汪`, 会自动转换为字符串                            |
-| 2   | Android Watch | 除`Android Phone`的限制外, 无法接收 `notify` 事件、无法接收口令红包、无法接收撤回消息 |
-| 3   | MacOS         | 无                                                                             |
+| 0   | iPad          | 无                                                               |
+| 1   | Android Phone | 无                                                               |
+| 2   | Android Watch | 无法接收 `notify` 事件、无法接收口令红包、无法接收撤回消息            |
+| 3   | MacOS         | 无                                                               |
 
 > 注意, 根据协议的不同, 各类消息有所限制
 
