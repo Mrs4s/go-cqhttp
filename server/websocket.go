@@ -333,6 +333,16 @@ func (c *websocketConn) handleRequest(bot *coolq.CQBot, payload []byte) {
 		c.Lock()
 		defer c.Unlock()
 		_ = c.WriteJSON(ret)
+	} else {
+		ret := global.MSG{
+			"status":  "failed",
+			"retcode": 1404,
+			"data":    nil,
+		}
+		if j.Get("echo").Exists() {
+			ret["echo"] = j.Get("echo").Value()
+		}
+		_ = c.WriteJSON(ret)
 	}
 }
 
