@@ -333,6 +333,14 @@ func (c *websocketConn) handleRequest(bot *coolq.CQBot, payload []byte) {
 		c.Lock()
 		defer c.Unlock()
 		_ = c.WriteJSON(ret)
+	} else {
+		ret := coolq.Failed(1404,"API_NOT_FOUND","API不存在")
+		if j.Get("echo").Exists() {
+			ret["echo"] = j.Get("echo").Value()
+		}
+		c.Lock()
+		defer c.Unlock()
+		_ = c.WriteJSON(ret)
 	}
 }
 
