@@ -41,6 +41,7 @@
 ##### 事件
 - [群消息撤回](#群消息撤回)
 - [好友消息撤回](#好友消息撤回)
+- [好友戳一戳](#好友戳一戳)
 - [群内戳一戳](#群内戳一戳)
 - [群红包运气王提示](#群红包运气王提示)
 - [群成员荣誉变更提示](#群成员荣誉变更提示)
@@ -81,6 +82,7 @@ Type : `image`
 
 示例: `[CQ:image,file=http://baidu.com/1.jpg,type=show,id=40004]`
 
+> 注意：图片总大小不能超过30MB，gif总帧数不能超过300帧
 
 ### 回复
 
@@ -779,6 +781,21 @@ Type: `tts`
 | `notice_type` | string | `friend_recall` | 消息类型       |
 | `user_id`     | int64  |                 | 好友id         |
 | `message_id`  | int64  |                 | 被撤回的消息id |
+
+## 好友戳一戳
+
+**事件数据**
+
+| 字段名        | 数据类型 | 可能的值 | 说明 |
+| ------------- | ------ | -------- | --- |
+| `post_type`   | string | `notice` | 上报类型     |
+| `notice_type` | string | `notify` | 消息类型     |
+| `sub_type`    | string | `poke`   | 提示类型     |
+| `self_id`     | int64  |          | BOT QQ 号    |
+| `sender_id`   | int64  |          | 发送者 QQ 号 |
+| `user_id`     | int64  |          | 发送者 QQ 号 |
+| `target_id`   | int64  |          | 被戳者 QQ 号 |
+| `time`        | int64  |          | 时间         |
 
 ### 群内戳一戳
 

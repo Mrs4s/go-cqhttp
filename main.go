@@ -218,6 +218,7 @@ func main() {
 			log.Warnf("警告: 在Debug模式下未启用WebUi服务, 将无法进行性能分析.")
 		}
 	}
+	log.Info("用户交流群: 721829413")
 	if !global.PathExists("device.json") {
 		log.Warn("虚拟设备信息不存在, 将自动生成随机设备.")
 		client.GenRandomDevice()
