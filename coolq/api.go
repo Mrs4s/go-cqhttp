@@ -232,7 +232,7 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupId int64, m gjson.Result) MSG {
 	if m.Type != gjson.JSON {
 		return Failed(100)
 	}
-	var nodes []*message.ForwardNode
+	var sendNodes []*message.ForwardNode
 	ts := time.Now().Add(-time.Minute * 5)
 	hasCustom := func() bool {
 		for _, item := range m.Array() {
@@ -242,13 +242,14 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupId int64, m gjson.Result) MSG {
 		}
 		return false
 	}()
-	convert := func(e gjson.Result) {
+	var convert func(e gjson.Result) []*message.ForwardNode
+	convert = func(e gjson.Result) (nodes []*message.ForwardNode) {
 		if e.Get("type").Str != "node" {
-			return
+			return nil
 		}
 		ts.Add(time.Second)
 		if e.Get("data.id").Exists() {
-			i, _ := strconv.Atoi(e.Get("data.id").Str)
+			i, _ := strconv.Atoi(e.Get("data.id").String())
 			m := bot.GetMessage(int32(i))
 			if m != nil {
 				sender := m["sender"].(message.Sender)
@@ -270,6 +271,30 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupId int64, m gjson.Result) MSG {
 		}
 		uin, _ := strconv.ParseInt(e.Get("data.uin").Str, 10, 64)
 		name := e.Get("data.name").Str
+		c := e.Get("data.content")
+		if c.IsArray() {
+			flag := false
+			c.ForEach(func(_, value gjson.Result) bool {
+				if value.Get("type").String() == "node" {
+					flag = true
+					return false
+				}
+				return true
+			})
+			if flag {
+				var taowa []*message.ForwardNode
+				for _, item := range c.Array() {
+					taowa = append(taowa, convert(item)...)
+				}
+				nodes = append(nodes, &message.ForwardNode{
+					SenderId:   uin,
+					SenderName: name,
+					Time:       int32(ts.Unix()),
+					Message:    []message.IMessageElement{bot.Client.UploadGroupForwardMessage(groupId, &message.ForwardMessage{Nodes: taowa})},
+				})
+				return
+			}
+		}
 		content := bot.ConvertObjectMessage(e.Get("data.content"), true)
 		if uin != 0 && name != "" && len(content) > 0 {
 			var newElem []message.IMessageElement
@@ -294,16 +319,17 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupId int64, m gjson.Result) MSG {
 			return
 		}
 		log.Warnf("警告: 非法 Forward node 将跳过")
+		return
 	}
 	if m.IsArray() {
 		for _, item := range m.Array() {
-			convert(item)
+			sendNodes = append(sendNodes, convert(item)...)
 		}
 	} else {
-		convert(m)
+		sendNodes = convert(m)
 	}
-	if len(nodes) > 0 {
-		gm := bot.Client.SendGroupForwardMessage(groupId, &message.ForwardMessage{Nodes: nodes})
+	if len(sendNodes) > 0 {
+		gm := bot.Client.SendGroupForwardMessage(groupId, &message.ForwardMessage{Nodes: sendNodes})
 		return OK(MSG{
 			"message_id": ToGlobalId(groupId, gm.Id),
 		})
