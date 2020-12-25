@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"compress/gzip"
 	"fmt"
+	"github.com/guonaihong/gout"
+	"github.com/pkg/errors"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -60,6 +62,26 @@ func GetBytes(url string) ([]byte, error) {
 		return unCom, err
 	}
 	return body, nil
+}
+
+func GetSilderTicket(raw, version string) (string, error) {
+	u, err := url.Parse(raw)
+	if err != nil {
+		return "", err
+	}
+	q := u.Query()
+	var rsp string
+	if err = gout.GET(fmt.Sprintf("https://api.shkong.com/gocqhttpapi/silder/ticket?uin=%v&sid=%v&cap=%v", q["uin"][0], q["sid"][0], q["cap_cd"][0])).
+		SetHeader(gout.H{"User-Agent": "go-cqhttp/" + version}).
+		BindBody(&rsp).
+		Do(); err != nil {
+		return "", err
+	}
+	g := gjson.Parse(rsp)
+	if g.Get("error").Str != "" {
+		return "", errors.New(g.Get("error").Str)
+	}
+	return g.Get("ticket").Str, nil
 }
 
 func QQMusicSongInfo(id string) (gjson.Result, error) {

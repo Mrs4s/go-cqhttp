@@ -125,15 +125,16 @@ func (s *webServer) Dologin() {
 		if !rsp.Success {
 			switch rsp.Error {
 			case client.SliderNeededError:
-				if client.SystemDeviceInfo.Protocol == client.AndroidPhone {
-					log.Warnf("警告: Android Phone 强制要求暂不支持的滑条验证码, 请开启设备锁或切换到Watch协议验证通过后再使用.")
-					log.Infof("按 Enter 继续....")
-					readLine()
-					os.Exit(0)
+				log.Warnf("正在处理滑条验证码, 这可能需要一段时间.")
+				ticket, err := global.GetSilderTicket(rsp.VerifyUrl, coolq.Version)
+				if err != nil {
+					log.Warnf("处理滑条验证码时出现错误: %v 将尝试跳过.", err)
+					cli.AllowSlider = false
+					cli.Disconnect()
+					rsp, err = cli.Login()
+					continue
 				}
-				cli.AllowSlider = false
-				cli.Disconnect()
-				rsp, err = cli.Login()
+				rsp, err = cli.SubmitTicket(ticket)
 				continue
 			case client.NeedCaptcha:
 				_ = ioutil.WriteFile("captcha.jpg", rsp.CaptchaImage, 0644)
