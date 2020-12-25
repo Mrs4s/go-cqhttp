@@ -114,9 +114,9 @@ func (bot *CQBot) groupMessageEvent(c *client.QQClient, m *message.GroupMessage)
 	}
 	if m.Sender.IsAnonymous() {
 		gm["anonymous"] = MSG{
-			"flag": "",
-			"id":   0,
-			"name": m.Sender.Nickname,
+			"flag": m.Sender.AnonymousInfo.AnonymousId + "|" + m.Sender.AnonymousInfo.AnonymousNick,
+			"id":   m.Sender.Uin,
+			"name": m.Sender.AnonymousInfo.AnonymousNick,
 		}
 		gm["sender"].(MSG)["nickname"] = "匿名消息"
 		gm["sub_type"] = "anonymous"

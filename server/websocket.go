@@ -553,6 +553,20 @@ var wsApi = map[string]func(*coolq.CQBot, gjson.Result) coolq.MSG{
 	"set_group_portrait": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		return bot.CQSetGroupPortrait(p.Get("group_id").Int(), p.Get("file").String(), p.Get("cache").String())
 	},
+	"set_group_anonymous_ban": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
+		obj := p.Get("anonymous")
+		flag := p.Get("anonymous_flag")
+		if !flag.Exists() {
+			flag = p.Get("flag")
+		}
+		if !flag.Exists() && !obj.Exists() {
+			return coolq.Failed(100, "FLAG_NOT_FOUND", "flag未找到")
+		}
+		if !flag.Exists() {
+			flag = obj.Get("flag")
+		}
+		return bot.CQSetGroupAnonymousBan(p.Get("group_id").Int(), flag.String(), int32(p.Get("duration").Int()))
+	},
 	".handle_quick_operation": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		return bot.CQHandleQuickOperation(p.Get("context"), p.Get("operation"))
 	},

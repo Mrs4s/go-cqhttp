@@ -399,6 +399,20 @@ func GetGroupAtAllRemain(s *httpServer, c *gin.Context) {
 	c.JSON(200, s.bot.CQGetAtAllRemain(gid))
 }
 
+func SetGroupAnonymousBan(s *httpServer, c *gin.Context) {
+	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
+	d, _ := strconv.ParseInt(getParam(c, "duration"), 10, 64)
+	flag := getParam(c, "flag")
+	if flag == "" {
+		flag = getParam(c, "anonymous_flag")
+	}
+	if flag == "" {
+		o := gjson.Parse(getParam(c, "anonymous"))
+		flag = o.Get("flag").String()
+	}
+	c.JSON(200, s.bot.CQSetGroupAnonymousBan(gid, flag, int32(d)))
+}
+
 func HandleQuickOperation(s *httpServer, c *gin.Context) {
 	if c.Request.Method != "POST" {
 		c.AbortWithStatus(404)
@@ -516,6 +530,7 @@ var httpApi = map[string]func(s *httpServer, c *gin.Context){
 	"get_stranger_info":          GetStrangerInfo,
 	"reload_event_filter":        ReloadEventFilter,
 	"set_group_portrait":         SetGroupPortrait,
+	"set_group_anonymous_ban":    SetGroupAnonymousBan,
 	".handle_quick_operation":    HandleQuickOperation,
 	".ocr_image":                 OcrImage,
 	"ocr_image":                  OcrImage,

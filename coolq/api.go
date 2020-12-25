@@ -840,6 +840,26 @@ func (bot *CQBot) CQSetGroupPortrait(groupId int64, file, cache string) MSG {
 	return Failed(100, "GROUP_NOT_FOUND", "群聊不存在")
 }
 
+func (bot *CQBot) CQSetGroupAnonymousBan(groupId int64, flag string, duration int32) MSG {
+	if flag == "" {
+		return Failed(100, "INVALID_FLAG", "无效的flag")
+	}
+	if g := bot.Client.FindGroup(groupId); g != nil {
+		s := strings.SplitN(flag, "|", 2)
+		if len(s) != 2 {
+			return Failed(100, "INVALID_FLAG", "无效的flag")
+		}
+		id := s[0]
+		nick := s[1]
+		if err := g.MuteAnonymous(id, nick, duration); err != nil {
+			log.Warnf("anonymous ban error: %v", err)
+			return Failed(100, "CALL_API_ERROR", err.Error())
+		}
+		return OK(nil)
+	}
+	return Failed(100, "GROUP_NOT_FOUND", "群聊不存在")
+}
+
 // https://github.com/howmanybots/onebot/blob/master/v11/specs/api/public.md#get_status-%E8%8E%B7%E5%8F%96%E8%BF%90%E8%A1%8C%E7%8A%B6%E6%80%81
 func (bot *CQBot) CQGetStatus() MSG {
 	return OK(MSG{
