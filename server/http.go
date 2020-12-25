@@ -352,6 +352,9 @@ func SetRestart(s *httpServer, c *gin.Context) {
 
 func GetForwardMessage(s *httpServer, c *gin.Context) {
 	resId := getParam(c, "message_id")
+	if resId == "" {
+		resId = getParam(c, "id")
+	}
 	c.JSON(200, s.bot.CQGetForwardMessage(resId))
 }
 
