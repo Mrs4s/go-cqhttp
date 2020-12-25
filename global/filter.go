@@ -13,8 +13,8 @@ import (
 type MSG map[string]interface{}
 
 func (m MSG) Get(s string) MSG {
-	if v,ok := m[s];ok {
-		if msg,ok := v.(MSG);ok {
+	if v, ok := m[s]; ok {
+		if msg, ok := v.(MSG); ok {
 			return msg
 		}
 		return MSG{"__str__": v} // 用这个名字应该没问题吧
@@ -23,7 +23,7 @@ func (m MSG) Get(s string) MSG {
 }
 
 func (m MSG) String() string {
-	if str,ok:=m["__str__"];ok {
+	if str, ok := m["__str__"]; ok {
 		return fmt.Sprint(str)
 	}
 	str, _ := json.MarshalToString(m)
