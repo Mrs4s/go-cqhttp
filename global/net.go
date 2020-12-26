@@ -64,7 +64,7 @@ func GetBytes(url string) ([]byte, error) {
 	return body, nil
 }
 
-func GetSilderTicket(raw, id string) (string, error) {
+func GetSliderTicket(raw, id string) (string, error) {
 	var rsp string
 	if err := gout.POST("https://api.shkong.com/gocqhttpapi/task").SetJSON(gout.H{
 		"id":  id,

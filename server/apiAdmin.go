@@ -149,7 +149,7 @@ func (s *webServer) Dologin() {
 				}
 				id := utils.RandomStringRange(6, "0123456789")
 				log.Warnf("滑块ID为 %v 请在30S内处理.", id)
-				ticket, err := global.GetSilderTicket(rsp.VerifyUrl, id)
+				ticket, err := global.GetSliderTicket(rsp.VerifyUrl, id)
 				if err != nil {
 					log.Warnf("错误: " + err.Error())
 					os.Exit(0)
