@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
+	"github.com/Mrs4s/MiraiGo/utils"
 	"github.com/gin-contrib/pprof"
 	"image"
 	"io/ioutil"
@@ -112,6 +113,7 @@ func (s *webServer) Dologin() {
 	s.Console = bufio.NewReader(os.Stdin)
 	readLine := func() (str string) {
 		str, _ = s.Console.ReadString('\n')
+		str = strings.TrimSpace(str)
 		return
 	}
 	conf := GetConf()
@@ -125,14 +127,32 @@ func (s *webServer) Dologin() {
 		if !rsp.Success {
 			switch rsp.Error {
 			case client.SliderNeededError:
-				log.Warnf("正在处理滑条验证码, 这可能需要一段时间.")
-				ticket, err := global.GetSilderTicket(rsp.VerifyUrl, coolq.Version)
-				if err != nil {
-					log.Warnf("处理滑条验证码时出现错误: %v 将尝试跳过.", err)
+				log.Warnf("登录需要滑条验证码, 请选择解决方案: ")
+				log.Warnf("1. 自行抓包. (推荐)")
+				log.Warnf("2. 使用Cef自动处理.")
+				log.Warnf("3. 不提交滑块并继续.(可能会导致上网环境异常错误)")
+				log.Warnf("详细信息请参考文档")
+				log.Warn("请输入(1 - 3): ")
+				text = readLine()
+				if strings.Contains(text, "1") {
+					log.Warnf("请用浏览器打开 -> %v <- 并获取Ticket.", rsp.VerifyUrl)
+					log.Warn("请输入Ticket： (Enter 提交)")
+					text = readLine()
+					rsp, err = cli.SubmitTicket(strings.TrimSpace(text))
+					return
+				}
+				if strings.Contains(text, "3") {
 					cli.AllowSlider = false
 					cli.Disconnect()
 					rsp, err = cli.Login()
 					continue
+				}
+				id := utils.RandomStringRange(6, "0123456789")
+				log.Warnf("滑块ID为 %v 请在30S内处理.", id)
+				ticket, err := global.GetSilderTicket(rsp.VerifyUrl, id)
+				if err != nil {
+					log.Warnf("错误: " + err.Error())
+					os.Exit(0)
 				}
 				rsp, err = cli.SubmitTicket(ticket)
 				continue
@@ -205,7 +225,7 @@ func (s *webServer) Dologin() {
 					cli.Disconnect()
 					rsp, err = cli.Login()
 					count++
-					log.Warnf("错误: 当前上网环境异常. 将更换服务器并重试. 如果频繁遇到此问题请打开设备锁.")
+					log.Warnf("错误: 当前上网环境异常. 将更换服务器并重试.")
 					time.Sleep(time.Second)
 					continue
 				}

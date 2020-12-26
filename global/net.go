@@ -64,17 +64,12 @@ func GetBytes(url string) ([]byte, error) {
 	return body, nil
 }
 
-func GetSilderTicket(raw, version string) (string, error) {
-	u, err := url.Parse(raw)
-	if err != nil {
-		return "", err
-	}
-	q := u.Query()
+func GetSilderTicket(raw, id string) (string, error) {
 	var rsp string
-	if err = gout.GET(fmt.Sprintf("https://api.shkong.com/gocqhttpapi/silder/ticket?uin=%v&sid=%v&cap=%v", q["uin"][0], q["sid"][0], q["cap_cd"][0])).
-		SetHeader(gout.H{"User-Agent": "go-cqhttp/" + version}).
-		BindBody(&rsp).
-		Do(); err != nil {
+	if err := gout.POST("https://api.shkong.com/gocqhttpapi/task").SetJSON(gout.H{
+		"id":  id,
+		"url": raw,
+	}).SetTimeout(time.Second * 35).BindBody(&rsp).Do(); err != nil {
 		return "", err
 	}
 	g := gjson.Parse(rsp)
