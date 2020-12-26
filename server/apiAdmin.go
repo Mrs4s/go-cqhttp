@@ -131,7 +131,7 @@ func (s *webServer) Dologin() {
 				log.Warnf("1. 自行抓包. (推荐)")
 				log.Warnf("2. 使用Cef自动处理.")
 				log.Warnf("3. 不提交滑块并继续.(可能会导致上网环境异常错误)")
-				log.Warnf("详细信息请参考文档")
+				log.Warnf("详细信息请参考文档 -> https://github.com/Mrs4s/go-cqhttp/blob/master/docs/slider.md <-")
 				log.Warn("请输入(1 - 3): ")
 				text = readLine()
 				if strings.Contains(text, "1") {
