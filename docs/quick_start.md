@@ -107,6 +107,14 @@ enable ws?(Y/n)
 
 # 进阶指南
 
+## 跳过启动的五秒延时
+
+使用命令行参数 `faststart`即可跳过启动的五秒钟延时，例如
+
+```
+.\go-cqhttp.exe faststart
+```
+
 ## 如何自己构建
 
 1. [下载源码](https://github.com/Mrs4s/go-cqhttp/archive/master.zip)并解压 || 使用`git clone https://github.com/Mrs4s/go-cqhttp.git`来拉取
