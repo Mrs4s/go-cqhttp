@@ -52,7 +52,7 @@
 
 此方案需要您有一台可以操作的 `Windows` 电脑.
 
-首先下载工具:  [蓝奏云](https://wws.lanzous.com/iw1Ejjr4rtg) [Google Drive](https://drive.google.com/file/d/1M6c3-kuD7ziHwl4hq75LcI119yB6HGdI/view?usp=sharing)
+首先下载工具:  [蓝奏云](https://wws.lanzous.com/i2vn0jrofte) [Google Drive](https://drive.google.com/file/d/1peMDHqgP8AgWBVp5vP-cfhcGrb2ksSrE/view?usp=sharing)
 
 解压并打开工具: 
 
