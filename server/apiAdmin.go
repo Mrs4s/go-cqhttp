@@ -139,7 +139,7 @@ func (s *webServer) Dologin() {
 					log.Warn("请输入Ticket： (Enter 提交)")
 					text = readLine()
 					rsp, err = cli.SubmitTicket(strings.TrimSpace(text))
-					return
+					continue
 				}
 				if strings.Contains(text, "3") {
 					cli.AllowSlider = false
