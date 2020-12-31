@@ -402,6 +402,12 @@ func (bot *CQBot) ConvertStringMessage(msg string, group bool) (r []message.IMes
 				}
 			}
 		}
+		if t == "forward" { // 单独处理转发
+			if id, ok := params["id"]; ok {
+				r = []message.IMessageElement{bot.Client.DownloadForwardMessage(id)}
+				return
+			}
+		}
 		elem, err := bot.ToElement(t, params, group)
 		if err != nil {
 			org := "[" + string(cqCode) + "]"
@@ -475,6 +481,10 @@ func (bot *CQBot) ConvertObjectMessage(m gjson.Result, group bool) (r []message.
 				}
 			}
 		}
+		if t == "forward" {
+			r = []message.IMessageElement{bot.Client.DownloadForwardMessage(e.Get("data.id").String())}
+			return
+		}
 		d := make(map[string]string)
 		e.Get("data").ForEach(func(key, value gjson.Result) bool {
 			d[key.Str] = value.String()
@@ -491,7 +501,6 @@ func (bot *CQBot) ConvertObjectMessage(m gjson.Result, group bool) (r []message.
 		case []message.IMessageElement:
 			r = append(r, i...)
 		}
-
 	}
 	if m.Type == gjson.String {
 		return bot.ConvertStringMessage(m.Str, group)
