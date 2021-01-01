@@ -27,7 +27,6 @@ import (
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
-	"github.com/getlantern/go-update"
 	jsoniter "github.com/json-iterator/go"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"github.com/rifflock/lfshook"
@@ -436,7 +435,7 @@ func selfUpdate(imageUrl string) {
 				return
 			}
 			wc := global.WriteCounter{}
-			err, _ = update.New().FromStream(io.TeeReader(resp.Body, &wc))
+			err, _ = global.UpdateFromStream(io.TeeReader(resp.Body, &wc))
 			fmt.Println()
 			if err != nil {
 				log.Error("更新失败!")
@@ -450,6 +449,8 @@ func selfUpdate(imageUrl string) {
 		} else {
 			log.Warn("已取消更新！")
 		}
+	} else {
+		log.Info("当前版本已经是最新版本!")
 	}
 	log.Info("按 Enter 继续....")
 	readLine()

@@ -5,16 +5,13 @@ go 1.15
 require (
 	github.com/Mrs4s/MiraiGo v0.0.0-20201231081106-eaa543ae8683
 	github.com/dustin/go-humanize v1.0.0
-	github.com/getlantern/go-update v0.0.0-20190510022740-79c495ab728c
-	github.com/getlantern/golog v0.0.0-20201105130739-9586b8bde3a9 // indirect
 	github.com/gin-contrib/pprof v1.3.0
 	github.com/gin-gonic/gin v1.6.3
 	github.com/gorilla/websocket v1.4.2
 	github.com/guonaihong/gout v0.1.4
 	github.com/hjson/hjson-go v3.1.0+incompatible
 	github.com/json-iterator/go v1.1.10
-	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
-	github.com/kr/binarydist v0.1.0 // indirect
+	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
 	github.com/lestrrat-go/strftime v1.0.3 // indirect
 	github.com/pkg/errors v0.9.1
