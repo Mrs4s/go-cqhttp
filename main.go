@@ -449,6 +449,8 @@ func selfUpdate(imageUrl string) {
 		} else {
 			log.Warn("已取消更新！")
 		}
+	} else {
+		log.Info("当前版本已经是最新版本!")
 	}
 	log.Info("按 Enter 继续....")
 	readLine()
