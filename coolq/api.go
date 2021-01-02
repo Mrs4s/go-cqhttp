@@ -299,8 +299,8 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupId int64, m gjson.Result) MSG {
 		if uin != 0 && name != "" && len(content) > 0 {
 			var newElem []message.IMessageElement
 			for _, elem := range content {
-				if img, ok := elem.(*message.ImageElement); ok {
-					gm, err := bot.Client.UploadGroupImage(groupId, img.Data)
+				if img, ok := elem.(*LocalImageElement); ok {
+					gm, err := bot.Client.UploadGroupImage(groupId, img.Stream)
 					if err != nil {
 						log.Warnf("警告：群 %v 图片上传失败: %v", groupId, err)
 						continue

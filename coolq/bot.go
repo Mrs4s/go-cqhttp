@@ -5,6 +5,7 @@ import (
 	"encoding/gob"
 	"fmt"
 	"hash/crc32"
+	"io/ioutil"
 	"path"
 	"runtime/debug"
 	"sync"
@@ -120,8 +121,8 @@ func (bot *CQBot) GetMessage(mid int32) MSG {
 func (bot *CQBot) SendGroupMessage(groupId int64, m *message.SendingMessage) int32 {
 	var newElem []message.IMessageElement
 	for _, elem := range m.Elements {
-		if i, ok := elem.(*message.ImageElement); ok {
-			gm, err := bot.Client.UploadGroupImage(groupId, i.Data)
+		if i, ok := elem.(*LocalImageElement); ok {
+			gm, err := bot.Client.UploadGroupImage(groupId, i.Stream)
 			if err != nil {
 				log.Warnf("警告: 群 %v 消息图片上传失败: %v", groupId, err)
 				continue
@@ -129,8 +130,8 @@ func (bot *CQBot) SendGroupMessage(groupId int64, m *message.SendingMessage) int
 			newElem = append(newElem, gm)
 			continue
 		}
-		if i, ok := elem.(*message.VoiceElement); ok {
-			gv, err := bot.Client.UploadGroupPtt(groupId, i.Data)
+		if i, ok := elem.(*LocalVoiceElement); ok {
+			gv, err := bot.Client.UploadGroupPtt(groupId, i.Stream)
 			if err != nil {
 				log.Warnf("警告: 群 %v 消息语音上传失败: %v", groupId, err)
 				continue
@@ -236,8 +237,8 @@ func (bot *CQBot) SendGroupMessage(groupId int64, m *message.SendingMessage) int
 func (bot *CQBot) SendPrivateMessage(target int64, m *message.SendingMessage) int32 {
 	var newElem []message.IMessageElement
 	for _, elem := range m.Elements {
-		if i, ok := elem.(*message.ImageElement); ok {
-			fm, err := bot.Client.UploadPrivateImage(target, i.Data)
+		if i, ok := elem.(*LocalImageElement); ok {
+			fm, err := bot.Client.UploadPrivateImage(target, i.Stream)
 			if err != nil {
 				log.Warnf("警告: 私聊 %v 消息图片上传失败.", target)
 				continue
@@ -249,8 +250,13 @@ func (bot *CQBot) SendPrivateMessage(target int64, m *message.SendingMessage) in
 			bot.Client.SendFriendPoke(i.Target)
 			return 0
 		}
-		if i, ok := elem.(*message.VoiceElement); ok {
-			fv, err := bot.Client.UploadPrivatePtt(target, i.Data)
+		if i, ok := elem.(*LocalVoiceElement); ok {
+			data, err := ioutil.ReadAll(i.Stream)
+			if err != nil {
+				log.Warnf("警告: 好友 %v 消息语音读取失败: %v", target, err)
+				continue
+			}
+			fv, err := bot.Client.UploadPrivatePtt(target, data)
 			if err != nil {
 				log.Warnf("警告: 好友 %v 消息语音上传失败: %v", target, err)
 				continue

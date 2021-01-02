@@ -8,10 +8,12 @@ import (
 	xml2 "encoding/xml"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"math"
 	"math/rand"
 	"net/url"
+	"os"
 	"path"
 	"runtime"
 	"strconv"
@@ -60,6 +62,16 @@ type CloudMusicElement struct {
 
 type MiguMusicElement struct {
 	MusicElement
+}
+
+type LocalImageElement struct {
+	message.ImageElement
+	Stream io.ReadSeeker
+}
+
+type LocalVoiceElement struct {
+	message.VoiceElement
+	Stream io.ReadSeeker
 }
 
 func (e *GiftElement) Type() message.ElementType {
@@ -539,11 +551,11 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m interf
 		if tp != "show" && tp != "flash" {
 			return img, nil
 		}
-		if i, ok := img.(*message.ImageElement); ok { // 秀图，闪照什么的就直接传了吧
+		if i, ok := img.(*LocalImageElement); ok { // 秀图，闪照什么的就直接传了吧
 			if group {
-				img, err = bot.Client.UploadGroupImage(1, i.Data)
+				img, err = bot.Client.UploadGroupImage(1, i.Stream)
 			} else {
-				img, err = bot.Client.UploadPrivateImage(1, i.Data)
+				img, err = bot.Client.UploadPrivateImage(1, i.Stream)
 			}
 			if err != nil {
 				return nil, err
@@ -827,7 +839,7 @@ func (bot *CQBot) makeImageElem(d map[string]string, group bool) (message.IMessa
 		if err != nil {
 			return nil, err
 		}
-		return message.NewImage(b), nil
+		return &LocalImageElement{Stream: bytes.NewReader(b)}, nil
 	}
 	if strings.HasPrefix(f, "file") {
 		fu, err := url.Parse(f)
@@ -837,11 +849,11 @@ func (bot *CQBot) makeImageElem(d map[string]string, group bool) (message.IMessa
 		if strings.HasPrefix(fu.Path, "/") && runtime.GOOS == `windows` {
 			fu.Path = fu.Path[1:]
 		}
-		b, err := ioutil.ReadFile(fu.Path)
+		file, err := os.Open(fu.Path)
 		if err != nil {
 			return nil, err
 		}
-		return message.NewImage(b), nil
+		return &LocalImageElement{Stream: file}, nil
 	}
 	rawPath := path.Join(global.IMAGE_PATH, f)
 	if !global.PathExists(rawPath) && global.PathExists(path.Join(global.IMAGE_PATH_OLD, f)) {
@@ -854,12 +866,16 @@ func (bot *CQBot) makeImageElem(d map[string]string, group bool) (message.IMessa
 		return bot.makeImageElem(map[string]string{"file": d["url"]}, group)
 	}
 	if global.PathExists(rawPath) {
-		b, err := ioutil.ReadFile(rawPath)
+		file, err := os.Open(rawPath)
 		if err != nil {
 			return nil, err
 		}
 		if path.Ext(rawPath) != ".image" && path.Ext(rawPath) != ".cqimg" {
-			return message.NewImage(b), nil
+			return &LocalImageElement{Stream: file}, nil
+		}
+		b, err := ioutil.ReadAll(file)
+		if err != nil {
+			return nil, err
 		}
 		if len(b) < 20 {
 			return nil, errors.New("invalid local file")
@@ -920,9 +936,9 @@ func (bot *CQBot) makeImageElem(d map[string]string, group bool) (message.IMessa
 func (bot *CQBot) makeShowPic(elem message.IMessageElement, source string, icon string, minWidth int64, minHeight int64, maxWidth int64, maxHeight int64, group bool) ([]message.IMessageElement, error) {
 	xml := ""
 	var suf message.IMessageElement
-	if i, ok := elem.(*message.ImageElement); ok {
+	if i, ok := elem.(*LocalImageElement); ok {
 		if group == false {
-			gm, err := bot.Client.UploadPrivateImage(1, i.Data)
+			gm, err := bot.Client.UploadPrivateImage(1, i.Stream)
 			if err != nil {
 				log.Warnf("警告: 好友消息 %v 消息图片上传失败: %v", 1, err)
 				return nil, err
@@ -930,7 +946,7 @@ func (bot *CQBot) makeShowPic(elem message.IMessageElement, source string, icon 
 			suf = gm
 			xml = fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="5" templateID="12345" action="" brief="&#91;分享&#93;我看到一张很赞的图片，分享给你，快来看！" sourceMsgId="0" url="%s" flag="0" adverSign="0" multiMsgFlag="0"><item layout="0" advertiser_id="0" aid="0"><image uuid="%x" md5="%x" GroupFiledid="0" filesize="%d" local_path="%s" minWidth="%d" minHeight="%d" maxWidth="%d" maxHeight="%d" /></item><source name="%s" icon="%s" action="" appid="-1" /></msg>`, "", gm.Md5, gm.Md5, len(i.Data), "", minWidth, minHeight, maxWidth, maxHeight, source, icon)
 		} else {
-			gm, err := bot.Client.UploadGroupImage(1, i.Data)
+			gm, err := bot.Client.UploadGroupImage(1, i.Stream)
 			if err != nil {
 				log.Warnf("警告: 群 %v 消息图片上传失败: %v", 1, err)
 				return nil, err
