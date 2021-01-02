@@ -756,6 +756,48 @@ Type: `tts`
 | `remain_at_all_count_for_group` | int16      | 群内所有管理当天剩余@全体成员次数 |
 | `remain_at_all_count_for_uin`   | int16      | BOT当天剩余@全体成员次数         |
 
+### 获取VIP信息
+
+终结点：`/_get_vip_info`
+
+**参数**
+
+| 字段名 | 数据类型 | 默认值 | 说明 |
+| ----- | ------- | ----- | --- |
+| `user_id` | int64 | | QQ 号 |
+
+**响应数据**
+
+| 字段                | 类型    | 说明        |
+| ------------------ | ------- | ---------- |
+| `user_id`          | int64   | QQ 号       |
+| `nickname`         | string  | 用户昵称    |
+| `level`            | int64   | QQ 等级     |
+| `level_speed`      | float64 | 等级加速度  |
+| `vip_level`        | string  | 会员等级    |
+| `vip_growth_speed` | int64   | 会员成长速度 |
+| `vip_growth_total` | int64   | 会员成长总值 |
+
+### 发送群公告
+
+终结点： `/_send_group_notice`
+
+**参数**
+
+| 字段名      | 数据类型  | 默认值 | 说明    |
+| ---------- | ------- | ----- | ------ |
+| `group_id` | int64   |       | 群号    |
+| `content`  | string  |       | 公告内容 |
+
+`该 API 没有响应数据`
+
+### 重载事件过滤器
+
+终结点：`/reload_event_filter`
+
+`该 API 无需参数也没有响应数据`
+
+
 ## 事件
 
 ### 群消息撤回
