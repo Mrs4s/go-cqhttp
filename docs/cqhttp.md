@@ -723,7 +723,7 @@ Type: `tts`
 | `plugins_good`    | bool       | 原 `CQHTTP` 字段, 恒定为 `true` |
 | `app_good`        | bool       | 原 `CQHTTP` 字段, 恒定为 `true` |
 | `online`          | bool       | 表示BOT是否在线                 |
-| `goold`           | bool       | 同 `online`                     |
+| `good`           | bool       | 同 `online`                     |
 | `stat`            | Statistics | 运行统计                        |
 
 **Statistics**
