@@ -35,6 +35,8 @@ var paramReg = regexp.MustCompile(`,([\w\-.]+?)=([^,\]]+)`)
 var IgnoreInvalidCQCode = false
 var SplitUrl = false
 
+const maxImageSize = 1024 * 1024 * 30 // 30MB
+
 type PokeElement struct {
 	Target int64
 }
@@ -816,23 +818,30 @@ func (bot *CQBot) makeImageElem(d map[string]string, group bool) (message.IMessa
 	f := d["file"]
 	if strings.HasPrefix(f, "http") || strings.HasPrefix(f, "https") {
 		cache := d["cache"]
+		c := d["c"]
 		if cache == "" {
 			cache = "1"
 		}
 		hash := md5.Sum([]byte(f))
 		cacheFile := path.Join(global.CACHE_PATH, hex.EncodeToString(hash[:])+".cache")
 		if global.PathExists(cacheFile) && cache == "1" {
-			b, err := ioutil.ReadFile(cacheFile)
+			f, err := os.Open(cacheFile)
 			if err == nil {
-				return message.NewImage(b), nil
+				return &LocalImageElement{Stream: f}, nil
 			}
 		}
-		b, err := global.GetBytes(f)
+		if global.PathExists(cacheFile) {
+			_ = os.Remove(cacheFile)
+		}
+		thread, _ := strconv.Atoi(c)
+		if err := global.DownloadFileMultiThreading(f, cacheFile, maxImageSize, thread); err != nil {
+			return nil, err
+		}
+		f, err := os.Open(cacheFile)
 		if err != nil {
 			return nil, err
 		}
-		_ = ioutil.WriteFile(cacheFile, b, 0644)
-		return message.NewImage(b), nil
+		return &LocalImageElement{Stream: f}, nil
 	}
 	if strings.HasPrefix(f, "base64") {
 		b, err := base64.StdEncoding.DecodeString(strings.ReplaceAll(f, "base64://", ""))
@@ -848,6 +857,13 @@ func (bot *CQBot) makeImageElem(d map[string]string, group bool) (message.IMessa
 		}
 		if strings.HasPrefix(fu.Path, "/") && runtime.GOOS == `windows` {
 			fu.Path = fu.Path[1:]
+		}
+		info, err := os.Stat(fu.Path)
+		if err != nil {
+			return nil, err
+		}
+		if info.Size() == 0 || info.Size() >= maxImageSize {
+			return nil, errors.New("invalid image size")
 		}
 		file, err := os.Open(fu.Path)
 		if err != nil {
