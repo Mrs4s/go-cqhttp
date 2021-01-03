@@ -104,6 +104,7 @@ func (e *PokeElement) Type() message.ElementType {
 }
 
 func ToArrayMessage(e []message.IMessageElement, code int64, raw ...bool) (r []MSG) {
+	r = []MSG{}
 	ur := false
 	if len(raw) != 0 {
 		ur = raw[0]
