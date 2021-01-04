@@ -69,6 +69,7 @@ type MiguMusicElement struct {
 type LocalImageElement struct {
 	message.ImageElement
 	Stream io.ReadSeeker
+	File   string
 }
 
 type LocalVoiceElement struct {
@@ -556,9 +557,9 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m interf
 		}
 		if i, ok := img.(*LocalImageElement); ok { // 秀图，闪照什么的就直接传了吧
 			if group {
-				img, err = bot.Client.UploadGroupImage(1, i.Stream)
+				img, err = bot.UploadLocalImageAsGroup(1, i)
 			} else {
-				img, err = bot.Client.UploadPrivateImage(1, i.Stream)
+				img, err = bot.UploadLocalImageAsPrivate(1, i)
 			}
 			if err != nil {
 				return nil, err
@@ -826,10 +827,7 @@ func (bot *CQBot) makeImageElem(d map[string]string, group bool) (message.IMessa
 		hash := md5.Sum([]byte(f))
 		cacheFile := path.Join(global.CACHE_PATH, hex.EncodeToString(hash[:])+".cache")
 		if global.PathExists(cacheFile) && cache == "1" {
-			f, err := os.Open(cacheFile)
-			if err == nil {
-				return &LocalImageElement{Stream: f}, nil
-			}
+			return &LocalImageElement{File: cacheFile}, nil
 		}
 		if global.PathExists(cacheFile) {
 			_ = os.Remove(cacheFile)
@@ -838,11 +836,7 @@ func (bot *CQBot) makeImageElem(d map[string]string, group bool) (message.IMessa
 		if err := global.DownloadFileMultiThreading(f, cacheFile, maxImageSize, thread); err != nil {
 			return nil, err
 		}
-		f, err := os.Open(cacheFile)
-		if err != nil {
-			return nil, err
-		}
-		return &LocalImageElement{Stream: f}, nil
+		return &LocalImageElement{File: cacheFile}, nil
 	}
 	if strings.HasPrefix(f, "base64") {
 		b, err := base64.StdEncoding.DecodeString(strings.ReplaceAll(f, "base64://", ""))
@@ -866,11 +860,7 @@ func (bot *CQBot) makeImageElem(d map[string]string, group bool) (message.IMessa
 		if info.Size() == 0 || info.Size() >= maxImageSize {
 			return nil, errors.New("invalid image size")
 		}
-		file, err := os.Open(fu.Path)
-		if err != nil {
-			return nil, err
-		}
-		return &LocalImageElement{Stream: file}, nil
+		return &LocalImageElement{File: fu.Path}, nil
 	}
 	rawPath := path.Join(global.IMAGE_PATH, f)
 	if !global.PathExists(rawPath) && global.PathExists(path.Join(global.IMAGE_PATH_OLD, f)) {

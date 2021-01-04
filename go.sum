@@ -1,9 +1,7 @@
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
-github.com/Mrs4s/MiraiGo v0.0.0-20210102160857-d0a296aab77f h1:Cup2n0Da+Iy9p0Jpgi/KxjvlCHwBZzfY4YB13l4mFLk=
-github.com/Mrs4s/MiraiGo v0.0.0-20210102160857-d0a296aab77f/go.mod h1:HW2e375lCQiRwtuA/LV6ZVTsi7co1TRfBn+L5Ow77Bo=
-github.com/Mrs4s/MiraiGo v0.0.0-20210102161828-e1e1c97a56f2 h1:7tuZag+0XUisdi3HJq5iaSGIJ3Q0doa2leSl1iH3cKs=
-github.com/Mrs4s/MiraiGo v0.0.0-20210102161828-e1e1c97a56f2/go.mod h1:HW2e375lCQiRwtuA/LV6ZVTsi7co1TRfBn+L5Ow77Bo=
+github.com/Mrs4s/MiraiGo v0.0.0-20210104164708-e94ea61cc8e9 h1:jzaBgDPLKRuJxQO9UT/2vCFL0ScCO9IThRCa7ViMbGE=
+github.com/Mrs4s/MiraiGo v0.0.0-20210104164708-e94ea61cc8e9/go.mod h1:HW2e375lCQiRwtuA/LV6ZVTsi7co1TRfBn+L5Ow77Bo=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
@@ -54,7 +52,6 @@ github.com/gorilla/websocket v1.4.2 h1:+/TMaTYc4QFitKJxsQ7Yye35DkWvkdLcvGKqM+x0U
 github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/guonaihong/gout v0.1.4 h1:uBBoyztMX9okC27OQxqhn6bZ0ROkGyvnEIHwtp3TM4g=
 github.com/guonaihong/gout v0.1.4/go.mod h1:0rFYAYyzbcxEg11eY2qUbffJs7hHRPeugAnlVYSp8Ic=
-github.com/hjson/hjson-go v0.2.3 h1:KhG7/PSxTibbYOzFso5FoiX2gWePcANaCsvM1WE/bTo=
 github.com/hjson/hjson-go v3.1.0+incompatible h1:DY/9yE8ey8Zv22bY+mHV1uk2yRy0h8tKhZ77hEdi0Aw=
 github.com/hjson/hjson-go v3.1.0+incompatible/go.mod h1:qsetwF8NlsTsOTwZTApNlTCerV+b2GjYRRcIk4JMFio=
 github.com/hpcloud/tail v1.0.0/go.mod h1:ab1qPbhIpdTxEkNHXyeSf5vhxWSCs/tWer42PpOxQnU=

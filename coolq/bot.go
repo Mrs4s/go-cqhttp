@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"hash/crc32"
 	"io/ioutil"
+	"os"
 	"path"
 	"runtime/debug"
 	"sync"
@@ -118,11 +119,30 @@ func (bot *CQBot) GetMessage(mid int32) MSG {
 	return nil
 }
 
+func (bot *CQBot) UploadLocalImageAsGroup(groupCode int64, img *LocalImageElement) (*message.GroupImageElement, error) {
+	if img.Stream != nil {
+		return bot.Client.UploadGroupImage(groupCode, img.Stream)
+	}
+	return bot.Client.UploadGroupImageByFile(groupCode, img.File)
+}
+
+func (bot *CQBot) UploadLocalImageAsPrivate(userId int64, img *LocalImageElement) (*message.FriendImageElement, error) {
+	if img.Stream != nil {
+		return bot.Client.UploadPrivateImage(userId, img.Stream)
+	}
+	// need update.
+	f, err := os.Open(img.File)
+	if err != nil {
+		return nil, err
+	}
+	return bot.Client.UploadPrivateImage(userId, f)
+}
+
 func (bot *CQBot) SendGroupMessage(groupId int64, m *message.SendingMessage) int32 {
 	var newElem []message.IMessageElement
 	for _, elem := range m.Elements {
 		if i, ok := elem.(*LocalImageElement); ok {
-			gm, err := bot.Client.UploadGroupImage(groupId, i.Stream)
+			gm, err := bot.UploadLocalImageAsGroup(groupId, i)
 			if err != nil {
 				log.Warnf("警告: 群 %v 消息图片上传失败: %v", groupId, err)
 				continue
@@ -238,7 +258,7 @@ func (bot *CQBot) SendPrivateMessage(target int64, m *message.SendingMessage) in
 	var newElem []message.IMessageElement
 	for _, elem := range m.Elements {
 		if i, ok := elem.(*LocalImageElement); ok {
-			fm, err := bot.Client.UploadPrivateImage(target, i.Stream)
+			fm, err := bot.UploadLocalImageAsPrivate(target, i)
 			if err != nil {
 				log.Warnf("警告: 私聊 %v 消息图片上传失败.", target)
 				continue
