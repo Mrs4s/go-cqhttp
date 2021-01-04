@@ -776,6 +776,12 @@ func (bot *CQBot) CQGetMessage(messageId int32) MSG {
 		"real_id":    msg["message-id"],
 		"group":      isGroup,
 		"group_id":   gid,
+		"message_type": func() string {
+			if isGroup {
+				return "group"
+			}
+			return "private"
+		}(),
 		"sender": MSG{
 			"user_id":  sender.Uin,
 			"nickname": sender.Nickname,
