@@ -90,7 +90,8 @@ func (s *httpServer) Run(addr, authToken string, bot *coolq.CQBot) {
 		}
 		if err := s.Http.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Error(err)
-			log.Infof("请检查端口是否被占用.")
+			log.Infof("HTTP 服务启动失败, 请检查端口是否被占用.")
+			log.Warnf("将在五秒后退出.")
 			time.Sleep(time.Second * 5)
 			os.Exit(1)
 		}
