@@ -760,6 +760,46 @@ Type: `tts`
 | `remain_at_all_count_for_group` | int16      | 群内所有管理当天剩余@全体成员次数 |
 | `remain_at_all_count_for_uin`   | int16      | BOT当天剩余@全体成员次数         |
 
+### 下载文件到缓存目录
+
+终结点: `/download_file`
+
+**参数** 
+
+| 字段       | 类型   | 说明                      |
+| ---------- | ------ | ------------------------- |
+| `url` | string  | 链接地址                      |
+| `thread_count` | int32  | 下载线程数            |
+| `headers` | string or array  | 自定义请求头    |
+
+**`headers`格式:**
+
+字符串:
+
+```
+User-Agent=YOUR_UA[\r\n]Referer=https://www.baidu.com
+```
+
+> `[\r\n]` 为换行符, 使用http请求时请注意编码
+
+JSON数组:
+
+```
+[
+    "User-Agent=YOUR_UA",
+    "Referer=https://www.baidu.com",
+]
+```
+
+**响应数据**
+
+| 字段        | 类型       | 说明            |
+| ---------- | ---------- | ------------ |
+| `file`    | string       |  下载文件的*绝对路径*        |
+
+> 通过这个API下载的文件能直接放入CQ码作为图片或语音发送
+> 调用后会阻塞直到下载完成后才会返回数据，请注意下载大文件时的超时
+
 ### 获取用户VIP信息
 
 终结点：`/_get_vip_info`
