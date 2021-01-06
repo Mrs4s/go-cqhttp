@@ -99,7 +99,7 @@ func DownloadFile(url, path string, limit int64) error {
 	return nil
 }
 
-func DownloadFileMultiThreading(url, path string, limit int64, threadCount int) error {
+func DownloadFileMultiThreading(url, path string, limit int64, threadCount int, headers map[string]string) error {
 	if threadCount < 2 {
 		return DownloadFile(url, path, limit)
 	}
@@ -127,6 +127,11 @@ func DownloadFileMultiThreading(url, path string, limit int64, threadCount int) 
 		req, err := http.NewRequest("GET", url, nil)
 		if err != nil {
 			return err
+		}
+		if headers != nil {
+			for k, v := range headers {
+				req.Header.Set(k, v)
+			}
 		}
 		req.Header.Set("range", "bytes=0-")
 		resp, err := client.Do(req)
@@ -184,6 +189,11 @@ func DownloadFileMultiThreading(url, path string, limit int64, threadCount int) 
 		_, _ = file.Seek(block.BeginOffset, io.SeekStart)
 		writer := bufio.NewWriter(file)
 		defer writer.Flush()
+		if headers != nil {
+			for k, v := range headers {
+				req.Header.Set(k, v)
+			}
+		}
 		req.Header.Set("range", "bytes="+strconv.FormatInt(block.BeginOffset, 10)+"-"+strconv.FormatInt(block.EndOffset, 10))
 		resp, err := client.Do(req)
 		if err != nil {

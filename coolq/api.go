@@ -1,9 +1,12 @@
 package coolq
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
@@ -739,6 +742,25 @@ func (bot *CQBot) CQGetImage(file string) MSG {
 	} else {
 		return Failed(100, "LOAD_FILE_ERROR", err.Error())
 	}
+}
+
+func (bot *CQBot) CQDownloadFile(url string, headers map[string]string, threadCount int) MSG {
+	hash := md5.Sum([]byte(url))
+	file := path.Join(global.CACHE_PATH, hex.EncodeToString(hash[:])+".cache")
+	if global.PathExists(file) {
+		if err := os.Remove(file); err != nil {
+			log.Warnf("删除缓存文件 %v 时出现错误: %v", file, err)
+			return Failed(100, "DELETE_FILE_ERROR", err.Error())
+		}
+	}
+	if err := global.DownloadFileMultiThreading(url, file, 0, threadCount, headers); err != nil {
+		log.Warnf("下载链接 %v 时出现错误: %v", url, err)
+		return Failed(100, "DOWNLOAD_FILE_ERROR", err.Error())
+	}
+	abs, _ := filepath.Abs(file)
+	return OK(MSG{
+		"file": abs,
+	})
 }
 
 func (bot *CQBot) CQGetForwardMessage(resId string) MSG {

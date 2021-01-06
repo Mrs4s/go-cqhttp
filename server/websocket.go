@@ -490,6 +490,28 @@ var wsApi = map[string]func(*coolq.CQBot, gjson.Result) coolq.MSG{
 	"get_msg": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		return bot.CQGetMessage(int32(p.Get("message_id").Int()))
 	},
+	"download_file": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
+		headers := map[string]string{}
+		headersToken := p.Get("headers")
+		if headersToken.IsArray() {
+			for _, sub := range headersToken.Array() {
+				str := strings.SplitN(sub.String(), "=", 2)
+				if len(str) == 2 {
+					headers[str[0]] = str[1]
+				}
+			}
+		}
+		if headersToken.Type == gjson.String {
+			lines := strings.Split(headersToken.String(), "\r\n")
+			for _, sub := range lines {
+				str := strings.SplitN(sub, "=", 2)
+				if len(str) == 2 {
+					headers[str[0]] = str[1]
+				}
+			}
+		}
+		return bot.CQDownloadFile(p.Get("url").Str, headers, int(p.Get("thread_count").Int()))
+	},
 	"get_group_honor_info": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		return bot.CQGetGroupHonorInfo(p.Get("group_id").Int(), p.Get("type").Str)
 	},

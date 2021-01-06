@@ -833,7 +833,7 @@ func (bot *CQBot) makeImageElem(d map[string]string, group bool) (message.IMessa
 			_ = os.Remove(cacheFile)
 		}
 		thread, _ := strconv.Atoi(c)
-		if err := global.DownloadFileMultiThreading(f, cacheFile, maxImageSize, thread); err != nil {
+		if err := global.DownloadFileMultiThreading(f, cacheFile, maxImageSize, thread, nil); err != nil {
 			return nil, err
 		}
 		return &LocalImageElement{File: cacheFile}, nil
