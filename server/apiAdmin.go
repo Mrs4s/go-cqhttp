@@ -295,6 +295,9 @@ func (s *webServer) Dologin() {
 						log.Fatalf("重连失败: 设备锁")
 					default:
 						log.Errorf("重连失败: %v", rsp.ErrorMessage)
+						if strings.Contains(rsp.ErrorMessage, "冻结") {
+							log.Fatalf("账号被冻结, 放弃重连")
+						}
 						cli.Disconnect()
 						continue
 					}
