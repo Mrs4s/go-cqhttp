@@ -266,6 +266,8 @@ func (s *webServer) Dologin() {
 	log.Info("アトリは、高性能ですから!")
 	cli.OnDisconnected(func(bot *client.QQClient, e *client.ClientDisconnectedEvent) {
 		if conf.ReLogin.Enabled {
+			conf.ReLogin.Enabled = false
+			defer func() { conf.ReLogin.Enabled = true }()
 			var times uint = 1
 			for {
 				if cli.Online {
