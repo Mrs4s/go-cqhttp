@@ -784,9 +784,6 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m interf
 		}
 		return bot.makeShowPic(img, source, icon, minWidth, minHeight, maxWidth, maxHeight, group)
 	case "video":
-		if !group {
-			return nil, errors.New("unsupported private short video")
-		}
 		cache := d["cache"]
 		if cache == "" {
 			cache = "1"
