@@ -878,22 +878,23 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video, group bool) (
 		}
 		hash := md5.Sum([]byte(f))
 		cacheFile := path.Join(global.CACHE_PATH, hex.EncodeToString(hash[:])+".cache")
-		if global.PathExists(cacheFile) && cache == "1" {
-			return &LocalImageElement{File: cacheFile}, nil
-		}
-		if global.PathExists(cacheFile) {
-			_ = os.Remove(cacheFile)
-		}
-		thread, _ := strconv.Atoi(c)
 		var maxSize = func() int64 {
 			if video {
 				return maxVideoSize
 			}
 			return maxImageSize
 		}()
+		thread, _ := strconv.Atoi(c)
+		if global.PathExists(cacheFile) && cache == "1" {
+			goto hasCacheFile
+		}
+		if global.PathExists(cacheFile) {
+			_ = os.Remove(cacheFile)
+		}
 		if err := global.DownloadFileMultiThreading(f, cacheFile, maxSize, thread, nil); err != nil {
 			return nil, err
 		}
+	hasCacheFile:
 		if video {
 			return &LocalVideoElement{
 				File: cacheFile,
