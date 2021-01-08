@@ -135,6 +135,7 @@ func (bot *CQBot) UploadLocalImageAsPrivate(userId int64, img *LocalImageElement
 	if err != nil {
 		return nil, err
 	}
+	defer f.Close()
 	return bot.Client.UploadPrivateImage(userId, f)
 }
 

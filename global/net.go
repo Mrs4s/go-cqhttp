@@ -23,7 +23,7 @@ import (
 
 var (
 	client = &http.Client{
-		Timeout: time.Second * 30,
+		Timeout: time.Second * 120,
 		Transport: &http.Transport{
 			Proxy: func(request *http.Request) (u *url.URL, e error) {
 				if Proxy == "" {
@@ -47,6 +47,8 @@ var (
 	Proxy string
 
 	ErrOverSize = errors.New("oversize")
+
+	UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36 Edg/87.0.664.66"
 )
 
 func GetBytes(url string) ([]byte, error) {
@@ -54,7 +56,7 @@ func GetBytes(url string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	req.Header["User-Agent"] = []string{"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36 Edg/83.0.478.61"}
+	req.Header["User-Agent"] = []string{UserAgent}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
@@ -74,7 +76,7 @@ func GetBytes(url string) ([]byte, error) {
 	return body, nil
 }
 
-func DownloadFile(url, path string, limit int64) error {
+func DownloadFile(url, path string, limit int64, headers map[string]string) error {
 	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		return err
@@ -83,6 +85,14 @@ func DownloadFile(url, path string, limit int64) error {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return err
+	}
+	if headers != nil {
+		for k, v := range headers {
+			req.Header.Set(k, v)
+		}
+	}
+	if _, ok := headers["User-Agent"]; ok {
+		req.Header["User-Agent"] = []string{UserAgent}
 	}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -101,7 +111,7 @@ func DownloadFile(url, path string, limit int64) error {
 
 func DownloadFileMultiThreading(url, path string, limit int64, threadCount int, headers map[string]string) error {
 	if threadCount < 2 {
-		return DownloadFile(url, path, limit)
+		return DownloadFile(url, path, limit, headers)
 	}
 	type BlockMetaData struct {
 		BeginOffset    int64
@@ -132,6 +142,9 @@ func DownloadFileMultiThreading(url, path string, limit int64, threadCount int, 
 			for k, v := range headers {
 				req.Header.Set(k, v)
 			}
+		}
+		if _, ok := headers["User-Agent"]; ok {
+			req.Header["User-Agent"] = []string{UserAgent}
 		}
 		req.Header.Set("range", "bytes=0-")
 		resp, err := client.Do(req)
@@ -193,6 +206,9 @@ func DownloadFileMultiThreading(url, path string, limit int64, threadCount int, 
 			for k, v := range headers {
 				req.Header.Set(k, v)
 			}
+		}
+		if _, ok := headers["User-Agent"]; ok {
+			req.Header["User-Agent"] = []string{UserAgent}
 		}
 		req.Header.Set("range", "bytes="+strconv.FormatInt(block.BeginOffset, 10)+"-"+strconv.FormatInt(block.EndOffset, 10))
 		resp, err := client.Do(req)

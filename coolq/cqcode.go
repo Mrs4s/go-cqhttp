@@ -810,7 +810,7 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m interf
 		_, err = v.video.Read(header)
 		if !bytes.Equal(header, []byte{0x66, 0x74, 0x79, 0x70}) { // ftyp
 			_, _ = v.video.Seek(0, io.SeekStart)
-			hash, _ := utils.GetMd5AndLength(v.video)
+			hash, _ := utils.ComputeMd5AndLength(v.video)
 			cacheFile := path.Join(global.CACHE_PATH, hex.EncodeToString(hash[:])+".mp4")
 			if global.PathExists(cacheFile) {
 				goto ok
