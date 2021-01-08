@@ -837,7 +837,7 @@ func (bot *CQBot) CQCanSendRecord() MSG {
 }
 
 func (bot *CQBot) CQOcrImage(imageId string) MSG {
-	img, err := bot.makeImageElem(map[string]string{"file": imageId}, true)
+	img, err := bot.makeImageOrVideoElem(map[string]string{"file": imageId}, false, true)
 	if err != nil {
 		log.Warnf("load image error: %v", err)
 		return Failed(100, "LOAD_FILE_ERROR", err.Error())

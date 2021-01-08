@@ -158,6 +158,15 @@ func (bot *CQBot) SendGroupMessage(groupId int64, m *message.SendingMessage) int
 			newElem = append(newElem, gv)
 			continue
 		}
+		if i, ok := elem.(*LocalVideoElement); ok { // todo:cache & multiThread
+			gv, err := bot.Client.UploadGroupShortVideo(groupId, i.video, i.thumb)
+			if err != nil {
+				log.Warnf("警告: 群 %v 消息短视频上传失败: %v", groupId, err)
+				continue
+			}
+			newElem = append(newElem, gv)
+			continue
+		}
 		if i, ok := elem.(*PokeElement); ok {
 			if group := bot.Client.FindGroup(groupId); group != nil {
 				if mem := group.FindMember(i.Target); mem != nil {
@@ -272,7 +281,7 @@ func (bot *CQBot) SendPrivateMessage(target int64, m *message.SendingMessage) in
 		if i, ok := elem.(*message.VoiceElement); ok {
 			fv, err := bot.Client.UploadPrivatePtt(target, i.Data)
 			if err != nil {
-				log.Warnf("警告: 好友 %v 消息语音上传失败: %v", target, err)
+				log.Warnf("警告: 群 %v 消息语音上传失败: %v", target, err)
 				continue
 			}
 			newElem = append(newElem, fv)
