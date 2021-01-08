@@ -282,7 +282,7 @@ func (bot *CQBot) SendPrivateMessage(target int64, m *message.SendingMessage) in
 		if i, ok := elem.(*message.VoiceElement); ok {
 			fv, err := bot.Client.UploadPrivatePtt(target, i.Data)
 			if err != nil {
-				log.Warnf("警告: 群 %v 消息语音上传失败: %v", target, err)
+				log.Warnf("警告: 私聊 %v 消息语音上传失败: %v", target, err)
 				continue
 			}
 			newElem = append(newElem, fv)
@@ -291,7 +291,7 @@ func (bot *CQBot) SendPrivateMessage(target int64, m *message.SendingMessage) in
 		if i, ok := elem.(*LocalVideoElement); ok { // todo:cache & multiThread
 			gv, err := bot.Client.UploadGroupShortVideo(target, i.video, i.thumb)
 			if err != nil {
-				log.Warnf("警告: 群 %v 消息短视频上传失败: %v", int64(rand.Uint32()), err)
+				log.Warnf("警告: 私聊 %v 消息短视频上传失败: %v", int64(rand.Uint32()), err)
 				continue
 			}
 			newElem = append(newElem, gv)
