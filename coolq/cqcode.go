@@ -605,7 +605,6 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m interf
 			}
 		}()
 		data, err := bot.Client.GetTts(d["text"])
-		ioutil.WriteFile("tts.silk", data, 777)
 		if err != nil {
 			return nil, err
 		}
@@ -620,7 +619,7 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m interf
 			return nil, err
 		}
 		if !global.IsAMRorSILK(data) {
-			data, err = global.Encoder(data)
+			data, err = global.EncoderSilk(data)
 			if err != nil {
 				return nil, err
 			}

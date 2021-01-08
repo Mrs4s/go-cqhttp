@@ -7,6 +7,7 @@ import (
 	"github.com/Mrs4s/go-cqhttp/global/codec"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
+	"os/exec"
 	"path"
 )
 
@@ -21,7 +22,7 @@ func InitCodec() {
 	}
 }
 
-func Encoder(data []byte) ([]byte, error) {
+func EncoderSilk(data []byte) ([]byte, error) {
 	if useSilkCodec == false {
 		return nil, errors.New("no silk encoder")
 	}
@@ -36,4 +37,14 @@ func Encoder(data []byte) ([]byte, error) {
 		return nil, err
 	}
 	return slk, nil
+}
+
+func EncodeMP4(src string, dst string) error {
+	cmd := exec.Command("ffmpeg", "-i", src, "-c", "copy", "-map", "0", dst)
+	return cmd.Run()
+}
+
+func ExtractCover(src string, dst string) error {
+	cmd := exec.Command("ffmpeg", "-i", src, "-y", "-r", "1", "-f", "image2", dst)
+	return cmd.Run()
 }
