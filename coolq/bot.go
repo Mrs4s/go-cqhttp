@@ -5,6 +5,7 @@ import (
 	"encoding/gob"
 	"fmt"
 	"hash/crc32"
+	"math/rand"
 	"os"
 	"path"
 	"runtime/debug"
@@ -285,6 +286,15 @@ func (bot *CQBot) SendPrivateMessage(target int64, m *message.SendingMessage) in
 				continue
 			}
 			newElem = append(newElem, fv)
+			continue
+		}
+		if i, ok := elem.(*LocalVideoElement); ok { // todo:cache & multiThread
+			gv, err := bot.Client.UploadGroupShortVideo(target, i.video, i.thumb)
+			if err != nil {
+				log.Warnf("警告: 群 %v 消息短视频上传失败: %v", int64(rand.Uint32()), err)
+				continue
+			}
+			newElem = append(newElem, gv)
 			continue
 		}
 		if i, ok := elem.(*QQMusicElement); ok {
