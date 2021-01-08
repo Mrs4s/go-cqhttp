@@ -71,6 +71,7 @@ Type : `image`
 | `url`   | -               | 图片 URL                                                        |
 | `cache` | `0` `1`         | 只在通过网络 URL 发送时有效，表示是否使用已缓存的文件，默认 `1` |
 | `id`    | -               | 发送秀图时的特效id，默认为40000                                 |
+| `c`     | `2` `3`         | 通过网络下载图片时的线程数, 默认单线程. (在资源不支持并发时会自动处理)|
 
 可用的特效ID:
 
@@ -269,6 +270,20 @@ Type: `node`
     }
 ]
 ````
+### 短视频消息
+
+Type: `video`
+
+范围: **发送/接收**
+
+参数:
+
+| 参数名  | 类型   | 说明                                              |
+| ------- | ------ | ------------------------------------------------|
+| `file`  | string | 支持http和file发送                                |
+| `cover` | string | 视频封面，支持http，file和base64发送，格式必须为jpg    |
+| `c`     | `2` `3`| 通过网络下载视频时的线程数, 默认单线程. (在资源不支持并发时会自动处理)|
+示例: `[CQ:image,file=file:///C:\\Users\Richard\Pictures\1.mp4]`
 
 ### XML 消息
 
@@ -758,6 +773,46 @@ Type: `tts`
 | `can_at_all`                    | bool       | 是否可以@全体成员                |
 | `remain_at_all_count_for_group` | int16      | 群内所有管理当天剩余@全体成员次数 |
 | `remain_at_all_count_for_uin`   | int16      | BOT当天剩余@全体成员次数         |
+
+### 下载文件到缓存目录
+
+终结点: `/download_file`
+
+**参数** 
+
+| 字段       | 类型   | 说明                      |
+| ---------- | ------ | ------------------------- |
+| `url` | string  | 链接地址                      |
+| `thread_count` | int32  | 下载线程数            |
+| `headers` | string or array  | 自定义请求头    |
+
+**`headers`格式:**
+
+字符串:
+
+```
+User-Agent=YOUR_UA[\r\n]Referer=https://www.baidu.com
+```
+
+> `[\r\n]` 为换行符, 使用http请求时请注意编码
+
+JSON数组:
+
+```
+[
+    "User-Agent=YOUR_UA",
+    "Referer=https://www.baidu.com",
+]
+```
+
+**响应数据**
+
+| 字段        | 类型       | 说明            |
+| ---------- | ---------- | ------------ |
+| `file`    | string       |  下载文件的*绝对路径*        |
+
+> 通过这个API下载的文件能直接放入CQ码作为图片或语音发送
+> 调用后会阻塞直到下载完成后才会返回数据，请注意下载大文件时的超时
 
 ### 获取用户VIP信息
 

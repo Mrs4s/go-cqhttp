@@ -4,31 +4,26 @@ import (
 	"crypto/md5"
 	"errors"
 	"fmt"
-	"io/ioutil"
-	"path"
-	"sync"
-
+	"github.com/Mrs4s/go-cqhttp/global/codec"
 	log "github.com/sirupsen/logrus"
-	"github.com/wdvxdr1123/go-silk/silk"
+	"io/ioutil"
+	"os/exec"
+	"path"
 )
 
-var codec silk.Encoder
-var useCodec = true
-var once sync.Once
+var useSilkCodec = true
 
 func InitCodec() {
-	once.Do(func() {
-		log.Info("正在加载silk编码器...")
-		err := codec.Init("data/cache", "codec")
-		if err != nil {
-			log.Error(err)
-			useCodec = false
-		}
-	})
+	log.Info("正在加载silk编码器...")
+	err := codec.Init("data/cache", "codec")
+	if err != nil {
+		log.Error(err)
+		useSilkCodec = false
+	}
 }
 
-func Encoder(data []byte) ([]byte, error) {
-	if useCodec == false {
+func EncoderSilk(data []byte) ([]byte, error) {
+	if useSilkCodec == false {
 		return nil, errors.New("no silk encoder")
 	}
 	h := md5.New()
@@ -42,4 +37,14 @@ func Encoder(data []byte) ([]byte, error) {
 		return nil, err
 	}
 	return slk, nil
+}
+
+func EncodeMP4(src string, dst string) error {
+	cmd := exec.Command("ffmpeg", "-i", src, "-y", "-c", "copy", "-map", "0", dst)
+	return cmd.Run()
+}
+
+func ExtractCover(src string, dst string) error {
+	cmd := exec.Command("ffmpeg", "-i", src, "-y", "-r", "1", "-f", "image2", dst)
+	return cmd.Run()
 }

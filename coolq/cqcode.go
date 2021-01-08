@@ -21,6 +21,7 @@ import (
 
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/message"
+	"github.com/Mrs4s/MiraiGo/utils"
 	"github.com/Mrs4s/go-cqhttp/global"
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
@@ -35,7 +36,8 @@ var paramReg = regexp.MustCompile(`,([\w\-.]+?)=([^,\]]+)`)
 var IgnoreInvalidCQCode = false
 var SplitUrl = false
 
-const maxImageSize = 1024 * 1024 * 30 // 30MB
+const maxImageSize = 1024 * 1024 * 30  // 30MB
+const maxVideoSize = 1024 * 1024 * 100 // 100MB
 
 type PokeElement struct {
 	Target int64
@@ -75,6 +77,13 @@ type LocalImageElement struct {
 type LocalVoiceElement struct {
 	message.VoiceElement
 	Stream io.ReadSeeker
+}
+
+type LocalVideoElement struct {
+	message.ShortVideoElement
+	File  string
+	video io.ReadSeeker
+	thumb io.ReadSeeker
 }
 
 func (e *GiftElement) Type() message.ElementType {
@@ -426,7 +435,7 @@ func (bot *CQBot) ConvertStringMessage(msg string, group bool) (r []message.IMes
 		}
 		elem, err := bot.ToElement(t, params, group)
 		if err != nil {
-			org := "[" + string(cqCode) + "]"
+			org := "[CQ:" + string(cqCode) + "]"
 			if !IgnoreInvalidCQCode {
 				log.Warnf("转换CQ码 %v 时出现错误: %v 将原样发送.", org, err)
 				r = append(r, message.NewText(org))
@@ -547,7 +556,7 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m interf
 		}
 		return message.NewText(d["text"]), nil
 	case "image":
-		img, err := bot.makeImageElem(d, group)
+		img, err := bot.makeImageOrVideoElem(d, false, group)
 		if err != nil {
 			return nil, err
 		}
@@ -605,7 +614,6 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m interf
 			}
 		}()
 		data, err := bot.Client.GetTts(d["text"])
-		ioutil.WriteFile("tts.silk", data, 777)
 		if err != nil {
 			return nil, err
 		}
@@ -620,7 +628,7 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m interf
 			return nil, err
 		}
 		if !global.IsAMRorSILK(data) {
-			data, err = global.Encoder(data)
+			data, err = global.EncoderSilk(data)
 			if err != nil {
 				return nil, err
 			}
@@ -770,11 +778,55 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m interf
 		if maxHeight == 0 {
 			maxHeight = 1000
 		}
-		img, err := bot.makeImageElem(d, group)
+		img, err := bot.makeImageOrVideoElem(d, false, group)
 		if err != nil {
 			return nil, errors.New("send cardimage faild")
 		}
 		return bot.makeShowPic(img, source, icon, minWidth, minHeight, maxWidth, maxHeight, group)
+	case "video":
+		if !group {
+			return nil, errors.New("unsupported private short video")
+		}
+		cache := d["cache"]
+		if cache == "" {
+			cache = "1"
+		}
+		file, err := bot.makeImageOrVideoElem(d, true, group)
+		if err != nil {
+			return nil, err
+		}
+		v := file.(*LocalVideoElement)
+		if cover, ok := d["cover"]; ok {
+			data, _ := global.FindFile(cover, cache, global.IMAGE_PATH)
+			v.thumb = bytes.NewReader(data)
+		}
+		if v.thumb == nil {
+			_ = global.ExtractCover(v.File, v.File+".jpg")
+			v.thumb, _ = os.Open(v.File + ".jpg")
+		}
+		v.video, _ = os.Open(v.File)
+		_, err = v.video.Seek(4, io.SeekStart)
+		if err != nil {
+			return nil, err
+		}
+		var header = make([]byte, 4)
+		_, err = v.video.Read(header)
+		if !bytes.Equal(header, []byte{0x66, 0x74, 0x79, 0x70}) { // ftyp
+			_, _ = v.video.Seek(0, io.SeekStart)
+			hash, _ := utils.GetMd5AndLength(v.video)
+			cacheFile := path.Join(global.CACHE_PATH, hex.EncodeToString(hash[:])+".mp4")
+			if global.PathExists(cacheFile) {
+				goto ok
+			}
+			err = global.EncodeMP4(v.File, cacheFile)
+			if err != nil {
+				return nil, err
+			}
+		ok:
+			v.video, _ = os.Open(cacheFile)
+		}
+		_, _ = v.video.Seek(0, io.SeekStart)
+		return v, nil
 	default:
 		return nil, errors.New("unsupported cq code: " + t)
 	}
@@ -816,7 +868,7 @@ func CQCodeUnescapeValue(content string) string {
 }
 
 // 图片 elem 生成器，单独拎出来，用于公用
-func (bot *CQBot) makeImageElem(d map[string]string, group bool) (message.IMessageElement, error) {
+func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video, group bool) (message.IMessageElement, error) {
 	f := d["file"]
 	if strings.HasPrefix(f, "http") || strings.HasPrefix(f, "https") {
 		cache := d["cache"]
@@ -833,17 +885,21 @@ func (bot *CQBot) makeImageElem(d map[string]string, group bool) (message.IMessa
 			_ = os.Remove(cacheFile)
 		}
 		thread, _ := strconv.Atoi(c)
-		if err := global.DownloadFileMultiThreading(f, cacheFile, maxImageSize, thread); err != nil {
+		var maxSize = func() int64 {
+			if video {
+				return maxVideoSize
+			}
+			return maxImageSize
+		}()
+		if err := global.DownloadFileMultiThreading(f, cacheFile, maxSize, thread, nil); err != nil {
 			return nil, err
+		}
+		if video {
+			return &LocalVideoElement{
+				File: cacheFile,
+			}, nil
 		}
 		return &LocalImageElement{File: cacheFile}, nil
-	}
-	if strings.HasPrefix(f, "base64") {
-		b, err := base64.StdEncoding.DecodeString(strings.ReplaceAll(f, "base64://", ""))
-		if err != nil {
-			return nil, err
-		}
-		return &LocalImageElement{Stream: bytes.NewReader(b)}, nil
 	}
 	if strings.HasPrefix(f, "file") {
 		fu, err := url.Parse(f)
@@ -857,10 +913,28 @@ func (bot *CQBot) makeImageElem(d map[string]string, group bool) (message.IMessa
 		if err != nil {
 			return nil, err
 		}
+		if video {
+			goto videos
+		}
 		if info.Size() == 0 || info.Size() >= maxImageSize {
 			return nil, errors.New("invalid image size")
 		}
 		return &LocalImageElement{File: fu.Path}, nil
+	videos:
+		if info.Size() == 0 || info.Size() >= maxVideoSize {
+			return nil, errors.New("invalid video size")
+		}
+		return &LocalVideoElement{File: fu.Path}, nil
+	}
+	if video { // 短视频视频只支持以上两种
+		return nil, errors.New("invalid video")
+	}
+	if strings.HasPrefix(f, "base64") {
+		b, err := base64.StdEncoding.DecodeString(strings.ReplaceAll(f, "base64://", ""))
+		if err != nil {
+			return nil, err
+		}
+		return &LocalImageElement{Stream: bytes.NewReader(b)}, nil
 	}
 	rawPath := path.Join(global.IMAGE_PATH, f)
 	if !global.PathExists(rawPath) && global.PathExists(path.Join(global.IMAGE_PATH_OLD, f)) {
@@ -870,7 +944,7 @@ func (bot *CQBot) makeImageElem(d map[string]string, group bool) (message.IMessa
 		rawPath += ".cqimg"
 	}
 	if !global.PathExists(rawPath) && d["url"] != "" {
-		return bot.makeImageElem(map[string]string{"file": d["url"]}, group)
+		return bot.makeImageOrVideoElem(map[string]string{"file": d["url"]}, false, group)
 	}
 	if global.PathExists(rawPath) {
 		file, err := os.Open(rawPath)
@@ -887,9 +961,11 @@ func (bot *CQBot) makeImageElem(d map[string]string, group bool) (message.IMessa
 		if len(b) < 20 {
 			return nil, errors.New("invalid local file")
 		}
-		var size int32
-		var hash []byte
-		var url string
+		var (
+			size int32
+			hash []byte
+			url  string
+		)
 		if path.Ext(rawPath) == ".cqimg" {
 			for _, line := range strings.Split(global.ReadAllText(rawPath), "\n") {
 				kv := strings.SplitN(line, "=", 2)
@@ -910,27 +986,23 @@ func (bot *CQBot) makeImageElem(d map[string]string, group bool) (message.IMessa
 		}
 		if size == 0 {
 			if url != "" {
-				return bot.makeImageElem(map[string]string{"file": url}, group)
+				return bot.makeImageOrVideoElem(map[string]string{"file": url}, false, group)
 			}
 			return nil, errors.New("img size is 0")
 		}
 		if len(hash) != 16 {
 			return nil, errors.New("invalid hash")
 		}
+		var rsp message.IMessageElement
 		if group {
-			rsp, err := bot.Client.QueryGroupImage(int64(rand.Uint32()), hash, size)
-			if err != nil {
-				if url != "" {
-					return bot.makeImageElem(map[string]string{"file": url}, group)
-				}
-				return nil, err
-			}
-			return rsp, nil
+			rsp, err = bot.Client.QueryGroupImage(int64(rand.Uint32()), hash, size)
+			goto ok
 		}
-		rsp, err := bot.Client.QueryFriendImage(int64(rand.Uint32()), hash, size)
+		rsp, err = bot.Client.QueryFriendImage(int64(rand.Uint32()), hash, size)
+	ok:
 		if err != nil {
 			if url != "" {
-				return bot.makeImageElem(map[string]string{"file": url}, group)
+				return bot.makeImageOrVideoElem(map[string]string{"file": url}, false, group)
 			}
 			return nil, err
 		}

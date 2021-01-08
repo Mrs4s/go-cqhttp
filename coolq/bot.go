@@ -5,7 +5,6 @@ import (
 	"encoding/gob"
 	"fmt"
 	"hash/crc32"
-	"io/ioutil"
 	"os"
 	"path"
 	"runtime/debug"
@@ -150,10 +149,19 @@ func (bot *CQBot) SendGroupMessage(groupId int64, m *message.SendingMessage) int
 			newElem = append(newElem, gm)
 			continue
 		}
-		if i, ok := elem.(*LocalVoiceElement); ok {
-			gv, err := bot.Client.UploadGroupPtt(groupId, i.Stream)
+		if i, ok := elem.(*message.VoiceElement); ok {
+			gv, err := bot.Client.UploadGroupPtt(groupId, bytes.NewReader(i.Data))
 			if err != nil {
 				log.Warnf("警告: 群 %v 消息语音上传失败: %v", groupId, err)
+				continue
+			}
+			newElem = append(newElem, gv)
+			continue
+		}
+		if i, ok := elem.(*LocalVideoElement); ok { // todo:cache & multiThread
+			gv, err := bot.Client.UploadGroupShortVideo(groupId, i.video, i.thumb)
+			if err != nil {
+				log.Warnf("警告: 群 %v 消息短视频上传失败: %v", groupId, err)
 				continue
 			}
 			newElem = append(newElem, gv)
@@ -270,15 +278,10 @@ func (bot *CQBot) SendPrivateMessage(target int64, m *message.SendingMessage) in
 			bot.Client.SendFriendPoke(i.Target)
 			return 0
 		}
-		if i, ok := elem.(*LocalVoiceElement); ok {
-			data, err := ioutil.ReadAll(i.Stream)
+		if i, ok := elem.(*message.VoiceElement); ok {
+			fv, err := bot.Client.UploadPrivatePtt(target, i.Data)
 			if err != nil {
-				log.Warnf("警告: 好友 %v 消息语音读取失败: %v", target, err)
-				continue
-			}
-			fv, err := bot.Client.UploadPrivatePtt(target, data)
-			if err != nil {
-				log.Warnf("警告: 好友 %v 消息语音上传失败: %v", target, err)
+				log.Warnf("警告: 群 %v 消息语音上传失败: %v", target, err)
 				continue
 			}
 			newElem = append(newElem, fv)

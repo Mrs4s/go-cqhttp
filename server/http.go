@@ -428,6 +428,33 @@ func HandleQuickOperation(s *httpServer, c *gin.Context) {
 	}
 }
 
+func DownloadFile(s *httpServer, c *gin.Context) {
+	url := getParam(c, "url")
+	tc, _ := strconv.Atoi(getParam(c, "thread_count"))
+	h, t := getParamWithType(c, "headers")
+	headers := map[string]string{}
+	if t == gjson.Null || t == gjson.String {
+		lines := strings.Split(h, "\r\n")
+		for _, sub := range lines {
+			str := strings.SplitN(sub, "=", 2)
+			if len(str) == 2 {
+				headers[str[0]] = str[1]
+			}
+		}
+	}
+	if t == gjson.JSON {
+		arr := gjson.Parse(h)
+		for _, sub := range arr.Array() {
+			str := strings.SplitN(sub.String(), "=", 2)
+			if len(str) == 2 {
+				headers[str[0]] = str[1]
+			}
+		}
+	}
+	println(url, tc, h, t)
+	c.JSON(200, s.bot.CQDownloadFile(url, headers, tc))
+}
+
 func OcrImage(s *httpServer, c *gin.Context) {
 	img := getParam(c, "image")
 	c.JSON(200, s.bot.CQOcrImage(img))
@@ -535,6 +562,7 @@ var httpApi = map[string]func(s *httpServer, c *gin.Context){
 	"reload_event_filter":        ReloadEventFilter,
 	"set_group_portrait":         SetGroupPortrait,
 	"set_group_anonymous_ban":    SetGroupAnonymousBan,
+	"download_file":              DownloadFile,
 	".handle_quick_operation":    HandleQuickOperation,
 	".ocr_image":                 OcrImage,
 	"ocr_image":                  OcrImage,

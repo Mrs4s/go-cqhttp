@@ -266,6 +266,8 @@ func (s *webServer) Dologin() {
 	log.Info("アトリは、高性能ですから!")
 	cli.OnDisconnected(func(bot *client.QQClient, e *client.ClientDisconnectedEvent) {
 		if conf.ReLogin.Enabled {
+			conf.ReLogin.Enabled = false
+			defer func() { conf.ReLogin.Enabled = true }()
 			var times uint = 1
 			for {
 				if cli.Online {
@@ -293,6 +295,9 @@ func (s *webServer) Dologin() {
 						log.Fatalf("重连失败: 设备锁")
 					default:
 						log.Errorf("重连失败: %v", rsp.ErrorMessage)
+						if strings.Contains(rsp.ErrorMessage, "冻结") {
+							log.Fatalf("账号被冻结, 放弃重连")
+						}
 						cli.Disconnect()
 						continue
 					}
