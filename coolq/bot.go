@@ -132,12 +132,9 @@ func (bot *CQBot) UploadLocalVideo(target int64, v *LocalVideoElement) (*message
 			return nil, err
 		}
 		defer video.Close()
-		// todo 加缓存上传失败:短视频上传失败: resp is empty 迷
-		/*
-			hash1, _ := utils.ComputeMd5AndLength(video)
-			hash2, _ := utils.ComputeMd5AndLength(v.thumb)
-			cacheFile := path.Join(global.CACHE_PATH, hex.EncodeToString(hash1[:])+hex.EncodeToString(hash2[:])+".video")
-		*/
+		// todo 多线程上传失败: 短视频上传失败: resp is empty (upload video file error: upload failed: 70
+		//hash, _ := utils.ComputeMd5AndLength(io.MultiReader(video, v.thumb))
+		//cacheFile := path.Join(global.CACHE_PATH, hex.EncodeToString(hash[:])+".cache")
 		return bot.Client.UploadGroupShortVideo(target, video, v.thumb)
 	}
 	return &v.ShortVideoElement, nil

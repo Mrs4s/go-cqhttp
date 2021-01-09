@@ -792,6 +792,9 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m interf
 			return nil, err
 		}
 		v := file.(*LocalVideoElement)
+		if v.File == "" {
+			return v, nil
+		}
 		var data []byte
 		if cover, ok := d["cover"]; ok {
 			data, _ = global.FindFile(cover, cache, global.IMAGE_PATH)
@@ -923,8 +926,9 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video, group bool) (
 		}
 		return &LocalVideoElement{File: fu.Path}, nil
 	}
-	if video { // 短视频视频只支持以上两种
-		return nil, errors.New("invalid video")
+	rawPath := path.Join(global.IMAGE_PATH, f)
+	if video {
+		goto video
 	}
 	if strings.HasPrefix(f, "base64") {
 		b, err := base64.StdEncoding.DecodeString(strings.ReplaceAll(f, "base64://", ""))
@@ -933,7 +937,6 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video, group bool) (
 		}
 		return &LocalImageElement{Stream: bytes.NewReader(b)}, nil
 	}
-	rawPath := path.Join(global.IMAGE_PATH, f)
 	if !global.PathExists(rawPath) && global.PathExists(path.Join(global.IMAGE_PATH_OLD, f)) {
 		rawPath = path.Join(global.IMAGE_PATH_OLD, f)
 	}
@@ -1006,6 +1009,23 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video, group bool) (
 		return rsp, nil
 	}
 	return nil, errors.New("invalid image")
+video:
+	rawPath = path.Join(global.VIDEO_PATH, f)
+	if !global.PathExists(rawPath) {
+		return nil, errors.New("invalid video")
+	}
+	if path.Ext(rawPath) == ".video" {
+		b, _ := ioutil.ReadFile(rawPath)
+		r := binary.NewReader(b)
+		return &LocalVideoElement{ShortVideoElement: message.ShortVideoElement{// todo 检查缓存是否有效
+			Md5:  r.ReadBytes(16),
+			Size: r.ReadInt32(),
+			Name: r.ReadString(),
+			Uuid: r.ReadAvailable(),
+		}}, nil
+	} else {
+		return &LocalVideoElement{File: rawPath}, nil
+	}
 }
 
 //makeShowPic 一种xml 方式发送的群消息图片
