@@ -82,7 +82,6 @@ type LocalVoiceElement struct {
 type LocalVideoElement struct {
 	message.ShortVideoElement
 	File  string
-	video io.ReadSeeker
 	thumb io.ReadSeeker
 }
 
@@ -793,26 +792,30 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m interf
 			return nil, err
 		}
 		v := file.(*LocalVideoElement)
+		if v.File == "" {
+			return v, nil
+		}
+		var data []byte
 		if cover, ok := d["cover"]; ok {
-			data, _ := global.FindFile(cover, cache, global.IMAGE_PATH)
-			v.thumb = bytes.NewReader(data)
-		}
-		if v.thumb == nil {
+			data, _ = global.FindFile(cover, cache, global.IMAGE_PATH)
+		} else {
 			_ = global.ExtractCover(v.File, v.File+".jpg")
-			v.thumb, _ = os.Open(v.File + ".jpg")
+			data, _ = ioutil.ReadFile(v.File + ".jpg")
 		}
-		v.video, _ = os.Open(v.File)
-		_, err = v.video.Seek(4, io.SeekStart)
+		v.thumb = bytes.NewReader(data)
+		video, _ := os.Open(v.File)
+		defer video.Close()
+		_, err = video.Seek(4, io.SeekStart)
 		if err != nil {
 			return nil, err
 		}
 		var header = make([]byte, 4)
-		_, err = v.video.Read(header)
-		if !bytes.Equal(header, []byte{0x66, 0x74, 0x79, 0x70}) { // ftyp
-			_, _ = v.video.Seek(0, io.SeekStart)
-			hash, _ := utils.ComputeMd5AndLength(v.video)
+		_, err = video.Read(header)
+		if !bytes.Equal(header, []byte{0x66, 0x74, 0x79, 0x70}) { // check file header ftyp
+			_, _ = video.Seek(0, io.SeekStart)
+			hash, _ := utils.ComputeMd5AndLength(video)
 			cacheFile := path.Join(global.CACHE_PATH, hex.EncodeToString(hash[:])+".mp4")
-			if global.PathExists(cacheFile) {
+			if global.PathExists(cacheFile) && cache == "1" {
 				goto ok
 			}
 			err = global.EncodeMP4(v.File, cacheFile)
@@ -820,9 +823,8 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m interf
 				return nil, err
 			}
 		ok:
-			v.video, _ = os.Open(cacheFile)
+			v.File = cacheFile
 		}
-		_, _ = v.video.Seek(0, io.SeekStart)
 		return v, nil
 	default:
 		return nil, errors.New("unsupported cq code: " + t)
@@ -924,8 +926,9 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video, group bool) (
 		}
 		return &LocalVideoElement{File: fu.Path}, nil
 	}
-	if video { // 短视频视频只支持以上两种
-		return nil, errors.New("invalid video")
+	rawPath := path.Join(global.IMAGE_PATH, f)
+	if video {
+		goto video
 	}
 	if strings.HasPrefix(f, "base64") {
 		b, err := base64.StdEncoding.DecodeString(strings.ReplaceAll(f, "base64://", ""))
@@ -934,7 +937,6 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video, group bool) (
 		}
 		return &LocalImageElement{Stream: bytes.NewReader(b)}, nil
 	}
-	rawPath := path.Join(global.IMAGE_PATH, f)
 	if !global.PathExists(rawPath) && global.PathExists(path.Join(global.IMAGE_PATH_OLD, f)) {
 		rawPath = path.Join(global.IMAGE_PATH_OLD, f)
 	}
@@ -1007,6 +1009,23 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video, group bool) (
 		return rsp, nil
 	}
 	return nil, errors.New("invalid image")
+video:
+	rawPath = path.Join(global.VIDEO_PATH, f)
+	if !global.PathExists(rawPath) {
+		return nil, errors.New("invalid video")
+	}
+	if path.Ext(rawPath) == ".video" {
+		b, _ := ioutil.ReadFile(rawPath)
+		r := binary.NewReader(b)
+		return &LocalVideoElement{ShortVideoElement: message.ShortVideoElement{// todo 检查缓存是否有效
+			Md5:  r.ReadBytes(16),
+			Size: r.ReadInt32(),
+			Name: r.ReadString(),
+			Uuid: r.ReadAvailable(),
+		}}, nil
+	} else {
+		return &LocalVideoElement{File: rawPath}, nil
+	}
 }
 
 //makeShowPic 一种xml 方式发送的群消息图片

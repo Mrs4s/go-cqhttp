@@ -5,7 +5,6 @@ import (
 	"encoding/gob"
 	"fmt"
 	"hash/crc32"
-	"math/rand"
 	"os"
 	"path"
 	"runtime/debug"
@@ -126,6 +125,21 @@ func (bot *CQBot) UploadLocalImageAsGroup(groupCode int64, img *LocalImageElemen
 	return bot.Client.UploadGroupImageByFile(groupCode, img.File)
 }
 
+func (bot *CQBot) UploadLocalVideo(target int64, v *LocalVideoElement) (*message.ShortVideoElement, error) {
+	if v.File != "" {
+		video, err := os.Open(v.File)
+		if err != nil {
+			return nil, err
+		}
+		defer video.Close()
+		// todo 多线程上传失败: 短视频上传失败: resp is empty (upload video file error: upload failed: 70
+		//hash, _ := utils.ComputeMd5AndLength(io.MultiReader(video, v.thumb))
+		//cacheFile := path.Join(global.CACHE_PATH, hex.EncodeToString(hash[:])+".cache")
+		return bot.Client.UploadGroupShortVideo(target, video, v.thumb)
+	}
+	return &v.ShortVideoElement, nil
+}
+
 func (bot *CQBot) UploadLocalImageAsPrivate(userId int64, img *LocalImageElement) (*message.FriendImageElement, error) {
 	if img.Stream != nil {
 		return bot.Client.UploadPrivateImage(userId, img.Stream)
@@ -160,8 +174,8 @@ func (bot *CQBot) SendGroupMessage(groupId int64, m *message.SendingMessage) int
 			newElem = append(newElem, gv)
 			continue
 		}
-		if i, ok := elem.(*LocalVideoElement); ok { // todo:cache & multiThread
-			gv, err := bot.Client.UploadGroupShortVideo(groupId, i.video, i.thumb)
+		if i, ok := elem.(*LocalVideoElement); ok {
+			gv, err := bot.UploadLocalVideo(groupId, i)
 			if err != nil {
 				log.Warnf("警告: 群 %v 消息短视频上传失败: %v", groupId, err)
 				continue
@@ -289,10 +303,10 @@ func (bot *CQBot) SendPrivateMessage(target int64, m *message.SendingMessage) in
 			newElem = append(newElem, fv)
 			continue
 		}
-		if i, ok := elem.(*LocalVideoElement); ok { // todo:cache & multiThread
-			gv, err := bot.Client.UploadGroupShortVideo(target, i.video, i.thumb)
+		if i, ok := elem.(*LocalVideoElement); ok {
+			gv, err := bot.UploadLocalVideo(target, i)
 			if err != nil {
-				log.Warnf("警告: 私聊 %v 消息短视频上传失败: %v", int64(rand.Uint32()), err)
+				log.Warnf("警告: 私聊 %v 消息短视频上传失败: %v", target, err)
 				continue
 			}
 			newElem = append(newElem, gv)
