@@ -82,7 +82,6 @@ type LocalVoiceElement struct {
 type LocalVideoElement struct {
 	message.ShortVideoElement
 	File  string
-	video io.ReadSeeker
 	thumb io.ReadSeeker
 }
 
@@ -793,26 +792,27 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m interf
 			return nil, err
 		}
 		v := file.(*LocalVideoElement)
+		var data []byte
 		if cover, ok := d["cover"]; ok {
-			data, _ := global.FindFile(cover, cache, global.IMAGE_PATH)
-			v.thumb = bytes.NewReader(data)
-		}
-		if v.thumb == nil {
+			data, _ = global.FindFile(cover, cache, global.IMAGE_PATH)
+		} else {
 			_ = global.ExtractCover(v.File, v.File+".jpg")
-			v.thumb, _ = os.Open(v.File + ".jpg")
+			data, _ = ioutil.ReadFile(v.File + ".jpg")
 		}
-		v.video, _ = os.Open(v.File)
-		_, err = v.video.Seek(4, io.SeekStart)
+		v.thumb = bytes.NewReader(data)
+		video, _ := os.Open(v.File)
+		defer video.Close()
+		_, err = video.Seek(4, io.SeekStart)
 		if err != nil {
 			return nil, err
 		}
 		var header = make([]byte, 4)
-		_, err = v.video.Read(header)
-		if !bytes.Equal(header, []byte{0x66, 0x74, 0x79, 0x70}) { // ftyp
-			_, _ = v.video.Seek(0, io.SeekStart)
-			hash, _ := utils.ComputeMd5AndLength(v.video)
+		_, err = video.Read(header)
+		if !bytes.Equal(header, []byte{0x66, 0x74, 0x79, 0x70}) { // check file header ftyp
+			_, _ = video.Seek(0, io.SeekStart)
+			hash, _ := utils.ComputeMd5AndLength(video)
 			cacheFile := path.Join(global.CACHE_PATH, hex.EncodeToString(hash[:])+".mp4")
-			if global.PathExists(cacheFile) {
+			if global.PathExists(cacheFile) && cache == "1" {
 				goto ok
 			}
 			err = global.EncodeMP4(v.File, cacheFile)
@@ -820,9 +820,8 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m interf
 				return nil, err
 			}
 		ok:
-			v.video, _ = os.Open(cacheFile)
+			v.File = cacheFile
 		}
-		_, _ = v.video.Seek(0, io.SeekStart)
 		return v, nil
 	default:
 		return nil, errors.New("unsupported cq code: " + t)

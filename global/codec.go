@@ -39,7 +39,7 @@ func EncoderSilk(data []byte) ([]byte, error) {
 	return slk, nil
 }
 
-func EncodeMP4(src string, dst string) error {
+func EncodeMP4(src string, dst string) error { //        -y 覆盖文件
 	cmd := exec.Command("ffmpeg", "-i", src, "-y", "-c", "copy", "-map", "0", dst)
 	return cmd.Run()
 }
