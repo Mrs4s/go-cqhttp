@@ -661,7 +661,7 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m interf
 			if len(aid) < 2 {
 				return nil, errors.New("song error")
 			}
-			content := "来自go-cqhttp"
+			content := ""
 			if d["content"] != "" {
 				content = d["content"]
 			}
