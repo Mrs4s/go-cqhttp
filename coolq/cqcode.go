@@ -911,6 +911,9 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video, group bool) (
 		}
 		info, err := os.Stat(fu.Path)
 		if err != nil {
+			if !os.IsExist(err) {
+				return nil, errors.New("file not found")
+			}
 			return nil, err
 		}
 		if video {
@@ -1017,7 +1020,7 @@ video:
 	if path.Ext(rawPath) == ".video" {
 		b, _ := ioutil.ReadFile(rawPath)
 		r := binary.NewReader(b)
-		return &LocalVideoElement{ShortVideoElement: message.ShortVideoElement{// todo 检查缓存是否有效
+		return &LocalVideoElement{ShortVideoElement: message.ShortVideoElement{ // todo 检查缓存是否有效
 			Md5:  r.ReadBytes(16),
 			Size: r.ReadInt32(),
 			Name: r.ReadString(),
