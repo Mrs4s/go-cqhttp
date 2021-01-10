@@ -3,8 +3,11 @@ package coolq
 import (
 	"bytes"
 	"encoding/gob"
+	"encoding/hex"
 	"fmt"
+	"github.com/Mrs4s/MiraiGo/utils"
 	"hash/crc32"
+	"io"
 	"os"
 	"path"
 	"runtime/debug"
@@ -132,10 +135,11 @@ func (bot *CQBot) UploadLocalVideo(target int64, v *LocalVideoElement) (*message
 			return nil, err
 		}
 		defer video.Close()
-		// todo 多线程上传失败: 短视频上传失败: resp is empty (upload video file error: upload failed: 70
-		//hash, _ := utils.ComputeMd5AndLength(io.MultiReader(video, v.thumb))
-		//cacheFile := path.Join(global.CACHE_PATH, hex.EncodeToString(hash[:])+".cache")
-		return bot.Client.UploadGroupShortVideo(target, video, v.thumb)
+		hash, _ := utils.ComputeMd5AndLength(io.MultiReader(video, v.thumb))
+		cacheFile := path.Join(global.CACHE_PATH, hex.EncodeToString(hash[:])+".cache")
+		_, _ = video.Seek(0, io.SeekStart)
+		_, _ = v.thumb.Seek(0, io.SeekStart)
+		return bot.Client.UploadGroupShortVideo(target, video, v.thumb, cacheFile)
 	}
 	return &v.ShortVideoElement, nil
 }
