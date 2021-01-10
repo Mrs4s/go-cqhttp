@@ -1021,10 +1021,12 @@ video:
 		b, _ := ioutil.ReadFile(rawPath)
 		r := binary.NewReader(b)
 		return &LocalVideoElement{ShortVideoElement: message.ShortVideoElement{ // todo 检查缓存是否有效
-			Md5:  r.ReadBytes(16),
-			Size: r.ReadInt32(),
-			Name: r.ReadString(),
-			Uuid: r.ReadAvailable(),
+			Md5:       r.ReadBytes(16),
+			ThumbMd5:  r.ReadBytes(16),
+			Size:      r.ReadInt32(),
+			ThumbSize: r.ReadInt32(),
+			Name:      r.ReadString(),
+			Uuid:      r.ReadAvailable(),
 		}}, nil
 	} else {
 		return &LocalVideoElement{File: rawPath}, nil

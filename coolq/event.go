@@ -566,7 +566,9 @@ func (bot *CQBot) checkMedia(e []message.IMessageElement) {
 			if !global.PathExists(path.Join(global.VIDEO_PATH, filename)) {
 				_ = ioutil.WriteFile(path.Join(global.VIDEO_PATH, filename), binary.NewWriterF(func(w *binary.Writer) {
 					w.Write(i.Md5)
+					w.Write(i.ThumbMd5)
 					w.WriteUInt32(uint32(i.Size))
+					w.WriteUInt32(uint32(i.ThumbSize))
 					w.WriteString(i.Name)
 					w.Write(i.Uuid)
 				}), 0644)
