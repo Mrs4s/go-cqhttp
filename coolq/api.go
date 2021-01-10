@@ -649,6 +649,7 @@ func (bot *CQBot) CQGetStrangerInfo(userId int64) MSG {
 	return OK(MSG{
 		"user_id":  info.Uin,
 		"nickname": info.Nickname,
+		"qid":      info.Qid,
 		"sex": func() string {
 			if info.Sex == 1 {
 				return "female"
