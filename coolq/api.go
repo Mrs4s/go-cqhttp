@@ -303,9 +303,18 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupId int64, m gjson.Result) MSG {
 			var newElem []message.IMessageElement
 			for _, elem := range content {
 				if img, ok := elem.(*LocalImageElement); ok {
-					gm, err := bot.Client.UploadGroupImage(groupId, img.Stream)
+					gm, err := bot.UploadLocalImageAsGroup(groupId, img)
 					if err != nil {
 						log.Warnf("警告：群 %v 图片上传失败: %v", groupId, err)
+						continue
+					}
+					newElem = append(newElem, gm)
+					continue
+				}
+				if video, ok := elem.(*LocalVideoElement); ok {
+					gm, err := bot.UploadLocalVideo(groupId, video)
+					if err != nil {
+						log.Warnf("警告：群 %v 视频上传失败: %v", groupId, err)
 						continue
 					}
 					newElem = append(newElem, gm)
