@@ -4,7 +4,7 @@ package codec
 
 import "errors"
 
-func Init(cachePath, codecPath string) error {
+func Init() error {
 	return errors.New("not support now")
 }
 

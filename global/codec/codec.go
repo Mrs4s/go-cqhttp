@@ -13,16 +13,13 @@ import (
 	"runtime"
 )
 
-var (
-	encoderPath string
-	cachePath   string
+const (
+	silkCachePath = "data/cache"
+	encoderPath   = "codec"
 )
 
-func downloadCodec(url string, path string) (err error) {
+func downloadCodec(url string) (err error) {
 	resp, err := http.Get(url)
-	if runtime.GOOS == "windows" {
-		path = path + ".exe"
-	}
 	if err != nil {
 		return
 	}
@@ -31,33 +28,37 @@ func downloadCodec(url string, path string) (err error) {
 	if err != nil {
 		return
 	}
-	err = ioutil.WriteFile(path, body, os.ModePerm)
+	err = ioutil.WriteFile(getEncoderFilePath(), body, os.ModePerm)
 	return
 }
 
-func Init(cachePath, codecPath string) error {
-	if !fileExist(codecPath) {
-		_ = os.MkdirAll(codecPath, os.ModePerm)
+func getEncoderFilePath() string {
+	encoderFile := path.Join(encoderPath, runtime.GOOS+"-"+runtime.GOARCH+"-encoder")
+	if runtime.GOOS == "windows" {
+		encoderFile = encoderFile + ".exe"
 	}
-	if !fileExist(cachePath) {
-		_ = os.MkdirAll(cachePath, os.ModePerm)
+	return encoderFile
+}
+
+func Init() error {
+	if !fileExist(silkCachePath) {
+		_ = os.MkdirAll(silkCachePath, os.ModePerm)
 	}
-	encoderFile := runtime.GOOS + "-" + runtime.GOARCH + "-encoder"
-	encoderPath = path.Join(codecPath, encoderFile)
 	if !fileExist(encoderPath) {
-		if err := downloadCodec("https://cdn.jsdelivr.net/gh/wdvxdr1123/tosilk/codec/"+encoderFile, encoderPath); err != nil {
+		_ = os.MkdirAll(encoderPath, os.ModePerm)
+	}
+	p := getEncoderFilePath()
+	if !fileExist(p) {
+		if err := downloadCodec("https://cdn.jsdelivr.net/gh/wdvxdr1123/tosilk/codec/" + runtime.GOOS + "-" + runtime.GOARCH + "-encoder"); err != nil {
 			return errors.New("下载依赖失败")
 		}
-	}
-	if runtime.GOOS == "windows" {
-		encoderPath = encoderPath + ".exe"
 	}
 	return nil
 }
 
 func EncodeToSilk(record []byte, tempName string, useCache bool) ([]byte, error) {
 	// 1. 写入缓存文件
-	rawPath := path.Join(cachePath, tempName+".wav")
+	rawPath := path.Join(silkCachePath, tempName+".wav")
 	err := ioutil.WriteFile(rawPath, record, os.ModePerm)
 	if err != nil {
 		return nil, err
@@ -65,7 +66,7 @@ func EncodeToSilk(record []byte, tempName string, useCache bool) ([]byte, error)
 	defer os.Remove(rawPath)
 
 	// 2.转换pcm
-	pcmPath := path.Join(cachePath, tempName+".pcm")
+	pcmPath := path.Join(silkCachePath, tempName+".pcm")
 	cmd := exec.Command("ffmpeg", "-i", rawPath, "-f", "s16le", "-ar", "24000", "-ac", "1", pcmPath)
 	if err = cmd.Run(); err != nil {
 		return nil, err
@@ -73,8 +74,8 @@ func EncodeToSilk(record []byte, tempName string, useCache bool) ([]byte, error)
 	defer os.Remove(pcmPath)
 
 	// 3. 转silk
-	silkPath := path.Join(cachePath, tempName+".silk")
-	cmd = exec.Command(encoderPath, pcmPath, silkPath, "-rate", "24000", "-quiet", "-tencent")
+	silkPath := path.Join(silkCachePath, tempName+".silk")
+	cmd = exec.Command(getEncoderFilePath(), pcmPath, silkPath, "-rate", "24000", "-quiet", "-tencent")
 	if err = cmd.Run(); err != nil {
 		return nil, err
 	}
