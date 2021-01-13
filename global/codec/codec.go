@@ -14,7 +14,6 @@ import (
 )
 
 var (
-	codecDir    string
 	encoderPath string
 	cachePath   string
 )
@@ -37,23 +36,16 @@ func downloadCodec(url string, path string) (err error) {
 }
 
 func Init(cachePath, codecPath string) error {
-	appPath, err := os.Executable()
-	appPath = path.Dir(appPath)
-	if err != nil {
-		return err
-	}
-	cachePath = path.Join(appPath, cachePath)
-	codecDir = path.Join(appPath, codecPath)
-	if !fileExist(codecDir) {
-		_ = os.MkdirAll(codecDir, os.ModePerm)
+	if !fileExist(codecPath) {
+		_ = os.MkdirAll(codecPath, os.ModePerm)
 	}
 	if !fileExist(cachePath) {
 		_ = os.MkdirAll(cachePath, os.ModePerm)
 	}
 	encoderFile := runtime.GOOS + "-" + runtime.GOARCH + "-encoder"
-	encoderPath = path.Join(codecDir, encoderFile)
+	encoderPath = path.Join(codecPath, encoderFile)
 	if !fileExist(encoderPath) {
-		if err = downloadCodec("https://cdn.jsdelivr.net/gh/wdvxdr1123/tosilk/codec/"+encoderFile, encoderPath); err != nil {
+		if err := downloadCodec("https://cdn.jsdelivr.net/gh/wdvxdr1123/tosilk/codec/"+encoderFile, encoderPath); err != nil {
 			return errors.New("下载依赖失败")
 		}
 	}
