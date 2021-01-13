@@ -354,7 +354,7 @@ func (bot *CQBot) CQSendPrivateMessage(userId int64, i interface{}, autoEscape b
 	var str string
 	if m, ok := i.(gjson.Result); ok {
 		if m.Type == gjson.JSON {
-			elem := bot.ConvertObjectMessage(m, true)
+			elem := bot.ConvertObjectMessage(m, false)
 			mid := bot.SendPrivateMessage(userId, &message.SendingMessage{Elements: elem})
 			if mid == -1 {
 				return Failed(100, "SEND_MSG_API_ERROR", "请参考输出")
