@@ -1,5 +1,4 @@
-// +build !linux,!windows,!darwin
-// +build !386,!amd64,!arm
+// +build !windows,!linux,!darwin
 
 package codec
 

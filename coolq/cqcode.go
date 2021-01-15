@@ -895,9 +895,7 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video, group bool) (
 		}
 	hasCacheFile:
 		if video {
-			return &LocalVideoElement{
-				File: cacheFile,
-			}, nil
+			return &LocalVideoElement{File: cacheFile}, nil
 		}
 		return &LocalImageElement{File: cacheFile}, nil
 	}
@@ -917,21 +915,36 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video, group bool) (
 			return nil, err
 		}
 		if video {
-			goto videos
+			if info.Size() == 0 || info.Size() >= maxVideoSize {
+				return nil, errors.New("invalid video size")
+			}
+			return &LocalVideoElement{File: fu.Path}, nil
 		}
 		if info.Size() == 0 || info.Size() >= maxImageSize {
 			return nil, errors.New("invalid image size")
 		}
 		return &LocalImageElement{File: fu.Path}, nil
-	videos:
-		if info.Size() == 0 || info.Size() >= maxVideoSize {
-			return nil, errors.New("invalid video size")
-		}
-		return &LocalVideoElement{File: fu.Path}, nil
 	}
 	rawPath := path.Join(global.IMAGE_PATH, f)
 	if video {
-		goto video
+		rawPath = path.Join(global.VIDEO_PATH, f)
+		if !global.PathExists(rawPath) {
+			return nil, errors.New("invalid video")
+		}
+		if path.Ext(rawPath) == ".video" {
+			b, _ := ioutil.ReadFile(rawPath)
+			r := binary.NewReader(b)
+			return &LocalVideoElement{ShortVideoElement: message.ShortVideoElement{ // todo 检查缓存是否有效
+				Md5:       r.ReadBytes(16),
+				ThumbMd5:  r.ReadBytes(16),
+				Size:      r.ReadInt32(),
+				ThumbSize: r.ReadInt32(),
+				Name:      r.ReadString(),
+				Uuid:      r.ReadAvailable(),
+			}}, nil
+		} else {
+			return &LocalVideoElement{File: rawPath}, nil
+		}
 	}
 	if strings.HasPrefix(f, "base64") {
 		b, err := base64.StdEncoding.DecodeString(strings.ReplaceAll(f, "base64://", ""))
@@ -1012,25 +1025,6 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video, group bool) (
 		return rsp, nil
 	}
 	return nil, errors.New("invalid image")
-video:
-	rawPath = path.Join(global.VIDEO_PATH, f)
-	if !global.PathExists(rawPath) {
-		return nil, errors.New("invalid video")
-	}
-	if path.Ext(rawPath) == ".video" {
-		b, _ := ioutil.ReadFile(rawPath)
-		r := binary.NewReader(b)
-		return &LocalVideoElement{ShortVideoElement: message.ShortVideoElement{ // todo 检查缓存是否有效
-			Md5:       r.ReadBytes(16),
-			ThumbMd5:  r.ReadBytes(16),
-			Size:      r.ReadInt32(),
-			ThumbSize: r.ReadInt32(),
-			Name:      r.ReadString(),
-			Uuid:      r.ReadAvailable(),
-		}}, nil
-	} else {
-		return &LocalVideoElement{File: rawPath}, nil
-	}
 }
 
 //makeShowPic 一种xml 方式发送的群消息图片

@@ -15,7 +15,7 @@ var useSilkCodec = true
 
 func InitCodec() {
 	log.Info("正在加载silk编码器...")
-	err := codec.Init("data/cache", "codec")
+	err := codec.Init()
 	if err != nil {
 		log.Error(err)
 		useSilkCodec = false

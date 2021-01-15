@@ -216,7 +216,7 @@ func UpdateFromStream(updateWith io.Reader) (err error, errRecover error) {
 		return
 	}
 
-	// move the new exectuable in to become the new program
+	// move the new executable in to become the new program
 	err = os.Rename(newPath, updatePath)
 
 	if err != nil {
