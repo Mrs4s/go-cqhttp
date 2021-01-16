@@ -472,7 +472,6 @@ func AdminDoRestart(s *webServer, c *gin.Context) {
 	s.Cli = nil
 	s.DoReLogin()
 	c.JSON(200, coolq.OK(coolq.MSG{}))
-	return
 }
 
 // 进程重启
@@ -485,7 +484,6 @@ func AdminProcessRestart(s *webServer, c *gin.Context) {
 func AdminDoRestartDocker(s *webServer, c *gin.Context) {
 	Console <- os.Kill
 	c.JSON(200, coolq.OK(coolq.MSG{}))
-	return
 }
 
 // web输入 html 页面

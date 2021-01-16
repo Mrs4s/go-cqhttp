@@ -86,11 +86,11 @@ func DownloadFile(url, path string, limit int64, headers map[string]string) erro
 	if err != nil {
 		return err
 	}
-	if headers != nil {
-		for k, v := range headers {
-			req.Header.Set(k, v)
-		}
+
+	for k, v := range headers {
+		req.Header.Set(k, v)
 	}
+
 	if _, ok := headers["User-Agent"]; ok {
 		req.Header["User-Agent"] = []string{UserAgent}
 	}
@@ -138,10 +138,10 @@ func DownloadFileMultiThreading(url, path string, limit int64, threadCount int, 
 		if err != nil {
 			return err
 		}
-		if headers != nil {
-			for k, v := range headers {
-				req.Header.Set(k, v)
-			}
+
+		for k, v := range headers {
+			req.Header.Set(k, v)
+
 		}
 		if _, ok := headers["User-Agent"]; ok {
 			req.Header["User-Agent"] = []string{UserAgent}
@@ -202,11 +202,11 @@ func DownloadFileMultiThreading(url, path string, limit int64, threadCount int, 
 		_, _ = file.Seek(block.BeginOffset, io.SeekStart)
 		writer := bufio.NewWriter(file)
 		defer writer.Flush()
-		if headers != nil {
-			for k, v := range headers {
-				req.Header.Set(k, v)
-			}
+
+		for k, v := range headers {
+			req.Header.Set(k, v)
 		}
+
 		if _, ok := headers["User-Agent"]; ok {
 			req.Header["User-Agent"] = []string{UserAgent}
 		}

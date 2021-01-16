@@ -576,9 +576,7 @@ func (s *httpServer) ShutDown() {
 	if err := s.Http.Shutdown(ctx); err != nil {
 		log.Fatal("http Server Shutdown:", err)
 	}
-	select {
-	case <-ctx.Done():
-		log.Println("timeout of 5 seconds.")
-	}
+	<-ctx.Done()
+	log.Println("timeout of 5 seconds.")
 	log.Println("http Server exiting")
 }

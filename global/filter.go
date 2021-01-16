@@ -104,7 +104,7 @@ func (andOperator *AndOperator) Eval(payload MSG) bool {
 			res = res && operand.filter.Eval(val)
 		}
 
-		if res == false {
+		if !res {
 			break
 		}
 	}
@@ -131,7 +131,7 @@ func (op *OrOperator) Eval(payload MSG) bool {
 	res := false
 	for _, operand := range op.operands {
 		res = res || operand.Eval(payload)
-		if res == true {
+		if res {
 			break
 		}
 	}

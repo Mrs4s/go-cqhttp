@@ -1032,7 +1032,7 @@ func (bot *CQBot) makeShowPic(elem message.IMessageElement, source string, icon 
 	xml := ""
 	var suf message.IMessageElement
 	if i, ok := elem.(*LocalImageElement); ok {
-		if group == false {
+		if !group {
 			gm, err := bot.UploadLocalImageAsPrivate(1, i)
 			if err != nil {
 				log.Warnf("警告: 好友消息 %v 消息图片上传失败: %v", 1, err)

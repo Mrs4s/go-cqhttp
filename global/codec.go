@@ -23,7 +23,7 @@ func InitCodec() {
 }
 
 func EncoderSilk(data []byte) ([]byte, error) {
-	if useSilkCodec == false {
+	if !useSilkCodec {
 		return nil, errors.New("no silk encoder")
 	}
 	h := md5.New()

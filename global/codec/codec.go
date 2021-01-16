@@ -79,7 +79,7 @@ func EncodeToSilk(record []byte, tempName string, useCache bool) ([]byte, error)
 	if err = cmd.Run(); err != nil {
 		return nil, err
 	}
-	if useCache == false {
+	if !useCache {
 		defer os.Remove(silkPath)
 	}
 	return ioutil.ReadFile(silkPath)
