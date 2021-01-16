@@ -132,7 +132,7 @@ func ToArrayMessage(e []message.IMessageElement, code int64, raw ...bool) (r []M
 		})
 	}
 	for _, elem := range e {
-		m := MSG{}
+		var m MSG
 		switch o := elem.(type) {
 		case *message.TextElement:
 			m = MSG{
@@ -811,6 +811,9 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m interf
 		}
 		var header = make([]byte, 4)
 		_, err = video.Read(header)
+		if err != nil {
+			return nil, err
+		}
 		if !bytes.Equal(header, []byte{0x66, 0x74, 0x79, 0x70}) { // check file header ftyp
 			_, _ = video.Seek(0, io.SeekStart)
 			hash, _ := utils.ComputeMd5AndLength(video)

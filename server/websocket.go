@@ -516,7 +516,7 @@ var wsApi = map[string]func(*coolq.CQBot, gjson.Result) coolq.MSG{
 		return bot.CQGetGroupHonorInfo(p.Get("group_id").Int(), p.Get("type").Str)
 	},
 	"set_restart": func(c *coolq.CQBot, p gjson.Result) coolq.MSG {
-		var delay int64 = 0
+		var delay int64
 		delay = p.Get("delay").Int()
 		if delay < 0 {
 			delay = 0
