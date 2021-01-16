@@ -21,7 +21,7 @@ import (
 	"github.com/Mrs4s/go-cqhttp/server"
 	"github.com/guonaihong/gout"
 	"github.com/tidwall/gjson"
-	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/term"
 
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/client"
@@ -231,7 +231,7 @@ func main() {
 	}
 	if conf.EncryptPassword && conf.PasswordEncrypted == "" {
 		log.Infof("密码加密已启用, 请输入Key对密码进行加密: (Enter 提交)")
-		byteKey, _ := terminal.ReadPassword(int(os.Stdin.Fd()))
+		byteKey, _ := term.ReadPassword(int(os.Stdin.Fd()))
 		key := md5.Sum(byteKey)
 		if encrypted := EncryptPwd(conf.Password, key[:]); encrypted != "" {
 			conf.Password = ""
@@ -255,7 +255,7 @@ func main() {
 					os.Exit(0)
 				}
 			}()
-			byteKey, _ = terminal.ReadPassword(int(os.Stdin.Fd()))
+			byteKey, _ = term.ReadPassword(int(os.Stdin.Fd()))
 			cancel <- struct{}{}
 		} else {
 			log.Infof("密码加密已启用, 使用运行时传递的参数进行解密，按 Ctrl+C 取消.")
