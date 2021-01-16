@@ -16,6 +16,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/Mrs4s/go-cqhttp/server"
@@ -97,6 +98,7 @@ func init() {
 }
 
 func main() {
+	
 	var byteKey []byte
 	var isFastStart = false
 	arg := os.Args
@@ -327,7 +329,7 @@ func main() {
 	c := server.Console
 	r := server.Restart
 	go checkUpdate()
-	signal.Notify(c, os.Interrupt, os.Kill)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	select {
 	case <-c:
 		b.Release()
@@ -458,7 +460,7 @@ func selfUpdate(imageUrl string) {
 }
 
 func restart(Args []string) {
-	cmd := &exec.Cmd{}
+	var cmd *exec.Cmd
 	if runtime.GOOS == "windows" {
 		file, err := exec.LookPath(Args[0])
 		if err != nil {

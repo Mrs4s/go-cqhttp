@@ -5,8 +5,6 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
-	"github.com/Mrs4s/MiraiGo/utils"
-	"github.com/gin-contrib/pprof"
 	"image"
 	"io/ioutil"
 	"net/http"
@@ -14,7 +12,11 @@ import (
 	"os/signal"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
+
+	"github.com/Mrs4s/MiraiGo/utils"
+	"github.com/gin-contrib/pprof"
 
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/go-cqhttp/coolq"
@@ -91,14 +93,14 @@ func (s *webServer) Run(addr string, cli *client.QQClient) *coolq.CQBot {
 				log.Error(err)
 				log.Infof("请检查端口是否被占用.")
 				c := make(chan os.Signal, 1)
-				signal.Notify(c, os.Interrupt, os.Kill)
+				signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 				<-c
 				os.Exit(1)
 			}
 		} else {
 			//关闭端口监听
 			c := make(chan os.Signal, 1)
-			signal.Notify(c, os.Interrupt, os.Kill)
+			signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 			<-c
 			os.Exit(1)
 		}
@@ -155,6 +157,10 @@ func (s *webServer) Dologin() {
 					os.Exit(0)
 				}
 				rsp, err = cli.SubmitTicket(ticket)
+				if err != nil {
+					log.Warnf("错误: " + err.Error())
+					os.Exit(0)
+				}
 				continue
 			case client.NeedCaptcha:
 				_ = ioutil.WriteFile("captcha.jpg", rsp.CaptchaImage, 0644)
