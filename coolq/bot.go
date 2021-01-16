@@ -456,7 +456,7 @@ func (bot *CQBot) Release() {
 }
 
 func (bot *CQBot) dispatchEventMessage(m MSG) {
-	if global.EventFilter != nil && global.EventFilter.Eval(global.MSG(m)) == false {
+	if global.EventFilter != nil && !global.EventFilter.Eval(global.MSG(m)){
 		log.Debug("Event filtered!")
 		return
 	}
