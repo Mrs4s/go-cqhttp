@@ -98,7 +98,7 @@ func init() {
 }
 
 func main() {
-	
+
 	var byteKey []byte
 	var isFastStart = false
 	arg := os.Args
@@ -487,5 +487,5 @@ func restart(Args []string) {
 			Stdout: os.Stdout,
 		}
 	}
-	cmd.Start()
+	_ = cmd.Start()
 }

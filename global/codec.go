@@ -27,7 +27,10 @@ func EncoderSilk(data []byte) ([]byte, error) {
 		return nil, errors.New("no silk encoder")
 	}
 	h := md5.New()
-	h.Write(data)
+	_, err := h.Write(data)
+	if err != nil {
+		return nil, err
+	}
 	tempName := fmt.Sprintf("%x", h.Sum(nil))
 	if silkPath := path.Join("data/cache", tempName+".silk"); PathExists(silkPath) {
 		return ioutil.ReadFile(silkPath)
