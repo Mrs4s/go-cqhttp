@@ -46,9 +46,14 @@ func EncoderSilk(data []byte) ([]byte, error) {
 }
 
 //EncodeMP4 将给定视频文件编码为MP4
-func EncodeMP4(src string, target string) error { //        -y 覆盖文件
-	cmd := exec.Command("ffmpeg", "-i", src, "-y", "-c", "copy", "-map", "0", target)
-	return cmd.Run()
+func EncodeMP4(src string, dst string) error { //        -y 覆盖文件
+	cmd1 := exec.Command("ffmpeg", "-i", src, "-y", "-c", "copy", "-map", "0", dst)
+	err := cmd1.Run()
+	if err != nil {
+		cmd2 := exec.Command("ffmpeg", "-i", src, "-y", "-c:v", "h264", "-c:a", "mp3", dst)
+		return cmd2.Run()
+	}
+	return err
 }
 
 //ExtractCover 获取给定视频文件的Cover
