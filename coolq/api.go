@@ -662,8 +662,11 @@ func (bot *CQBot) CQGetStrangerInfo(userId int64) MSG {
 		"sex": func() string {
 			if info.Sex == 1 {
 				return "female"
+			} else if info.Sex == 0 {
+				return "male"
 			}
-			return "male"
+			// unknown = 0x2
+			return "unknown"
 		}(),
 		"age":        info.Age,
 		"level":      info.Level,
@@ -965,8 +968,11 @@ func convertGroupMemberInfo(groupId int64, m *client.GroupMemberInfo) MSG {
 		"sex":            func() string {
 			if m.Gender == 1 {
 				return "female"
+			} else if m.Gender == 0 {
+				return "male"
 			}
-			return "male"
+			// unknown = 0xff
+			return "unknown"
 		}(),
 		"age":            0,
 		"area":           "",
