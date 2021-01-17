@@ -730,10 +730,10 @@ func (bot *CQBot) CQHandleQuickOperation(context, operation gjson.Result) MSG {
 }
 
 func (bot *CQBot) CQGetImage(file string) MSG {
-	if !global.PathExists(path.Join(global.IMAGE_PATH, file)) {
+	if !global.PathExists(path.Join(global.ImagePath, file)) {
 		return Failed(100)
 	}
-	if b, err := ioutil.ReadFile(path.Join(global.IMAGE_PATH, file)); err == nil {
+	if b, err := ioutil.ReadFile(path.Join(global.ImagePath, file)); err == nil {
 		r := binary.NewReader(b)
 		r.ReadBytes(16)
 		msg := MSG{
@@ -741,7 +741,7 @@ func (bot *CQBot) CQGetImage(file string) MSG {
 			"filename": r.ReadString(),
 			"url":      r.ReadString(),
 		}
-		local := path.Join(global.CACHE_PATH, file+"."+path.Ext(msg["filename"].(string)))
+		local := path.Join(global.CachePath, file+"."+path.Ext(msg["filename"].(string)))
 		if !global.PathExists(local) {
 			if data, err := global.GetBytes(msg["url"].(string)); err == nil {
 				_ = ioutil.WriteFile(local, data, 0644)
@@ -756,7 +756,7 @@ func (bot *CQBot) CQGetImage(file string) MSG {
 
 func (bot *CQBot) CQDownloadFile(url string, headers map[string]string, threadCount int) MSG {
 	hash := md5.Sum([]byte(url))
-	file := path.Join(global.CACHE_PATH, hex.EncodeToString(hash[:])+".cache")
+	file := path.Join(global.CachePath, hex.EncodeToString(hash[:])+".cache")
 	if global.PathExists(file) {
 		if err := os.Remove(file); err != nil {
 			log.Warnf("删除缓存文件 %v 时出现错误: %v", file, err)
@@ -867,7 +867,7 @@ func (bot *CQBot) CQReloadEventFilter() MSG {
 
 func (bot *CQBot) CQSetGroupPortrait(groupId int64, file, cache string) MSG {
 	if g := bot.Client.FindGroup(groupId); g != nil {
-		img, err := global.FindFile(file, cache, global.IMAGE_PATH)
+		img, err := global.FindFile(file, cache, global.ImagePath)
 		if err != nil {
 			log.Warnf("set group portrait error: %v", err)
 			return Failed(100, "LOAD_FILE_ERROR", err.Error())

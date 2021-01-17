@@ -9,7 +9,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/kardianos/osext"
 	"io"
 	"io/ioutil"
 	"net"
@@ -21,75 +20,95 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/kardianos/osext"
+
 	"github.com/dustin/go-humanize"
 	log "github.com/sirupsen/logrus"
 )
 
-var (
-	IMAGE_PATH     = path.Join("data", "images")
-	IMAGE_PATH_OLD = path.Join("data", "image")
-	VOICE_PATH     = path.Join("data", "voices")
-	VOICE_PATH_OLD = path.Join("data", "record")
-	VIDEO_PATH     = path.Join("data", "videos")
-	CACHE_PATH     = path.Join("data", "cache")
-
-	HEADER_AMR  = []byte("#!AMR")
-	HEADER_SILK = []byte("\x02#!SILK_V3")
-
-	ErrSyntax = errors.New("syntax error")
+const (
+	//ImagePath go-cqhttp使用的图片缓存目录
+	ImagePath = "data/images"
+	//ImagePathOld 兼容旧版go-cqhtto使用的图片缓存目录
+	ImagePathOld = "data/image"
+	//VoicePath go-cqhttp使用的语音缓存目录
+	VoicePath = "data/voices"
+	//VoicePathOld 兼容旧版go-cqhtto使用的语音缓存目录
+	VoicePathOld = "data/record"
+	//VideoPath go-cqhttp使用的视频缓存目录
+	VideoPath = "data/videos"
+	//CachePath go-cqhttp使用的缓存目录
+	CachePath = "data/cache"
 )
 
+var (
+	//ErrSyntax Path语法错误时返回的错误
+	ErrSyntax = errors.New("syntax error")
+	//HeaderAmr AMR文件头
+	HeaderAmr = []byte("#!AMR")
+	//HeaderSilk Silkv3文件头
+	HeaderSilk = []byte("\x02#!SILK_V3")
+)
+
+//PathExists 判断给定path是否存在
 func PathExists(path string) bool {
 	_, err := os.Stat(path)
 	return err == nil || os.IsExist(err)
 }
 
+//ReadAllText 读取给定path对应文件，无法读取时返回空值
 func ReadAllText(path string) string {
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
+		log.Error(err)
 		return ""
 	}
 	return string(b)
 }
 
+//WriteAllText 将给定text写入给定path
 func WriteAllText(path, text string) error {
 	return ioutil.WriteFile(path, []byte(text), 0644)
 }
 
+//Check 检测err是否为nil
 func Check(err error) {
 	if err != nil {
 		log.Fatalf("遇到错误: %v", err)
 	}
 }
 
+//IsAMRorSILK 判断给定文件是否为Amr或Silk格式
 func IsAMRorSILK(b []byte) bool {
-	return bytes.HasPrefix(b, HEADER_AMR) || bytes.HasPrefix(b, HEADER_SILK)
+	return bytes.HasPrefix(b, HeaderAmr) || bytes.HasPrefix(b, HeaderSilk)
 }
 
-func FindFile(f, cache, PATH string) (data []byte, err error) {
+//FindFile 从给定的File寻找文件，并返回文件byte数组。File是一个合法的URL。Path为文件寻找位置。
+//对于HTTP/HTTPS形式的URL，Cache为"1"或空时表示启用缓存
+func FindFile(file, cache, PATH string) (data []byte, err error) {
 	data, err = nil, ErrSyntax
-	if strings.HasPrefix(f, "http") || strings.HasPrefix(f, "https") {
+	if strings.HasPrefix(file, "http") || strings.HasPrefix(file, "https") {
 		if cache == "" {
 			cache = "1"
 		}
-		hash := md5.Sum([]byte(f))
-		cacheFile := path.Join(CACHE_PATH, hex.EncodeToString(hash[:])+".cache")
+		hash := md5.Sum([]byte(file))
+		cacheFile := path.Join(CachePath, hex.EncodeToString(hash[:])+".cache")
 		if PathExists(cacheFile) && cache == "1" {
 			return ioutil.ReadFile(cacheFile)
 		}
-		data, err = GetBytes(f)
+		data, err = GetBytes(file)
 		_ = ioutil.WriteFile(cacheFile, data, 0644)
 		if err != nil {
 			return nil, err
 		}
-	} else if strings.HasPrefix(f, "base64") {
-		data, err = base64.StdEncoding.DecodeString(strings.ReplaceAll(f, "base64://", ""))
+	} else if strings.HasPrefix(file, "base64") {
+		data, err = base64.StdEncoding.DecodeString(strings.ReplaceAll(file, "base64://", ""))
 		if err != nil {
 			return nil, err
 		}
-	} else if strings.HasPrefix(f, "file") {
+	} else if strings.HasPrefix(file, "file") {
 		var fu *url.URL
-		fu, err = url.Parse(f)
+		fu, err = url.Parse(file)
 		if err != nil {
 			return nil, err
 		}
@@ -100,8 +119,8 @@ func FindFile(f, cache, PATH string) (data []byte, err error) {
 		if err != nil {
 			return nil, err
 		}
-	} else if PathExists(path.Join(PATH, f)) {
-		data, err = ioutil.ReadFile(path.Join(PATH, f))
+	} else if PathExists(path.Join(PATH, file)) {
+		data, err = ioutil.ReadFile(path.Join(PATH, file))
 		if err != nil {
 			return nil, err
 		}
@@ -109,19 +128,20 @@ func FindFile(f, cache, PATH string) (data []byte, err error) {
 	return
 }
 
+//DelFile 删除一个给定path，并返回删除结果
 func DelFile(path string) bool {
 	err := os.Remove(path)
 	if err != nil {
 		// 删除失败
 		log.Error(err)
 		return false
-	} else {
-		// 删除成功
-		log.Info(path + "删除成功")
-		return true
 	}
+	// 删除成功
+	log.Info(path + "删除成功")
+	return true
 }
 
+//ReadAddrFile 从给定path中读取合法的IP地址与端口,每个IP地址以换行符"\n"作为分隔
 func ReadAddrFile(path string) []*net.TCPAddr {
 	d, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -140,10 +160,12 @@ func ReadAddrFile(path string) []*net.TCPAddr {
 	return ret
 }
 
+//WriteCounter 写入量计算实例
 type WriteCounter struct {
 	Total uint64
 }
 
+//Write 方法将写入的byte长度追加至写入的总长度Total中
 func (wc *WriteCounter) Write(p []byte) (int, error) {
 	n := len(p)
 	wc.Total += uint64(n)
@@ -151,12 +173,13 @@ func (wc *WriteCounter) Write(p []byte) (int, error) {
 	return n, nil
 }
 
-func (wc WriteCounter) PrintProgress() {
+//PrintProgress 方法将打印当前的总写入量
+func (wc *WriteCounter) PrintProgress() {
 	fmt.Printf("\r%s", strings.Repeat(" ", 35))
 	fmt.Printf("\rDownloading... %s complete", humanize.Bytes(wc.Total))
 }
 
-// UpdateFromStream copy form getlantern/go-update
+//UpdateFromStream copy form getlantern/go-update
 func UpdateFromStream(updateWith io.Reader) (err error, errRecover error) {
 	updatePath, err := osext.Executable()
 	if err != nil {
