@@ -962,7 +962,12 @@ func convertGroupMemberInfo(groupId int64, m *client.GroupMemberInfo) MSG {
 		"user_id":        m.Uin,
 		"nickname":       m.Nickname,
 		"card":           m.CardName,
-		"sex":            "unknown",
+		"sex":            func() string {
+			if m.Gender == 1 {
+				return "female"
+			}
+			return "male"
+		}(),
 		"age":            0,
 		"area":           "",
 		"join_time":      m.JoinTime,
