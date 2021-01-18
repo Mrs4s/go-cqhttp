@@ -260,10 +260,11 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupId int64, m gjson.Result) MSG {
 					SenderId:   sender.Uin,
 					SenderName: (&sender).DisplayName(),
 					Time: func() int32 {
-						if hasCustom {
+						msgTime := m["time"].(int32)
+						if hasCustom && msgTime == 0 {
 							return int32(ts.Unix())
 						}
-						return m["time"].(int32)
+						return msgTime
 					}(),
 					Message: bot.ConvertStringMessage(m["message"].(string), true),
 				})
@@ -273,6 +274,8 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupId int64, m gjson.Result) MSG {
 			return
 		}
 		uin, _ := strconv.ParseInt(e.Get("data.uin").Str, 10, 64)
+		msgTime, err := strconv.ParseInt(e.Get("data.time").Str, 10, 64)
+		if err != nil { msgTime = ts.Unix()}
 		name := e.Get("data.name").Str
 		c := e.Get("data.content")
 		if c.IsArray() {
@@ -292,7 +295,7 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupId int64, m gjson.Result) MSG {
 				nodes = append(nodes, &message.ForwardNode{
 					SenderId:   uin,
 					SenderName: name,
-					Time:       int32(ts.Unix()),
+					Time:       int32(msgTime),
 					Message:    []message.IMessageElement{bot.Client.UploadGroupForwardMessage(groupId, &message.ForwardMessage{Nodes: taowa})},
 				})
 				return
@@ -325,7 +328,7 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupId int64, m gjson.Result) MSG {
 			nodes = append(nodes, &message.ForwardNode{
 				SenderId:   uin,
 				SenderName: name,
-				Time:       int32(ts.Unix()),
+				Time:       int32(msgTime),
 				Message:    newElem,
 			})
 			return
@@ -343,7 +346,7 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupId int64, m gjson.Result) MSG {
 	if len(sendNodes) > 0 {
 		gm := bot.Client.SendGroupForwardMessage(groupId, &message.ForwardMessage{Nodes: sendNodes})
 		return OK(MSG{
-			"message_id": ToGlobalId(groupId, gm.Id),
+			"message_id": bot.InsertGroupMessage(gm),
 		})
 	}
 	return Failed(100)
