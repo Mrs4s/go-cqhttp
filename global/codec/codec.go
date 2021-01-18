@@ -40,6 +40,7 @@ func getEncoderFilePath() string {
 	return encoderFile
 }
 
+//Init 下载Silk编码器
 func Init() error {
 	if !fileExist(silkCachePath) {
 		_ = os.MkdirAll(silkCachePath, os.ModePerm)
@@ -56,6 +57,7 @@ func Init() error {
 	return nil
 }
 
+//EncodeToSilk 将音频编码为Silk
 func EncodeToSilk(record []byte, tempName string, useCache bool) ([]byte, error) {
 	// 1. 写入缓存文件
 	rawPath := path.Join(silkCachePath, tempName+".wav")
@@ -79,7 +81,7 @@ func EncodeToSilk(record []byte, tempName string, useCache bool) ([]byte, error)
 	if err = cmd.Run(); err != nil {
 		return nil, err
 	}
-	if useCache == false {
+	if !useCache {
 		defer os.Remove(silkPath)
 	}
 	return ioutil.ReadFile(silkPath)

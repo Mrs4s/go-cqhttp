@@ -5,7 +5,6 @@ import (
 	"encoding/gob"
 	"encoding/hex"
 	"fmt"
-	"github.com/Mrs4s/MiraiGo/utils"
 	"hash/crc32"
 	"io"
 	"os"
@@ -13,6 +12,8 @@ import (
 	"runtime/debug"
 	"sync"
 	"time"
+
+	"github.com/Mrs4s/MiraiGo/utils"
 
 	"github.com/syndtr/goleveldb/leveldb"
 
@@ -41,7 +42,7 @@ type MSG map[string]interface{}
 
 var ForceFragmented = false
 
-func NewQQBot(cli *client.QQClient, conf *global.JsonConfig) *CQBot {
+func NewQQBot(cli *client.QQClient, conf *global.JSONConfig) *CQBot {
 	bot := &CQBot{
 		Client: cli,
 	}
@@ -136,7 +137,7 @@ func (bot *CQBot) UploadLocalVideo(target int64, v *LocalVideoElement) (*message
 		}
 		defer video.Close()
 		hash, _ := utils.ComputeMd5AndLength(io.MultiReader(video, v.thumb))
-		cacheFile := path.Join(global.CACHE_PATH, hex.EncodeToString(hash[:])+".cache")
+		cacheFile := path.Join(global.CachePath, hex.EncodeToString(hash[:])+".cache")
 		_, _ = video.Seek(0, io.SeekStart)
 		_, _ = v.thumb.Seek(0, io.SeekStart)
 		return bot.Client.UploadGroupShortVideo(target, video, v.thumb, cacheFile)
@@ -456,7 +457,7 @@ func (bot *CQBot) Release() {
 }
 
 func (bot *CQBot) dispatchEventMessage(m MSG) {
-	if global.EventFilter != nil && global.EventFilter.Eval(global.MSG(m)) == false {
+	if global.EventFilter != nil && !global.EventFilter.Eval(global.MSG(m)) {
 		log.Debug("Event filtered!")
 		return
 	}

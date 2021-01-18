@@ -123,7 +123,11 @@ func (c *httpClient) onBotPushEvent(m coolq.MSG) {
 		}
 		if c.secret != "" {
 			mac := hmac.New(sha1.New, []byte(c.secret))
-			mac.Write([]byte(m.ToJson()))
+			_, err := mac.Write([]byte(m.ToJson()))
+			if err != nil {
+				log.Error(err)
+				return nil
+			}
 			h["X-Signature"] = "sha1=" + hex.EncodeToString(mac.Sum(nil))
 		}
 		return h
@@ -576,9 +580,7 @@ func (s *httpServer) ShutDown() {
 	if err := s.Http.Shutdown(ctx); err != nil {
 		log.Fatal("http Server Shutdown:", err)
 	}
-	select {
-	case <-ctx.Done():
-		log.Println("timeout of 5 seconds.")
-	}
+	<-ctx.Done()
+	log.Println("timeout of 5 seconds.")
 	log.Println("http Server exiting")
 }

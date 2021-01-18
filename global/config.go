@@ -12,6 +12,7 @@ import (
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
+//DefaultConfigWithComments 为go-cqhttp的默认配置文件
 var DefaultConfigWithComments = `
 /*
     go-cqhttp 默认配置文件
@@ -134,7 +135,8 @@ var DefaultConfigWithComments = `
 }
 `
 
-type JsonConfig struct {
+//JSONConfig Config对应的结构体
+type JSONConfig struct {
 	Uin               int64  `json:"uin"`
 	Password          string `json:"password"`
 	EncryptPassword   bool   `json:"encrypt_password"`
@@ -153,39 +155,41 @@ type JsonConfig struct {
 	} `json:"_rate_limit"`
 	IgnoreInvalidCQCode bool                          `json:"ignore_invalid_cqcode"`
 	ForceFragmented     bool                          `json:"force_fragmented"`
-	FixUrl              bool                          `json:"fix_url"`
+	FixURL              bool                          `json:"fix_url"`
 	ProxyRewrite        string                        `json:"proxy_rewrite"`
 	HeartbeatInterval   time.Duration                 `json:"heartbeat_interval"`
-	HttpConfig          *GoCQHttpConfig               `json:"http_config"`
-	WSConfig            *GoCQWebsocketConfig          `json:"ws_config"`
-	ReverseServers      []*GoCQReverseWebsocketConfig `json:"ws_reverse_servers"`
+	HTTPConfig          *GoCQHTTPConfig               `json:"http_config"`
+	WSConfig            *GoCQWebSocketConfig          `json:"ws_config"`
+	ReverseServers      []*GoCQReverseWebSocketConfig `json:"ws_reverse_servers"`
 	PostMessageFormat   string                        `json:"post_message_format"`
 	UseSSOAddress       bool                          `json:"use_sso_address"`
 	Debug               bool                          `json:"debug"`
 	LogLevel            string                        `json:"log_level"`
-	WebUi               *GoCqWebUi                    `json:"web_ui"`
+	WebUI               *GoCQWebUI                    `json:"web_ui"`
 }
 
-type CQHttpApiConfig struct {
+//CQHTTPAPIConfig HTTPAPI对应的Config结构体
+type CQHTTPAPIConfig struct {
 	Host                         string `json:"host"`
 	Port                         uint16 `json:"port"`
-	UseHttp                      bool   `json:"use_http"`
+	UseHTTP                      bool   `json:"use_http"`
 	WSHost                       string `json:"ws_host"`
 	WSPort                       uint16 `json:"ws_port"`
 	UseWS                        bool   `json:"use_ws"`
-	WSReverseUrl                 string `json:"ws_reverse_url"`
-	WSReverseApiUrl              string `json:"ws_reverse_api_url"`
-	WSReverseEventUrl            string `json:"ws_reverse_event_url"`
+	WSReverseURL                 string `json:"ws_reverse_url"`
+	WSReverseAPIURL              string `json:"ws_reverse_api_url"`
+	WSReverseEventURL            string `json:"ws_reverse_event_url"`
 	WSReverseReconnectInterval   uint16 `json:"ws_reverse_reconnect_interval"`
 	WSReverseReconnectOnCode1000 bool   `json:"ws_reverse_reconnect_on_code_1000"`
 	UseWsReverse                 bool   `json:"use_ws_reverse"`
-	PostUrl                      string `json:"post_url"`
+	PostURL                      string `json:"post_url"`
 	AccessToken                  string `json:"access_token"`
 	Secret                       string `json:"secret"`
 	PostMessageFormat            string `json:"post_message_format"`
 }
 
-type GoCQHttpConfig struct {
+//GoCQHTTPConfig 正向HTTP对应config结构体
+type GoCQHTTPConfig struct {
 	Enabled  bool              `json:"enabled"`
 	Host     string            `json:"host"`
 	Port     uint16            `json:"port"`
@@ -193,29 +197,33 @@ type GoCQHttpConfig struct {
 	PostUrls map[string]string `json:"post_urls"`
 }
 
-type GoCQWebsocketConfig struct {
+//GoCQWebSocketConfig 正向WebSocket对应Config结构体
+type GoCQWebSocketConfig struct {
 	Enabled bool   `json:"enabled"`
 	Host    string `json:"host"`
 	Port    uint16 `json:"port"`
 }
 
-type GoCQReverseWebsocketConfig struct {
+//GoCQReverseWebSocketConfig 反向WebSocket对应Config结构体
+type GoCQReverseWebSocketConfig struct {
 	Enabled                  bool   `json:"enabled"`
-	ReverseUrl               string `json:"reverse_url"`
-	ReverseApiUrl            string `json:"reverse_api_url"`
-	ReverseEventUrl          string `json:"reverse_event_url"`
+	ReverseURL               string `json:"reverse_url"`
+	ReverseAPIURL            string `json:"reverse_api_url"`
+	ReverseEventURL          string `json:"reverse_event_url"`
 	ReverseReconnectInterval uint16 `json:"reverse_reconnect_interval"`
 }
 
-type GoCqWebUi struct {
+//GoCQWebUI WebUI对应Config结构体
+type GoCQWebUI struct {
 	Enabled   bool   `json:"enabled"`
 	Host      string `json:"host"`
-	WebUiPort uint64 `json:"web_ui_port"`
+	WebUIPort uint64 `json:"web_ui_port"`
 	WebInput  bool   `json:"web_input"`
 }
 
-func DefaultConfig() *JsonConfig {
-	return &JsonConfig{
+//DefaultConfig 返回一份默认配置对应结构体
+func DefaultConfig() *JSONConfig {
+	return &JSONConfig{
 		EnableDB: true,
 		ReLogin: struct {
 			Enabled         bool `json:"enabled"`
@@ -237,42 +245,43 @@ func DefaultConfig() *JsonConfig {
 		},
 		PostMessageFormat: "string",
 		ForceFragmented:   false,
-		HttpConfig: &GoCQHttpConfig{
+		HTTPConfig: &GoCQHTTPConfig{
 			Enabled:  true,
 			Host:     "0.0.0.0",
 			Port:     5700,
 			PostUrls: map[string]string{},
 		},
-		WSConfig: &GoCQWebsocketConfig{
+		WSConfig: &GoCQWebSocketConfig{
 			Enabled: true,
 			Host:    "0.0.0.0",
 			Port:    6700,
 		},
-		ReverseServers: []*GoCQReverseWebsocketConfig{
+		ReverseServers: []*GoCQReverseWebSocketConfig{
 			{
 				Enabled:                  false,
-				ReverseUrl:               "ws://you_websocket_universal.server",
-				ReverseApiUrl:            "ws://you_websocket_api.server",
-				ReverseEventUrl:          "ws://you_websocket_event.server",
+				ReverseURL:               "ws://you_websocket_universal.server",
+				ReverseAPIURL:            "ws://you_websocket_api.server",
+				ReverseEventURL:          "ws://you_websocket_event.server",
 				ReverseReconnectInterval: 3000,
 			},
 		},
-		WebUi: &GoCqWebUi{
+		WebUI: &GoCQWebUI{
 			Enabled:   true,
 			Host:      "127.0.0.1",
 			WebInput:  false,
-			WebUiPort: 9999,
+			WebUIPort: 9999,
 		},
 	}
 }
 
-func Load(p string) *JsonConfig {
+//Load 加载配置文件
+func Load(p string) *JSONConfig {
 	if !PathExists(p) {
 		log.Warnf("尝试加载配置文件 %v 失败: 文件不存在", p)
 		return nil
 	}
 	var dat map[string]interface{}
-	var c = JsonConfig{}
+	var c = JSONConfig{}
 	err := hjson.Unmarshal([]byte(ReadAllText(p)), &dat)
 	if err == nil {
 		b, _ := json.Marshal(dat)
@@ -287,7 +296,8 @@ func Load(p string) *JsonConfig {
 	return &c
 }
 
-func (c *JsonConfig) Save(p string) error {
+//Save 写入配置文件至path
+func (c *JSONConfig) Save(path string) error {
 	data, err := hjson.MarshalWithOptions(c, hjson.EncoderOptions{
 		Eol:            "\n",
 		BracesSameLine: true,
@@ -296,5 +306,5 @@ func (c *JsonConfig) Save(p string) error {
 	if err != nil {
 		return err
 	}
-	return WriteAllText(p, string(data))
+	return WriteAllText(path, string(data))
 }

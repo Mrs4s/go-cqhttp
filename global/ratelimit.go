@@ -9,13 +9,15 @@ import (
 var limiter *rate.Limiter
 var limitEnable = false
 
+//RateLimit 执行API调用速率限制
 func RateLimit(ctx context.Context) {
 	if limitEnable {
 		_ = limiter.Wait(ctx)
 	}
 }
 
-func InitLimiter(r float64, b int) {
+//InitLimiter 初始化速率限制器
+func InitLimiter(frequency float64, bucketSize int) {
 	limitEnable = true
-	limiter = rate.NewLimiter(rate.Limit(r), b)
+	limiter = rate.NewLimiter(rate.Limit(frequency), bucketSize)
 }
