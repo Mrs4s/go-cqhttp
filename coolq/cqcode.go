@@ -18,6 +18,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/message"
@@ -411,6 +412,7 @@ func (bot *CQBot) ConvertStringMessage(msg string, group bool) (r []message.IMes
 				}
 			}
 			mid, err := strconv.Atoi(params["id"])
+			customText := params["text"]
 			if err == nil {
 				org := bot.GetMessage(int32(mid))
 				if org != nil {
@@ -424,6 +426,25 @@ func (bot *CQBot) ConvertStringMessage(msg string, group bool) (r []message.IMes
 					}, r...)
 					return
 				}
+			} else if customText != "" {
+				sender, err := strconv.ParseInt(params["qq"], 10, 64)
+				if err != nil {
+					log.Warnf("警告:自定义 Reply 元素中必须包含Uin")
+					return
+				}
+				msgTime, err := strconv.ParseInt(params["time"], 10, 64)
+				if err != nil {
+					msgTime = time.Now().Unix()
+				}
+				r = append([]message.IMessageElement{
+					&message.ReplyElement{
+						ReplySeq: int32(0),
+						Sender:   sender,
+						Time:     int32(msgTime),
+						Elements: bot.ConvertStringMessage(customText, group),
+					},
+				}, r...)
+				return
 			}
 		}
 		if t == "forward" { // 单独处理转发
@@ -490,6 +511,7 @@ func (bot *CQBot) ConvertObjectMessage(m gjson.Result, group bool) (r []message.
 				}
 			}
 			mid, err := strconv.Atoi(e.Get("data").Get("id").String())
+			customText := e.Get("data").Get("text").String()
 			if err == nil {
 				org := bot.GetMessage(int32(mid))
 				if org != nil {
@@ -503,6 +525,25 @@ func (bot *CQBot) ConvertObjectMessage(m gjson.Result, group bool) (r []message.
 					}, r...)
 					return
 				}
+			} else if customText != "" {
+				sender, err := strconv.ParseInt(e.Get("data").Get("qq").String(), 10, 64)
+				if err != nil {
+					log.Warnf("警告:自定义 Reply 元素中必须包含Uin")
+					return
+				}
+				msgTime, err := strconv.ParseInt(e.Get("data").Get("time").String(), 10, 64)
+				if err != nil {
+					msgTime = time.Now().Unix()
+				}
+				r = append([]message.IMessageElement{
+					&message.ReplyElement{
+						ReplySeq: int32(0),
+						Sender:   sender,
+						Time:     int32(msgTime),
+						Elements: bot.ConvertStringMessage(customText, group),
+					},
+				}, r...)
+				return
 			}
 		}
 		if t == "forward" {
