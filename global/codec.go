@@ -40,8 +40,13 @@ func EncoderSilk(data []byte) ([]byte, error) {
 }
 
 func EncodeMP4(src string, dst string) error { //        -y 覆盖文件
-	cmd := exec.Command("ffmpeg", "-i", src, "-y", "-c", "copy", "-map", "0", dst)
-	return cmd.Run()
+	cmd1 := exec.Command("ffmpeg", "-i", src, "-y", "-c", "copy", "-map", "0", dst)
+	err := cmd1.Run()
+	if err != nil {
+		cmd2 := exec.Command("ffmpeg", "-i", src, "-y", "-c:v", "h264", "-c:a", "mp3", dst)
+		return cmd2.Run()
+	}
+	return err
 }
 
 func ExtractCover(src string, dst string) error {
