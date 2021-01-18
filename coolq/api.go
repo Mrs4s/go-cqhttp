@@ -343,7 +343,7 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupId int64, m gjson.Result) MSG {
 	if len(sendNodes) > 0 {
 		gm := bot.Client.SendGroupForwardMessage(groupId, &message.ForwardMessage{Nodes: sendNodes})
 		return OK(MSG{
-			"message_id": ToGlobalId(groupId, gm.Id),
+			"message_id": bot.InsertGroupMessage(gm),
 		})
 	}
 	return Failed(100)
