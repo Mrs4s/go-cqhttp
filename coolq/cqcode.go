@@ -429,7 +429,7 @@ func (bot *CQBot) ConvertStringMessage(msg string, group bool) (r []message.IMes
 			} else if customText != "" {
 				sender, err := strconv.ParseInt(params["qq"], 10, 64)
 				if err != nil {
-					log.Warnf("警告:自定义Reply 元素中必须包含QQ的Uin")
+					log.Warnf("警告:自定义 Reply 元素中必须包含Uin")
 					return
 				}
 				msgTime, err := strconv.ParseInt(params["time"], 10, 64)
@@ -528,7 +528,7 @@ func (bot *CQBot) ConvertObjectMessage(m gjson.Result, group bool) (r []message.
 			} else if customText != "" {
 				sender, err := strconv.ParseInt(e.Get("data").Get("qq").String(), 10, 64)
 				if err != nil {
-					log.Warnf("警告:自定义Reply 元素中必须包含QQ的Uin")
+					log.Warnf("警告:自定义 Reply 元素中必须包含Uin")
 					return
 				}
 				msgTime, err := strconv.ParseInt(e.Get("data").Get("time").String(), 10, 64)
