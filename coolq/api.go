@@ -275,7 +275,9 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupId int64, m gjson.Result) MSG {
 		}
 		uin, _ := strconv.ParseInt(e.Get("data.uin").Str, 10, 64)
 		msgTime, err := strconv.ParseInt(e.Get("data.time").Str, 10, 64)
-		if err != nil { msgTime = ts.Unix()}
+		if err != nil {
+			msgTime = ts.Unix()
+		}
 		name := e.Get("data.name").Str
 		c := e.Get("data.content")
 		if c.IsArray() {
@@ -807,10 +809,11 @@ func (bot *CQBot) CQGetMessage(messageId int32) MSG {
 	gid, isGroup := msg["group"]
 	raw := msg["message"].(string)
 	return OK(MSG{
-		"message_id": messageId,
-		"real_id":    msg["message-id"],
-		"group":      isGroup,
-		"group_id":   gid,
+		"message_id":  messageId,
+		"real_id":     msg["message-id"],
+		"message_seq": msg["message-id"],
+		"group":       isGroup,
+		"group_id":    gid,
 		"message_type": func() string {
 			if isGroup {
 				return "group"
@@ -839,6 +842,30 @@ func (bot *CQBot) CQGetGroupSystemMessages() MSG {
 		return Failed(100, "SYSTEM_MSG_API_ERROR", err.Error())
 	}
 	return OK(msg)
+}
+
+func (bot *CQBot) CQGetGroupMessageHistory(groupId int64, seq int64) MSG {
+	if g := bot.Client.FindGroup(groupId); g == nil {
+		return Failed(100, "GROUP_NOT_FOUND", "群聊不存在")
+	}
+	msg, err := bot.Client.GetGroupMessages(groupId, seq-19, seq)
+	if err != nil {
+		log.Warnf("获取群历史消息失败: %v", err)
+		return Failed(100, "MESSAGES_API_ERROR", err.Error())
+	}
+	var ms []MSG
+	for _, m := range msg {
+		id := m.Id
+		if bot.db != nil {
+			id = bot.InsertGroupMessage(m)
+		}
+		t := bot.formatGroupMessage(m)
+		t["message_id"] = id
+		ms = append(ms, t)
+	}
+	return OK(MSG{
+		"messages": ms,
+	})
 }
 
 func (bot *CQBot) CQCanSendImage() MSG {

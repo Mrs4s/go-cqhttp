@@ -421,6 +421,12 @@ func SetGroupAnonymousBan(s *httpServer, c *gin.Context) {
 	c.JSON(200, s.bot.CQSetGroupAnonymousBan(gid, flag, int32(d)))
 }
 
+func GetGroupMessageHistory(s *httpServer, c *gin.Context) {
+	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
+	seq, _ := strconv.ParseInt(getParam(c, "message_seq"), 10, 64)
+	c.JSON(200, s.bot.CQGetGroupMessageHistory(gid, seq))
+}
+
 func HandleQuickOperation(s *httpServer, c *gin.Context) {
 	if c.Request.Method != "POST" {
 		c.AbortWithStatus(404)
@@ -566,6 +572,7 @@ var httpApi = map[string]func(s *httpServer, c *gin.Context){
 	"reload_event_filter":        ReloadEventFilter,
 	"set_group_portrait":         SetGroupPortrait,
 	"set_group_anonymous_ban":    SetGroupAnonymousBan,
+	"get_group_msg_history":      GetGroupMessageHistory,
 	"download_file":              DownloadFile,
 	".handle_quick_operation":    HandleQuickOperation,
 	".ocr_image":                 OcrImage,

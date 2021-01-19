@@ -472,6 +472,57 @@ func (bot *CQBot) dispatchEventMessage(m MSG) {
 	}
 }
 
+func (bot *CQBot) formatGroupMessage(m *message.GroupMessage) MSG {
+	cqm := ToStringMessage(m.Elements, m.GroupCode, true)
+	gm := MSG{
+		"anonymous":    nil,
+		"font":         0,
+		"group_id":     m.GroupCode,
+		"message":      ToFormattedMessage(m.Elements, m.GroupCode, false),
+		"message_type": "group",
+		"message_seq":  m.Id,
+		"post_type":    "message",
+		"raw_message":  cqm,
+		"self_id":      bot.Client.Uin,
+		"sender": MSG{
+			"age":     0,
+			"area":    "",
+			"level":   "",
+			"sex":     "unknown",
+			"user_id": m.Sender.Uin,
+		},
+		"sub_type": "normal",
+		"time":     time.Now().Unix(),
+		"user_id":  m.Sender.Uin,
+	}
+	if m.Sender.IsAnonymous() {
+		gm["anonymous"] = MSG{
+			"flag": m.Sender.AnonymousInfo.AnonymousId + "|" + m.Sender.AnonymousInfo.AnonymousNick,
+			"id":   m.Sender.Uin,
+			"name": m.Sender.AnonymousInfo.AnonymousNick,
+		}
+		gm["sender"].(MSG)["nickname"] = "匿名消息"
+		gm["sub_type"] = "anonymous"
+	} else {
+		mem := bot.Client.FindGroup(m.GroupCode).FindMember(m.Sender.Uin)
+		ms := gm["sender"].(MSG)
+		ms["role"] = func() string {
+			switch mem.Permission {
+			case client.Owner:
+				return "owner"
+			case client.Administrator:
+				return "admin"
+			default:
+				return "member"
+			}
+		}()
+		ms["nickname"] = mem.Nickname
+		ms["card"] = mem.CardName
+		ms["title"] = mem.SpecialTitle
+	}
+	return gm
+}
+
 func formatGroupName(group *client.GroupInfo) string {
 	return fmt.Sprintf("%s(%d)", group.Name, group.Code)
 }
