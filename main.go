@@ -29,42 +29,14 @@ import (
 	"github.com/Mrs4s/go-cqhttp/global"
 	jsoniter "github.com/json-iterator/go"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
-	"github.com/rifflock/lfshook"
 	log "github.com/sirupsen/logrus"
 	easy "github.com/t-tomalak/logrus-easy-formatter"
 )
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
+var conf *global.JsonConfig
 
 func init() {
-	log.SetFormatter(&easy.Formatter{
-		TimestampFormat: "2006-01-02 15:04:05",
-		LogFormat:       "[%time%] [%lvl%]: %msg% \n",
-	})
-	w, err := rotatelogs.New(path.Join("logs", "%Y-%m-%d.log"), rotatelogs.WithRotationTime(time.Hour*24))
-	if err == nil {
-		log.SetOutput(io.MultiWriter(os.Stderr, w))
-	}
-	if !global.PathExists(global.IMAGE_PATH) {
-		if err := os.MkdirAll(global.IMAGE_PATH, 0755); err != nil {
-			log.Fatalf("创建图片缓存文件夹失败: %v", err)
-		}
-	}
-	if !global.PathExists(global.VOICE_PATH) {
-		if err := os.MkdirAll(global.VOICE_PATH, 0755); err != nil {
-			log.Fatalf("创建语音缓存文件夹失败: %v", err)
-		}
-	}
-	if !global.PathExists(global.VIDEO_PATH) {
-		if err := os.MkdirAll(global.VIDEO_PATH, 0755); err != nil {
-			log.Fatalf("创建视频缓存文件夹失败: %v", err)
-		}
-	}
-	if !global.PathExists(global.CACHE_PATH) {
-		if err := os.MkdirAll(global.CACHE_PATH, 0755); err != nil {
-			log.Fatalf("创建发送图片缓存文件夹失败: %v", err)
-		}
-	}
 	if global.PathExists("cqhttp.json") {
 		log.Info("发现 cqhttp.json 将在五秒后尝试导入配置，按 Ctrl+C 取消.")
 		log.Warn("警告: 该操作会删除 cqhttp.json 并覆盖 config.hjson 文件.")
@@ -94,6 +66,44 @@ func init() {
 		}
 		_ = os.Remove("cqhttp.json")
 	}
+
+	conf = getConfig()
+	if conf == nil {
+		return
+	}
+
+	logFormatter := &easy.Formatter{
+		TimestampFormat: "2006-01-02 15:04:05",
+		LogFormat:       "[%time%] [%lvl%]: %msg% \n",
+	}
+	w, err := rotatelogs.New(path.Join("logs", "%Y-%m-%d.log"), rotatelogs.WithRotationTime(time.Hour*24))
+	if err != nil {
+		log.Errorf("rotatelogs init err: %v", err)
+		panic(err)
+	}
+
+	log.AddHook(global.NewLocalHook(w, logFormatter, global.GetLogLevel(conf.LogLevel)...))
+
+	if !global.PathExists(global.IMAGE_PATH) {
+		if err := os.MkdirAll(global.IMAGE_PATH, 0755); err != nil {
+			log.Fatalf("创建图片缓存文件夹失败: %v", err)
+		}
+	}
+	if !global.PathExists(global.VOICE_PATH) {
+		if err := os.MkdirAll(global.VOICE_PATH, 0755); err != nil {
+			log.Fatalf("创建语音缓存文件夹失败: %v", err)
+		}
+	}
+	if !global.PathExists(global.VIDEO_PATH) {
+		if err := os.MkdirAll(global.VIDEO_PATH, 0755); err != nil {
+			log.Fatalf("创建视频缓存文件夹失败: %v", err)
+		}
+	}
+	if !global.PathExists(global.CACHE_PATH) {
+		if err := os.MkdirAll(global.CACHE_PATH, 0755); err != nil {
+			log.Fatalf("创建发送图片缓存文件夹失败: %v", err)
+		}
+	}
 }
 
 func main() {
@@ -120,91 +130,10 @@ func main() {
 		}
 	}
 
-	var conf *global.JsonConfig
-	if global.PathExists("config.json") {
-		conf = global.Load("config.json")
-		_ = conf.Save("config.hjson")
-		_ = os.Remove("config.json")
-	} else if os.Getenv("UIN") != "" {
-		log.Infof("将从环境变量加载配置.")
-		uin, _ := strconv.ParseInt(os.Getenv("UIN"), 10, 64)
-		pwd := os.Getenv("PASS")
-		post := os.Getenv("HTTP_POST")
-		conf = &global.JsonConfig{
-			Uin:      uin,
-			Password: pwd,
-			HttpConfig: &global.GoCQHttpConfig{
-				Enabled:  true,
-				Host:     "0.0.0.0",
-				Port:     5700,
-				PostUrls: map[string]string{},
-			},
-			WSConfig: &global.GoCQWebsocketConfig{
-				Enabled: true,
-				Host:    "0.0.0.0",
-				Port:    6700,
-			},
-			PostMessageFormat: "string",
-			Debug:             os.Getenv("DEBUG") == "true",
-		}
-		if post != "" {
-			conf.HttpConfig.PostUrls[post] = os.Getenv("HTTP_SECRET")
-		}
-	} else {
-		conf = global.Load("config.hjson")
-	}
-	if conf == nil {
-		err := global.WriteAllText("config.hjson", global.DefaultConfigWithComments)
-		if err != nil {
-			log.Fatalf("创建默认配置文件时出现错误: %v", err)
-			return
-		}
-		log.Infof("默认配置文件已生成, 请编辑 config.hjson 后重启程序.")
-		time.Sleep(time.Second * 5)
-		return
-	}
 	if conf.Uin == 0 || (conf.Password == "" && conf.PasswordEncrypted == "") {
 		log.Warnf("请修改 config.hjson 以添加账号密码.")
 		time.Sleep(time.Second * 5)
 		return
-	}
-
-	// log classified by level
-	// Collect all records up to the specified level (default level: warn)
-	logLevel := conf.LogLevel
-	if logLevel != "" {
-		date := time.Now().Format("2006-01-02")
-		var logPathMap lfshook.PathMap
-		switch conf.LogLevel {
-		case "warn":
-			logPathMap = lfshook.PathMap{
-				log.WarnLevel:  path.Join("logs", date+"-warn.log"),
-				log.ErrorLevel: path.Join("logs", date+"-warn.log"),
-				log.FatalLevel: path.Join("logs", date+"-warn.log"),
-				log.PanicLevel: path.Join("logs", date+"-warn.log"),
-			}
-		case "error":
-			logPathMap = lfshook.PathMap{
-				log.ErrorLevel: path.Join("logs", date+"-error.log"),
-				log.FatalLevel: path.Join("logs", date+"-error.log"),
-				log.PanicLevel: path.Join("logs", date+"-error.log"),
-			}
-		default:
-			logPathMap = lfshook.PathMap{
-				log.WarnLevel:  path.Join("logs", date+"-warn.log"),
-				log.ErrorLevel: path.Join("logs", date+"-warn.log"),
-				log.FatalLevel: path.Join("logs", date+"-warn.log"),
-				log.PanicLevel: path.Join("logs", date+"-warn.log"),
-			}
-		}
-
-		log.AddHook(lfshook.NewHook(
-			logPathMap,
-			&easy.Formatter{
-				TimestampFormat: "2006-01-02 15:04:05",
-				LogFormat:       "[%time%] [%lvl%]: %msg% \n",
-			},
-		))
 	}
 
 	log.Info("当前版本:", coolq.Version)
@@ -486,4 +415,50 @@ func restart(Args []string) {
 		}
 	}
 	cmd.Start()
+}
+
+func getConfig() *global.JsonConfig {
+	if global.PathExists("config.json") {
+		conf = global.Load("config.json")
+		_ = conf.Save("config.hjson")
+		_ = os.Remove("config.json")
+	} else if os.Getenv("UIN") != "" {
+		log.Infof("将从环境变量加载配置.")
+		uin, _ := strconv.ParseInt(os.Getenv("UIN"), 10, 64)
+		pwd := os.Getenv("PASS")
+		post := os.Getenv("HTTP_POST")
+		conf = &global.JsonConfig{
+			Uin:      uin,
+			Password: pwd,
+			HttpConfig: &global.GoCQHttpConfig{
+				Enabled:  true,
+				Host:     "0.0.0.0",
+				Port:     5700,
+				PostUrls: map[string]string{},
+			},
+			WSConfig: &global.GoCQWebsocketConfig{
+				Enabled: true,
+				Host:    "0.0.0.0",
+				Port:    6700,
+			},
+			PostMessageFormat: "string",
+			Debug:             os.Getenv("DEBUG") == "true",
+		}
+		if post != "" {
+			conf.HttpConfig.PostUrls[post] = os.Getenv("HTTP_SECRET")
+		}
+	} else {
+		conf = global.Load("config.hjson")
+	}
+	if conf == nil {
+		err := global.WriteAllText("config.hjson", global.DefaultConfigWithComments)
+		if err != nil {
+			log.Fatalf("创建默认配置文件时出现错误: %v", err)
+			return nil
+		}
+		log.Infof("默认配置文件已生成, 请编辑 config.hjson 后重启程序.")
+		time.Sleep(time.Second * 5)
+		return nil
+	}
+	return conf
 }
