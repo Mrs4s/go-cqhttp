@@ -69,7 +69,7 @@ func init() {
 
 	conf = getConfig()
 	if conf == nil {
-		return
+		os.Exit(1)
 	}
 
 	logFormatter := &easy.Formatter{
@@ -80,6 +80,11 @@ func init() {
 	if err != nil {
 		log.Errorf("rotatelogs init err: %v", err)
 		panic(err)
+	}
+
+	// 更加彻底的调试 将在标准输出中打印执行行数
+	if conf.Debug {
+		log.SetReportCaller(true)
 	}
 
 	log.AddHook(global.NewLocalHook(w, logFormatter, global.GetLogLevel(conf.LogLevel)...))
