@@ -118,8 +118,8 @@ var DefaultConfigWithComments = `
     use_sso_address: false
     // 是否启用 DEBUG
     debug: false
-    // 日志等级
-    log_level: ""
+    // 日志等级 trace,debug,info,warn,error
+    log_level: "info"
     // WebUi 设置
     web_ui: {
         // 是否启用 WebUi
