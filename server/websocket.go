@@ -580,6 +580,9 @@ var wsAPI = map[string]func(*coolq.CQBot, gjson.Result) coolq.MSG{
 	"get_group_at_all_remain": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		return bot.CQGetAtAllRemain(p.Get("group_id").Int())
 	},
+	"get_online_clients": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
+		return bot.CQGetOnlineClients(p.Get("no_cache").Bool())
+	},
 	".get_word_slices": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		return bot.CQGetWordSlices(p.Get("content").Str)
 	},

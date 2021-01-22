@@ -427,6 +427,10 @@ func GetGroupMessageHistory(s *httpServer, c *gin.Context) {
 	c.JSON(200, s.bot.CQGetGroupMessageHistory(gid, seq))
 }
 
+func GetOnlineClients(s *httpServer, c *gin.Context) {
+	c.JSON(200, s.bot.CQGetOnlineClients(getParamOrDefault(c, "no_cache", "false") == "true"))
+}
+
 func HandleQuickOperation(s *httpServer, c *gin.Context) {
 	if c.Request.Method != "POST" {
 		c.AbortWithStatus(404)
@@ -578,6 +582,7 @@ var httpApi = map[string]func(s *httpServer, c *gin.Context){
 	".ocr_image":                 OcrImage,
 	"ocr_image":                  OcrImage,
 	"get_group_at_all_remain":    GetGroupAtAllRemain,
+	"get_online_clients":         GetOnlineClients,
 	".get_word_slices":           GetWordSlices,
 }
 

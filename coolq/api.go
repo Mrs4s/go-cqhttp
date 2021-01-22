@@ -868,6 +868,26 @@ func (bot *CQBot) CQGetGroupMessageHistory(groupId int64, seq int64) MSG {
 	})
 }
 
+func (bot *CQBot) CQGetOnlineClients(noCache bool) MSG {
+	if noCache {
+		if err := bot.Client.RefreshStatus(); err != nil {
+			log.Warnf("刷新客户端状态时出现问题 %v", err)
+			return Failed(100, "REFRESH_STATUS_ERROR", err.Error())
+		}
+	}
+	var d []MSG
+	for _, oc := range bot.Client.OnlineClients {
+		d = append(d, MSG{
+			"app_id":      oc.AppId,
+			"device_name": oc.DeviceName,
+			"device_kind": oc.DeviceKind,
+		})
+	}
+	return OK(MSG{
+		"clients": d,
+	})
+}
+
 func (bot *CQBot) CQCanSendImage() MSG {
 	return OK(MSG{"yes": true})
 }
