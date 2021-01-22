@@ -413,6 +413,27 @@ func (bot *CQBot) groupJoinReqEvent(c *client.QQClient, e *client.UserJoinGroupR
 	})
 }
 
+func (bot *CQBot) otherClientStatusChangedEvent(c *client.QQClient, e *client.OtherClientStatusChangedEvent) {
+	if e.Online {
+		log.Infof("Bot 账号在客户端 %v (%v) 登录.", e.Client.DeviceName, e.Client.DeviceKind)
+	} else {
+		log.Infof("Bot 账号在客户端 %v (%v) 登出.", e.Client.DeviceName, e.Client.DeviceKind)
+	}
+	bot.dispatchEventMessage(MSG{
+		"post_type":   "notice",
+		"notice_type": "client_status",
+		"client": MSG{
+			"online":      e.Online,
+			"app_id":      e.Client.AppId,
+			"device_name": e.Client.DeviceName,
+			"device_kind": e.Client.DeviceKind,
+		},
+		"self_id": c.Uin,
+		"time":    time.Now().Unix(),
+	})
+
+}
+
 func (bot *CQBot) groupIncrease(groupCode, operatorUin, userUin int64) MSG {
 	return MSG{
 		"post_type":   "notice",
