@@ -106,7 +106,7 @@ Type : `reply`
 | `id`   | int  | 回复时所引用的消息id, 必须为本群消息. |
 | `text`   | string  | 自定义回复的信息 |
 | `qq`   | int64  | 自定义回复时的自定义QQ, 如果使用自定义信息必须指定. |
-| `time`   | int64  | 自定义回复时的时间, 格式为Unix时间 |
+| `time`   | int64  | 可选. 自定义回复时的时间, 格式为Unix时间 |
 
 
 
@@ -515,7 +515,7 @@ Type: `tts`
 
 响应示例
 
-````json
+````json5
 {
     "data": {
         "messages": [
@@ -533,7 +533,7 @@ Type: `tts`
                     "nickname": "发送者B",
                     "user_id": 10087
                 },
-                "time": 1595694393
+                "time": 1595694393 //  可选
             }
         ]
     },
