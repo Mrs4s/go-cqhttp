@@ -30,12 +30,16 @@ import (
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
+//WebInput 网页输入channel
 var WebInput = make(chan string, 1) //长度1，用于阻塞
 
+//Console 控制台channel
 var Console = make(chan os.Signal, 1)
 
+//Restart 重启信号监听channel
 var Restart = make(chan struct{}, 1)
 
+//JSONConfig go-cqhttp配置
 var JSONConfig *global.JSONConfig
 
 type webServer struct {
@@ -46,23 +50,25 @@ type webServer struct {
 	Console *bufio.Reader
 }
 
+//WebServer Admin子站的Server
 var WebServer = &webServer{}
 
-// admin 子站的 路由映射
-var HttpuriAdmin = map[string]func(s *webServer, c *gin.Context){
-	"do_restart":         AdminDoRestart,       //热重启
-	"do_process_restart": AdminProcessRestart,  //进程重启
-	"get_web_write":      AdminWebWrite,        //获取是否验证码输入
-	"do_web_write":       AdminDoWebWrite,      //web上进行输入操作
-	"do_restart_docker":  AdminDoRestartDocker, //直接停止（依赖supervisord/docker）重新拉起
-	"do_config_base":     AdminDoConfigBase,    //修改config.json中的基础部分
-	"do_config_http":     AdminDoConfigHttp,    //修改config.json的http部分
-	"do_config_ws":       AdminDoConfigWs,      //修改config.json的正向ws部分
-	"do_config_reverse":  AdminDoConfigReverse, //修改config.json 中的反向ws部分
-	"do_config_json":     AdminDoConfigJson,    //直接修改 config.json配置
-	"get_config_json":    AdminGetConfigJson,   //拉取 当前的config.json配置
+//APIAdminRoutingTable Admin子站的路由映射
+var APIAdminRoutingTable = map[string]func(s *webServer, c *gin.Context){
+	"do_restart":         AdminDoRestart,         //热重启
+	"do_process_restart": AdminProcessRestart,    //进程重启
+	"get_web_write":      AdminWebWrite,          //获取是否验证码输入
+	"do_web_write":       AdminDoWebWrite,        //web上进行输入操作
+	"do_restart_docker":  AdminDoRestartDocker,   //直接停止（依赖supervisord/docker）重新拉起
+	"do_config_base":     AdminDoConfigBase,      //修改config.json中的基础部分
+	"do_config_http":     AdminDoConfigHTTP,      //修改config.json的http部分
+	"do_config_ws":       AdminDoConfigWS,        //修改config.json的正向ws部分
+	"do_config_reverse":  AdminDoConfigReverseWS, //修改config.json 中的反向ws部分
+	"do_config_json":     AdminDoConfigJSON,      //直接修改 config.json配置
+	"get_config_json":    AdminGetConfigJSON,     //拉取 当前的config.json配置
 }
 
+//Failed 构建失败返回MSG
 func Failed(code int, msg string) coolq.MSG {
 	return coolq.MSG{"data": nil, "retcode": code, "status": "failed", "msg": msg}
 }
@@ -266,7 +272,7 @@ func (s *webServer) Dologin() {
 	global.BootFilter()
 	global.InitCodec()
 	coolq.IgnoreInvalidCQCode = conf.IgnoreInvalidCQCode
-	coolq.SplitUrl = conf.FixURL
+	coolq.SplitURL = conf.FixURL
 	coolq.ForceFragmented = conf.ForceFragmented
 	log.Info("资源初始化完成, 开始处理信息.")
 	log.Info("アトリは、高性能ですから!")
@@ -321,14 +327,14 @@ func (s *webServer) Dologin() {
 func (s *webServer) admin(c *gin.Context) {
 	action := c.Param("action")
 	log.Debugf("WebServer接收到cgi调用: %v", action)
-	if f, ok := HttpuriAdmin[action]; ok {
+	if f, ok := APIAdminRoutingTable[action]; ok {
 		f(s, c)
 	} else {
 		c.JSON(200, coolq.Failed(404))
 	}
 }
 
-// 获取当前配置文件信息
+//GetConf 获取当前配置文件信息
 func GetConf() *global.JSONConfig {
 	if JSONConfig != nil {
 		return JSONConfig
@@ -337,7 +343,7 @@ func GetConf() *global.JSONConfig {
 	return conf
 }
 
-// admin 控制器 登录验证
+//AuthMiddleWare Admin控制器登录验证
 func AuthMiddleWare() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		conf := GetConf()
@@ -431,7 +437,7 @@ func (s *webServer) DoReLogin() { // TODO: 协议层的 ReLogin
 	s.Dologin()
 	//关闭之前的 server
 	if OldConf.HTTPConfig != nil && OldConf.HTTPConfig.Enabled {
-		HttpServer.ShutDown()
+		cqHTTPServer.ShutDown()
 	}
 	//if OldConf.WSConfig != nil && OldConf.WSConfig.Enabled {
 	//	server.WsShutdown()
@@ -444,9 +450,9 @@ func (s *webServer) DoReLogin() { // TODO: 协议层的 ReLogin
 func (s *webServer) UpServer() {
 	conf := GetConf()
 	if conf.HTTPConfig != nil && conf.HTTPConfig.Enabled {
-		go HttpServer.Run(fmt.Sprintf("%s:%d", conf.HTTPConfig.Host, conf.HTTPConfig.Port), conf.AccessToken, s.bot)
+		go cqHTTPServer.Run(fmt.Sprintf("%s:%d", conf.HTTPConfig.Host, conf.HTTPConfig.Port), conf.AccessToken, s.bot)
 		for k, v := range conf.HTTPConfig.PostUrls {
-			NewHttpClient().Run(k, v, conf.HTTPConfig.Timeout, s.bot)
+			newHTTPClient().Run(k, v, conf.HTTPConfig.Timeout, s.bot)
 		}
 	}
 	if conf.WSConfig != nil && conf.WSConfig.Enabled {
@@ -461,9 +467,9 @@ func (s *webServer) UpServer() {
 func (s *webServer) ReloadServer() {
 	conf := GetConf()
 	if conf.HTTPConfig != nil && conf.HTTPConfig.Enabled {
-		go HttpServer.Run(fmt.Sprintf("%s:%d", conf.HTTPConfig.Host, conf.HTTPConfig.Port), conf.AccessToken, s.bot)
+		go cqHTTPServer.Run(fmt.Sprintf("%s:%d", conf.HTTPConfig.Host, conf.HTTPConfig.Port), conf.AccessToken, s.bot)
 		for k, v := range conf.HTTPConfig.PostUrls {
-			NewHttpClient().Run(k, v, conf.HTTPConfig.Timeout, s.bot)
+			newHTTPClient().Run(k, v, conf.HTTPConfig.Timeout, s.bot)
 		}
 	}
 	for _, rc := range conf.ReverseServers {
@@ -471,7 +477,7 @@ func (s *webServer) ReloadServer() {
 	}
 }
 
-// 热重启
+//AdminDoRestart 热重启
 func AdminDoRestart(s *webServer, c *gin.Context) {
 	s.bot.Release()
 	s.bot = nil
@@ -480,19 +486,19 @@ func AdminDoRestart(s *webServer, c *gin.Context) {
 	c.JSON(200, coolq.OK(coolq.MSG{}))
 }
 
-// 进程重启
+//AdminProcessRestart 进程重启
 func AdminProcessRestart(s *webServer, c *gin.Context) {
 	Restart <- struct{}{}
 	c.JSON(200, coolq.OK(coolq.MSG{}))
 }
 
-// 冷重启
+//AdminDoRestartDocker 冷重启
 func AdminDoRestartDocker(s *webServer, c *gin.Context) {
 	Console <- os.Kill
 	c.JSON(200, coolq.OK(coolq.MSG{}))
 }
 
-// web输入 html 页面
+//AdminWebWrite web输入html页面
 func AdminWebWrite(s *webServer, c *gin.Context) {
 	pic := global.ReadAllText("captcha.jpg")
 	var picbase64 string
@@ -509,14 +515,14 @@ func AdminWebWrite(s *webServer, c *gin.Context) {
 	}))
 }
 
-// web输入 处理
+//AdminDoWebWrite web输入处理
 func AdminDoWebWrite(s *webServer, c *gin.Context) {
 	input := c.PostForm("input")
 	WebInput <- input
 	c.JSON(200, coolq.OK(coolq.MSG{}))
 }
 
-// 普通配置修改
+//AdminDoConfigBase 普通配置修改
 func AdminDoConfigBase(s *webServer, c *gin.Context) {
 	conf := GetConf()
 	conf.Uin, _ = strconv.ParseInt(c.PostForm("uin"), 10, 64)
@@ -536,8 +542,8 @@ func AdminDoConfigBase(s *webServer, c *gin.Context) {
 	}
 }
 
-// http配置修改
-func AdminDoConfigHttp(s *webServer, c *gin.Context) {
+//AdminDoConfigHTTP HTTP配置修改
+func AdminDoConfigHTTP(s *webServer, c *gin.Context) {
 	conf := GetConf()
 	p, _ := strconv.ParseUint(c.PostForm("port"), 10, 16)
 	conf.HTTPConfig.Port = uint16(p)
@@ -561,8 +567,8 @@ func AdminDoConfigHttp(s *webServer, c *gin.Context) {
 	}
 }
 
-// ws配置修改
-func AdminDoConfigWs(s *webServer, c *gin.Context) {
+//AdminDoConfigWS ws配置修改
+func AdminDoConfigWS(s *webServer, c *gin.Context) {
 	conf := GetConf()
 	p, _ := strconv.ParseUint(c.PostForm("port"), 10, 16)
 	conf.WSConfig.Port = uint16(p)
@@ -581,8 +587,8 @@ func AdminDoConfigWs(s *webServer, c *gin.Context) {
 	}
 }
 
-// 反向ws配置修改
-func AdminDoConfigReverse(s *webServer, c *gin.Context) {
+//AdminDoConfigReverseWS 反向ws配置修改
+func AdminDoConfigReverseWS(s *webServer, c *gin.Context) {
 	conf := GetConf()
 	conf.ReverseServers[0].ReverseAPIURL = c.PostForm("reverse_api_url")
 	conf.ReverseServers[0].ReverseURL = c.PostForm("reverse_url")
@@ -603,11 +609,11 @@ func AdminDoConfigReverse(s *webServer, c *gin.Context) {
 	}
 }
 
-// config.json配置修改
-func AdminDoConfigJson(s *webServer, c *gin.Context) {
+//AdminDoConfigJSON config.hjson配置修改
+func AdminDoConfigJSON(s *webServer, c *gin.Context) {
 	conf := GetConf()
-	Json := c.PostForm("json")
-	err := json.Unmarshal([]byte(Json), &conf)
+	JSON := c.PostForm("json")
+	err := json.Unmarshal([]byte(JSON), &conf)
 	if err != nil {
 		log.Warnf("尝试加载配置文件 %v 时出现错误: %v", "config.hjson", err)
 		c.JSON(200, Failed(502, "保存 config.hjson 时出现错误:"+fmt.Sprintf("%v", err)))
@@ -622,8 +628,8 @@ func AdminDoConfigJson(s *webServer, c *gin.Context) {
 	}
 }
 
-// 拉取config.json配置
-func AdminGetConfigJson(s *webServer, c *gin.Context) {
+//AdminGetConfigJSON 拉取config.hjson配置
+func AdminGetConfigJSON(s *webServer, c *gin.Context) {
 	conf := GetConf()
 	c.JSON(200, coolq.OK(coolq.MSG{"config": conf}))
 

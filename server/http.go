@@ -24,7 +24,7 @@ import (
 type httpServer struct {
 	engine *gin.Engine
 	bot    *coolq.CQBot
-	Http   *http.Server
+	HTTP   *http.Server
 }
 
 type httpClient struct {
@@ -34,7 +34,9 @@ type httpClient struct {
 	timeout int32
 }
 
-var HttpServer = &httpServer{}
+var cqHTTPServer = &httpServer{}
+
+//Debug 是否启用Debug模式
 var Debug = false
 
 func (s *httpServer) Run(addr, authToken string, bot *coolq.CQBot) {
@@ -84,11 +86,11 @@ func (s *httpServer) Run(addr, authToken string, bot *coolq.CQBot) {
 
 	go func() {
 		log.Infof("CQ HTTP 服务器已启动: %v", addr)
-		s.Http = &http.Server{
+		s.HTTP = &http.Server{
 			Addr:    addr,
 			Handler: s.engine,
 		}
-		if err := s.Http.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := s.HTTP.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Error(err)
 			log.Infof("HTTP 服务启动失败, 请检查端口是否被占用.")
 			log.Warnf("将在五秒后退出.")
@@ -98,7 +100,7 @@ func (s *httpServer) Run(addr, authToken string, bot *coolq.CQBot) {
 	}()
 }
 
-func NewHttpClient() *httpClient {
+func newHTTPClient() *httpClient {
 	return &httpClient{}
 }
 
@@ -123,7 +125,7 @@ func (c *httpClient) onBotPushEvent(m coolq.MSG) {
 		}
 		if c.secret != "" {
 			mac := hmac.New(sha1.New, []byte(c.secret))
-			_, err := mac.Write([]byte(m.ToJson()))
+			_, err := mac.Write([]byte(m.ToJSON()))
 			if err != nil {
 				log.Error(err)
 				return nil
@@ -141,12 +143,12 @@ func (c *httpClient) onBotPushEvent(m coolq.MSG) {
 			return nil
 		}).Do()
 	if err != nil {
-		log.Warnf("上报Event数据 %v 到 %v 失败: %v", m.ToJson(), c.addr, err)
+		log.Warnf("上报Event数据 %v 到 %v 失败: %v", m.ToJSON(), c.addr, err)
 		return
 	}
-	log.Debugf("上报Event数据 %v 到 %v", m.ToJson(), c.addr)
+	log.Debugf("上报Event数据 %v 到 %v", m.ToJSON(), c.addr)
 	if gjson.Valid(res) {
-		c.bot.CQHandleQuickOperation(gjson.Parse(m.ToJson()), gjson.Parse(res))
+		c.bot.CQHandleQuickOperation(gjson.Parse(m.ToJSON()), gjson.Parse(res))
 	}
 }
 
@@ -154,7 +156,7 @@ func (s *httpServer) HandleActions(c *gin.Context) {
 	global.RateLimit(context.Background())
 	action := strings.ReplaceAll(c.Param("action"), "_async", "")
 	log.Debugf("HTTPServer接收到API调用: %v", action)
-	if f, ok := httpApi[action]; ok {
+	if f, ok := httpAPI[action]; ok {
 		f(s, c)
 	} else {
 		c.JSON(200, coolq.Failed(404))
@@ -202,13 +204,13 @@ func GetGroupRootFiles(s *httpServer, c *gin.Context) {
 	c.JSON(200, s.bot.CQGetGroupRootFiles(gid))
 }
 
-func GetGroupFilesByFolderId(s *httpServer, c *gin.Context) {
+func GetGroupFilesByFolderID(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
-	folderId := getParam(c, "folder_id")
-	c.JSON(200, s.bot.CQGetGroupFilesByFolderID(gid, folderId))
+	folderID := getParam(c, "folder_id")
+	c.JSON(200, s.bot.CQGetGroupFilesByFolderID(gid, folderID))
 }
 
-func GetGroupFileUrl(s *httpServer, c *gin.Context) {
+func GetGroupFileURL(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	fid := getParam(c, "file_id")
 	busid, _ := strconv.ParseInt(getParam(c, "busid"), 10, 32)
@@ -356,11 +358,11 @@ func SetRestart(s *httpServer, c *gin.Context) {
 }
 
 func GetForwardMessage(s *httpServer, c *gin.Context) {
-	resId := getParam(c, "message_id")
-	if resId == "" {
-		resId = getParam(c, "id")
+	resID := getParam(c, "message_id")
+	if resID == "" {
+		resID = getParam(c, "id")
 	}
-	c.JSON(200, s.bot.CQGetForwardMessage(resId))
+	c.JSON(200, s.bot.CQGetForwardMessage(resID))
 }
 
 func GetGroupSystemMessage(s *httpServer, c *gin.Context) {
@@ -534,7 +536,7 @@ func getParamWithType(c *gin.Context, k string) (string, gjson.Type) {
 	return "", gjson.Null
 }
 
-var httpApi = map[string]func(s *httpServer, c *gin.Context){
+var httpAPI = map[string]func(s *httpServer, c *gin.Context){
 	"get_login_info":             GetLoginInfo,
 	"get_friend_list":            GetFriendList,
 	"get_group_list":             GetGroupList,
@@ -543,8 +545,8 @@ var httpApi = map[string]func(s *httpServer, c *gin.Context){
 	"get_group_member_info":      GetGroupMemberInfo,
 	"get_group_file_system_info": GetGroupFileSystemInfo,
 	"get_group_root_files":       GetGroupRootFiles,
-	"get_group_files_by_folder":  GetGroupFilesByFolderId,
-	"get_group_file_url":         GetGroupFileUrl,
+	"get_group_files_by_folder":  GetGroupFilesByFolderID,
+	"get_group_file_url":         GetGroupFileURL,
 	"send_msg":                   SendMessage,
 	"send_group_msg":             SendGroupMessage,
 	"send_group_forward_msg":     SendGroupForwardMessage,
@@ -589,7 +591,7 @@ var httpApi = map[string]func(s *httpServer, c *gin.Context){
 func (s *httpServer) ShutDown() {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	if err := s.Http.Shutdown(ctx); err != nil {
+	if err := s.HTTP.Shutdown(ctx); err != nil {
 		log.Fatal("http Server Shutdown:", err)
 	}
 	<-ctx.Done()
