@@ -135,6 +135,8 @@ var DefaultConfigWithComments = `
 }
 `
 
+var PasswordHash [16]byte
+
 //JSONConfig Config对应的结构体
 type JSONConfig struct {
 	Uin               int64  `json:"uin"`
