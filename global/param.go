@@ -21,6 +21,15 @@ var falseSet = map[string]struct{}{
 	"0":     {},
 }
 
+//EnsureBool 判断给定的p是否可表示为合法Bool类型,否则返回defaultVal
+//
+//支持的合法类型有
+//
+//type bool
+//
+//type gjson.True or gjson.False
+//
+//type string "true","yes","1" or "false","no","0" (case insensitive)
 func EnsureBool(p interface{}, defaultVal bool) bool {
 	var str string
 	if b, ok := p.(bool); ok {
@@ -54,9 +63,13 @@ func EnsureBool(p interface{}, defaultVal bool) bool {
 }
 
 // VersionNameCompare 检查版本名是否需要更新, 仅适用于 go-cqhttp 的版本命名规则
+//
 // 例: v0.9.29-fix2 == v0.9.29-fix2 -> false
+//
 // v0.9.29-fix1 < v0.9.29-fix2 -> true
+//
 // v0.9.29-fix2 > v0.9.29-fix1 -> false
+//
 // v0.9.29-fix2 < v0.9.30 -> true
 func VersionNameCompare(current, remote string) bool {
 	sp := regexp.MustCompile(`[0-9]\d*`)
@@ -72,8 +85,9 @@ func VersionNameCompare(current, remote string) bool {
 	return len(cur) < len(re)
 }
 
-func SplitUrl(s string) []string {
-	reg := regexp.MustCompile(`[a-zA-Z0-9][-a-zA-Z0-9]{0,62}(\.[a-zA-Z0-9][-a-zA-Z0-9]{0,62})+\.?`)
+//SplitURL 将给定URL字符串分割为两部分，用于URL预处理防止风控
+func SplitURL(s string) []string {
+	reg := regexp.MustCompile(`(?i)[a-z\d][-a-z\d]{0,62}(\.[a-z\d][-a-z\d]{0,62})+\.?`)
 	idx := reg.FindAllStringIndex(s, -1)
 	if len(idx) == 0 {
 		return []string{s}

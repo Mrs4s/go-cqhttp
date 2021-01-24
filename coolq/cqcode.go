@@ -18,6 +18,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/message"
@@ -132,7 +133,7 @@ func ToArrayMessage(e []message.IMessageElement, code int64, raw ...bool) (r []M
 		})
 	}
 	for _, elem := range e {
-		m := MSG{}
+		var m MSG
 		switch o := elem.(type) {
 		case *message.TextElement:
 			m = MSG{
@@ -369,7 +370,7 @@ func (bot *CQBot) ConvertStringMessage(msg string, group bool) (r []message.IMes
 	saveTempText := func() {
 		if len(tempText) != 0 {
 			if SplitUrl {
-				for _, t := range global.SplitUrl(CQCodeUnescapeValue(string(tempText))) {
+				for _, t := range global.SplitURL(CQCodeUnescapeValue(string(tempText))) {
 					r = append(r, message.NewText(t))
 				}
 			} else {
@@ -411,6 +412,7 @@ func (bot *CQBot) ConvertStringMessage(msg string, group bool) (r []message.IMes
 				}
 			}
 			mid, err := strconv.Atoi(params["id"])
+			customText := params["text"]
 			if err == nil {
 				org := bot.GetMessage(int32(mid))
 				if org != nil {
@@ -424,6 +426,25 @@ func (bot *CQBot) ConvertStringMessage(msg string, group bool) (r []message.IMes
 					}, r...)
 					return
 				}
+			} else if customText != "" {
+				sender, err := strconv.ParseInt(params["qq"], 10, 64)
+				if err != nil {
+					log.Warnf("警告:自定义 Reply 元素中必须包含Uin")
+					return
+				}
+				msgTime, err := strconv.ParseInt(params["time"], 10, 64)
+				if err != nil {
+					msgTime = time.Now().Unix()
+				}
+				r = append([]message.IMessageElement{
+					&message.ReplyElement{
+						ReplySeq: int32(0),
+						Sender:   sender,
+						Time:     int32(msgTime),
+						Elements: bot.ConvertStringMessage(customText, group),
+					},
+				}, r...)
+				return
 			}
 		}
 		if t == "forward" { // 单独处理转发
@@ -490,6 +511,7 @@ func (bot *CQBot) ConvertObjectMessage(m gjson.Result, group bool) (r []message.
 				}
 			}
 			mid, err := strconv.Atoi(e.Get("data").Get("id").String())
+			customText := e.Get("data").Get("text").String()
 			if err == nil {
 				org := bot.GetMessage(int32(mid))
 				if org != nil {
@@ -503,6 +525,25 @@ func (bot *CQBot) ConvertObjectMessage(m gjson.Result, group bool) (r []message.
 					}, r...)
 					return
 				}
+			} else if customText != "" {
+				sender, err := strconv.ParseInt(e.Get("data").Get("qq").String(), 10, 64)
+				if err != nil {
+					log.Warnf("警告:自定义 Reply 元素中必须包含Uin")
+					return
+				}
+				msgTime, err := strconv.ParseInt(e.Get("data").Get("time").String(), 10, 64)
+				if err != nil {
+					msgTime = time.Now().Unix()
+				}
+				r = append([]message.IMessageElement{
+					&message.ReplyElement{
+						ReplySeq: int32(0),
+						Sender:   sender,
+						Time:     int32(msgTime),
+						Elements: bot.ConvertStringMessage(customText, group),
+					},
+				}, r...)
+				return
 			}
 		}
 		if t == "forward" {
@@ -548,7 +589,7 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m interf
 	case "text":
 		if SplitUrl {
 			var ret []message.IMessageElement
-			for _, text := range global.SplitUrl(d["text"]) {
+			for _, text := range global.SplitURL(d["text"]) {
 				ret = append(ret, message.NewText(text))
 			}
 			return ret, nil
@@ -619,9 +660,9 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m interf
 		return &message.VoiceElement{Data: data}, nil
 	case "record":
 		f := d["file"]
-		data, err := global.FindFile(f, d["cache"], global.VOICE_PATH)
+		data, err := global.FindFile(f, d["cache"], global.VoicePath)
 		if err == global.ErrSyntax {
-			data, err = global.FindFile(f, d["cache"], global.VOICE_PATH_OLD)
+			data, err = global.FindFile(f, d["cache"], global.VoicePathOld)
 		}
 		if err != nil {
 			return nil, err
@@ -797,7 +838,7 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m interf
 		}
 		var data []byte
 		if cover, ok := d["cover"]; ok {
-			data, _ = global.FindFile(cover, cache, global.IMAGE_PATH)
+			data, _ = global.FindFile(cover, cache, global.ImagePath)
 		} else {
 			_ = global.ExtractCover(v.File, v.File+".jpg")
 			data, _ = ioutil.ReadFile(v.File + ".jpg")
@@ -811,10 +852,13 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m interf
 		}
 		var header = make([]byte, 4)
 		_, err = video.Read(header)
+		if err != nil {
+			return nil, err
+		}
 		if !bytes.Equal(header, []byte{0x66, 0x74, 0x79, 0x70}) { // check file header ftyp
 			_, _ = video.Seek(0, io.SeekStart)
 			hash, _ := utils.ComputeMd5AndLength(video)
-			cacheFile := path.Join(global.CACHE_PATH, hex.EncodeToString(hash[:])+".mp4")
+			cacheFile := path.Join(global.CachePath, hex.EncodeToString(hash[:])+".mp4")
 			if global.PathExists(cacheFile) && cache == "1" {
 				goto ok
 			}
@@ -876,7 +920,7 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video, group bool) (
 			cache = "1"
 		}
 		hash := md5.Sum([]byte(f))
-		cacheFile := path.Join(global.CACHE_PATH, hex.EncodeToString(hash[:])+".cache")
+		cacheFile := path.Join(global.CachePath, hex.EncodeToString(hash[:])+".cache")
 		var maxSize = func() int64 {
 			if video {
 				return maxVideoSize
@@ -925,9 +969,9 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video, group bool) (
 		}
 		return &LocalImageElement{File: fu.Path}, nil
 	}
-	rawPath := path.Join(global.IMAGE_PATH, f)
+	rawPath := path.Join(global.ImagePath, f)
 	if video {
-		rawPath = path.Join(global.VIDEO_PATH, f)
+		rawPath = path.Join(global.VideoPath, f)
 		if !global.PathExists(rawPath) {
 			return nil, errors.New("invalid video")
 		}
@@ -953,8 +997,8 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video, group bool) (
 		}
 		return &LocalImageElement{Stream: bytes.NewReader(b)}, nil
 	}
-	if !global.PathExists(rawPath) && global.PathExists(path.Join(global.IMAGE_PATH_OLD, f)) {
-		rawPath = path.Join(global.IMAGE_PATH_OLD, f)
+	if !global.PathExists(rawPath) && global.PathExists(path.Join(global.ImagePathOld, f)) {
+		rawPath = path.Join(global.ImagePathOld, f)
 	}
 	if !global.PathExists(rawPath) && global.PathExists(rawPath+".cqimg") {
 		rawPath += ".cqimg"
@@ -1032,7 +1076,7 @@ func (bot *CQBot) makeShowPic(elem message.IMessageElement, source string, icon 
 	xml := ""
 	var suf message.IMessageElement
 	if i, ok := elem.(*LocalImageElement); ok {
-		if group == false {
+		if !group {
 			gm, err := bot.UploadLocalImageAsPrivate(1, i)
 			if err != nil {
 				log.Warnf("警告: 好友消息 %v 消息图片上传失败: %v", 1, err)
