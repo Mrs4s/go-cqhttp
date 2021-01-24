@@ -23,6 +23,9 @@ _✨ 基于 [Mirai](https://github.com/mamoe/mirai) 以及 [MiraiGo](https://git
   <a href="https://github.com/Mrs4s/go-cqhttp/actions">
     <img src="https://github.com/Mrs4s/go-cqhttp/workflows/CI/badge.svg" alt="action">
   </a>
+  <a href="https://goreportcard.com/report/github.com/Mrs4s/go-cqhttp">
+  <img src="https://goreportcard.com/badge/github.com/Mrs4s/go-cqhttp" alt="GoReportCard">
+  </a>
 </p>
 
 <p align="center">
