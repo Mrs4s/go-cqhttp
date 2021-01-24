@@ -93,52 +93,8 @@ func (bot *CQBot) groupMessageEvent(c *client.QQClient, m *message.GroupMessage)
 		id = bot.InsertGroupMessage(m)
 	}
 	log.Infof("收到群 %v(%v) 内 %v(%v) 的消息: %v (%v)", m.GroupName, m.GroupCode, m.Sender.DisplayName(), m.Sender.Uin, cqm, id)
-	gm := MSG{
-		"anonymous":    nil,
-		"font":         0,
-		"group_id":     m.GroupCode,
-		"message":      ToFormattedMessage(m.Elements, m.GroupCode, false),
-		"message_id":   id,
-		"message_type": "group",
-		"post_type":    "message",
-		"raw_message":  cqm,
-		"self_id":      c.Uin,
-		"sender": MSG{
-			"age":     0,
-			"area":    "",
-			"level":   "",
-			"sex":     "unknown",
-			"user_id": m.Sender.Uin,
-		},
-		"sub_type": "normal",
-		"time":     time.Now().Unix(),
-		"user_id":  m.Sender.Uin,
-	}
-	if m.Sender.IsAnonymous() {
-		gm["anonymous"] = MSG{
-			"flag": m.Sender.AnonymousInfo.AnonymousId + "|" + m.Sender.AnonymousInfo.AnonymousNick,
-			"id":   m.Sender.Uin,
-			"name": m.Sender.AnonymousInfo.AnonymousNick,
-		}
-		gm["sender"].(MSG)["nickname"] = "匿名消息"
-		gm["sub_type"] = "anonymous"
-	} else {
-		mem := c.FindGroup(m.GroupCode).FindMember(m.Sender.Uin)
-		ms := gm["sender"].(MSG)
-		ms["role"] = func() string {
-			switch mem.Permission {
-			case client.Owner:
-				return "owner"
-			case client.Administrator:
-				return "admin"
-			default:
-				return "member"
-			}
-		}()
-		ms["nickname"] = mem.Nickname
-		ms["card"] = mem.CardName
-		ms["title"] = mem.SpecialTitle
-	}
+	gm := bot.formatGroupMessage(m)
+	gm["message_id"] = id
 	bot.dispatchEventMessage(gm)
 }
 
@@ -455,6 +411,27 @@ func (bot *CQBot) groupJoinReqEvent(c *client.QQClient, e *client.UserJoinGroupR
 		"time":         time.Now().Unix(),
 		"self_id":      c.Uin,
 	})
+}
+
+func (bot *CQBot) otherClientStatusChangedEvent(c *client.QQClient, e *client.OtherClientStatusChangedEvent) {
+	if e.Online {
+		log.Infof("Bot 账号在客户端 %v (%v) 登录.", e.Client.DeviceName, e.Client.DeviceKind)
+	} else {
+		log.Infof("Bot 账号在客户端 %v (%v) 登出.", e.Client.DeviceName, e.Client.DeviceKind)
+	}
+	bot.dispatchEventMessage(MSG{
+		"post_type":   "notice",
+		"notice_type": "client_status",
+		"online":      e.Online,
+		"client": MSG{
+			"app_id":      e.Client.AppId,
+			"device_name": e.Client.DeviceName,
+			"device_kind": e.Client.DeviceKind,
+		},
+		"self_id": c.Uin,
+		"time":    time.Now().Unix(),
+	})
+
 }
 
 func (bot *CQBot) groupIncrease(groupCode, operatorUin, userUin int64) MSG {

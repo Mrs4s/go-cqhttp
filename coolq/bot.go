@@ -77,6 +77,7 @@ func NewQQBot(cli *client.QQClient, conf *global.JSONConfig) *CQBot {
 	bot.Client.OnNewFriendAdded(bot.friendAddedEvent)
 	bot.Client.OnGroupInvited(bot.groupInvitedEvent)
 	bot.Client.OnUserWantJoinGroup(bot.groupJoinReqEvent)
+	bot.Client.OnOtherClientStatusChanged(bot.otherClientStatusChangedEvent)
 	go func() {
 		i := conf.HeartbeatInterval
 		if i < 0 {
@@ -272,13 +273,7 @@ func (bot *CQBot) SendGroupMessage(groupId int64, m *message.SendingMessage) int
 	ret := bot.Client.SendGroupMessage(groupId, m, ForceFragmented)
 	if ret == nil || ret.Id == -1 {
 		log.Warnf("群消息发送失败: 账号可能被风控.")
-		if !ForceFragmented {
-			log.Warnf("将尝试分片发送...")
-			ret = bot.Client.SendGroupMessage(groupId, m, true)
-		}
-		if ret == nil || ret.Id == -1 {
-			return -1
-		}
+		return -1
 	}
 	return bot.InsertGroupMessage(ret)
 }
@@ -476,6 +471,57 @@ func (bot *CQBot) dispatchEventMessage(m MSG) {
 			}
 		}(f)
 	}
+}
+
+func (bot *CQBot) formatGroupMessage(m *message.GroupMessage) MSG {
+	cqm := ToStringMessage(m.Elements, m.GroupCode, true)
+	gm := MSG{
+		"anonymous":    nil,
+		"font":         0,
+		"group_id":     m.GroupCode,
+		"message":      ToFormattedMessage(m.Elements, m.GroupCode, false),
+		"message_type": "group",
+		"message_seq":  m.Id,
+		"post_type":    "message",
+		"raw_message":  cqm,
+		"self_id":      bot.Client.Uin,
+		"sender": MSG{
+			"age":     0,
+			"area":    "",
+			"level":   "",
+			"sex":     "unknown",
+			"user_id": m.Sender.Uin,
+		},
+		"sub_type": "normal",
+		"time":     time.Now().Unix(),
+		"user_id":  m.Sender.Uin,
+	}
+	if m.Sender.IsAnonymous() {
+		gm["anonymous"] = MSG{
+			"flag": m.Sender.AnonymousInfo.AnonymousId + "|" + m.Sender.AnonymousInfo.AnonymousNick,
+			"id":   m.Sender.Uin,
+			"name": m.Sender.AnonymousInfo.AnonymousNick,
+		}
+		gm["sender"].(MSG)["nickname"] = "匿名消息"
+		gm["sub_type"] = "anonymous"
+	} else {
+		mem := bot.Client.FindGroup(m.GroupCode).FindMember(m.Sender.Uin)
+		ms := gm["sender"].(MSG)
+		ms["role"] = func() string {
+			switch mem.Permission {
+			case client.Owner:
+				return "owner"
+			case client.Administrator:
+				return "admin"
+			default:
+				return "member"
+			}
+		}()
+		ms["nickname"] = mem.Nickname
+		ms["card"] = mem.CardName
+		ms["title"] = mem.SpecialTitle
+	}
+	return gm
 }
 
 func formatGroupName(group *client.GroupInfo) string {

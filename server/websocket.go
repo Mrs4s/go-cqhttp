@@ -562,6 +562,9 @@ var wsAPI = map[string]func(*coolq.CQBot, gjson.Result) coolq.MSG{
 	"get_group_file_url": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		return bot.CQGetGroupFileUrl(p.Get("group_id").Int(), p.Get("file_id").Str, int32(p.Get("busid").Int()))
 	},
+	"get_group_msg_history": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
+		return bot.CQGetGroupMessageHistory(p.Get("group_id").Int(), p.Get("message_seq").Int())
+	},
 	"_get_vip_info": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		return bot.CQGetVipInfo(p.Get("user_id").Int())
 	},
@@ -576,6 +579,9 @@ var wsAPI = map[string]func(*coolq.CQBot, gjson.Result) coolq.MSG{
 	},
 	"get_group_at_all_remain": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		return bot.CQGetAtAllRemain(p.Get("group_id").Int())
+	},
+	"get_online_clients": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
+		return bot.CQGetOnlineClients(p.Get("no_cache").Bool())
 	},
 	".get_word_slices": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		return bot.CQGetWordSlices(p.Get("content").Str)

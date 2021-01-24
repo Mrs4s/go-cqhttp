@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -24,7 +23,6 @@ import (
 
 var (
 	client = &http.Client{
-		Timeout: time.Second * 120,
 		Transport: &http.Transport{
 			Proxy: func(request *http.Request) (u *url.URL, e error) {
 				if Proxy == "" {
@@ -32,17 +30,10 @@ var (
 				}
 				return url.Parse(Proxy)
 			},
-			DialContext: (&net.Dialer{
-				Timeout:   30 * time.Second,
-				KeepAlive: 30 * time.Second,
-			}).DialContext,
-			ForceAttemptHTTP2:     true,
-			IdleConnTimeout:       90 * time.Second,
-			TLSHandshakeTimeout:   10 * time.Second,
-			ExpectContinueTimeout: 1 * time.Second,
-			MaxConnsPerHost:       0,
-			MaxIdleConns:          0,
-			MaxIdleConnsPerHost:   999,
+			ForceAttemptHTTP2:   true,
+			MaxConnsPerHost:     0,
+			MaxIdleConns:        0,
+			MaxIdleConnsPerHost: 999,
 		},
 	}
 
@@ -98,7 +89,7 @@ func DownloadFile(url, path string, limit int64, headers map[string]string) erro
 		req.Header.Set(k, v)
 	}
 
-	if _, ok := headers["User-Agent"]; ok {
+	if _, ok := headers["User-Agent"]; !ok {
 		req.Header["User-Agent"] = []string{UserAgent}
 	}
 	resp, err := client.Do(req)
@@ -151,7 +142,7 @@ func DownloadFileMultiThreading(url, path string, limit int64, threadCount int, 
 			req.Header.Set(k, v)
 
 		}
-		if _, ok := headers["User-Agent"]; ok {
+		if _, ok := headers["User-Agent"]; !ok {
 			req.Header["User-Agent"] = []string{UserAgent}
 		}
 		req.Header.Set("range", "bytes=0-")
