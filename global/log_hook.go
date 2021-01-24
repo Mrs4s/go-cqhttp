@@ -84,9 +84,9 @@ func (hook *LocalHook) SetFormatter(formatter logrus.Formatter) {
 		// 用默认的
 		formatter = &logrus.TextFormatter{DisableColors: true}
 	} else {
-		switch formatter.(type) {
+		switch f := formatter.(type) {
 		case *logrus.TextFormatter:
-			textFormatter := formatter.(*logrus.TextFormatter)
+			textFormatter := f
 			textFormatter.DisableColors = true
 		default:
 			// todo
@@ -115,11 +115,11 @@ func NewLocalHook(args interface{}, formatter logrus.Formatter, levels ...logrus
 	hook.SetFormatter(formatter)
 	hook.levels = append(hook.levels, levels...)
 
-	switch args.(type) {
+	switch arg := args.(type) {
 	case string:
-		hook.SetPath(args.(string))
+		hook.SetPath(arg)
 	case io.Writer:
-		hook.SetWriter(args.(io.Writer))
+		hook.SetWriter(arg)
 	default:
 		panic(fmt.Sprintf("unsupported type: %v", reflect.TypeOf(args)))
 	}

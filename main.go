@@ -83,7 +83,7 @@ func init() {
 		panic(err)
 	}
 
-	// 更加彻底的调试 将在标准输出中打印执行行数
+	// 在debug模式下,将在标准输出中打印当前执行行数
 	if conf.Debug {
 		log.SetReportCaller(true)
 	}
