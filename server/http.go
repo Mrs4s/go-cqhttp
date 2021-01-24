@@ -205,14 +205,14 @@ func GetGroupRootFiles(s *httpServer, c *gin.Context) {
 func GetGroupFilesByFolderId(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	folderId := getParam(c, "folder_id")
-	c.JSON(200, s.bot.CQGetGroupFilesByFolderId(gid, folderId))
+	c.JSON(200, s.bot.CQGetGroupFilesByFolderID(gid, folderId))
 }
 
 func GetGroupFileUrl(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	fid := getParam(c, "file_id")
 	busid, _ := strconv.ParseInt(getParam(c, "busid"), 10, 32)
-	c.JSON(200, s.bot.CQGetGroupFileUrl(gid, fid, int32(busid)))
+	c.JSON(200, s.bot.CQGetGroupFileURL(gid, fid, int32(busid)))
 }
 
 func SendMessage(s *httpServer, c *gin.Context) {

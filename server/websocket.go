@@ -557,10 +557,10 @@ var wsAPI = map[string]func(*coolq.CQBot, gjson.Result) coolq.MSG{
 		return bot.CQGetGroupRootFiles(p.Get("group_id").Int())
 	},
 	"get_group_files_by_folder": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
-		return bot.CQGetGroupFilesByFolderId(p.Get("group_id").Int(), p.Get("folder_id").Str)
+		return bot.CQGetGroupFilesByFolderID(p.Get("group_id").Int(), p.Get("folder_id").Str)
 	},
 	"get_group_file_url": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
-		return bot.CQGetGroupFileUrl(p.Get("group_id").Int(), p.Get("file_id").Str, int32(p.Get("busid").Int()))
+		return bot.CQGetGroupFileURL(p.Get("group_id").Int(), p.Get("file_id").Str, int32(p.Get("busid").Int()))
 	},
 	"get_group_msg_history": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		return bot.CQGetGroupMessageHistory(p.Get("group_id").Int(), p.Get("message_seq").Int())
