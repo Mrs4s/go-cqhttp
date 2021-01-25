@@ -92,7 +92,7 @@ func (hook *LocalHook) SetFormatter(formatter logrus.Formatter) {
 			// todo
 		}
 	}
-
+	logrus.SetFormatter(formatter)
 	hook.formatter = formatter
 }
 
@@ -147,6 +147,7 @@ func GetLogLevel(level string) []logrus.Level {
 		return []logrus.Level{logrus.ErrorLevel, logrus.FatalLevel,
 			logrus.PanicLevel}
 	default:
-		return logrus.AllLevels
+		return []logrus.Level{logrus.InfoLevel, logrus.WarnLevel,
+			logrus.ErrorLevel, logrus.FatalLevel, logrus.PanicLevel}
 	}
 }

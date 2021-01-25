@@ -25,8 +25,8 @@ import (
 	"github.com/Mrs4s/go-cqhttp/server"
 	"github.com/guonaihong/gout"
 	"github.com/tidwall/gjson"
-	"golang.org/x/term"
 	"golang.org/x/crypto/pbkdf2"
+	"golang.org/x/term"
 
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/client"
@@ -213,6 +213,8 @@ func main() {
 			log.Fatalf("加密存储的密码损坏，请尝试重新配置密码")
 		}
 		copy(global.PasswordHash[:], ph)
+	} else {
+		global.PasswordHash = md5.Sum([]byte(conf.Password))
 	}
 	if !isFastStart {
 		log.Info("Bot将在5秒后登录并开始信息处理, 按 Ctrl+C 取消.")
