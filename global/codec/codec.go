@@ -4,7 +4,7 @@
 package codec
 
 import (
-	"errors"
+	"github.com/pkg/errors"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -63,7 +63,7 @@ func EncodeToSilk(record []byte, tempName string, useCache bool) ([]byte, error)
 	rawPath := path.Join(silkCachePath, tempName+".wav")
 	err := ioutil.WriteFile(rawPath, record, os.ModePerm)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "write temp file error")
 	}
 	defer os.Remove(rawPath)
 
@@ -71,7 +71,7 @@ func EncodeToSilk(record []byte, tempName string, useCache bool) ([]byte, error)
 	pcmPath := path.Join(silkCachePath, tempName+".pcm")
 	cmd := exec.Command("ffmpeg", "-i", rawPath, "-f", "s16le", "-ar", "24000", "-ac", "1", pcmPath)
 	if err = cmd.Run(); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "convert pcm file error")
 	}
 	defer os.Remove(pcmPath)
 
@@ -79,7 +79,7 @@ func EncodeToSilk(record []byte, tempName string, useCache bool) ([]byte, error)
 	silkPath := path.Join(silkCachePath, tempName+".silk")
 	cmd = exec.Command(getEncoderFilePath(), pcmPath, silkPath, "-rate", "24000", "-quiet", "-tencent")
 	if err = cmd.Run(); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "convert silk file error")
 	}
 	if !useCache {
 		defer os.Remove(silkPath)

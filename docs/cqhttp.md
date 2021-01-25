@@ -111,6 +111,54 @@ Type : `reply`
 \
 自定义回复示例: `[CQ:reply,text=Hello World,qq=10086,time=3376656000]`
 
+### 音乐分享 <Badge text="发"/>
+
+```json
+{
+    "type": "music",
+    "data": {
+        "type": "163",
+        "id": "28949129"
+    }
+}
+```
+
+```
+[CQ:music,type=163,id=28949129]
+```
+
+| 参数名 | 收 | 发 | 可能的值 | 说明 |
+| --- | --- | --- | --- | --- |
+| `type` |  | ✓ | `qq` `163` | 分别表示使用 QQ 音乐、网易云音乐 |
+| `id` |  | ✓ | - | 歌曲 ID |
+
+### 音乐自定义分享 <Badge text="发"/>
+
+```json
+{
+    "type": "music",
+    "data": {
+        "type": "custom",
+        "url": "http://baidu.com",
+        "audio": "http://baidu.com/1.mp3",
+        "title": "音乐标题"
+    }
+}
+```
+
+```
+[CQ:music,type=custom,url=http://baidu.com,audio=http://baidu.com/1.mp3,title=音乐标题]
+```
+
+| 参数名 | 收 | 发 | 可能的值 | 说明 |
+| --- | --- | --- | --- | --- |
+| `type` |  | ✓ | `custom` | 表示音乐自定义分享 |
+| `subtype` |  | ✓ | `qq,163,migu,kugou,kuwo` | 表示分享类型，不填写发送为xml卡片，推荐填写提高稳定性 |
+| `url` |  | ✓ | - | 点击后跳转目标 URL |
+| `audio` |  | ✓ | - | 音乐 URL |
+| `title` |  | ✓ | - | 标题 |
+| `content` |  | ✓ | - | 内容描述 |
+| `image` |  | ✓ | - | 图片 URL |
 
 ### 红包
 
