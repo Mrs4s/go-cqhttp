@@ -3,15 +3,16 @@ module github.com/Mrs4s/go-cqhttp
 go 1.15
 
 require (
-	github.com/Mrs4s/MiraiGo v0.0.0-20210124065645-9549a32d954a
+	github.com/Mrs4s/MiraiGo v0.0.0-20210124201115-fb93c5c73169
 	github.com/dustin/go-humanize v1.0.0
-	github.com/gin-contrib/pprof v1.2.1
-	github.com/gin-gonic/gin v1.5.0
+	github.com/gin-contrib/pprof v1.3.0
+	github.com/gin-gonic/gin v1.6.3
+	github.com/go-playground/validator/v10 v10.4.1 // indirect
 	github.com/golang/snappy v0.0.2 // indirect
 	github.com/google/go-cmp v0.5.4 // indirect
 	github.com/google/uuid v1.2.0 // indirect
 	github.com/gorilla/websocket v1.4.2
-	github.com/guonaihong/gout v0.1.3
+	github.com/guonaihong/gout v0.1.4
 	github.com/hjson/hjson-go v3.1.0+incompatible
 	github.com/jonboulle/clockwork v0.2.2 // indirect
 	github.com/json-iterator/go v1.1.10
@@ -20,9 +21,11 @@ require (
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
 	github.com/lestrrat-go/strftime v1.0.4 // indirect
-	github.com/mattn/go-isatty v0.0.12 // indirect
+	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
+	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/nxadm/tail v1.4.6 // indirect
-	github.com/onsi/gomega v1.10.2 // indirect
+	github.com/onsi/ginkgo v1.14.2 // indirect
+	github.com/onsi/gomega v1.10.4 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/rifflock/lfshook v0.0.0-20180920164130-b9218ef580f5
 	github.com/sirupsen/logrus v1.7.0
@@ -32,8 +35,11 @@ require (
 	github.com/tidwall/gjson v1.6.7
 	github.com/ugorji/go v1.2.3 // indirect
 	github.com/yinghau76/go-ascii-art v0.0.0-20190517192627-e7f465a30189
-	golang.org/x/sys v0.0.0-20210123231150-1d476976d117 // indirect
+	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad // indirect
+	golang.org/x/net v0.0.0-20210119194325-5f4716e94777 // indirect
+	golang.org/x/sys v0.0.0-20210124154548-22da62e12c0c // indirect
 	golang.org/x/term v0.0.0-20201210144234-2321bbc49cbf
+	golang.org/x/text v0.3.5 // indirect
 	golang.org/x/time v0.0.0-20201208040808-7e3f01d25324
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
