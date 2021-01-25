@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"io/ioutil"
+	"math"
 	"os"
 	"path"
 	"path/filepath"
@@ -667,8 +668,11 @@ func (bot *CQBot) CQGetStrangerInfo(userId int64) MSG {
 		"sex": func() string {
 			if info.Sex == 1 {
 				return "female"
+			} else if info.Sex == 0 {
+				return "male"
 			}
-			return "male"
+			// unknown = 0x2
+			return "unknown"
 		}(),
 		"age":        info.Age,
 		"level":      info.Level,
@@ -848,7 +852,14 @@ func (bot *CQBot) CQGetGroupMessageHistory(groupId int64, seq int64) MSG {
 	if g := bot.Client.FindGroup(groupId); g == nil {
 		return Failed(100, "GROUP_NOT_FOUND", "群聊不存在")
 	}
-	msg, err := bot.Client.GetGroupMessages(groupId, seq-19, seq)
+	if seq == 0 {
+		g, err := bot.Client.GetGroupInfo(groupId)
+		if err != nil {
+			return Failed(100, "GROUP_INFO_API_ERROR", err.Error())
+		}
+		seq = g.LastMsgSeq
+	}
+	msg, err := bot.Client.GetGroupMessages(groupId, int64(math.Max(float64(seq-19), 1)), seq)
 	if err != nil {
 		log.Warnf("获取群历史消息失败: %v", err)
 		return Failed(100, "MESSAGES_API_ERROR", err.Error())
@@ -1008,11 +1019,19 @@ func Failed(code int, msg ...string) MSG {
 
 func convertGroupMemberInfo(groupId int64, m *client.GroupMemberInfo) MSG {
 	return MSG{
-		"group_id":       groupId,
-		"user_id":        m.Uin,
-		"nickname":       m.Nickname,
-		"card":           m.CardName,
-		"sex":            "unknown",
+		"group_id": groupId,
+		"user_id":  m.Uin,
+		"nickname": m.Nickname,
+		"card":     m.CardName,
+		"sex": func() string {
+			if m.Gender == 1 {
+				return "female"
+			} else if m.Gender == 0 {
+				return "male"
+			}
+			// unknown = 0xff
+			return "unknown"
+		}(),
 		"age":            0,
 		"area":           "",
 		"join_time":      m.JoinTime,

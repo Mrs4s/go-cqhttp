@@ -2,8 +2,11 @@ package main
 
 import (
 	"bufio"
+	"crypto/aes"
 	"crypto/md5"
+	"crypto/sha1"
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -23,6 +26,7 @@ import (
 	"github.com/guonaihong/gout"
 	"github.com/tidwall/gjson"
 	"golang.org/x/term"
+	"golang.org/x/crypto/pbkdf2"
 
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/client"
@@ -233,15 +237,11 @@ func main() {
 	}
 	if conf.EncryptPassword && conf.PasswordEncrypted == "" {
 		log.Infof("密码加密已启用, 请输入Key对密码进行加密: (Enter 提交)")
-		byteKey, _ := term.ReadPassword(int(os.Stdin.Fd()))
-		key := md5.Sum(byteKey)
-		if encrypted := EncryptPwd(conf.Password, key[:]); encrypted != "" {
-			conf.Password = ""
-			conf.PasswordEncrypted = encrypted
-			_ = conf.Save("config.hjson")
-		} else {
-			log.Warnf("加密时出现问题.")
-		}
+		byteKey, _ = term.ReadPassword(int(os.Stdin.Fd()))
+		global.PasswordHash = md5.Sum([]byte(conf.Password))
+		conf.Password = ""
+		conf.PasswordEncrypted = "AES:" + PasswordHashEncrypt(global.PasswordHash[:], byteKey)
+		_ = conf.Save("config.hjson")
 	}
 	if conf.PasswordEncrypted != "" {
 		if len(byteKey) == 0 {
@@ -262,8 +262,23 @@ func main() {
 		} else {
 			log.Infof("密码加密已启用, 使用运行时传递的参数进行解密，按 Ctrl+C 取消.")
 		}
-		key := md5.Sum(byteKey)
-		conf.Password = DecryptPwd(conf.PasswordEncrypted, key[:])
+
+		//升级客户端密码加密方案，MD5+TEA 加密密码 -> PBKDF2+AES 加密 MD5
+		//升级后的 PasswordEncrypted 字符串以"AES:"开始，其后为 Hex 编码的16字节加密 MD5
+		if !strings.HasPrefix(conf.PasswordEncrypted, "AES:") {
+			password := OldPasswordDecrypt(conf.PasswordEncrypted, byteKey)
+			passwordHash := md5.Sum([]byte(password))
+			newPasswordHash := PasswordHashEncrypt(passwordHash[:], byteKey)
+			conf.PasswordEncrypted = "AES:" + newPasswordHash
+			_ = conf.Save("config.hjson")
+			log.Debug("密码加密方案升级完成")
+		}
+
+		ph, err := PasswordHashDecrypt(conf.PasswordEncrypted[4:], byteKey)
+		if err != nil {
+			log.Fatalf("加密存储的密码损坏，请尝试重新配置密码")
+		}
+		copy(global.PasswordHash[:], ph)
 	}
 	if !isFastStart {
 		log.Info("Bot将在5秒后登录并开始信息处理, 按 Ctrl+C 取消.")
@@ -283,7 +298,7 @@ func main() {
 		}
 		return "未知"
 	}())
-	cli := client.NewClient(conf.Uin, conf.Password)
+	cli := client.NewClientMd5(conf.Uin, global.PasswordHash)
 	cli.OnLog(func(c *client.QQClient, e *client.LogEvent) {
 		switch e.Type {
 		case "INFO":
@@ -340,27 +355,50 @@ func main() {
 	}
 }
 
-//EncryptPwd 通过给定key加密给定pwd
-func EncryptPwd(pwd string, key []byte) string {
-	tea := binary.NewTeaCipher(key)
-	if tea == nil {
-		return ""
+// PasswordHashEncrypt 使用key加密给定passwordHash
+func PasswordHashEncrypt(passwordHash []byte, key []byte) string {
+	if len(passwordHash) != 16 {
+		panic("密码加密参数错误")
 	}
-	return base64.StdEncoding.EncodeToString(tea.Encrypt([]byte(pwd)))
+
+	key = pbkdf2.Key(key, key, 114514, 32, sha1.New)
+
+	cipher, _ := aes.NewCipher(key)
+	result := make([]byte, 16)
+	cipher.Encrypt(result, passwordHash)
+
+	return hex.EncodeToString(result)
 }
 
-//DecryptPwd 通过给定key解密给定ePwd
-func DecryptPwd(ePwd string, key []byte) string {
+// PasswordHashDecrypt 使用key解密给定passwordHash
+func PasswordHashDecrypt(encryptedPasswordHash string, key []byte) ([]byte, error) {
+	ciphertext, err := hex.DecodeString(encryptedPasswordHash)
+	if err != nil {
+		return nil, err
+	}
+
+	key = pbkdf2.Key(key, key, 114514, 32, sha1.New)
+
+	cipher, _ := aes.NewCipher(key)
+	result := make([]byte, 16)
+	cipher.Decrypt(result, ciphertext)
+
+	return result, nil
+}
+
+// OldPasswordDecrypt 使用key解密老password，仅供兼容使用
+func OldPasswordDecrypt(encryptedPassword string, key []byte) string {
 	defer func() {
 		if pan := recover(); pan != nil {
 			log.Fatalf("密码解密失败: %v", pan)
 		}
 	}()
-	encrypted, err := base64.StdEncoding.DecodeString(ePwd)
+	encKey := md5.Sum(key)
+	encrypted, err := base64.StdEncoding.DecodeString(encryptedPassword)
 	if err != nil {
 		panic(err)
 	}
-	tea := binary.NewTeaCipher(key)
+	tea := binary.NewTeaCipher(encKey[:])
 	if tea == nil {
 		panic("密钥错误")
 	}

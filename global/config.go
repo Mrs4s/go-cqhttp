@@ -135,6 +135,9 @@ var DefaultConfigWithComments = `
 }
 `
 
+//PasswordHash 存储QQ密码哈希供登录使用
+var PasswordHash [16]byte
+
 //JSONConfig Config对应的结构体
 type JSONConfig struct {
 	Uin               int64  `json:"uin"`

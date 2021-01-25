@@ -422,8 +422,8 @@ func (bot *CQBot) otherClientStatusChangedEvent(c *client.QQClient, e *client.Ot
 	bot.dispatchEventMessage(MSG{
 		"post_type":   "notice",
 		"notice_type": "client_status",
+		"online":      e.Online,
 		"client": MSG{
-			"online":      e.Online,
 			"app_id":      e.Client.AppId,
 			"device_name": e.Client.DeviceName,
 			"device_kind": e.Client.DeviceKind,
