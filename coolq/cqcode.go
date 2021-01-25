@@ -49,26 +49,6 @@ type GiftElement struct {
 	GiftId message.GroupGift
 }
 
-type MusicElement struct {
-	Title      string
-	Summary    string
-	Url        string
-	PictureUrl string
-	MusicUrl   string
-}
-
-type QQMusicElement struct {
-	MusicElement
-}
-
-type CloudMusicElement struct {
-	MusicElement
-}
-
-type MiguMusicElement struct {
-	MusicElement
-}
-
 type LocalImageElement struct {
 	message.ImageElement
 	Stream io.ReadSeeker
@@ -88,10 +68,6 @@ type LocalVideoElement struct {
 
 func (e *GiftElement) Type() message.ElementType {
 	return message.At
-}
-
-func (e *MusicElement) Type() message.ElementType {
-	return message.Service
 }
 
 var GiftId = [...]message.GroupGift{
@@ -699,7 +675,7 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m interf
 				return nil, errors.New("song not found")
 			}
 			aid := strconv.FormatInt(info.Get("track_info.album.id").Int(), 10)
-			name := info.Get("track_info.name").Str + " - " + info.Get("track_info.singer.0.name").Str
+			name := info.Get("track_info.name").Str
 			mid := info.Get("track_info.mid").Str
 			albumMid := info.Get("track_info.album.mid").Str
 			pinfo, _ := global.GetBytes("http://u.y.qq.com/cgi-bin/musicu.fcg?g_tk=2034008533&uin=0&format=json&data={\"comm\":{\"ct\":23,\"cv\":0},\"url_mid\":{\"module\":\"vkey.GetVkeyServer\",\"method\":\"CgiGetVkey\",\"param\":{\"guid\":\"4311206557\",\"songmid\":[\"" + mid + "\"],\"songtype\":[0],\"uin\":\"0\",\"loginflag\":1,\"platform\":\"23\"}}}&_=1599039471576")
@@ -709,17 +685,18 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m interf
 			if len(aid) < 2 {
 				return nil, errors.New("song error")
 			}
-			content := "来自go-cqhttp"
+			content := info.Get("track_info.singer.0.name").Str
 			if d["content"] != "" {
 				content = d["content"]
 			}
-			return &QQMusicElement{MusicElement: MusicElement{
+			return &message.MusicShareElement{
+				MusicType:  message.QQMusic,
 				Title:      name,
 				Summary:    content,
 				Url:        jumpUrl,
 				PictureUrl: preview,
 				MusicUrl:   purl,
-			}}, nil
+			}, nil
 		}
 		if d["type"] == "163" {
 			info, err := global.NeteaseMusicSongInfo(d["id"])
@@ -737,41 +714,36 @@ func (bot *CQBot) ToElement(t string, d map[string]string, group bool) (m interf
 			if info.Get("artists.0").Exists() {
 				artistName = info.Get("artists.0.name").Str
 			}
-			return &CloudMusicElement{MusicElement{
+			return &message.MusicShareElement{
+				MusicType:  message.CloudMusic,
 				Title:      name,
 				Summary:    artistName,
 				Url:        jumpUrl,
 				PictureUrl: picUrl,
 				MusicUrl:   musicUrl,
-			}}, nil
+			}, nil
 		}
 		if d["type"] == "custom" {
-			if d["subtype"] == "qq" {
-				return &QQMusicElement{MusicElement{
+			if d["subtype"] != "" {
+				var subtype = map[string]int{
+					"qq":    message.QQMusic,
+					"163":   message.CloudMusic,
+					"migu":  message.MiguMusic,
+					"kugou": message.KugouMusic,
+					"kuwo":  message.KuwoMusic,
+				}
+				var musicType = 0
+				if tp, ok := subtype[d["subtype"]]; ok {
+					musicType = tp
+				}
+				return &message.MusicShareElement{
+					MusicType:  musicType,
 					Title:      d["title"],
 					Summary:    d["content"],
 					Url:        d["url"],
 					PictureUrl: d["image"],
 					MusicUrl:   d["purl"],
-				}}, nil
-			}
-			if d["subtype"] == "163" {
-				return &CloudMusicElement{MusicElement{
-					Title:      d["title"],
-					Summary:    d["content"],
-					Url:        d["url"],
-					PictureUrl: d["image"],
-					MusicUrl:   d["purl"],
-				}}, nil
-			}
-			if d["subtype"] == "migu" {
-				return &MiguMusicElement{MusicElement{
-					Title:      d["title"],
-					Summary:    d["content"],
-					Url:        d["url"],
-					PictureUrl: d["image"],
-					MusicUrl:   d["purl"],
-				}}, nil
+				}, nil
 			}
 			xml := fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="2" templateID="1" action="web" brief="[分享] %s" sourceMsgId="0" url="%s" flag="0" adverSign="0" multiMsgFlag="0"><item layout="2"><audio cover="%s" src="%s"/><title>%s</title><summary>%s</summary></item><source name="音乐" icon="https://i.gtimg.cn/open/app_icon/01/07/98/56/1101079856_100_m.png" url="http://web.p.qq.com/qqmpmobile/aio/app.html?id=1101079856" action="app" a_actionData="com.tencent.qqmusic" i_actionData="tencent1101079856://" appid="1101079856" /></msg>`,
 				XmlEscape(d["title"]), d["url"], d["image"], d["audio"], XmlEscape(d["title"]), XmlEscape(d["content"]))
