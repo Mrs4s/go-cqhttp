@@ -25,12 +25,18 @@ func (m MSG) Get(s string) MSG {
 		}
 		return MSG{"__str__": v} // 用这个名字应该没问题吧
 	}
-	return MSG{}
+	return nil // 不存在为空
 }
 
 //String 将消息Map转化为String。若Map存在key "__str__",则返回此key对应的值,否则将输出整张消息Map对应的JSON字符串
 func (m MSG) String() string {
+	if m == nil {
+		return "" // 空 JSON
+	}
 	if str, ok := m["__str__"]; ok {
+		if str == nil {
+			return "" // 空 JSON
+		}
 		return fmt.Sprint(str)
 	}
 	str, _ := json.MarshalToString(m)
