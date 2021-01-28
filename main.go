@@ -469,7 +469,7 @@ func restart(Args []string) {
 func getConfig() *global.JSONConfig {
 	var conf *global.JSONConfig
 	if global.PathExists("config.json") {
-		conf = global.Load("config.json")
+		conf = global.LoadConfig("config.json")
 		_ = conf.Save("config.hjson")
 		_ = os.Remove("config.json")
 	} else if os.Getenv("UIN") != "" {
@@ -498,7 +498,7 @@ func getConfig() *global.JSONConfig {
 			conf.HTTPConfig.PostUrls[post] = os.Getenv("HTTP_SECRET")
 		}
 	} else {
-		conf = global.Load("config.hjson")
+		conf = global.LoadConfig("config.hjson")
 	}
 	if conf == nil {
 		err := global.WriteAllText("config.hjson", global.DefaultConfigWithComments)

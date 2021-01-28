@@ -277,8 +277,8 @@ func DefaultConfig() *JSONConfig {
 	}
 }
 
-//Load 加载配置文件
-func Load(p string) *JSONConfig {
+//LoadConfig 加载配置文件
+func LoadConfig(p string) *JSONConfig {
 	if !PathExists(p) {
 		log.Warnf("尝试加载配置文件 %v 失败: 文件不存在", p)
 		return nil

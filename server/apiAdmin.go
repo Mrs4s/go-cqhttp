@@ -333,7 +333,7 @@ func GetConf() *global.JSONConfig {
 	if JSONConfig != nil {
 		return JSONConfig
 	}
-	conf := global.Load("config.hjson")
+	conf := global.LoadConfig("config.hjson")
 	return conf
 }
 
