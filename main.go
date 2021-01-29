@@ -36,6 +36,7 @@ import (
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 var conf *global.JSONConfig
+var isFastStart = false
 
 func init() {
 	if global.PathExists("cqhttp.json") {
@@ -115,7 +116,6 @@ func init() {
 func main() {
 
 	var byteKey []byte
-	var isFastStart = false
 	arg := os.Args
 	if len(arg) > 1 {
 		for i := range arg {
