@@ -139,7 +139,9 @@ func main() {
 
 	if conf.Uin == 0 || (conf.Password == "" && conf.PasswordEncrypted == "") {
 		log.Warnf("请修改 config.hjson 以添加账号密码.")
-		time.Sleep(time.Second * 5)
+		if (!isFastStart) {
+			time.Sleep(time.Second * 5)	
+		}
 		return
 	}
 
@@ -467,7 +469,9 @@ func getConfig() *global.JSONConfig {
 			return nil
 		}
 		log.Infof("默认配置文件已生成, 请编辑 config.hjson 后重启程序.")
-		time.Sleep(time.Second * 5)
+		if (!isFastStart) {
+			time.Sleep(time.Second * 5)
+		}
 		return nil
 	}
 	return conf
