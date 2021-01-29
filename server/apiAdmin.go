@@ -270,7 +270,6 @@ func (s *webServer) Dologin() {
 	}
 	log.Info("正在加载事件过滤器.")
 	global.BootFilter()
-	global.InitCodec()
 	coolq.IgnoreInvalidCQCode = conf.IgnoreInvalidCQCode
 	coolq.SplitURL = conf.FixURL
 	coolq.ForceFragmented = conf.ForceFragmented
