@@ -37,8 +37,14 @@ import (
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 var conf *global.JSONConfig
 var isFastStart = false
+var customLogFormatter = &log.TextFormatter{
+	ForceColors:     true,
+	FullTimestamp:   true,
+	TimestampFormat: "2006-01-02 15:04:05",
+}
 
 func init() {
+	log.SetFormatter(customLogFormatter)
 	if global.PathExists("cqhttp.json") {
 		log.Info("发现 cqhttp.json 将在五秒后尝试导入配置，按 Ctrl+C 取消.")
 		log.Warn("警告: 该操作会删除 cqhttp.json 并覆盖 config.hjson 文件.")
@@ -139,8 +145,8 @@ func main() {
 
 	if conf.Uin == 0 || (conf.Password == "" && conf.PasswordEncrypted == "") {
 		log.Warnf("请修改 config.hjson 以添加账号密码.")
-		if (!isFastStart) {
-			time.Sleep(time.Second * 5)	
+		if !isFastStart {
+			time.Sleep(time.Second * 5)
 		}
 		return
 	}
@@ -469,7 +475,7 @@ func getConfig() *global.JSONConfig {
 			return nil
 		}
 		log.Infof("默认配置文件已生成, 请编辑 config.hjson 后重启程序.")
-		if (!isFastStart) {
+		if !isFastStart {
 			time.Sleep(time.Second * 5)
 		}
 		return nil
