@@ -867,6 +867,7 @@ func (bot *CQBot) CQGetGroupMessageHistory(groupId int64, seq int64) MSG {
 	var ms []MSG
 	for _, m := range msg {
 		id := m.Id
+		bot.checkMedia(m.Elements)
 		if bot.db != nil {
 			id = bot.InsertGroupMessage(m)
 		}
