@@ -431,7 +431,47 @@ func (bot *CQBot) otherClientStatusChangedEvent(c *client.QQClient, e *client.Ot
 		"self_id": c.Uin,
 		"time":    time.Now().Unix(),
 	})
+}
 
+func (bot *CQBot) groupEssenceMsg(c *client.QQClient, e *client.GroupDigestEvent) {
+	g := c.FindGroup(e.GroupCode)
+	gid := ToGlobalId(e.GroupCode, e.MessageID)
+	if e.OperationType == 1 {
+		log.Infof(
+			"群 %v 内 %v 将 %v 的消息(%v)设为了精华消息.",
+			formatGroupName(g),
+			formatMemberName(g.FindMember(e.OperatorUin)),
+			formatMemberName(g.FindMember(e.SenderUin)),
+			gid,
+		)
+	} else {
+		log.Infof(
+			"群 %v 内 %v 将 %v 的消息(%v)移出了精华消息.",
+			formatGroupName(g),
+			formatMemberName(g.FindMember(e.OperatorUin)),
+			formatMemberName(g.FindMember(e.SenderUin)),
+			gid,
+		)
+	}
+	if e.OperatorUin == bot.Client.Uin {
+		return
+	}
+	bot.dispatchEventMessage(MSG{
+		"post_type":   "notice",
+		"group_id":    e.GroupCode,
+		"notice_type": "essence",
+		"sub_type": func() string {
+			if e.OperationType == 1 {
+				return "add"
+			}
+			return "delete"
+		}(),
+		"self_id":     c.Uin,
+		"sender_id":   e.SenderUin,
+		"operator_id": e.OperatorUin,
+		"time":        time.Now().Unix(),
+		"message_id":  gid,
+	})
 }
 
 func (bot *CQBot) groupIncrease(groupCode, operatorUin, userUin int64) MSG {

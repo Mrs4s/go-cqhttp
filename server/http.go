@@ -486,6 +486,21 @@ func SetGroupPortrait(s *httpServer, c *gin.Context) {
 	c.JSON(200, s.bot.CQSetGroupPortrait(gid, file, cache))
 }
 
+func SetEssenceMsg(s *httpServer, c *gin.Context) {
+	mid, _ := strconv.ParseInt(getParam(c, "message_id"), 10, 64)
+	c.JSON(200, s.bot.CQSetEssenceMessage(int32(mid)))
+}
+
+func DeleteEssenceMsg(s *httpServer, c *gin.Context) {
+	mid, _ := strconv.ParseInt(getParam(c, "message_id"), 10, 64)
+	c.JSON(200, s.bot.CQDeleteEssenceMessage(int32(mid)))
+}
+
+func GetEssenceMsgList(s *httpServer, c *gin.Context) {
+	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
+	c.JSON(200, s.bot.CQGetEssenceMessageList(gid))
+}
+
 func getParamOrDefault(c *gin.Context, k, def string) string {
 	r := getParam(c, k)
 	if r != "" {
@@ -545,11 +560,13 @@ var httpApi = map[string]func(s *httpServer, c *gin.Context){
 	"get_group_root_files":       GetGroupRootFiles,
 	"get_group_files_by_folder":  GetGroupFilesByFolderId,
 	"get_group_file_url":         GetGroupFileUrl,
+	"get_essence_msg_list":       GetEssenceMsgList,
 	"send_msg":                   SendMessage,
 	"send_group_msg":             SendGroupMessage,
 	"send_group_forward_msg":     SendGroupForwardMessage,
 	"send_private_msg":           SendPrivateMessage,
 	"delete_msg":                 DeleteMessage,
+	"delete_essence_msg":         DeleteEssenceMsg,
 	"set_friend_add_request":     ProcessFriendRequest,
 	"set_group_add_request":      ProcessGroupRequest,
 	"set_group_card":             SetGroupCard,
@@ -559,6 +576,7 @@ var httpApi = map[string]func(s *httpServer, c *gin.Context){
 	"set_group_whole_ban":        SetWholeBan,
 	"set_group_name":             SetGroupName,
 	"set_group_admin":            SetGroupAdmin,
+	"set_essence_msg":            SetEssenceMsg,
 	"set_restart":                SetRestart,
 	"_send_group_notice":         SendGroupNotice,
 	"set_group_leave":            SetGroupLeave,
