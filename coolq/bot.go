@@ -78,6 +78,7 @@ func NewQQBot(cli *client.QQClient, conf *global.JSONConfig) *CQBot {
 	bot.Client.OnGroupInvited(bot.groupInvitedEvent)
 	bot.Client.OnUserWantJoinGroup(bot.groupJoinReqEvent)
 	bot.Client.OnOtherClientStatusChanged(bot.otherClientStatusChangedEvent)
+	bot.Client.OnGroupDigest(bot.groupEssenceMsg)
 	go func() {
 		i := conf.HeartbeatInterval
 		if i < 0 {
