@@ -1026,10 +1026,9 @@ func (bot *CQBot) CQGetEssenceMessageList(groupCode int64) MSG {
 			"sender_time":   m.SenderTime,
 			"operator_time": m.AddDigestTime,
 			"operator_nick": m.AddDigestNick,
-			"group_code":    groupCode,
 		}
-		msg["sender_uin"], _ = strconv.ParseUint(m.SenderUin, 10, 64)
-		msg["operator_uin"], _ = strconv.ParseUint(m.AddDigestUin, 10, 64)
+		msg["sender_id"], _ = strconv.ParseUint(m.SenderUin, 10, 64)
+		msg["operator_id"], _ = strconv.ParseUint(m.AddDigestUin, 10, 64)
 		msg["message_id"] = ToGlobalId(groupCode, int32(m.MessageID))
 		list = append(list, msg)
 	}
