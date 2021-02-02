@@ -62,7 +62,22 @@ func (bot *CQBot) CQGetGroupList(noCache bool) MSG {
 func (bot *CQBot) CQGetGroupInfo(groupId int64, noCache bool) MSG {
 	group := bot.Client.FindGroup(groupId)
 	if group == nil {
-		return Failed(100, "GROUP_NOT_FOUND", "群聊不存在")
+		gid := strconv.FormatInt(groupId, 10)
+		info, err := bot.Client.SearchGroupByKeyword(gid)
+		if err != nil {
+			return Failed(100, "GROUP_SEARCH_ERROR", "群聊搜索失败")
+		}
+		for _, g := range info {
+			if g.Code == groupId {
+				return OK(MSG{
+					"group_id":         g.Code,
+					"group_name":       g.Name,
+					"max_member_count": 0,
+					"member_count":     0,
+				})
+			}
+		}
+		return Failed(100, "GROUP_NOT_FOUND", "群聊不存在失败")
 	}
 	if noCache {
 		var err error

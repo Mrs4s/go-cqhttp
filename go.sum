@@ -1,5 +1,7 @@
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
+github.com/Mrs4s/MiraiGo v0.0.0-20210201234941-c69e578d0815 h1:WW2YfA+0+LSa/0VlWVhnfrXXatcE09paHgPgfPxlIMk=
+github.com/Mrs4s/MiraiGo v0.0.0-20210201234941-c69e578d0815/go.mod h1:yhqA0NyKxUf7I/0HR/1OMchveFggX8wde04gqdGrNfU=
 github.com/Mrs4s/MiraiGo v0.0.0-20210202135946-553229fea92e h1:5rZXeo+KW1vNq5fM7DowITQgm8r7HuH6w9tScWJ5GQQ=
 github.com/Mrs4s/MiraiGo v0.0.0-20210202135946-553229fea92e/go.mod h1:yhqA0NyKxUf7I/0HR/1OMchveFggX8wde04gqdGrNfU=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
