@@ -34,52 +34,52 @@ var typeReg = regexp.MustCompile(`\[CQ:(\w+)`)
 var paramReg = regexp.MustCompile(`,([\w\-.]+?)=([^,\]]+)`)
 */
 
-//IgnoreInvalidCQCode 是否忽略无效CQ码
+// IgnoreInvalidCQCode 是否忽略无效CQ码
 var IgnoreInvalidCQCode = false
 
-//SplitURL 是否分割URL
+// SplitURL 是否分割URL
 var SplitURL = false
 
 const maxImageSize = 1024 * 1024 * 30  // 30MB
 const maxVideoSize = 1024 * 1024 * 100 // 100MB
-//PokeElement 拍一拍
+// PokeElement 拍一拍
 type PokeElement struct {
 	Target int64
 }
 
-//GiftElement 礼物
+// GiftElement 礼物
 type GiftElement struct {
 	Target int64
 	GiftID message.GroupGift
 }
 
-//LocalImageElement 本地图片
+// LocalImageElement 本地图片
 type LocalImageElement struct {
 	message.ImageElement
 	Stream io.ReadSeeker
 	File   string
 }
 
-//LocalVoiceElement 本地语音
+// LocalVoiceElement 本地语音
 type LocalVoiceElement struct {
 	message.VoiceElement
 	Stream io.ReadSeeker
 }
 
-//LocalVideoElement 本地视频
+// LocalVideoElement 本地视频
 type LocalVideoElement struct {
 	message.ShortVideoElement
 	File  string
 	thumb io.ReadSeeker
 }
 
-//Type 获取元素类型ID
+// Type 获取元素类型ID
 func (e *GiftElement) Type() message.ElementType {
-	//Make message.IMessageElement Happy
+	// Make message.IMessageElement Happy
 	return message.At
 }
 
-//GiftID 礼物ID数组
+// GiftID 礼物ID数组
 var GiftID = [...]message.GroupGift{
 	message.SweetWink,
 	message.HappyCola,
@@ -97,13 +97,13 @@ var GiftID = [...]message.GroupGift{
 	message.LoveMask,
 }
 
-//Type 获取元素类型ID
+// Type 获取元素类型ID
 func (e *PokeElement) Type() message.ElementType {
-	//Make message.IMessageElement Happy
+	// Make message.IMessageElement Happy
 	return message.At
 }
 
-//ToArrayMessage 将消息元素数组转为MSG数组以用于消息上报
+// ToArrayMessage 将消息元素数组转为MSG数组以用于消息上报
 func ToArrayMessage(e []message.IMessageElement, id int64, isRaw ...bool) (r []MSG) {
 	r = []MSG{}
 	ur := false
@@ -130,10 +130,10 @@ func ToArrayMessage(e []message.IMessageElement, id int64, isRaw ...bool) (r []M
 				"data": map[string]string{"text": o.Content},
 			}
 		case *message.LightAppElement:
-			//m = MSG{
-			//	"type": "text",
-			//	"data": map[string]string{"text": o.Content},
-			//}
+			// m = MSG{
+			// 	"type": "text",
+			// 	"data": map[string]string{"text": o.Content},
+			// }
 			m = MSG{
 				"type": "json",
 				"data": map[string]string{"data": o.Content},
@@ -255,7 +255,7 @@ func ToArrayMessage(e []message.IMessageElement, id int64, isRaw ...bool) (r []M
 	return
 }
 
-//ToStringMessage 将消息元素数组转为字符串以用于消息上报
+// ToStringMessage 将消息元素数组转为字符串以用于消息上报
 func ToStringMessage(e []message.IMessageElement, id int64, isRaw ...bool) (r string) {
 	ur := false
 	if len(isRaw) != 0 {
@@ -328,13 +328,13 @@ func ToStringMessage(e []message.IMessageElement, id int64, isRaw ...bool) (r st
 			}
 		case *message.LightAppElement:
 			r += fmt.Sprintf(`[CQ:json,data=%s]`, CQCodeEscapeValue(o.Content))
-			//r += CQCodeEscapeText(o.Content)
+			// r += CQCodeEscapeText(o.Content)
 		}
 	}
 	return
 }
 
-//ConvertStringMessage 将消息字符串转为消息元素数组
+// ConvertStringMessage 将消息字符串转为消息元素数组
 func (bot *CQBot) ConvertStringMessage(msg string, isGroup bool) (r []message.IMessageElement) {
 	index := 0
 	stat := 0
@@ -491,7 +491,7 @@ func (bot *CQBot) ConvertStringMessage(msg string, isGroup bool) (r []message.IM
 	return
 }
 
-//ConvertObjectMessage 将消息JSON对象转为消息元素数组
+// ConvertObjectMessage 将消息JSON对象转为消息元素数组
 func (bot *CQBot) ConvertObjectMessage(m gjson.Result, isGroup bool) (r []message.IMessageElement) {
 	convertElem := func(e gjson.Result) {
 		t := e.Get("type").Str
@@ -782,11 +782,11 @@ func (bot *CQBot) ToElement(t string, d map[string]string, isGroup bool) (m inte
 		resID := d["resid"]
 		i, _ := strconv.ParseInt(resID, 10, 64)
 		if i == 0 {
-			//默认情况下走小程序通道
+			// 默认情况下走小程序通道
 			msg := message.NewLightApp(CQCodeUnescapeValue(d["data"]))
 			return msg, nil
 		}
-		//resid不为0的情况下走富文本通道，后续补全透传service Id，此处暂时不处理 TODO
+		// resid不为0的情况下走富文本通道，后续补全透传service Id，此处暂时不处理 TODO
 		msg := message.NewRichJson(CQCodeUnescapeValue(d["data"]))
 		return msg, nil
 	case "cardimage":
@@ -866,7 +866,7 @@ func (bot *CQBot) ToElement(t string, d map[string]string, isGroup bool) (m inte
 	return nil, nil
 }
 
-//XMLEscape 将字符串c转义为XML字符串
+// XMLEscape 将字符串c转义为XML字符串
 func XMLEscape(c string) string {
 	buf := new(bytes.Buffer)
 	_ = xml2.EscapeText(buf, []byte(c))
@@ -929,7 +929,7 @@ func CQCodeUnescapeValue(content string) string {
 	return ret
 }
 
-//makeImageOrVideoElem 图片 elem 生成器，单独拎出来，用于公用
+// makeImageOrVideoElem 图片 elem 生成器，单独拎出来，用于公用
 func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video, group bool) (message.IMessageElement, error) {
 	f := d["file"]
 	if strings.HasPrefix(f, "http") || strings.HasPrefix(f, "https") {
@@ -1089,7 +1089,7 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video, group bool) (
 	return nil, errors.New("invalid image")
 }
 
-//makeShowPic 一种xml 方式发送的群消息图片
+// makeShowPic 一种xml 方式发送的群消息图片
 func (bot *CQBot) makeShowPic(elem message.IMessageElement, source string, icon string, minWidth int64, minHeight int64, maxWidth int64, maxHeight int64, group bool) ([]message.IMessageElement, error) {
 	xml := ""
 	var suf message.IMessageElement
@@ -1122,7 +1122,7 @@ func (bot *CQBot) makeShowPic(elem message.IMessageElement, source string, icon 
 		suf = i
 	}
 	if xml != "" {
-		//log.Warn(xml)
+		// log.Warn(xml)
 		ret := []message.IMessageElement{suf}
 		ret = append(ret, message.NewRichXml(xml, 5))
 		return ret, nil

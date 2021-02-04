@@ -28,7 +28,7 @@ import (
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
-//CQBot CQBot结构体,存储Bot实例相关配置
+// CQBot CQBot结构体,存储Bot实例相关配置
 type CQBot struct {
 	Client *client.QQClient
 
@@ -39,13 +39,13 @@ type CQBot struct {
 	oneWayMsgCache sync.Map
 }
 
-//MSG 消息Map
+// MSG 消息Map
 type MSG map[string]interface{}
 
-//ForceFragmented 是否启用强制分片
+// ForceFragmented 是否启用强制分片
 var ForceFragmented = false
 
-//NewQQBot 初始化一个QQBot实例
+// NewQQBot 初始化一个QQBot实例
 func NewQQBot(cli *client.QQClient, conf *global.JSONConfig) *CQBot {
 	bot := &CQBot{
 		Client: cli,
@@ -107,12 +107,12 @@ func NewQQBot(cli *client.QQClient, conf *global.JSONConfig) *CQBot {
 	return bot
 }
 
-//OnEventPush 注册事件上报函数
+// OnEventPush 注册事件上报函数
 func (bot *CQBot) OnEventPush(f func(m MSG)) {
 	bot.events = append(bot.events, f)
 }
 
-//GetMessage 获取给定消息id对应的消息
+// GetMessage 获取给定消息id对应的消息
 func (bot *CQBot) GetMessage(mid int32) MSG {
 	if bot.db != nil {
 		m := MSG{}
@@ -130,7 +130,7 @@ func (bot *CQBot) GetMessage(mid int32) MSG {
 	return nil
 }
 
-//UploadLocalImageAsGroup 上传本地图片至群聊
+// UploadLocalImageAsGroup 上传本地图片至群聊
 func (bot *CQBot) UploadLocalImageAsGroup(groupCode int64, img *LocalImageElement) (*message.GroupImageElement, error) {
 	if img.Stream != nil {
 		return bot.Client.UploadGroupImage(groupCode, img.Stream)
@@ -138,7 +138,7 @@ func (bot *CQBot) UploadLocalImageAsGroup(groupCode int64, img *LocalImageElemen
 	return bot.Client.UploadGroupImageByFile(groupCode, img.File)
 }
 
-//UploadLocalVideo 上传本地短视频至群聊
+// UploadLocalVideo 上传本地短视频至群聊
 func (bot *CQBot) UploadLocalVideo(target int64, v *LocalVideoElement) (*message.ShortVideoElement, error) {
 	if v.File != "" {
 		video, err := os.Open(v.File)
@@ -155,7 +155,7 @@ func (bot *CQBot) UploadLocalVideo(target int64, v *LocalVideoElement) (*message
 	return &v.ShortVideoElement, nil
 }
 
-//UploadLocalImageAsPrivate 上传本地图片至私聊
+// UploadLocalImageAsPrivate 上传本地图片至私聊
 func (bot *CQBot) UploadLocalImageAsPrivate(userID int64, img *LocalImageElement) (*message.FriendImageElement, error) {
 	if img.Stream != nil {
 		return bot.Client.UploadPrivateImage(userID, img.Stream)
@@ -169,7 +169,7 @@ func (bot *CQBot) UploadLocalImageAsPrivate(userID int64, img *LocalImageElement
 	return bot.Client.UploadPrivateImage(userID, f)
 }
 
-//SendGroupMessage 发送群消息
+// SendGroupMessage 发送群消息
 func (bot *CQBot) SendGroupMessage(groupID int64, m *message.SendingMessage) int32 {
 	var newElem []message.IMessageElement
 	for _, elem := range m.Elements {
@@ -236,7 +236,7 @@ func (bot *CQBot) SendGroupMessage(groupID int64, m *message.SendingMessage) int
 	return bot.InsertGroupMessage(ret)
 }
 
-//SendPrivateMessage 发送私聊消息
+// SendPrivateMessage 发送私聊消息
 func (bot *CQBot) SendPrivateMessage(target int64, m *message.SendingMessage) int32 {
 	var newElem []message.IMessageElement
 	for _, elem := range m.Elements {
@@ -306,7 +306,7 @@ func (bot *CQBot) SendPrivateMessage(target int64, m *message.SendingMessage) in
 	return id
 }
 
-//InsertGroupMessage 群聊消息入数据库
+// InsertGroupMessage 群聊消息入数据库
 func (bot *CQBot) InsertGroupMessage(m *message.GroupMessage) int32 {
 	val := MSG{
 		"message-id":  m.Id,
@@ -332,7 +332,7 @@ func (bot *CQBot) InsertGroupMessage(m *message.GroupMessage) int32 {
 	return id
 }
 
-//InsertPrivateMessage 私聊消息入数据库
+// InsertPrivateMessage 私聊消息入数据库
 func (bot *CQBot) InsertPrivateMessage(m *message.PrivateMessage) int32 {
 	val := MSG{
 		"message-id":  m.Id,
@@ -357,12 +357,12 @@ func (bot *CQBot) InsertPrivateMessage(m *message.PrivateMessage) int32 {
 	return id
 }
 
-//toGlobalID 构建`code`-`msgID`的字符串并返回其CRC32 Checksum的值
+// toGlobalID 构建`code`-`msgID`的字符串并返回其CRC32 Checksum的值
 func toGlobalID(code int64, msgID int32) int32 {
 	return int32(crc32.ChecksumIEEE([]byte(fmt.Sprintf("%d-%d", code, msgID))))
 }
 
-//Release 释放Bot实例
+// Release 释放Bot实例
 func (bot *CQBot) Release() {
 	if bot.db != nil {
 		_ = bot.db.Close()
@@ -453,7 +453,7 @@ func formatMemberName(mem *client.GroupMemberInfo) string {
 	return fmt.Sprintf("%s(%d)", mem.DisplayName(), mem.Uin)
 }
 
-//ToJSON 生成JSON字符串
+// ToJSON 生成JSON字符串
 func (m MSG) ToJSON() string {
 	b, _ := json.Marshal(m)
 	return string(b)

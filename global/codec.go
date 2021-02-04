@@ -14,7 +14,7 @@ import (
 
 var useSilkCodec = true
 
-//InitCodec 初始化Silk编码器
+// InitCodec 初始化Silk编码器
 func InitCodec() {
 	log.Info("正在加载silk编码器...")
 	err := codec.Init()
@@ -24,7 +24,7 @@ func InitCodec() {
 	}
 }
 
-//EncoderSilk 将音频编码为Silk
+// EncoderSilk 将音频编码为Silk
 func EncoderSilk(data []byte) ([]byte, error) {
 	if !useSilkCodec {
 		return nil, errors.New("no silk encoder")
@@ -45,7 +45,7 @@ func EncoderSilk(data []byte) ([]byte, error) {
 	return slk, nil
 }
 
-//EncodeMP4 将给定视频文件编码为MP4
+// EncodeMP4 将给定视频文件编码为MP4
 func EncodeMP4(src string, dst string) error { //        -y 覆盖文件
 	cmd1 := exec.Command("ffmpeg", "-i", src, "-y", "-c", "copy", "-map", "0", dst)
 	err := cmd1.Run()
@@ -56,7 +56,7 @@ func EncodeMP4(src string, dst string) error { //        -y 覆盖文件
 	return err
 }
 
-//ExtractCover 获取给定视频文件的Cover
+// ExtractCover 获取给定视频文件的Cover
 func ExtractCover(src string, target string) error {
 	cmd := exec.Command("ffmpeg", "-i", src, "-y", "-r", "1", "-f", "image2", target)
 	return errors.Wrap(cmd.Run(), "extract video cover failed")

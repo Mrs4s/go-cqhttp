@@ -25,7 +25,7 @@ type webSocketServer struct {
 	handshake      string
 }
 
-//WebSocketClient WebSocket客户端实例
+// WebSocketClient WebSocket客户端实例
 type WebSocketClient struct {
 	conf  *global.GoCQReverseWebSocketConfig
 	token string
@@ -40,7 +40,7 @@ type webSocketConn struct {
 	sync.Mutex
 }
 
-//WebSocketServer 初始化一个WebSocketServer实例
+// WebSocketServer 初始化一个WebSocketServer实例
 var WebSocketServer = &webSocketServer{}
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
@@ -63,12 +63,12 @@ func (s *webSocketServer) Run(addr, authToken string, b *coolq.CQBot) {
 	}()
 }
 
-//NewWebSocketClient 初始化一个NWebSocket客户端
+// NewWebSocketClient 初始化一个NWebSocket客户端
 func NewWebSocketClient(conf *global.GoCQReverseWebSocketConfig, authToken string, b *coolq.CQBot) *WebSocketClient {
 	return &WebSocketClient{conf: conf, token: authToken, bot: b}
 }
 
-//Run 运行实例
+// Run 运行实例
 func (c *WebSocketClient) Run() {
 	if !c.conf.Enabled {
 		return

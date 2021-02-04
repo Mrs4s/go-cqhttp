@@ -21,15 +21,15 @@ var falseSet = map[string]struct{}{
 	"0":     {},
 }
 
-//EnsureBool 判断给定的p是否可表示为合法Bool类型,否则返回defaultVal
+// EnsureBool 判断给定的p是否可表示为合法Bool类型,否则返回defaultVal
 //
-//支持的合法类型有
+// 支持的合法类型有
 //
-//type bool
+// type bool
 //
-//type gjson.True or gjson.False
+// type gjson.True or gjson.False
 //
-//type string "true","yes","1" or "false","no","0" (case insensitive)
+// type string "true","yes","1" or "false","no","0" (case insensitive)
 func EnsureBool(p interface{}, defaultVal bool) bool {
 	var str string
 	if b, ok := p.(bool); ok {
@@ -85,7 +85,7 @@ func VersionNameCompare(current, remote string) bool {
 	return len(cur) < len(re)
 }
 
-//SplitURL 将给定URL字符串分割为两部分，用于URL预处理防止风控
+// SplitURL 将给定URL字符串分割为两部分，用于URL预处理防止风控
 func SplitURL(s string) []string {
 	reg := regexp.MustCompile(`(?i)[a-z\d][-a-z\d]{0,62}(\.[a-z\d][-a-z\d]{0,62})+\.?`)
 	idx := reg.FindAllStringIndex(s, -1)

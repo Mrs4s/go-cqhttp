@@ -36,7 +36,7 @@ type httpClient struct {
 
 var cqHTTPServer = &httpServer{}
 
-//Debug 是否启用Debug模式
+// Debug 是否启用Debug模式
 var Debug = false
 
 func (s *httpServer) Run(addr, authToken string, bot *coolq.CQBot) {

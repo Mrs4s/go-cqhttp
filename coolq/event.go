@@ -17,12 +17,12 @@ import (
 
 var format = "string"
 
-//SetMessageFormat 设置消息上报格式，默认为string
+// SetMessageFormat 设置消息上报格式，默认为string
 func SetMessageFormat(f string) {
 	format = f
 }
 
-//ToFormattedMessage 将给定[]message.IMessageElement转换为通过coolq.SetMessageFormat所定义的消息上报格式
+// ToFormattedMessage 将给定[]message.IMessageElement转换为通过coolq.SetMessageFormat所定义的消息上报格式
 func ToFormattedMessage(e []message.IMessageElement, id int64, isRaw ...bool) (r interface{}) {
 	if format == "string" {
 		r = ToStringMessage(e, id, isRaw...)
