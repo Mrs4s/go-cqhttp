@@ -82,6 +82,7 @@ func NewQQBot(cli *client.QQClient, conf *global.JSONConfig) *CQBot {
 	bot.Client.OnGroupInvited(bot.groupInvitedEvent)
 	bot.Client.OnUserWantJoinGroup(bot.groupJoinReqEvent)
 	bot.Client.OnOtherClientStatusChanged(bot.otherClientStatusChangedEvent)
+	bot.Client.OnGroupDigest(bot.groupEssenceMsg)
 	go func() {
 		i := conf.HeartbeatInterval
 		if i < 0 {
@@ -211,61 +212,8 @@ func (bot *CQBot) SendGroupMessage(groupID int64, m *message.SendingMessage) int
 			bot.Client.SendGroupGift(uint64(groupID), uint64(i.Target), i.GiftID)
 			return 0
 		}
-		if i, ok := elem.(*QQMusicElement); ok {
-			var msgStyle uint32 = 4
-			if i.MusicURL == "" {
-				msgStyle = 0 // fix vip song
-			}
-			ret, err := bot.Client.SendGroupRichMessage(groupID, 100497308, 1, msgStyle, client.RichClientInfo{
-				Platform:    1,
-				SdkVersion:  "0.0.0",
-				PackageName: "com.tencent.qqmusic",
-				Signature:   "cbd27cd7c861227d013a25b2d10f0799",
-			}, &message.RichMessage{
-				Title:      i.Title,
-				Summary:    i.Summary,
-				Url:        i.URL,
-				PictureUrl: i.PictureURL,
-				MusicUrl:   i.MusicURL,
-			})
-			if err != nil {
-				log.Warnf("警告: 群 %v 富文本消息发送失败: %v", groupID, err)
-				return -1
-			}
-			return bot.InsertGroupMessage(ret)
-		}
-		if i, ok := elem.(*CloudMusicElement); ok {
-			ret, err := bot.Client.SendGroupRichMessage(groupID, 100495085, 1, 4, client.RichClientInfo{
-				Platform:    1,
-				SdkVersion:  "0.0.0",
-				PackageName: "com.netease.cloudmusic",
-				Signature:   "da6b069da1e2982db3e386233f68d76d",
-			}, &message.RichMessage{
-				Title:      i.Title,
-				Summary:    i.Summary,
-				Url:        i.URL,
-				PictureUrl: i.PictureURL,
-				MusicUrl:   i.MusicURL,
-			})
-			if err != nil {
-				log.Warnf("警告: 群 %v 富文本消息发送失败: %v", groupID, err)
-				return -1
-			}
-			return bot.InsertGroupMessage(ret)
-		}
-		if i, ok := elem.(*MiguMusicElement); ok {
-			ret, err := bot.Client.SendGroupRichMessage(groupID, 1101053067, 1, 4, client.RichClientInfo{
-				Platform:    1,
-				SdkVersion:  "0.0.0",
-				PackageName: "cmccwm.mobilemusic",
-				Signature:   "6cdc72a439cef99a3418d2a78aa28c73",
-			}, &message.RichMessage{
-				Title:      i.Title,
-				Summary:    i.Summary,
-				Url:        i.URL,
-				PictureUrl: i.PictureURL,
-				MusicUrl:   i.MusicURL,
-			})
+		if i, ok := elem.(*message.MusicShareElement); ok {
+			ret, err := bot.Client.SendGroupMusicShare(groupID, i)
 			if err != nil {
 				log.Warnf("警告: 群 %v 富文本消息发送失败: %v", groupID, err)
 				return -1
@@ -323,53 +271,8 @@ func (bot *CQBot) SendPrivateMessage(target int64, m *message.SendingMessage) in
 			newElem = append(newElem, gv)
 			continue
 		}
-		if i, ok := elem.(*QQMusicElement); ok {
-			var msgStyle uint32 = 4
-			if i.MusicURL == "" {
-				msgStyle = 0 // fix vip song
-			}
-			bot.Client.SendFriendRichMessage(target, 100497308, 1, msgStyle, client.RichClientInfo{
-				Platform:    1,
-				SdkVersion:  "0.0.0",
-				PackageName: "com.tencent.qqmusic",
-				Signature:   "cbd27cd7c861227d013a25b2d10f0799",
-			}, &message.RichMessage{
-				Title:      i.Title,
-				Summary:    i.Summary,
-				Url:        i.URL,
-				PictureUrl: i.PictureURL,
-				MusicUrl:   i.MusicURL,
-			})
-			return 0
-		}
-		if i, ok := elem.(*CloudMusicElement); ok {
-			bot.Client.SendFriendRichMessage(target, 100495085, 1, 4, client.RichClientInfo{
-				Platform:    1,
-				SdkVersion:  "0.0.0",
-				PackageName: "com.netease.cloudmusic",
-				Signature:   "da6b069da1e2982db3e386233f68d76d",
-			}, &message.RichMessage{
-				Title:      i.Title,
-				Summary:    i.Summary,
-				Url:        i.URL,
-				PictureUrl: i.PictureURL,
-				MusicUrl:   i.MusicURL,
-			})
-			return 0
-		}
-		if i, ok := elem.(*MiguMusicElement); ok {
-			bot.Client.SendFriendRichMessage(target, 1101053067, 1, 4, client.RichClientInfo{
-				Platform:    1,
-				SdkVersion:  "0.0.0",
-				PackageName: "cmccwm.mobilemusic",
-				Signature:   "6cdc72a439cef99a3418d2a78aa28c73",
-			}, &message.RichMessage{
-				Title:      i.Title,
-				Summary:    i.Summary,
-				Url:        i.URL,
-				PictureUrl: i.PictureURL,
-				MusicUrl:   i.MusicURL,
-			})
+		if i, ok := elem.(*message.MusicShareElement); ok {
+			bot.Client.SendFriendMusicShare(target, i)
 			return 0
 		}
 		newElem = append(newElem, elem)

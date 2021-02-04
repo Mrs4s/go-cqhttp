@@ -119,8 +119,8 @@ var DefaultConfigWithComments = `
     use_sso_address: false
     // 是否启用 DEBUG
     debug: false
-    // 日志等级
-    log_level: ""
+    // 日志等级 trace,debug,info,warn,error
+    log_level: "info"
     // WebUi 设置
     web_ui: {
         // 是否启用 WebUi
@@ -134,6 +134,9 @@ var DefaultConfigWithComments = `
     }
 }
 `
+
+//PasswordHash 存储QQ密码哈希供登录使用
+var PasswordHash [16]byte
 
 //JSONConfig Config对应的结构体
 type JSONConfig struct {
@@ -274,8 +277,8 @@ func DefaultConfig() *JSONConfig {
 	}
 }
 
-//Load 加载配置文件
-func Load(p string) *JSONConfig {
+//LoadConfig 加载配置文件
+func LoadConfig(p string) *JSONConfig {
 	if !PathExists(p) {
 		log.Warnf("尝试加载配置文件 %v 失败: 文件不存在", p)
 		return nil

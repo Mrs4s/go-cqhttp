@@ -39,6 +39,9 @@
 - [获取群子目录文件列表](#设置群名)
 - [获取用户VIP信息](#获取用户VIP信息)
 - [发送群公告](#发送群公告)
+- [设置精华消息](#设置精华消息)
+- [移出精华消息](#移出精华消息)
+- [获取精华消息列表](#获取精华消息列表)
 - [重载事件过滤器](#重载事件过滤器)
 
 ##### 事件
@@ -50,6 +53,7 @@
 - [群成员荣誉变更提示](#群成员荣誉变更提示)
 - [群成员名片更新](#群成员名片更新)
 - [接收到离线文件](#接收到离线文件)
+- [群精华消息](#精华消息)
 
 </p>
 </details>
@@ -111,6 +115,54 @@ Type : `reply`
 \
 自定义回复示例: `[CQ:reply,text=Hello World,qq=10086,time=3376656000]`
 
+### 音乐分享 <Badge text="发"/>
+
+```json
+{
+    "type": "music",
+    "data": {
+        "type": "163",
+        "id": "28949129"
+    }
+}
+```
+
+```
+[CQ:music,type=163,id=28949129]
+```
+
+| 参数名 | 收 | 发 | 可能的值 | 说明 |
+| --- | --- | --- | --- | --- |
+| `type` |  | ✓ | `qq` `163` | 分别表示使用 QQ 音乐、网易云音乐 |
+| `id` |  | ✓ | - | 歌曲 ID |
+
+### 音乐自定义分享 <Badge text="发"/>
+
+```json
+{
+    "type": "music",
+    "data": {
+        "type": "custom",
+        "url": "http://baidu.com",
+        "audio": "http://baidu.com/1.mp3",
+        "title": "音乐标题"
+    }
+}
+```
+
+```
+[CQ:music,type=custom,url=http://baidu.com,audio=http://baidu.com/1.mp3,title=音乐标题]
+```
+
+| 参数名 | 收 | 发 | 可能的值 | 说明 |
+| --- | --- | --- | --- | --- |
+| `type` |  | ✓ | `custom` | 表示音乐自定义分享 |
+| `subtype` |  | ✓ | `qq,163,migu,kugou,kuwo` | 表示分享类型，不填写发送为xml卡片，推荐填写提高稳定性 |
+| `url` |  | ✓ | - | 点击后跳转目标 URL |
+| `audio` |  | ✓ | - | 音乐 URL |
+| `title` |  | ✓ | - | 标题 |
+| `content` |  | ✓ | - | 内容描述 |
+| `image` |  | ✓ | - | 图片 URL |
 
 ### 红包
 
@@ -572,11 +624,63 @@ Type: `tts`
 | -------- | -------- | ---- |
 | `slices` | string[] | 词组 |
 
+### 设置精华消息
+
+终结点: `/set_essence_msg`
+
+**参数**
+
+| 字段      | 类型   | 说明 |
+| --------- | ------ | ---- |
+| `message_id` | int32 | 消息ID |
+
+**响应数据**
+
+无
+
+### 移出精华消息
+
+终结点: `/delete_essence_msg`
+
+**参数**
+
+| 字段      | 类型   | 说明 |
+| --------- | ------ | ---- |
+| `message_id` | int32 | 消息ID |
+
+**响应数据**
+
+无
+
+### 获取精华消息列表
+
+终结点: `/get_essence_msg_list`
+
+**参数**
+
+| 字段      | 类型   | 说明 |
+| --------- | ------ | ---- |
+| `group_id` | int64 | 群号 |
+
+**响应数据**
+
+响应内容为 JSON 数组，每个元素如下：
+
+| 字段名 | 数据类型 | 说明 |
+| ----- | ------- | --- |
+| `sender_id` |int64 | 发送者QQ 号 |
+| `sender_nick` | string | 发送者昵称 |
+| `sender_time` | int64 | 消息发送时间 |
+| `operator_id` |int64 | 发送者QQ 号 |
+| `operator_nick` | string | 发送者昵称 |
+| `operator_time` | int64 | 消息发送时间|
+| `message_id` | int32 | 消息ID |
+
 ### 图片OCR
 
 > 注意: 目前图片OCR接口仅支持接受的图片
 
-终结点: `/.ocr_image` 
+终结点: `/ocr_image` 
 
 **参数** 
 
@@ -1048,3 +1152,16 @@ JSON数组:
 | `notice_type` | string | `client_status` | 消息类型 |
 | `client`      | Device  |                | 客户端信息 |
 | `online`        | bool |                | 当前是否在线 |
+
+### 精华消息
+
+**上报数据**
+
+| 字段          | 类型   | 可能的值       | 说明     |
+| ------------- | ------ | -------------- | -------- |
+| `post_type`   | string | `notice`       | 上报类型 |
+| `notice_type` | string | `essence` | 消息类型 |
+| `sub_type`   | string | `add`,`delete`       | 添加为`add`,移出为`delete` |
+| `sender_id` | int64 |  | 消息发送者ID |
+| `operator_id` | int64 |  | 操作者ID |
+| `message_id`   | int32 |    | 消息ID |
