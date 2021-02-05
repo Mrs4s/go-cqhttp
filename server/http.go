@@ -506,6 +506,10 @@ func GetEssenceMsgList(s *httpServer, c *gin.Context) {
 	c.JSON(200, s.bot.CQGetEssenceMessageList(gid))
 }
 
+func CheckUrlSafely(s *httpServer, c *gin.Context) {
+	c.JSON(200, s.bot.CQCheckUrlSafely(getParam(c, "url")))
+}
+
 func getParamOrDefault(c *gin.Context, k, def string) string {
 	r := getParam(c, k)
 	if r != "" {
@@ -601,6 +605,7 @@ var httpApi = map[string]func(s *httpServer, c *gin.Context){
 	"set_group_portrait":         SetGroupPortrait,
 	"set_group_anonymous_ban":    SetGroupAnonymousBan,
 	"get_group_msg_history":      GetGroupMessageHistory,
+	"check_url_safely":           CheckUrlSafely,
 	"download_file":              DownloadFile,
 	".handle_quick_operation":    HandleQuickOperation,
 	".ocr_image":                 OcrImage,

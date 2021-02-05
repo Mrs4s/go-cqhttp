@@ -1070,6 +1070,12 @@ func (bot *CQBot) CQGetEssenceMessageList(groupCode int64) MSG {
 	return OK(list)
 }
 
+func (bot *CQBot) CQCheckUrlSafely(url string) MSG {
+	return OK(MSG{
+		"level": bot.Client.CheckUrlSafely(url),
+	})
+}
+
 func (bot *CQBot) CQGetVersionInfo() MSG {
 	wd, _ := os.Getwd()
 	return OK(MSG{

@@ -601,6 +601,9 @@ var wsAPI = map[string]func(*coolq.CQBot, gjson.Result) coolq.MSG{
 	"get_essence_msg_list": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		return bot.CQGetEssenceMessageList(p.Get("group_id").Int())
 	},
+	"check_urk_safely": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
+		return bot.CQCheckUrlSafely(p.Get("url").String())
+	},
 	"set_group_anonymous_ban": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		obj := p.Get("anonymous")
 		flag := p.Get("anonymous_flag")
