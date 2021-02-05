@@ -215,6 +215,11 @@ func GetGroupFileUrl(s *httpServer, c *gin.Context) {
 	c.JSON(200, s.bot.CQGetGroupFileUrl(gid, fid, int32(busid)))
 }
 
+func UploadGroupFile(s *httpServer, c *gin.Context) {
+	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
+	c.JSON(200, s.bot.CQUploadGroupFile(gid, getParam(c, "file"), getParam(c, "name"), getParam(c, "folder")))
+}
+
 func SendMessage(s *httpServer, c *gin.Context) {
 	if getParam(c, "message_type") == "private" {
 		SendPrivateMessage(s, c)
@@ -560,6 +565,7 @@ var httpApi = map[string]func(s *httpServer, c *gin.Context){
 	"get_group_root_files":       GetGroupRootFiles,
 	"get_group_files_by_folder":  GetGroupFilesByFolderId,
 	"get_group_file_url":         GetGroupFileUrl,
+	"upload_group_file":          UploadGroupFile,
 	"get_essence_msg_list":       GetEssenceMsgList,
 	"send_msg":                   SendMessage,
 	"send_group_msg":             SendGroupMessage,

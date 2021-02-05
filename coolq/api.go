@@ -181,6 +181,26 @@ func (bot *CQBot) CQGetGroupFileUrl(groupId int64, fileId string, busId int32) M
 	})
 }
 
+func (bot *CQBot) CQUploadGroupFile(groupId int64, file, name, folder string) MSG {
+	if !global.PathExists(file) {
+		log.Errorf("上传群文件 %v 失败: 文件不存在", file)
+		return Failed(100, "FILE_NOT_FOUND", "文件不存在")
+	}
+	fs, err := bot.Client.GetGroupFileSystem(groupId)
+	if err != nil {
+		log.Errorf("获取群 %v 文件系统信息失败: %v", groupId, err)
+		return Failed(100, "FILE_SYSTEM_API_ERROR", err.Error())
+	}
+	if folder == "" {
+		folder = "/"
+	}
+	if err = fs.UploadFile(file, name, folder); err != nil {
+		log.Errorf("上传群 %v 文件 %v 失败: %v", groupId, file, err)
+		return Failed(100, "FILE_SYSTEM_UPLOAD_API_ERROR", err.Error())
+	}
+	return OK(nil)
+}
+
 func (bot *CQBot) CQGetWordSlices(content string) MSG {
 	slices, err := bot.Client.GetWordSegmentation(content)
 	if err != nil {
