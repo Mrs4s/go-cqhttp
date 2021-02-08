@@ -5,13 +5,14 @@
 package codec
 
 import (
-	"github.com/pkg/errors"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
 	"path"
 	"runtime"
+
+	"github.com/pkg/errors"
 )
 
 const (

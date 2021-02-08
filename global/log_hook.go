@@ -2,14 +2,16 @@ package global
 
 import (
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"io"
 	"os"
 	"path/filepath"
 	"reflect"
 	"sync"
+
+	"github.com/sirupsen/logrus"
 )
 
+// LocalHook logrus本地钩子
 type LocalHook struct {
 	lock      *sync.Mutex
 	levels    []logrus.Level   // hook级别
@@ -18,7 +20,7 @@ type LocalHook struct {
 	writer    io.Writer        // io
 }
 
-// Levels ref: logrus/hooks.go. impl Hook interface
+// Levels ref: logrus/hooks.go impl Hook interface
 func (hook *LocalHook) Levels() []logrus.Level {
 	if len(hook.levels) == 0 {
 		return logrus.AllLevels
@@ -61,6 +63,7 @@ func (hook *LocalHook) pathWrite(entry *logrus.Entry) error {
 	return err
 }
 
+// Fire ref: logrus/hooks.go impl Hook interface
 func (hook *LocalHook) Fire(entry *logrus.Entry) error {
 	hook.lock.Lock()
 	defer hook.lock.Unlock()

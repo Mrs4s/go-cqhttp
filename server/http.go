@@ -163,53 +163,63 @@ func (s *httpServer) HandleActions(c *gin.Context) {
 	}
 }
 
+// GetLoginInfo 获取登录号信息
 func GetLoginInfo(s *httpServer, c *gin.Context) {
 	c.JSON(200, s.bot.CQGetLoginInfo())
 }
 
+// GetFriendList 获取好友列表
 func GetFriendList(s *httpServer, c *gin.Context) {
 	c.JSON(200, s.bot.CQGetFriendList())
 }
 
+// GetGroupList 获取群列表
 func GetGroupList(s *httpServer, c *gin.Context) {
 	nc := getParamOrDefault(c, "no_cache", "false")
 	c.JSON(200, s.bot.CQGetGroupList(nc == "true"))
 }
 
+// GetGroupInfo 获取群信息
 func GetGroupInfo(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	nc := getParamOrDefault(c, "no_cache", "false")
 	c.JSON(200, s.bot.CQGetGroupInfo(gid, nc == "true"))
 }
 
+// GetGroupMemberList 获取群成员列表
 func GetGroupMemberList(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	nc := getParamOrDefault(c, "no_cache", "false")
 	c.JSON(200, s.bot.CQGetGroupMemberList(gid, nc == "true"))
 }
 
+// GetGroupMemberInfo 获取群成员信息
 func GetGroupMemberInfo(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	uid, _ := strconv.ParseInt(getParam(c, "user_id"), 10, 64)
 	c.JSON(200, s.bot.CQGetGroupMemberInfo(gid, uid))
 }
 
+// GetGroupFileSystemInfo 扩展API-获取群文件系统信息
 func GetGroupFileSystemInfo(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	c.JSON(200, s.bot.CQGetGroupFileSystemInfo(gid))
 }
 
+// GetGroupRootFiles 扩展API-获取群根目录文件列表
 func GetGroupRootFiles(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	c.JSON(200, s.bot.CQGetGroupRootFiles(gid))
 }
 
+// GetGroupFilesByFolderID 扩展API-获取群子目录文件列表
 func GetGroupFilesByFolderID(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	folderID := getParam(c, "folder_id")
 	c.JSON(200, s.bot.CQGetGroupFilesByFolderID(gid, folderID))
 }
 
+// GetGroupFileURL 扩展API-获取群文件资源链接
 func GetGroupFileURL(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	fid := getParam(c, "file_id")
@@ -217,11 +227,15 @@ func GetGroupFileURL(s *httpServer, c *gin.Context) {
 	c.JSON(200, s.bot.CQGetGroupFileURL(gid, fid, int32(busid)))
 }
 
+// UploadGroupFile 扩展API-上传群文件
 func UploadGroupFile(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	c.JSON(200, s.bot.CQUploadGroupFile(gid, getParam(c, "file"), getParam(c, "name"), getParam(c, "folder")))
 }
 
+// SendMessage 发送消息
+//
+// https://git.io/JtwTQ
 func SendMessage(s *httpServer, c *gin.Context) {
 	if getParam(c, "message_type") == "private" {
 		SendPrivateMessage(s, c)
@@ -240,6 +254,7 @@ func SendMessage(s *httpServer, c *gin.Context) {
 	}
 }
 
+// SendPrivateMessage 发送私聊消息
 func SendPrivateMessage(s *httpServer, c *gin.Context) {
 	uid, _ := strconv.ParseInt(getParam(c, "user_id"), 10, 64)
 	msg, t := getParamWithType(c, "message")
@@ -251,6 +266,7 @@ func SendPrivateMessage(s *httpServer, c *gin.Context) {
 	c.JSON(200, s.bot.CQSendPrivateMessage(uid, msg, autoEscape))
 }
 
+// SendGroupMessage 发送群消息
 func SendGroupMessage(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	msg, t := getParamWithType(c, "message")
@@ -262,33 +278,39 @@ func SendGroupMessage(s *httpServer, c *gin.Context) {
 	c.JSON(200, s.bot.CQSendGroupMessage(gid, msg, autoEscape))
 }
 
+// SendGroupForwardMessage 扩展API-发送合并转发(群)
 func SendGroupForwardMessage(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	msg := getParam(c, "messages")
 	c.JSON(200, s.bot.CQSendGroupForwardMessage(gid, gjson.Parse(msg)))
 }
 
+// GetImage 获取图片(修改自OneBot)
 func GetImage(s *httpServer, c *gin.Context) {
 	file := getParam(c, "file")
 	c.JSON(200, s.bot.CQGetImage(file))
 }
 
+// GetMessage 获取消息
 func GetMessage(s *httpServer, c *gin.Context) {
 	mid, _ := strconv.ParseInt(getParam(c, "message_id"), 10, 32)
 	c.JSON(200, s.bot.CQGetMessage(int32(mid)))
 }
 
+// GetGroupHonorInfo 获取群荣誉信息
 func GetGroupHonorInfo(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	c.JSON(200, s.bot.CQGetGroupHonorInfo(gid, getParam(c, "type")))
 }
 
+// ProcessFriendRequest 处理加好友请求
 func ProcessFriendRequest(s *httpServer, c *gin.Context) {
 	flag := getParam(c, "flag")
 	approve := getParamOrDefault(c, "approve", "true")
 	c.JSON(200, s.bot.CQProcessFriendRequest(flag, approve == "true"))
 }
 
+// ProcessGroupRequest 处理加群请求／邀请
 func ProcessGroupRequest(s *httpServer, c *gin.Context) {
 	flag := getParam(c, "flag")
 	subType := getParam(c, "sub_type")
@@ -299,18 +321,21 @@ func ProcessGroupRequest(s *httpServer, c *gin.Context) {
 	c.JSON(200, s.bot.CQProcessGroupRequest(flag, subType, getParam(c, "reason"), approve == "true"))
 }
 
+// SetGroupCard 设置群名片(群备注)
 func SetGroupCard(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	uid, _ := strconv.ParseInt(getParam(c, "user_id"), 10, 64)
 	c.JSON(200, s.bot.CQSetGroupCard(gid, uid, getParam(c, "card")))
 }
 
+// SetSpecialTitle 设置群组专属头衔
 func SetSpecialTitle(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	uid, _ := strconv.ParseInt(getParam(c, "user_id"), 10, 64)
 	c.JSON(200, s.bot.CQSetGroupSpecialTitle(gid, uid, getParam(c, "special_title")))
 }
 
+// SetGroupKick 群组踢人
 func SetGroupKick(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	uid, _ := strconv.ParseInt(getParam(c, "user_id"), 10, 64)
@@ -319,6 +344,7 @@ func SetGroupKick(s *httpServer, c *gin.Context) {
 	c.JSON(200, s.bot.CQSetGroupKick(gid, uid, msg, block == "true"))
 }
 
+// SetGroupBan 群组单人禁言
 func SetGroupBan(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	uid, _ := strconv.ParseInt(getParam(c, "user_id"), 10, 64)
@@ -326,32 +352,40 @@ func SetGroupBan(s *httpServer, c *gin.Context) {
 	c.JSON(200, s.bot.CQSetGroupBan(gid, uid, uint32(i)))
 }
 
+// SetWholeBan 群组全员禁言
 func SetWholeBan(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	c.JSON(200, s.bot.CQSetGroupWholeBan(gid, getParamOrDefault(c, "enable", "true") == "true"))
 }
 
+// SetGroupName 设置群名
 func SetGroupName(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	c.JSON(200, s.bot.CQSetGroupName(gid, getParam(c, "group_name")))
 }
 
+// SetGroupAdmin 群组设置管理员
 func SetGroupAdmin(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	uid, _ := strconv.ParseInt(getParam(c, "user_id"), 10, 64)
 	c.JSON(200, s.bot.CQSetGroupAdmin(gid, uid, getParamOrDefault(c, "enable", "true") == "true"))
 }
 
+// SendGroupNotice 扩展API-发送群公告
 func SendGroupNotice(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	c.JSON(200, s.bot.CQSetGroupMemo(gid, getParam(c, "content")))
 }
 
+// SetGroupLeave 退出群组
 func SetGroupLeave(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	c.JSON(200, s.bot.CQSetGroupLeave(gid))
 }
 
+// SetRestart 重启 OneBot 实现
+//
+// https://git.io/JtwkJ
 func SetRestart(s *httpServer, c *gin.Context) {
 	delay, _ := strconv.ParseInt(getParam(c, "delay"), 10, 64)
 	c.JSON(200, coolq.MSG{"data": nil, "retcode": 0, "status": "async"})
@@ -362,6 +396,7 @@ func SetRestart(s *httpServer, c *gin.Context) {
 
 }
 
+// GetForwardMessage 获取合并转发消息
 func GetForwardMessage(s *httpServer, c *gin.Context) {
 	resID := getParam(c, "message_id")
 	if resID == "" {
@@ -370,50 +405,61 @@ func GetForwardMessage(s *httpServer, c *gin.Context) {
 	c.JSON(200, s.bot.CQGetForwardMessage(resID))
 }
 
+// GetGroupSystemMessage 扩展API-获取群文件系统消息
 func GetGroupSystemMessage(s *httpServer, c *gin.Context) {
 	c.JSON(200, s.bot.CQGetGroupSystemMessages())
 }
 
+// DeleteMessage 撤回消息
 func DeleteMessage(s *httpServer, c *gin.Context) {
 	mid, _ := strconv.ParseInt(getParam(c, "message_id"), 10, 32)
 	c.JSON(200, s.bot.CQDeleteMessage(int32(mid)))
 }
 
+// CanSendImage 检查是否可以发送图片(此处永远返回true)
 func CanSendImage(s *httpServer, c *gin.Context) {
 	c.JSON(200, s.bot.CQCanSendImage())
 }
 
+// CanSendRecord 检查是否可以发送语音(此处永远返回true)
 func CanSendRecord(s *httpServer, c *gin.Context) {
 	c.JSON(200, s.bot.CQCanSendRecord())
 }
 
+// GetStatus 获取运行状态
 func GetStatus(s *httpServer, c *gin.Context) {
 	c.JSON(200, s.bot.CQGetStatus())
 }
 
+// GetVersionInfo 获取版本信息
 func GetVersionInfo(s *httpServer, c *gin.Context) {
 	c.JSON(200, s.bot.CQGetVersionInfo())
 }
 
+// ReloadEventFilter 扩展API-重载事件过滤器
 func ReloadEventFilter(s *httpServer, c *gin.Context) {
 	c.JSON(200, s.bot.CQReloadEventFilter())
 }
 
+// GetVipInfo 扩展API-获取VIP信息
 func GetVipInfo(s *httpServer, c *gin.Context) {
 	uid, _ := strconv.ParseInt(getParam(c, "user_id"), 10, 64)
 	c.JSON(200, s.bot.CQGetVipInfo(uid))
 }
 
+// GetStrangerInfo 获取陌生人信息
 func GetStrangerInfo(s *httpServer, c *gin.Context) {
 	uid, _ := strconv.ParseInt(getParam(c, "user_id"), 10, 64)
 	c.JSON(200, s.bot.CQGetStrangerInfo(uid))
 }
 
+// GetGroupAtAllRemain 扩展API-获取群 @全体成员 剩余次数
 func GetGroupAtAllRemain(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	c.JSON(200, s.bot.CQGetAtAllRemain(gid))
 }
 
+// SetGroupAnonymousBan 群组匿名用户禁言
 func SetGroupAnonymousBan(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	d, _ := strconv.ParseInt(getParam(c, "duration"), 10, 64)
@@ -428,16 +474,19 @@ func SetGroupAnonymousBan(s *httpServer, c *gin.Context) {
 	c.JSON(200, s.bot.CQSetGroupAnonymousBan(gid, flag, int32(d)))
 }
 
+// GetGroupMessageHistory 获取群消息历史记录
 func GetGroupMessageHistory(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	seq, _ := strconv.ParseInt(getParam(c, "message_seq"), 10, 64)
 	c.JSON(200, s.bot.CQGetGroupMessageHistory(gid, seq))
 }
 
+// GetOnlineClients 扩展API-获取当前账号在线客户端列表
 func GetOnlineClients(s *httpServer, c *gin.Context) {
 	c.JSON(200, s.bot.CQGetOnlineClients(getParamOrDefault(c, "no_cache", "false") == "true"))
 }
 
+// HandleQuickOperation 隐藏API-对事件执行快速操作
 func HandleQuickOperation(s *httpServer, c *gin.Context) {
 	if c.Request.Method != "POST" {
 		c.AbortWithStatus(404)
@@ -449,6 +498,7 @@ func HandleQuickOperation(s *httpServer, c *gin.Context) {
 	}
 }
 
+// DownloadFile 扩展API-下载文件到缓存目录
 func DownloadFile(s *httpServer, c *gin.Context) {
 	url := getParam(c, "url")
 	tc, _ := strconv.Atoi(getParam(c, "thread_count"))
@@ -476,16 +526,19 @@ func DownloadFile(s *httpServer, c *gin.Context) {
 	c.JSON(200, s.bot.CQDownloadFile(url, headers, tc))
 }
 
+// OcrImage 扩展API-图片OCR
 func OcrImage(s *httpServer, c *gin.Context) {
 	img := getParam(c, "image")
 	c.JSON(200, s.bot.CQOcrImage(img))
 }
 
+// GetWordSlices 隐藏API-获取中文分词
 func GetWordSlices(s *httpServer, c *gin.Context) {
 	content := getParam(c, "content")
 	c.JSON(200, s.bot.CQGetWordSlices(content))
 }
 
+// SetGroupPortrait 扩展API-设置群头像
 func SetGroupPortrait(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	file := getParam(c, "file")
@@ -493,23 +546,27 @@ func SetGroupPortrait(s *httpServer, c *gin.Context) {
 	c.JSON(200, s.bot.CQSetGroupPortrait(gid, file, cache))
 }
 
+// SetEssenceMsg 扩展API-设置精华消息
 func SetEssenceMsg(s *httpServer, c *gin.Context) {
 	mid, _ := strconv.ParseInt(getParam(c, "message_id"), 10, 64)
 	c.JSON(200, s.bot.CQSetEssenceMessage(int32(mid)))
 }
 
+// DeleteEssenceMsg 扩展API-移出精华消息
 func DeleteEssenceMsg(s *httpServer, c *gin.Context) {
 	mid, _ := strconv.ParseInt(getParam(c, "message_id"), 10, 64)
 	c.JSON(200, s.bot.CQDeleteEssenceMessage(int32(mid)))
 }
 
+// GetEssenceMsgList 扩展API-获取精华消息列表
 func GetEssenceMsgList(s *httpServer, c *gin.Context) {
 	gid, _ := strconv.ParseInt(getParam(c, "group_id"), 10, 64)
 	c.JSON(200, s.bot.CQGetEssenceMessageList(gid))
 }
 
-func CheckUrlSafely(s *httpServer, c *gin.Context) {
-	c.JSON(200, s.bot.CQCheckUrlSafely(getParam(c, "url")))
+// CheckURLSafely 扩展API-检查链接安全性
+func CheckURLSafely(s *httpServer, c *gin.Context) {
+	c.JSON(200, s.bot.CQCheckURLSafely(getParam(c, "url")))
 }
 
 func getParamOrDefault(c *gin.Context, k, def string) string {
@@ -607,7 +664,7 @@ var httpAPI = map[string]func(s *httpServer, c *gin.Context){
 	"set_group_portrait":         SetGroupPortrait,
 	"set_group_anonymous_ban":    SetGroupAnonymousBan,
 	"get_group_msg_history":      GetGroupMessageHistory,
-	"check_url_safely":           CheckUrlSafely,
+	"check_url_safely":           CheckURLSafely,
 	"download_file":              DownloadFile,
 	".handle_quick_operation":    HandleQuickOperation,
 	".ocr_image":                 OcrImage,

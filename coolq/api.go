@@ -206,21 +206,24 @@ func (bot *CQBot) CQGetGroupFileURL(groupID int64, fileID string, busID int32) M
 	})
 }
 
-func (bot *CQBot) CQUploadGroupFile(groupId int64, file, name, folder string) MSG {
+// CQUploadGroupFile 扩展API-上传群文件
+//
+// https://docs.go-cqhttp.org/api/#%E4%B8%8A%E4%BC%A0%E7%BE%A4%E6%96%87%E4%BB%B6
+func (bot *CQBot) CQUploadGroupFile(groupID int64, file, name, folder string) MSG {
 	if !global.PathExists(file) {
 		log.Errorf("上传群文件 %v 失败: 文件不存在", file)
 		return Failed(100, "FILE_NOT_FOUND", "文件不存在")
 	}
-	fs, err := bot.Client.GetGroupFileSystem(groupId)
+	fs, err := bot.Client.GetGroupFileSystem(groupID)
 	if err != nil {
-		log.Errorf("获取群 %v 文件系统信息失败: %v", groupId, err)
+		log.Errorf("获取群 %v 文件系统信息失败: %v", groupID, err)
 		return Failed(100, "FILE_SYSTEM_API_ERROR", err.Error())
 	}
 	if folder == "" {
 		folder = "/"
 	}
 	if err = fs.UploadFile(file, name, folder); err != nil {
-		log.Errorf("上传群 %v 文件 %v 失败: %v", groupId, file, err)
+		log.Errorf("上传群 %v 文件 %v 失败: %v", groupID, file, err)
 		return Failed(100, "FILE_SYSTEM_UPLOAD_API_ERROR", err.Error())
 	}
 	return OK(nil)
@@ -873,7 +876,9 @@ func (bot *CQBot) CQGetImage(file string) MSG {
 	return Failed(100, "LOAD_FILE_ERROR", err.Error())
 }
 
-// CQDownloadFile 使用给定threadCount和给定headers下载给定url
+// CQDownloadFile 扩展API-下载文件到缓存目录
+//
+// https://docs.go-cqhttp.org/api/#%E4%B8%8B%E8%BD%BD%E6%96%87%E4%BB%B6%E5%88%B0%E7%BC%93%E5%AD%98%E7%9B%AE%E5%BD%95
 func (bot *CQBot) CQDownloadFile(url string, headers map[string]string, threadCount int) MSG {
 	hash := md5.Sum([]byte(url))
 	file := path.Join(global.CachePath, hex.EncodeToString(hash[:])+".cache")
@@ -1119,9 +1124,9 @@ func (bot *CQBot) CQGetStatus() MSG {
 	})
 }
 
-// CQSetEssenceMessage 设置精华消息
+// CQSetEssenceMessage 扩展API-设置精华消息
 //
-//
+// https://docs.go-cqhttp.org/api/#%E8%AE%BE%E7%BD%AE%E7%B2%BE%E5%8D%8E%E6%B6%88%E6%81%AF
 func (bot *CQBot) CQSetEssenceMessage(messageID int32) MSG {
 	msg := bot.GetMessage(messageID)
 	if msg == nil {
@@ -1139,9 +1144,9 @@ func (bot *CQBot) CQSetEssenceMessage(messageID int32) MSG {
 	return OK(nil)
 }
 
-// CQDeleteEssenceMessage 移出精华消息
+// CQDeleteEssenceMessage 扩展API-移出精华消息
 //
-//
+// https://docs.go-cqhttp.org/api/#%E7%A7%BB%E5%87%BA%E7%B2%BE%E5%8D%8E%E6%B6%88%E6%81%AF
 func (bot *CQBot) CQDeleteEssenceMessage(messageID int32) MSG {
 	msg := bot.GetMessage(messageID)
 	if msg == nil {
@@ -1159,9 +1164,9 @@ func (bot *CQBot) CQDeleteEssenceMessage(messageID int32) MSG {
 	return OK(nil)
 }
 
-// CQGetEssenceMessageList 获取精华消息列表
+// CQGetEssenceMessageList 扩展API-获取精华消息列表
 //
-//
+// https://docs.go-cqhttp.org/api/#%E8%8E%B7%E5%8F%96%E7%B2%BE%E5%8D%8E%E6%B6%88%E6%81%AF%E5%88%97%E8%A1%A8
 func (bot *CQBot) CQGetEssenceMessageList(groupCode int64) MSG {
 	g := bot.Client.FindGroup(groupCode)
 	if g == nil {
@@ -1187,7 +1192,10 @@ func (bot *CQBot) CQGetEssenceMessageList(groupCode int64) MSG {
 	return OK(list)
 }
 
-func (bot *CQBot) CQCheckUrlSafely(url string) MSG {
+// CQCheckURLSafely 扩展API-检查链接安全性
+//
+// https://docs.go-cqhttp.org/api/#%E6%A3%80%E6%9F%A5%E9%93%BE%E6%8E%A5%E5%AE%89%E5%85%A8%E6%80%A7
+func (bot *CQBot) CQCheckURLSafely(url string) MSG {
 	return OK(MSG{
 		"level": bot.Client.CheckUrlSafely(url),
 	})
