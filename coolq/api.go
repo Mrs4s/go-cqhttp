@@ -521,7 +521,10 @@ func (bot *CQBot) CQSetGroupMemo(groupID int64, msg string) MSG {
 func (bot *CQBot) CQSetGroupKick(groupID, userID int64, msg string, block bool) MSG {
 	if g := bot.Client.FindGroup(groupID); g != nil {
 		if m := g.FindMember(userID); m != nil {
-			m.Kick(msg, block)
+			err := m.Kick(msg, block)
+			if err != nil {
+				return Failed(100, "NOT_MANAGEABLE", "机器人权限不足")
+			}
 			return OK(nil)
 		}
 	}
@@ -534,7 +537,13 @@ func (bot *CQBot) CQSetGroupKick(groupID, userID int64, msg string, block bool) 
 func (bot *CQBot) CQSetGroupBan(groupID, userID int64, duration uint32) MSG {
 	if g := bot.Client.FindGroup(groupID); g != nil {
 		if m := g.FindMember(userID); m != nil {
-			m.Mute(duration)
+			err := m.Mute(duration)
+			if err != nil {
+				if duration >= 2592000 {
+					return Failed(100, "DURATION_IS_NOT_IN_RANGE", "非法的禁言时长")
+				}
+				return Failed(100, "NOT_MANAGEABLE", "机器人权限不足")
+			}
 			return OK(nil)
 		}
 	}
