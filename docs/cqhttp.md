@@ -846,6 +846,22 @@ Type: `tts`
 | `creator_name`     | string | 创建者名字 |
 | `total_file_count` | int32  | 子文件数量 |
 
+### 上传群文件
+
+终结点: `/upload_group_file`
+
+**参数** 
+
+| 字段       | 类型   | 说明                      |
+| ---------- | ------ | ------------------------- |
+| `group_id` | int64  | 群号                      |
+| `file`     | string |  本地文件路径       |
+| `name`     | string | 储存名称         |
+| `folder`   | string | 父目录ID           |
+
+> 在不提供 `folder` 参数的情况下默认上传到根目录
+> 只能上传本地文件, 需要上传 `http` 文件的话请先调用 `download_file` API下载
+
 ### 获取状态
 
 终结点: `/get_status`
@@ -977,6 +993,22 @@ JSON数组:
 | `app_id`      | int64  | 客户端ID |
 | `device_name` | string | 设备名称 |
 | `device_kind` | string | 设备类型 |
+
+### 检查链接安全性
+
+终结点：`/check_url_safely`
+
+**参数** 
+
+| 字段       | 类型   | 说明                      |
+| ---------- | ------ | ------------------------- |
+| `url` | string  | 需要检查的链接  |
+
+**响应数据**
+
+| 字段        | 类型       | 说明            |
+| ---------- | ---------- | ------------ |
+| `level`    | int       |  安全等级, 1: 安全 2: 未知 3: 危险  |
 
 ### 获取用户VIP信息
 

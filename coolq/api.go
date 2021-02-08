@@ -206,6 +206,26 @@ func (bot *CQBot) CQGetGroupFileURL(groupID int64, fileID string, busID int32) M
 	})
 }
 
+func (bot *CQBot) CQUploadGroupFile(groupId int64, file, name, folder string) MSG {
+	if !global.PathExists(file) {
+		log.Errorf("上传群文件 %v 失败: 文件不存在", file)
+		return Failed(100, "FILE_NOT_FOUND", "文件不存在")
+	}
+	fs, err := bot.Client.GetGroupFileSystem(groupId)
+	if err != nil {
+		log.Errorf("获取群 %v 文件系统信息失败: %v", groupId, err)
+		return Failed(100, "FILE_SYSTEM_API_ERROR", err.Error())
+	}
+	if folder == "" {
+		folder = "/"
+	}
+	if err = fs.UploadFile(file, name, folder); err != nil {
+		log.Errorf("上传群 %v 文件 %v 失败: %v", groupId, file, err)
+		return Failed(100, "FILE_SYSTEM_UPLOAD_API_ERROR", err.Error())
+	}
+	return OK(nil)
+}
+
 // CQGetWordSlices 隐藏API-获取中文分词
 //
 // https://docs.go-cqhttp.org/api/#%E8%8E%B7%E5%8F%96%E4%B8%AD%E6%96%87%E5%88%86%E8%AF%8D-%E9%9A%90%E8%97%8F-api
@@ -1101,7 +1121,7 @@ func (bot *CQBot) CQGetStatus() MSG {
 
 // CQSetEssenceMessage 设置精华消息
 //
-// 
+//
 func (bot *CQBot) CQSetEssenceMessage(messageID int32) MSG {
 	msg := bot.GetMessage(messageID)
 	if msg == nil {
@@ -1167,9 +1187,15 @@ func (bot *CQBot) CQGetEssenceMessageList(groupCode int64) MSG {
 	return OK(list)
 }
 
+func (bot *CQBot) CQCheckUrlSafely(url string) MSG {
+	return OK(MSG{
+		"level": bot.Client.CheckUrlSafely(url),
+	})
+}
+
 // CQGetVersionInfo 获取版本信息
 //
-// https://github.com/howmanybots/onebot/blob/master/v11/specs/api/public.md#get_version_info-%E8%8E%B7%E5%8F%96%E7%89%88%E6%9C%AC%E4%BF%A1%E6%81%AF
+// https://git.io/JtwUs
 func (bot *CQBot) CQGetVersionInfo() MSG {
 	wd, _ := os.Getwd()
 	return OK(MSG{
