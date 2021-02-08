@@ -26,11 +26,11 @@ _✨ 基于 [Mirai](https://github.com/mamoe/mirai) 以及 [MiraiGo](https://git
 </p>
 
 <p align="center">
-  <a href="http://ishkong.github.io/go-cqhttp-docs">文档</a>
+  <a href="https://docs.go-cqhttp.org/">文档</a>
   ·
   <a href="https://github.com/Mrs4s/go-cqhttp/releases">下载</a>
   ·
-  <a href="https://ishkong.github.io/go-cqhttp-docs/guide/quick_start.html">开始使用</a>
+  <a href="https://docs.go-cqhttp.org/guide/quick_start.html">开始使用</a>
 </p>
 
 ---
