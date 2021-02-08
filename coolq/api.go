@@ -214,6 +214,10 @@ func (bot *CQBot) CQGetWordSlices(content string) MSG {
 
 // https://cqhttp.cc/docs/4.15/#/API?id=send_group_msg-%E5%8F%91%E9%80%81%E7%BE%A4%E6%B6%88%E6%81%AF
 func (bot *CQBot) CQSendGroupMessage(groupId int64, i interface{}, autoEscape bool) MSG {
+	if bot.Client.FindGroup(groupId) == nil {
+		log.Warnf("群消息发送失败: 群 %v 不存在", groupId)
+		return Failed(100, "GROUP_NOT_FOUND", "群聊不存在")
+	}
 	var str string
 	fixAt := func(elem []message.IMessageElement) {
 		for _, e := range elem {
