@@ -291,7 +291,7 @@ func Generate(opName string, argument gjson.Result) Filter {
 }
 
 // EventFilter 初始化一个nil过滤器
-var EventFilter Filter = nil
+var EventFilter Filter
 
 // BootFilter 启动事件过滤器
 func BootFilter() {
