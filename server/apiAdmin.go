@@ -272,6 +272,7 @@ func (s *webServer) logincore(relogin bool) {
 	}
 }
 
+// Dologin 主程序登录
 func (s *webServer) Dologin() {
 
 	s.Cli.AllowSlider = true
