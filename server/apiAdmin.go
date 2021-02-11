@@ -148,7 +148,7 @@ func (s *webServer) logincore(relogin bool) {
 		} else if err == client.ErrAlreadyOnline {
 			break
 		}
-		log.Error("登录遇到错误: %v", err)
+		log.Error("登录遇到错误: " + err.Error())
 
 		switch res.Error {
 		case client.SliderNeededError:
@@ -179,6 +179,10 @@ func (s *webServer) logincore(relogin bool) {
 				os.Exit(0)
 			}
 			res, err = s.Cli.SubmitTicket(ticket)
+			if err != nil {
+				log.Warnf("错误: " + err.Error())
+				continue // 尝试重新登录
+			}
 			goto Again
 		case client.NeedCaptcha:
 			_ = ioutil.WriteFile("captcha.jpg", res.CaptchaImage, 0644)
