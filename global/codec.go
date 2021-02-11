@@ -9,26 +9,10 @@ import (
 
 	"github.com/Mrs4s/go-cqhttp/global/codec"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 )
-
-var useSilkCodec = true
-
-// InitCodec 初始化Silk编码器
-func InitCodec() {
-	log.Info("正在加载silk编码器...")
-	err := codec.Init()
-	if err != nil {
-		log.Error(err)
-		useSilkCodec = false
-	}
-}
 
 // EncoderSilk 将音频编码为Silk
 func EncoderSilk(data []byte) ([]byte, error) {
-	if !useSilkCodec {
-		return nil, errors.New("no silk encoder")
-	}
 	h := md5.New()
 	_, err := h.Write(data)
 	if err != nil {
