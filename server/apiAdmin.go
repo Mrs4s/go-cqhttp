@@ -303,7 +303,7 @@ func (s *webServer) Dologin() {
 	log.Info("正在加载事件过滤器.")
 	global.BootFilter()
 	coolq.IgnoreInvalidCQCode = s.Conf.IgnoreInvalidCQCode
-	coolq.SplitUrl = s.Conf.FixURL
+	coolq.SplitURL = s.Conf.FixURL
 	coolq.ForceFragmented = s.Conf.ForceFragmented
 	log.Info("资源初始化完成, 开始处理信息.")
 	log.Info("アトリは、高性能ですから!")
