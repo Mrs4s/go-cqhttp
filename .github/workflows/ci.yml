@@ -17,7 +17,7 @@ jobs:
         # build and publish in parallel: linux/386, linux/amd64, windows/386, windows/amd64, darwin/amd64
         goos: [linux, windows, darwin]
         goarch: ["386", amd64, arm, arm64]
-        exclude: 
+        exclude:
           - goos: darwin
             goarch: arm
           - goos: darwin
@@ -27,32 +27,36 @@ jobs:
           - goos: windows
             goarch: arm64
       fail-fast: true
-
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
+      - name: Setup Go environment
+        uses: actions/setup-go@v2.1.3
+        with:
+          go-version: 1.15
+      - name: Build binary file
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          IS_PR: ${{ !!github.head_ref }}
+        run: |
+          if [ $GOOS = "windows" ]; then export BINARY_SUFFIX="$BINARY_SUFFIX.exe"; fi
+          if $IS_PR ; then echo $PR_PROMPT; fi
+          export BINARY_NAME="$BINARY_PREFIX$GOOS_$GOARCH$BINARY_SUFFIX"
+          export CGO_ENABLED=0
+          go build -o "output/$BINARY_NAME" -ldflags "$LD_FLAGS" .
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        if: ${{ !github.head_ref }}
+        with:
+          name: ${{ matrix.goos }}_${{ matrix.goarch }}
+          path: output/
 
-    - name: Setup Go environment
-      uses: actions/setup-go@v2.1.3
-      with:
-        go-version: 1.15
-    
-    - name: Build binary file
-      env:
-        GOOS: ${{ matrix.goos }}
-        GOARCH: ${{ matrix.goarch }}
-        IS_PR: ${{ !!github.head_ref }}
-      run: |
-        if [ $GOOS = "windows" ]; then export BINARY_SUFFIX="$BINARY_SUFFIX.exe"; fi
-        if $IS_PR ; then echo $PR_PROMPT; fi
-        export BINARY_NAME="$BINARY_PREFIX$GOOS_$GOARCH$BINARY_SUFFIX"
-        export CGO_ENABLED=0
-        go build -o "output/$BINARY_NAME" -ldflags "$LD_FLAGS" .
-    
-    - name: Upload artifact
-      uses: actions/upload-artifact@v2
-      if: ${{ !github.head_ref }}
-      with:
-        name: ${{ matrix.goos }}_${{ matrix.goarch }}
-        path: output/
-    
-    
+  golangci:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: v1.29

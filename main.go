@@ -199,8 +199,8 @@ func main() {
 			log.Infof("密码加密已启用, 使用运行时传递的参数进行解密，按 Ctrl+C 取消.")
 		}
 
-		//升级客户端密码加密方案，MD5+TEA 加密密码 -> PBKDF2+AES 加密 MD5
-		//升级后的 PasswordEncrypted 字符串以"AES:"开始，其后为 Hex 编码的16字节加密 MD5
+		// 升级客户端密码加密方案，MD5+TEA 加密密码 -> PBKDF2+AES 加密 MD5
+		// 升级后的 PasswordEncrypted 字符串以"AES:"开始，其后为 Hex 编码的16字节加密 MD5
 		if !strings.HasPrefix(conf.PasswordEncrypted, "AES:") {
 			password := OldPasswordDecrypt(conf.PasswordEncrypted, byteKey)
 			passwordHash := md5.Sum([]byte(password))

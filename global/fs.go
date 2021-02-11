@@ -27,36 +27,36 @@ import (
 )
 
 const (
-	//ImagePath go-cqhttp使用的图片缓存目录
+	// ImagePath go-cqhttp使用的图片缓存目录
 	ImagePath = "data/images"
-	//ImagePathOld 兼容旧版go-cqhtto使用的图片缓存目录
+	// ImagePathOld 兼容旧版go-cqhtto使用的图片缓存目录
 	ImagePathOld = "data/image"
-	//VoicePath go-cqhttp使用的语音缓存目录
+	// VoicePath go-cqhttp使用的语音缓存目录
 	VoicePath = "data/voices"
-	//VoicePathOld 兼容旧版go-cqhtto使用的语音缓存目录
+	// VoicePathOld 兼容旧版go-cqhtto使用的语音缓存目录
 	VoicePathOld = "data/record"
-	//VideoPath go-cqhttp使用的视频缓存目录
+	// VideoPath go-cqhttp使用的视频缓存目录
 	VideoPath = "data/videos"
-	//CachePath go-cqhttp使用的缓存目录
+	// CachePath go-cqhttp使用的缓存目录
 	CachePath = "data/cache"
 )
 
 var (
-	//ErrSyntax Path语法错误时返回的错误
+	// ErrSyntax Path语法错误时返回的错误
 	ErrSyntax = errors.New("syntax error")
-	//HeaderAmr AMR文件头
+	// HeaderAmr AMR文件头
 	HeaderAmr = []byte("#!AMR")
-	//HeaderSilk Silkv3文件头
+	// HeaderSilk Silkv3文件头
 	HeaderSilk = []byte("\x02#!SILK_V3")
 )
 
-//PathExists 判断给定path是否存在
+// PathExists 判断给定path是否存在
 func PathExists(path string) bool {
 	_, err := os.Stat(path)
 	return err == nil || os.IsExist(err)
 }
 
-//ReadAllText 读取给定path对应文件，无法读取时返回空值
+// ReadAllText 读取给定path对应文件，无法读取时返回空值
 func ReadAllText(path string) string {
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -66,25 +66,25 @@ func ReadAllText(path string) string {
 	return string(b)
 }
 
-//WriteAllText 将给定text写入给定path
+// WriteAllText 将给定text写入给定path
 func WriteAllText(path, text string) error {
 	return ioutil.WriteFile(path, []byte(text), 0644)
 }
 
-//Check 检测err是否为nil
+// Check 检测err是否为nil
 func Check(err error) {
 	if err != nil {
 		log.Fatalf("遇到错误: %v", err)
 	}
 }
 
-//IsAMRorSILK 判断给定文件是否为Amr或Silk格式
+// IsAMRorSILK 判断给定文件是否为Amr或Silk格式
 func IsAMRorSILK(b []byte) bool {
 	return bytes.HasPrefix(b, HeaderAmr) || bytes.HasPrefix(b, HeaderSilk)
 }
 
-//FindFile 从给定的File寻找文件，并返回文件byte数组。File是一个合法的URL。Path为文件寻找位置。
-//对于HTTP/HTTPS形式的URL，Cache为"1"或空时表示启用缓存
+// FindFile 从给定的File寻找文件，并返回文件byte数组。File是一个合法的URL。Path为文件寻找位置。
+// 对于HTTP/HTTPS形式的URL，Cache为"1"或空时表示启用缓存
 func FindFile(file, cache, PATH string) (data []byte, err error) {
 	data, err = nil, ErrSyntax
 	if strings.HasPrefix(file, "http") || strings.HasPrefix(file, "https") {
@@ -128,7 +128,7 @@ func FindFile(file, cache, PATH string) (data []byte, err error) {
 	return
 }
 
-//DelFile 删除一个给定path，并返回删除结果
+// DelFile 删除一个给定path，并返回删除结果
 func DelFile(path string) bool {
 	err := os.Remove(path)
 	if err != nil {
@@ -141,7 +141,7 @@ func DelFile(path string) bool {
 	return true
 }
 
-//ReadAddrFile 从给定path中读取合法的IP地址与端口,每个IP地址以换行符"\n"作为分隔
+// ReadAddrFile 从给定path中读取合法的IP地址与端口,每个IP地址以换行符"\n"作为分隔
 func ReadAddrFile(path string) []*net.TCPAddr {
 	d, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -160,12 +160,12 @@ func ReadAddrFile(path string) []*net.TCPAddr {
 	return ret
 }
 
-//WriteCounter 写入量计算实例
+// WriteCounter 写入量计算实例
 type WriteCounter struct {
 	Total uint64
 }
 
-//Write 方法将写入的byte长度追加至写入的总长度Total中
+// Write 方法将写入的byte长度追加至写入的总长度Total中
 func (wc *WriteCounter) Write(p []byte) (int, error) {
 	n := len(p)
 	wc.Total += uint64(n)
@@ -173,13 +173,13 @@ func (wc *WriteCounter) Write(p []byte) (int, error) {
 	return n, nil
 }
 
-//PrintProgress 方法将打印当前的总写入量
+// PrintProgress 方法将打印当前的总写入量
 func (wc *WriteCounter) PrintProgress() {
 	fmt.Printf("\r%s", strings.Repeat(" ", 35))
 	fmt.Printf("\rDownloading... %s complete", humanize.Bytes(wc.Total))
 }
 
-//UpdateFromStream copy form getlantern/go-update
+// UpdateFromStream copy form getlantern/go-update
 func UpdateFromStream(updateWith io.Reader) (err error, errRecover error) {
 	updatePath, err := osext.Executable()
 	if err != nil {

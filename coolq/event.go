@@ -17,17 +17,17 @@ import (
 
 var format = "string"
 
-//SetMessageFormat 设置消息上报格式，默认为string
+// SetMessageFormat 设置消息上报格式，默认为string
 func SetMessageFormat(f string) {
 	format = f
 }
 
-//ToFormattedMessage 将给定[]message.IMessageElement转换为通过coolq.SetMessageFormat所定义的消息上报格式
-func ToFormattedMessage(e []message.IMessageElement, id int64, raw ...bool) (r interface{}) {
+// ToFormattedMessage 将给定[]message.IMessageElement转换为通过coolq.SetMessageFormat所定义的消息上报格式
+func ToFormattedMessage(e []message.IMessageElement, id int64, isRaw ...bool) (r interface{}) {
 	if format == "string" {
-		r = ToStringMessage(e, id, raw...)
+		r = ToStringMessage(e, id, isRaw...)
 	} else if format == "array" {
-		r = ToArrayMessage(e, id, raw...)
+		r = ToArrayMessage(e, id, isRaw...)
 	}
 	return
 }
@@ -164,7 +164,7 @@ func (bot *CQBot) groupMutedEvent(c *client.QQClient, e *client.GroupMuteEvent) 
 
 func (bot *CQBot) groupRecallEvent(c *client.QQClient, e *client.GroupMessageRecalledEvent) {
 	g := c.FindGroup(e.GroupCode)
-	gid := ToGlobalId(e.GroupCode, e.MessageId)
+	gid := toGlobalID(e.GroupCode, e.MessageId)
 	log.Infof("群 %v 内 %v 撤回了 %v 的消息: %v.",
 		formatGroupName(g), formatMemberName(g.FindMember(e.OperatorUin)), formatMemberName(g.FindMember(e.AuthorUin)), gid)
 	bot.dispatchEventMessage(MSG{
@@ -258,7 +258,7 @@ func (bot *CQBot) friendNotifyEvent(c *client.QQClient, e client.INotifyEvent) {
 
 func (bot *CQBot) friendRecallEvent(c *client.QQClient, e *client.FriendMessageRecalledEvent) {
 	f := c.FindFriend(e.FriendUin)
-	gid := ToGlobalId(e.FriendUin, e.MessageId)
+	gid := toGlobalID(e.FriendUin, e.MessageId)
 	if f != nil {
 		log.Infof("好友 %v(%v) 撤回了消息: %v", f.Nickname, f.Uin, gid)
 	} else {
@@ -435,7 +435,7 @@ func (bot *CQBot) otherClientStatusChangedEvent(c *client.QQClient, e *client.Ot
 
 func (bot *CQBot) groupEssenceMsg(c *client.QQClient, e *client.GroupDigestEvent) {
 	g := c.FindGroup(e.GroupCode)
-	gid := ToGlobalId(e.GroupCode, e.MessageID)
+	gid := toGlobalID(e.GroupCode, e.MessageID)
 	if e.OperationType == 1 {
 		log.Infof(
 			"群 %v 内 %v 将 %v 的消息(%v)设为了精华消息.",
