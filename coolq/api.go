@@ -805,7 +805,7 @@ func (bot *CQBot) CQGetStrangerInfo(userID int64) MSG {
 func (bot *CQBot) CQHandleQuickOperation(context, operation gjson.Result) MSG {
 	postType := context.Get("post_type").Str
 	anonymous := context.Get("anonymous")
-	isAnonymous := anonymous.Type == gjson.Null
+	isAnonymous := anonymous.Type != gjson.Null
 
 	switch postType {
 	case "message":
@@ -830,8 +830,9 @@ func (bot *CQBot) CQHandleQuickOperation(context, operation gjson.Result) MSG {
 					},
 				})
 
-				err := json.UnmarshalFromString(reply.Raw, replySegments)
+				err := json.UnmarshalFromString(reply.Raw, &replySegments)
 				if err != nil {
+					log.WithError(err).Warnf("处理 at_sender 过程中发生错误")
 					return Failed(-1, "处理 at_sender 过程中发生错误", err.Error())
 				}
 
@@ -839,6 +840,7 @@ func (bot *CQBot) CQHandleQuickOperation(context, operation gjson.Result) MSG {
 
 				modified, err := json.MarshalToString(segments)
 				if err != nil {
+					log.WithError(err).Warnf("处理 at_sender 过程中发生错误")
 					return Failed(-1, "处理 at_sender 过程中发生错误", err.Error())
 				}
 
