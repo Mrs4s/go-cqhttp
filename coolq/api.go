@@ -804,22 +804,23 @@ func (bot *CQBot) CQGetStrangerInfo(userID int64) MSG {
 // https://git.io/Jtz15
 func (bot *CQBot) CQHandleQuickOperation(context, operation gjson.Result) MSG {
 	postType := context.Get("post_type").Str
-	anonymous := context.Get("anonymous")
-	isAnonymous := anonymous.Type != gjson.Null
 
 	switch postType {
 	case "message":
+		anonymous := context.Get("anonymous")
+		isAnonymous := anonymous.Type != gjson.Null
 		msgType := context.Get("message_type").Str
 		reply := operation.Get("reply")
+
 		if reply.Exists() {
 			autoEscape := global.EnsureBool(operation.Get("auto_escape"), false)
 
 			at := !isAnonymous // 除匿名消息场合外默认 true
 			if operation.Get("at_sender").Exists() {
-				at = operation.Get("at_sender").Bool()
+				at = operation.Get("at_sender").Bool() && !isAnonymous
 			}
 
-			if !isAnonymous && at && reply.IsArray() {
+			if at && reply.IsArray() {
 				// 在 reply 数组头部插入CQ码
 				replySegments := make([]MSG, 0)
 				segments := make([]MSG, 0)
@@ -845,7 +846,7 @@ func (bot *CQBot) CQHandleQuickOperation(context, operation gjson.Result) MSG {
 				}
 
 				reply = gjson.Parse(modified)
-			} else if !isAnonymous && at && reply.Type == gjson.String {
+			} else if at && reply.Type == gjson.String {
 				reply = gjson.Parse(fmt.Sprintf(
 					"\"[CQ:at,qq=%d]%s\"",
 					context.Get("sender.user_id").Int(),
