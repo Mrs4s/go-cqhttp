@@ -533,7 +533,7 @@ func (bot *CQBot) ConvertObjectMessage(m gjson.Result, group bool) (r []message.
 		})
 		elem, err := bot.ToElement(t, d, group)
 		if err != nil {
-			log.Warnf("转换CQ码到MiraiGo Element时出现错误: %v 将忽略本段CQ码.", err)
+			log.Warnf("转换CQ码 (%v) 到MiraiGo Element时出现错误: %v 将忽略本段CQ码.", e.Raw, err)
 			return
 		}
 		switch i := elem.(type) {

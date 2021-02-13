@@ -3,6 +3,12 @@ package coolq
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"fmt"
+	"github.com/Mrs4s/MiraiGo/binary"
+	"github.com/Mrs4s/MiraiGo/client"
+	"github.com/Mrs4s/MiraiGo/message"
+	"github.com/tidwall/gjson"
+	"github.com/tidwall/sjson"
 	"io/ioutil"
 	"math"
 	"os"
@@ -13,12 +19,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Mrs4s/MiraiGo/binary"
-	"github.com/Mrs4s/MiraiGo/client"
-	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/Mrs4s/go-cqhttp/global"
 	log "github.com/sirupsen/logrus"
-	"github.com/tidwall/gjson"
 )
 
 var Version = "unknown"
@@ -729,13 +731,36 @@ func (bot *CQBot) CQHandleQuickOperation(context, operation gjson.Result) MSG {
 		reply := operation.Get("reply")
 		if reply.Exists() {
 			autoEscape := global.EnsureBool(operation.Get("auto_escape"), false)
-			/*
-				at := true
-				if operation.Get("at_sender").Exists() {
-					at = operation.Get("at_sender").Bool()
+
+			at := false
+			if operation.Get("at_sender").Exists() {
+				at = operation.Get("at_sender").Bool()
+			}
+
+			if at && reply.IsArray() {
+				modified, err := sjson.Set(
+					reply.Raw,
+					"-1",
+					MSG{
+						"type": "at",
+						"data": MSG{
+							"qq": context.Get("sender.user_id").Int(),
+						},
+					},
+				)
+				if err != nil {
+					return Failed(-1, "处理 at_sender 字段时出现错误", err.Error())
 				}
-			*/
-			// TODO: 处理at字段
+
+				reply = gjson.Parse(modified)
+			} else if at && reply.Type == gjson.String {
+				reply = gjson.Parse(fmt.Sprintf(
+					"\"%s[CQ:at,qq=%d]\"",
+					reply.String(),
+					context.Get("sender.user_id").Int(),
+				))
+			}
+
 			if msgType == "group" {
 				bot.CQSendGroupMessage(context.Get("group_id").Int(), reply, autoEscape)
 			}
