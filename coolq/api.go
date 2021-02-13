@@ -1216,6 +1216,10 @@ func (bot *CQBot) CQCheckURLSafely(url string) MSG {
 func (bot *CQBot) CQGetVersionInfo() MSG {
 	wd, _ := os.Getwd()
 	return OK(MSG{
+		"app_name":                   "go-cqhttp",
+		"app_version":                Version,
+		"app_full_name":              fmt.Sprintf("go-cqhttp-%s_%s_%s-%s", Version, runtime.GOOS, runtime.GOARCH, runtime.Version()),
+		"protocol_version":           "v11",
 		"coolq_directory":            wd,
 		"coolq_edition":              "pro",
 		"go-cqhttp":                  true,
