@@ -8,7 +8,6 @@ import (
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/tidwall/gjson"
-	"github.com/tidwall/sjson"
 	"io/ioutil"
 	"math"
 	"os"
@@ -805,6 +804,9 @@ func (bot *CQBot) CQGetStrangerInfo(userID int64) MSG {
 // https://git.io/Jtz15
 func (bot *CQBot) CQHandleQuickOperation(context, operation gjson.Result) MSG {
 	postType := context.Get("post_type").Str
+	anonymous := context.Get("anonymous")
+	isAnonymous := anonymous.Type == gjson.Null
+
 	switch postType {
 	case "message":
 		msgType := context.Get("message_type").Str
@@ -812,32 +814,40 @@ func (bot *CQBot) CQHandleQuickOperation(context, operation gjson.Result) MSG {
 		if reply.Exists() {
 			autoEscape := global.EnsureBool(operation.Get("auto_escape"), false)
 
-			at := false
+			at := !isAnonymous // 除匿名消息场合外默认 true
 			if operation.Get("at_sender").Exists() {
 				at = operation.Get("at_sender").Bool()
 			}
 
-			if at && reply.IsArray() {
-				modified, err := sjson.Set(
-					reply.Raw,
-					"-1",
-					MSG{
-						"type": "at",
-						"data": MSG{
-							"qq": context.Get("sender.user_id").Int(),
-						},
+			if !isAnonymous && at && reply.IsArray() {
+				// 在 reply 数组头部插入CQ码
+				replySegments := make([]MSG, 0)
+				segments := make([]MSG, 0)
+				segments = append(segments, MSG{
+					"type": "at",
+					"data": MSG{
+						"qq": context.Get("sender.user_id").Int(),
 					},
-				)
+				})
+
+				err := json.UnmarshalFromString(reply.Raw, replySegments)
 				if err != nil {
-					return Failed(-1, "处理 at_sender 字段时出现错误", err.Error())
+					return Failed(-1, "处理 at_sender 过程中发生错误", err.Error())
+				}
+
+				segments = append(segments, replySegments...)
+
+				modified, err := json.MarshalToString(segments)
+				if err != nil {
+					return Failed(-1, "处理 at_sender 过程中发生错误", err.Error())
 				}
 
 				reply = gjson.Parse(modified)
-			} else if at && reply.Type == gjson.String {
+			} else if !isAnonymous && at && reply.Type == gjson.String {
 				reply = gjson.Parse(fmt.Sprintf(
-					"\"%s[CQ:at,qq=%d]\"",
-					reply.String(),
+					"\"[CQ:at,qq=%d]%s\"",
 					context.Get("sender.user_id").Int(),
+					reply.String(),
 				))
 			}
 
@@ -849,8 +859,6 @@ func (bot *CQBot) CQHandleQuickOperation(context, operation gjson.Result) MSG {
 			}
 		}
 		if msgType == "group" {
-			anonymous := context.Get("anonymous")
-			isAnonymous := anonymous.Type == gjson.Null
 			if operation.Get("delete").Bool() {
 				bot.CQDeleteMessage(int32(context.Get("message_id").Int()))
 			}
