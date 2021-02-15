@@ -140,12 +140,22 @@ func (s *webServer) Dologin() {
 				log.Warnf("2. 使用Cef自动处理.")
 				log.Warnf("3. 不提交滑块并继续.(可能会导致上网环境异常错误)")
 				log.Warnf("详细信息请参考文档 -> https://github.com/Mrs4s/go-cqhttp/blob/master/docs/slider.md <-")
-				log.Warn("请输入(1 - 3): ")
-				text = readLine()
+				if conf.WebUI != nil && conf.WebUI.WebInput {
+					log.Warnf("请输入(1 - 3)： (http://%s:%d/admin/do_web_write 输入)", conf.WebUI.Host, conf.WebUI.WebUIPort)
+					text = <-WebInput
+				} else {
+					log.Warn("请输入(1 - 3)：")
+					text = readLine()
+				}
 				if strings.Contains(text, "1") {
 					log.Warnf("请用浏览器打开 -> %v <- 并获取Ticket.", rsp.VerifyUrl)
-					log.Warn("请输入Ticket： (Enter 提交)")
-					text = readLine()
+					if conf.WebUI != nil && conf.WebUI.WebInput {
+						log.Warnf("请输入Ticket： (http://%s:%d/admin/do_web_write 输入)", conf.WebUI.Host, conf.WebUI.WebUIPort)
+						text = <-WebInput
+					} else {
+						log.Warn("请输入Ticket： (Enter 提交)")
+						text = readLine()
+					}
 					rsp, err = cli.SubmitTicket(strings.TrimSpace(text))
 					continue
 				}
@@ -183,31 +193,50 @@ func (s *webServer) Dologin() {
 				global.DelFile("captcha.jpg")
 				continue
 			case client.SMSNeededError:
-				log.Warnf("账号已开启设备锁, 按下 Enter 向手机 %v 发送短信验证码.", rsp.SMSPhone)
-				readLine()
+				if conf.WebUI != nil && conf.WebUI.WebInput {
+					log.Warnf("账号已开启设备锁, 已向手机 %v 发送短信验证码.", rsp.SMSPhone)
+				} else {
+					log.Warnf("账号已开启设备锁, 按下 Enter 向手机 %v 发送短信验证码.", rsp.SMSPhone)
+					readLine()
+				}
 				if !cli.RequestSMS() {
 					log.Warnf("发送验证码失败，可能是请求过于频繁.")
 					time.Sleep(time.Second * 5)
 					os.Exit(0)
 				}
-				log.Warn("请输入短信验证码： (Enter 提交)")
-				text = readLine()
+				if conf.WebUI != nil && conf.WebUI.WebInput {
+					log.Warnf("请输入短信验证码： (http://%s:%d/admin/do_web_write 输入)", conf.WebUI.Host, conf.WebUI.WebUIPort)
+					text = <-WebInput
+				} else {
+					log.Warn("请输入短信验证码： (Enter 提交)")
+					text = readLine()
+				}
 				rsp, err = cli.SubmitSMS(strings.ReplaceAll(strings.ReplaceAll(text, "\n", ""), "\r", ""))
 				continue
 			case client.SMSOrVerifyNeededError:
 				log.Warnf("账号已开启设备锁，请选择验证方式:")
 				log.Warnf("1. 向手机 %v 发送短信验证码", rsp.SMSPhone)
 				log.Warnf("2. 使用手机QQ扫码验证.")
-				log.Warn("请输入(1 - 2): ")
-				text = readLine()
+				if conf.WebUI != nil && conf.WebUI.WebInput {
+					log.Warnf("请输入(1 - 2)： (http://%s:%d/admin/do_web_write 输入)", conf.WebUI.Host, conf.WebUI.WebUIPort)
+					text = <-WebInput
+				} else {
+					log.Warn("请输入(1 - 2)：")
+					text = readLine()
+				}
 				if strings.Contains(text, "1") {
 					if !cli.RequestSMS() {
 						log.Warnf("发送验证码失败，可能是请求过于频繁.")
 						time.Sleep(time.Second * 5)
 						os.Exit(0)
 					}
-					log.Warn("请输入短信验证码： (Enter 提交)")
-					text = readLine()
+					if conf.WebUI != nil && conf.WebUI.WebInput {
+						log.Warnf("请输入短信验证码：  (http://%s:%d/admin/do_web_write 输入)....", conf.WebUI.Host, conf.WebUI.WebUIPort)
+						text = <-WebInput
+					} else {
+						log.Warn("请输入短信验证码： (Enter 提交)")
+						text = readLine()
+					}
 					rsp, err = cli.SubmitSMS(strings.ReplaceAll(strings.ReplaceAll(text, "\n", ""), "\r", ""))
 					continue
 				}
