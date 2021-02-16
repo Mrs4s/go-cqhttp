@@ -1,2 +1,7 @@
 vendor/
 .idea
+config.hjson
+device.json
+codec/
+data/
+logs/

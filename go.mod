@@ -1,31 +1,27 @@
 module github.com/Mrs4s/go-cqhttp
 
-go 1.14
+go 1.15
 
 require (
-	github.com/Mrs4s/MiraiGo v0.0.0-20200910013944-236c0f629099
-	github.com/fastly/go-utils v0.0.0-20180712184237-d95a45783239 // indirect
+	github.com/Mrs4s/MiraiGo v0.0.0-20210206134348-800bf525ed0e
+	github.com/dustin/go-humanize v1.0.0
+	github.com/gin-contrib/pprof v1.3.0
 	github.com/gin-gonic/gin v1.6.3
-	github.com/go-playground/validator/v10 v10.3.0 // indirect
 	github.com/gorilla/websocket v1.4.2
-	github.com/guonaihong/gout v0.1.2
-	github.com/jehiah/go-strftime v0.0.0-20171201141054-1d33003b3869 // indirect
-	github.com/jonboulle/clockwork v0.2.0 // indirect
-	github.com/json-iterator/go v1.1.10 // indirect
+	github.com/guonaihong/gout v0.1.4
+	github.com/hjson/hjson-go v3.1.0+incompatible
+	github.com/jonboulle/clockwork v0.2.2 // indirect
+	github.com/json-iterator/go v1.1.10
+	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
-	github.com/lestrrat-go/strftime v1.0.3 // indirect
-	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
-	github.com/modern-go/reflect2 v1.0.1 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
-	github.com/rifflock/lfshook v0.0.0-20180920164130-b9218ef580f5
-	github.com/sirupsen/logrus v1.6.0
+	github.com/lestrrat-go/strftime v1.0.4 // indirect
+	github.com/pkg/errors v0.9.1
+	github.com/sirupsen/logrus v1.7.0
+	github.com/syndtr/goleveldb v1.0.0
 	github.com/t-tomalak/logrus-easy-formatter v0.0.0-20190827215021-c074f06c5816
-	github.com/tebeka/strftime v0.1.5 // indirect
-	github.com/tidwall/gjson v1.6.1
-	github.com/xujiajun/nutsdb v0.5.0
+	github.com/tidwall/gjson v1.6.7
 	github.com/yinghau76/go-ascii-art v0.0.0-20190517192627-e7f465a30189
-	golang.org/x/net v0.0.0-20200904194848-62affa334b73 // indirect
-	golang.org/x/sys v0.0.0-20200909081042-eff7692f9009 // indirect
-	golang.org/x/time v0.0.0-20200630173020-3af7569d3a1e
-	gopkg.in/yaml.v2 v2.3.0 // indirect
+	golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2
+	golang.org/x/term v0.0.0-20201210144234-2321bbc49cbf
+	golang.org/x/time v0.0.0-20201208040808-7e3f01d25324
 )
