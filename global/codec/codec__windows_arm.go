@@ -1,5 +1,3 @@
-// +build !arm,!arm64,!amd64,!386
-
 package codec
 
 import "errors"

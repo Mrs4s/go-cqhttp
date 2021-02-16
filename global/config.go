@@ -12,7 +12,7 @@ import (
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
-//DefaultConfigWithComments 为go-cqhttp的默认配置文件
+// DefaultConfigWithComments 为go-cqhttp的默认配置文件
 var DefaultConfigWithComments = `
 /*
     go-cqhttp 默认配置文件
@@ -119,8 +119,8 @@ var DefaultConfigWithComments = `
     use_sso_address: false
     // 是否启用 DEBUG
     debug: false
-    // 日志等级
-    log_level: ""
+    // 日志等级 trace,debug,info,warn,error
+    log_level: "info"
     // WebUi 设置
     web_ui: {
         // 是否启用 WebUi
@@ -135,7 +135,10 @@ var DefaultConfigWithComments = `
 }
 `
 
-//JSONConfig Config对应的结构体
+// PasswordHash 存储QQ密码哈希供登录使用
+var PasswordHash [16]byte
+
+// JSONConfig Config对应的结构体
 type JSONConfig struct {
 	Uin               int64  `json:"uin"`
 	Password          string `json:"password"`
@@ -168,7 +171,7 @@ type JSONConfig struct {
 	WebUI               *GoCQWebUI                    `json:"web_ui"`
 }
 
-//CQHTTPAPIConfig HTTPAPI对应的Config结构体
+// CQHTTPAPIConfig HTTPAPI对应的Config结构体
 type CQHTTPAPIConfig struct {
 	Host                         string `json:"host"`
 	Port                         uint16 `json:"port"`
@@ -188,7 +191,7 @@ type CQHTTPAPIConfig struct {
 	PostMessageFormat            string `json:"post_message_format"`
 }
 
-//GoCQHTTPConfig 正向HTTP对应config结构体
+// GoCQHTTPConfig 正向HTTP对应config结构体
 type GoCQHTTPConfig struct {
 	Enabled  bool              `json:"enabled"`
 	Host     string            `json:"host"`
@@ -197,14 +200,14 @@ type GoCQHTTPConfig struct {
 	PostUrls map[string]string `json:"post_urls"`
 }
 
-//GoCQWebSocketConfig 正向WebSocket对应Config结构体
+// GoCQWebSocketConfig 正向WebSocket对应Config结构体
 type GoCQWebSocketConfig struct {
 	Enabled bool   `json:"enabled"`
 	Host    string `json:"host"`
 	Port    uint16 `json:"port"`
 }
 
-//GoCQReverseWebSocketConfig 反向WebSocket对应Config结构体
+// GoCQReverseWebSocketConfig 反向WebSocket对应Config结构体
 type GoCQReverseWebSocketConfig struct {
 	Enabled                  bool   `json:"enabled"`
 	ReverseURL               string `json:"reverse_url"`
@@ -213,7 +216,7 @@ type GoCQReverseWebSocketConfig struct {
 	ReverseReconnectInterval uint16 `json:"reverse_reconnect_interval"`
 }
 
-//GoCQWebUI WebUI对应Config结构体
+// GoCQWebUI WebUI对应Config结构体
 type GoCQWebUI struct {
 	Enabled   bool   `json:"enabled"`
 	Host      string `json:"host"`
@@ -221,7 +224,7 @@ type GoCQWebUI struct {
 	WebInput  bool   `json:"web_input"`
 }
 
-//DefaultConfig 返回一份默认配置对应结构体
+// DefaultConfig 返回一份默认配置对应结构体
 func DefaultConfig() *JSONConfig {
 	return &JSONConfig{
 		EnableDB: true,
@@ -274,8 +277,8 @@ func DefaultConfig() *JSONConfig {
 	}
 }
 
-//Load 加载配置文件
-func Load(p string) *JSONConfig {
+// LoadConfig 加载配置文件
+func LoadConfig(p string) *JSONConfig {
 	if !PathExists(p) {
 		log.Warnf("尝试加载配置文件 %v 失败: 文件不存在", p)
 		return nil
@@ -296,7 +299,7 @@ func Load(p string) *JSONConfig {
 	return &c
 }
 
-//Save 写入配置文件至path
+// Save 写入配置文件至path
 func (c *JSONConfig) Save(path string) error {
 	data, err := hjson.MarshalWithOptions(c, hjson.EncoderOptions{
 		Eol:            "\n",

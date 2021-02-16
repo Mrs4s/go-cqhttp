@@ -2,8 +2,11 @@ package main
 
 import (
 	"bufio"
+	"crypto/aes"
 	"crypto/md5"
+	"crypto/sha1"
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -22,6 +25,7 @@ import (
 	"github.com/Mrs4s/go-cqhttp/server"
 	"github.com/guonaihong/gout"
 	"github.com/tidwall/gjson"
+	"golang.org/x/crypto/pbkdf2"
 	"golang.org/x/term"
 
 	"github.com/Mrs4s/MiraiGo/binary"
@@ -30,42 +34,15 @@ import (
 	"github.com/Mrs4s/go-cqhttp/global"
 	jsoniter "github.com/json-iterator/go"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
-	"github.com/rifflock/lfshook"
 	log "github.com/sirupsen/logrus"
 	easy "github.com/t-tomalak/logrus-easy-formatter"
 )
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
+var conf *global.JSONConfig
+var isFastStart = false
 
 func init() {
-	log.SetFormatter(&easy.Formatter{
-		TimestampFormat: "2006-01-02 15:04:05",
-		LogFormat:       "[%time%] [%lvl%]: %msg% \n",
-	})
-	w, err := rotatelogs.New(path.Join("logs", "%Y-%m-%d.log"), rotatelogs.WithRotationTime(time.Hour*24))
-	if err == nil {
-		log.SetOutput(io.MultiWriter(os.Stderr, w))
-	}
-	if !global.PathExists(global.ImagePath) {
-		if err := os.MkdirAll(global.ImagePath, 0755); err != nil {
-			log.Fatalf("创建图片缓存文件夹失败: %v", err)
-		}
-	}
-	if !global.PathExists(global.VoicePath) {
-		if err := os.MkdirAll(global.VoicePath, 0755); err != nil {
-			log.Fatalf("创建语音缓存文件夹失败: %v", err)
-		}
-	}
-	if !global.PathExists(global.VideoPath) {
-		if err := os.MkdirAll(global.VideoPath, 0755); err != nil {
-			log.Fatalf("创建视频缓存文件夹失败: %v", err)
-		}
-	}
-	if !global.PathExists(global.CachePath) {
-		if err := os.MkdirAll(global.CachePath, 0755); err != nil {
-			log.Fatalf("创建发送图片缓存文件夹失败: %v", err)
-		}
-	}
 	if global.PathExists("cqhttp.json") {
 		log.Info("发现 cqhttp.json 将在五秒后尝试导入配置，按 Ctrl+C 取消.")
 		log.Warn("警告: 该操作会删除 cqhttp.json 并覆盖 config.hjson 文件.")
@@ -95,12 +72,54 @@ func init() {
 		}
 		_ = os.Remove("cqhttp.json")
 	}
+
+	conf = getConfig()
+	if conf == nil {
+		os.Exit(1)
+	}
+
+	logFormatter := &easy.Formatter{
+		TimestampFormat: "2006-01-02 15:04:05",
+		LogFormat:       "[%time%] [%lvl%]: %msg% \n",
+	}
+	w, err := rotatelogs.New(path.Join("logs", "%Y-%m-%d.log"), rotatelogs.WithRotationTime(time.Hour*24))
+	if err != nil {
+		log.Errorf("rotatelogs init err: %v", err)
+		panic(err)
+	}
+
+	// 在debug模式下,将在标准输出中打印当前执行行数
+	if conf.Debug {
+		log.SetReportCaller(true)
+	}
+
+	log.AddHook(global.NewLocalHook(w, logFormatter, global.GetLogLevel(conf.LogLevel)...))
+
+	if !global.PathExists(global.ImagePath) {
+		if err := os.MkdirAll(global.ImagePath, 0755); err != nil {
+			log.Fatalf("创建图片缓存文件夹失败: %v", err)
+		}
+	}
+	if !global.PathExists(global.VoicePath) {
+		if err := os.MkdirAll(global.VoicePath, 0755); err != nil {
+			log.Fatalf("创建语音缓存文件夹失败: %v", err)
+		}
+	}
+	if !global.PathExists(global.VideoPath) {
+		if err := os.MkdirAll(global.VideoPath, 0755); err != nil {
+			log.Fatalf("创建视频缓存文件夹失败: %v", err)
+		}
+	}
+	if !global.PathExists(global.CachePath) {
+		if err := os.MkdirAll(global.CachePath, 0755); err != nil {
+			log.Fatalf("创建发送图片缓存文件夹失败: %v", err)
+		}
+	}
 }
 
 func main() {
 
 	var byteKey []byte
-	var isFastStart = false
 	arg := os.Args
 	if len(arg) > 1 {
 		for i := range arg {
@@ -122,91 +141,12 @@ func main() {
 		}
 	}
 
-	var conf *global.JSONConfig
-	if global.PathExists("config.json") {
-		conf = global.Load("config.json")
-		_ = conf.Save("config.hjson")
-		_ = os.Remove("config.json")
-	} else if os.Getenv("UIN") != "" {
-		log.Infof("将从环境变量加载配置.")
-		uin, _ := strconv.ParseInt(os.Getenv("UIN"), 10, 64)
-		pwd := os.Getenv("PASS")
-		post := os.Getenv("HTTP_POST")
-		conf = &global.JSONConfig{
-			Uin:      uin,
-			Password: pwd,
-			HTTPConfig: &global.GoCQHTTPConfig{
-				Enabled:  true,
-				Host:     "0.0.0.0",
-				Port:     5700,
-				PostUrls: map[string]string{},
-			},
-			WSConfig: &global.GoCQWebSocketConfig{
-				Enabled: true,
-				Host:    "0.0.0.0",
-				Port:    6700,
-			},
-			PostMessageFormat: "string",
-			Debug:             os.Getenv("DEBUG") == "true",
-		}
-		if post != "" {
-			conf.HTTPConfig.PostUrls[post] = os.Getenv("HTTP_SECRET")
-		}
-	} else {
-		conf = global.Load("config.hjson")
-	}
-	if conf == nil {
-		err := global.WriteAllText("config.hjson", global.DefaultConfigWithComments)
-		if err != nil {
-			log.Fatalf("创建默认配置文件时出现错误: %v", err)
-			return
-		}
-		log.Infof("默认配置文件已生成, 请编辑 config.hjson 后重启程序.")
-		time.Sleep(time.Second * 5)
-		return
-	}
 	if conf.Uin == 0 || (conf.Password == "" && conf.PasswordEncrypted == "") {
 		log.Warnf("请修改 config.hjson 以添加账号密码.")
-		time.Sleep(time.Second * 5)
-		return
-	}
-
-	// log classified by level
-	// Collect all records up to the specified level (default level: warn)
-	logLevel := conf.LogLevel
-	if logLevel != "" {
-		date := time.Now().Format("2006-01-02")
-		var logPathMap lfshook.PathMap
-		switch conf.LogLevel {
-		case "warn":
-			logPathMap = lfshook.PathMap{
-				log.WarnLevel:  path.Join("logs", date+"-warn.log"),
-				log.ErrorLevel: path.Join("logs", date+"-warn.log"),
-				log.FatalLevel: path.Join("logs", date+"-warn.log"),
-				log.PanicLevel: path.Join("logs", date+"-warn.log"),
-			}
-		case "error":
-			logPathMap = lfshook.PathMap{
-				log.ErrorLevel: path.Join("logs", date+"-error.log"),
-				log.FatalLevel: path.Join("logs", date+"-error.log"),
-				log.PanicLevel: path.Join("logs", date+"-error.log"),
-			}
-		default:
-			logPathMap = lfshook.PathMap{
-				log.WarnLevel:  path.Join("logs", date+"-warn.log"),
-				log.ErrorLevel: path.Join("logs", date+"-warn.log"),
-				log.FatalLevel: path.Join("logs", date+"-warn.log"),
-				log.PanicLevel: path.Join("logs", date+"-warn.log"),
-			}
+		if !isFastStart {
+			time.Sleep(time.Second * 5)
 		}
-
-		log.AddHook(lfshook.NewHook(
-			logPathMap,
-			&easy.Formatter{
-				TimestampFormat: "2006-01-02 15:04:05",
-				LogFormat:       "[%time%] [%lvl%]: %msg% \n",
-			},
-		))
+		return
 	}
 
 	log.Info("当前版本:", coolq.Version)
@@ -233,15 +173,11 @@ func main() {
 	}
 	if conf.EncryptPassword && conf.PasswordEncrypted == "" {
 		log.Infof("密码加密已启用, 请输入Key对密码进行加密: (Enter 提交)")
-		byteKey, _ := term.ReadPassword(int(os.Stdin.Fd()))
-		key := md5.Sum(byteKey)
-		if encrypted := EncryptPwd(conf.Password, key[:]); encrypted != "" {
-			conf.Password = ""
-			conf.PasswordEncrypted = encrypted
-			_ = conf.Save("config.hjson")
-		} else {
-			log.Warnf("加密时出现问题.")
-		}
+		byteKey, _ = term.ReadPassword(int(os.Stdin.Fd()))
+		global.PasswordHash = md5.Sum([]byte(conf.Password))
+		conf.Password = ""
+		conf.PasswordEncrypted = "AES:" + PasswordHashEncrypt(global.PasswordHash[:], byteKey)
+		_ = conf.Save("config.hjson")
 	}
 	if conf.PasswordEncrypted != "" {
 		if len(byteKey) == 0 {
@@ -262,8 +198,25 @@ func main() {
 		} else {
 			log.Infof("密码加密已启用, 使用运行时传递的参数进行解密，按 Ctrl+C 取消.")
 		}
-		key := md5.Sum(byteKey)
-		conf.Password = DecryptPwd(conf.PasswordEncrypted, key[:])
+
+		// 升级客户端密码加密方案，MD5+TEA 加密密码 -> PBKDF2+AES 加密 MD5
+		// 升级后的 PasswordEncrypted 字符串以"AES:"开始，其后为 Hex 编码的16字节加密 MD5
+		if !strings.HasPrefix(conf.PasswordEncrypted, "AES:") {
+			password := OldPasswordDecrypt(conf.PasswordEncrypted, byteKey)
+			passwordHash := md5.Sum([]byte(password))
+			newPasswordHash := PasswordHashEncrypt(passwordHash[:], byteKey)
+			conf.PasswordEncrypted = "AES:" + newPasswordHash
+			_ = conf.Save("config.hjson")
+			log.Debug("密码加密方案升级完成")
+		}
+
+		ph, err := PasswordHashDecrypt(conf.PasswordEncrypted[4:], byteKey)
+		if err != nil {
+			log.Fatalf("加密存储的密码损坏，请尝试重新配置密码")
+		}
+		copy(global.PasswordHash[:], ph)
+	} else {
+		global.PasswordHash = md5.Sum([]byte(conf.Password))
 	}
 	if !isFastStart {
 		log.Info("Bot将在5秒后登录并开始信息处理, 按 Ctrl+C 取消.")
@@ -283,7 +236,7 @@ func main() {
 		}
 		return "未知"
 	}())
-	cli := client.NewClient(conf.Uin, conf.Password)
+	cli := client.NewClientMd5(conf.Uin, global.PasswordHash)
 	cli.OnLog(func(c *client.QQClient, e *client.LogEvent) {
 		switch e.Type {
 		case "INFO":
@@ -340,27 +293,50 @@ func main() {
 	}
 }
 
-//EncryptPwd 通过给定key加密给定pwd
-func EncryptPwd(pwd string, key []byte) string {
-	tea := binary.NewTeaCipher(key)
-	if tea == nil {
-		return ""
+// PasswordHashEncrypt 使用key加密给定passwordHash
+func PasswordHashEncrypt(passwordHash []byte, key []byte) string {
+	if len(passwordHash) != 16 {
+		panic("密码加密参数错误")
 	}
-	return base64.StdEncoding.EncodeToString(tea.Encrypt([]byte(pwd)))
+
+	key = pbkdf2.Key(key, key, 114514, 32, sha1.New)
+
+	cipher, _ := aes.NewCipher(key)
+	result := make([]byte, 16)
+	cipher.Encrypt(result, passwordHash)
+
+	return hex.EncodeToString(result)
 }
 
-//DecryptPwd 通过给定key解密给定ePwd
-func DecryptPwd(ePwd string, key []byte) string {
+// PasswordHashDecrypt 使用key解密给定passwordHash
+func PasswordHashDecrypt(encryptedPasswordHash string, key []byte) ([]byte, error) {
+	ciphertext, err := hex.DecodeString(encryptedPasswordHash)
+	if err != nil {
+		return nil, err
+	}
+
+	key = pbkdf2.Key(key, key, 114514, 32, sha1.New)
+
+	cipher, _ := aes.NewCipher(key)
+	result := make([]byte, 16)
+	cipher.Decrypt(result, ciphertext)
+
+	return result, nil
+}
+
+// OldPasswordDecrypt 使用key解密老password，仅供兼容使用
+func OldPasswordDecrypt(encryptedPassword string, key []byte) string {
 	defer func() {
 		if pan := recover(); pan != nil {
 			log.Fatalf("密码解密失败: %v", pan)
 		}
 	}()
-	encrypted, err := base64.StdEncoding.DecodeString(ePwd)
+	encKey := md5.Sum(key)
+	encrypted, err := base64.StdEncoding.DecodeString(encryptedPassword)
 	if err != nil {
 		panic(err)
 	}
-	tea := binary.NewTeaCipher(key)
+	tea := binary.NewTeaCipher(encKey[:])
 	if tea == nil {
 		panic("密钥错误")
 	}
@@ -490,4 +466,53 @@ func restart(Args []string) {
 		}
 	}
 	_ = cmd.Start()
+}
+
+func getConfig() *global.JSONConfig {
+	var conf *global.JSONConfig
+	if global.PathExists("config.json") {
+		conf = global.LoadConfig("config.json")
+		_ = conf.Save("config.hjson")
+		_ = os.Remove("config.json")
+	} else if os.Getenv("UIN") != "" {
+		log.Infof("将从环境变量加载配置.")
+		uin, _ := strconv.ParseInt(os.Getenv("UIN"), 10, 64)
+		pwd := os.Getenv("PASS")
+		post := os.Getenv("HTTP_POST")
+		conf = &global.JSONConfig{
+			Uin:      uin,
+			Password: pwd,
+			HTTPConfig: &global.GoCQHTTPConfig{
+				Enabled:  true,
+				Host:     "0.0.0.0",
+				Port:     5700,
+				PostUrls: map[string]string{},
+			},
+			WSConfig: &global.GoCQWebSocketConfig{
+				Enabled: true,
+				Host:    "0.0.0.0",
+				Port:    6700,
+			},
+			PostMessageFormat: "string",
+			Debug:             os.Getenv("DEBUG") == "true",
+		}
+		if post != "" {
+			conf.HTTPConfig.PostUrls[post] = os.Getenv("HTTP_SECRET")
+		}
+	} else {
+		conf = global.LoadConfig("config.hjson")
+	}
+	if conf == nil {
+		err := global.WriteAllText("config.hjson", global.DefaultConfigWithComments)
+		if err != nil {
+			log.Fatalf("创建默认配置文件时出现错误: %v", err)
+			return nil
+		}
+		log.Infof("默认配置文件已生成, 请编辑 config.hjson 后重启程序.")
+		if !isFastStart {
+			time.Sleep(time.Second * 5)
+		}
+		return nil
+	}
+	return conf
 }
