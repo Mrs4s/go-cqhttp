@@ -409,6 +409,9 @@ func (bot *CQBot) formatGroupMessage(m *message.GroupMessage) MSG {
 		gm["sub_type"] = "anonymous"
 	} else {
 		mem := bot.Client.FindGroup(m.GroupCode).FindMember(m.Sender.Uin)
+		if mem == nil{
+			return Failed(100,"MEMBER_NOT_FOUND","群员不存在")
+		}
 		ms := gm["sender"].(MSG)
 		ms["role"] = func() string {
 			switch mem.Permission {
