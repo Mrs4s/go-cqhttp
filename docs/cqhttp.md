@@ -671,13 +671,13 @@ Type: `tts`
 
 | 字段名          | 数据类型 | 说明         |
 | --------------- | -------- | ------------ |
-| `sender_id`     | int64    | 发送者QQ 号  |
-| `sender_nick`   | string   | 发送者昵称   |
-| `sender_time`   | int64    | 消息发送时间 |
+| `operator_id`   | int64    | 操作者QQ 号  |
+| `operator_nick` | string   | 操作者昵称   |
+| `operator_time` | int64    | 精华设置时间 |
 | `operator_id`   | int64    | 发送者QQ 号  |
 | `operator_nick` | string   | 发送者昵称   |
 | `operator_time` | int64    | 消息发送时间 |
-| `message_id`    | int32    | 消息ID       |
+| `message_id`    | int32    | 消息ID      |
 
 ### 图片OCR
 
