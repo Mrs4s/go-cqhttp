@@ -13,7 +13,10 @@ assignees: ''
 2: 准确填写环境信息.
 3: 最好能打开DEBUG模式并复现相关问题.
 4: 如果涉及内存泄漏/CPU占用异常请打开DEBUG模式并下载pprof性能分析.
+注: 如果您不知道如何有效、精准地表述，我们建议您先阅读《提问的智慧》 -> https://github.com/ryanhanwu/How-To-Ask-Questions-The-Smart-Way/blob/main/README-zh_CN.md
 -->
+
+- [ ] 我已经阅读"提问前需知 [图+文]": https://github.com/Mrs4s/go-cqhttp/issues/633
 
 **环境信息**
 请根据实际使用环境修改以下信息
