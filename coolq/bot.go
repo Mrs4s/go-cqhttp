@@ -13,17 +13,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Mrs4s/MiraiGo/utils"
-
-	"github.com/syndtr/goleveldb/leveldb"
-
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/MiraiGo/message"
+	"github.com/Mrs4s/MiraiGo/utils"
 	"github.com/Mrs4s/go-cqhttp/global"
-
 	jsoniter "github.com/json-iterator/go"
 	log "github.com/sirupsen/logrus"
+	"github.com/syndtr/goleveldb/leveldb"
 )
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
@@ -423,7 +420,21 @@ func (bot *CQBot) formatGroupMessage(m *message.GroupMessage) MSG {
 		gm["sender"].(MSG)["nickname"] = "匿名消息"
 		gm["sub_type"] = "anonymous"
 	} else {
-		mem := bot.Client.FindGroup(m.GroupCode).FindMember(m.Sender.Uin)
+		group := bot.Client.FindGroup(m.GroupCode)
+		mem := group.FindMember(m.Sender.Uin)
+		if mem == nil{
+			log.Warnf("获取 %v 成员信息失败，尝试刷新成员列表", m.Sender.Uin)
+			t, err := bot.Client.GetGroupMembers(group)
+			if err != nil {
+				log.Warnf("刷新群 %v 成员列表失败: %v", group.Uin, err)
+				return Failed(100, "GET_MEMBERS_API_ERROR", err.Error())
+			}
+			group.Members = t
+			mem = group.FindMember(m.Sender.Uin)
+			if  mem != nil{
+				return Failed(100,"MEMBER_NOT_FOUND","群员不存在")
+			}
+		}
 		ms := gm["sender"].(MSG)
 		ms["role"] = func() string {
 			switch mem.Permission {
