@@ -3,6 +3,11 @@ package coolq
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"fmt"
+	"github.com/Mrs4s/MiraiGo/binary"
+	"github.com/Mrs4s/MiraiGo/client"
+	"github.com/Mrs4s/MiraiGo/message"
+	"github.com/tidwall/gjson"
 	"io/ioutil"
 	"math"
 	"os"
@@ -13,12 +18,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Mrs4s/MiraiGo/binary"
-	"github.com/Mrs4s/MiraiGo/client"
-	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/Mrs4s/go-cqhttp/global"
 	log "github.com/sirupsen/logrus"
-	"github.com/tidwall/gjson"
 )
 
 // Version go-cqhttp的版本信息，在编译时使用ldfalgs进行覆盖
@@ -803,19 +804,56 @@ func (bot *CQBot) CQGetStrangerInfo(userID int64) MSG {
 // https://git.io/Jtz15
 func (bot *CQBot) CQHandleQuickOperation(context, operation gjson.Result) MSG {
 	postType := context.Get("post_type").Str
+
 	switch postType {
 	case "message":
+		anonymous := context.Get("anonymous")
+		isAnonymous := anonymous.Type != gjson.Null
 		msgType := context.Get("message_type").Str
 		reply := operation.Get("reply")
+
 		if reply.Exists() {
 			autoEscape := global.EnsureBool(operation.Get("auto_escape"), false)
-			/*
-				at := true
-				if operation.Get("at_sender").Exists() {
-					at = operation.Get("at_sender").Bool()
+
+			at := !isAnonymous // 除匿名消息场合外默认 true
+			if operation.Get("at_sender").Exists() {
+				at = operation.Get("at_sender").Bool() && !isAnonymous
+			}
+
+			if at && reply.IsArray() {
+				// 在 reply 数组头部插入CQ码
+				replySegments := make([]MSG, 0)
+				segments := make([]MSG, 0)
+				segments = append(segments, MSG{
+					"type": "at",
+					"data": MSG{
+						"qq": context.Get("sender.user_id").Int(),
+					},
+				})
+
+				err := json.UnmarshalFromString(reply.Raw, &replySegments)
+				if err != nil {
+					log.WithError(err).Warnf("处理 at_sender 过程中发生错误")
+					return Failed(-1, "处理 at_sender 过程中发生错误", err.Error())
 				}
-			*/
-			// TODO: 处理at字段
+
+				segments = append(segments, replySegments...)
+
+				modified, err := json.MarshalToString(segments)
+				if err != nil {
+					log.WithError(err).Warnf("处理 at_sender 过程中发生错误")
+					return Failed(-1, "处理 at_sender 过程中发生错误", err.Error())
+				}
+
+				reply = gjson.Parse(modified)
+			} else if at && reply.Type == gjson.String {
+				reply = gjson.Parse(fmt.Sprintf(
+					"\"[CQ:at,qq=%d]%s\"",
+					context.Get("sender.user_id").Int(),
+					reply.String(),
+				))
+			}
+
 			if msgType == "group" {
 				bot.CQSendGroupMessage(context.Get("group_id").Int(), reply, autoEscape)
 			}
@@ -824,8 +862,6 @@ func (bot *CQBot) CQHandleQuickOperation(context, operation gjson.Result) MSG {
 			}
 		}
 		if msgType == "group" {
-			anonymous := context.Get("anonymous")
-			isAnonymous := anonymous.Type == gjson.Null
 			if operation.Get("delete").Bool() {
 				bot.CQDeleteMessage(int32(context.Get("message_id").Int()))
 			}
