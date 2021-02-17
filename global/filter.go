@@ -109,9 +109,9 @@ func andOperatorConstruct(argument gjson.Result) *AndOperator {
 }
 
 // Eval 对payload执行And过滤
-func (andOperator *AndOperator) Eval(payload MSG) bool {
+func (op *AndOperator) Eval(payload MSG) bool {
 	res := true
-	for _, operand := range andOperator.operands {
+	for _, operand := range op.operands {
 
 		if len(operand.key) == 0 {
 			// is an operator

@@ -361,11 +361,11 @@ func (bot *CQBot) ConvertStringMessage(msg string, isGroup bool) (r []message.IM
 	saveTempText := func() {
 		if len(tempText) != 0 {
 			if SplitURL {
-				for _, t := range global.SplitURL(CQCodeUnescapeValue(string(tempText))) {
+				for _, t := range global.SplitURL(CQCodeUnescapeText(string(tempText))) {
 					r = append(r, message.NewText(t))
 				}
 			} else {
-				r = append(r, message.NewText(CQCodeUnescapeValue(string(tempText))))
+				r = append(r, message.NewText(CQCodeUnescapeText(string(tempText))))
 			}
 		}
 		tempText = []rune{}
@@ -783,11 +783,11 @@ func (bot *CQBot) ToElement(t string, d map[string]string, isGroup bool) (m inte
 		i, _ := strconv.ParseInt(resID, 10, 64)
 		if i == 0 {
 			// 默认情况下走小程序通道
-			msg := message.NewLightApp(CQCodeUnescapeValue(d["data"]))
+			msg := message.NewLightApp(d["data"])
 			return msg, nil
 		}
 		// resid不为0的情况下走富文本通道，后续补全透传service Id，此处暂时不处理 TODO
-		msg := message.NewRichJson(CQCodeUnescapeValue(d["data"]))
+		msg := message.NewRichJson(d["data"])
 		return msg, nil
 	case "cardimage":
 		source := d["source"]
@@ -894,6 +894,12 @@ func CQCodeEscapeText(raw string) string {
 
 , -> &#44;
 
+& -> &amp;
+
+[ -> &#91;
+
+] -> &#93;
+
 */
 func CQCodeEscapeValue(value string) string {
 	ret := CQCodeEscapeText(value)
@@ -920,7 +926,13 @@ func CQCodeUnescapeText(content string) string {
 
 /*CQCodeUnescapeValue 将字符串content中部分字符反转义
 
-, -> &#44;
+&#44; -> ,
+
+&amp; -> &
+
+&#91; -> [
+
+&#93; -> ]
 
 */
 func CQCodeUnescapeValue(content string) string {
