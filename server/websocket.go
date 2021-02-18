@@ -25,7 +25,7 @@ type webSocketServer struct {
 	handshake      string
 }
 
-//WebSocketClient Websocket客户端实例
+// WebSocketClient WebSocket客户端实例
 type WebSocketClient struct {
 	conf  *global.GoCQReverseWebSocketConfig
 	token string
@@ -40,7 +40,7 @@ type webSocketConn struct {
 	sync.Mutex
 }
 
-//WebSocketServer 初始化一个WebSocketServer实例
+// WebSocketServer 初始化一个WebSocketServer实例
 var WebSocketServer = &webSocketServer{}
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
@@ -58,17 +58,17 @@ func (s *webSocketServer) Run(addr, authToken string, b *coolq.CQBot) {
 	http.HandleFunc("/api", s.api)
 	http.HandleFunc("/", s.any)
 	go func() {
-		log.Infof("CQ Websocket 服务器已启动: %v", addr)
+		log.Infof("CQ WebSocket 服务器已启动: %v", addr)
 		log.Fatal(http.ListenAndServe(addr, nil))
 	}()
 }
 
-//NewWebSocketClient 初始化一个NWebSocket客户端
+// NewWebSocketClient 初始化一个NWebSocket客户端
 func NewWebSocketClient(conf *global.GoCQReverseWebSocketConfig, authToken string, b *coolq.CQBot) *WebSocketClient {
 	return &WebSocketClient{conf: conf, token: authToken, bot: b}
 }
 
-//Run 运行实例
+// Run 运行实例
 func (c *WebSocketClient) Run() {
 	if !c.conf.Enabled {
 		return
@@ -87,7 +87,7 @@ func (c *WebSocketClient) Run() {
 }
 
 func (c *WebSocketClient) connectAPI() {
-	log.Infof("开始尝试连接到反向Websocket API服务器: %v", c.conf.ReverseAPIURL)
+	log.Infof("开始尝试连接到反向WebSocket API服务器: %v", c.conf.ReverseAPIURL)
 	header := http.Header{
 		"X-Client-Role": []string{"API"},
 		"X-Self-ID":     []string{strconv.FormatInt(c.bot.Client.Uin, 10)},
@@ -98,20 +98,20 @@ func (c *WebSocketClient) connectAPI() {
 	}
 	conn, _, err := websocket.DefaultDialer.Dial(c.conf.ReverseAPIURL, header)
 	if err != nil {
-		log.Warnf("连接到反向Websocket API服务器 %v 时出现错误: %v", c.conf.ReverseAPIURL, err)
+		log.Warnf("连接到反向WebSocket API服务器 %v 时出现错误: %v", c.conf.ReverseAPIURL, err)
 		if c.conf.ReverseReconnectInterval != 0 {
 			time.Sleep(time.Millisecond * time.Duration(c.conf.ReverseReconnectInterval))
 			c.connectAPI()
 		}
 		return
 	}
-	log.Infof("已连接到反向Websocket API服务器 %v", c.conf.ReverseAPIURL)
+	log.Infof("已连接到反向WebSocket API服务器 %v", c.conf.ReverseAPIURL)
 	wrappedConn := &webSocketConn{Conn: conn}
 	go c.listenAPI(wrappedConn, false)
 }
 
 func (c *WebSocketClient) connectEvent() {
-	log.Infof("开始尝试连接到反向Websocket Event服务器: %v", c.conf.ReverseEventURL)
+	log.Infof("开始尝试连接到反向WebSocket Event服务器: %v", c.conf.ReverseEventURL)
 	header := http.Header{
 		"X-Client-Role": []string{"Event"},
 		"X-Self-ID":     []string{strconv.FormatInt(c.bot.Client.Uin, 10)},
@@ -122,7 +122,7 @@ func (c *WebSocketClient) connectEvent() {
 	}
 	conn, _, err := websocket.DefaultDialer.Dial(c.conf.ReverseEventURL, header)
 	if err != nil {
-		log.Warnf("连接到反向Websocket Event服务器 %v 时出现错误: %v", c.conf.ReverseEventURL, err)
+		log.Warnf("连接到反向WebSocket Event服务器 %v 时出现错误: %v", c.conf.ReverseEventURL, err)
 		if c.conf.ReverseReconnectInterval != 0 {
 			time.Sleep(time.Millisecond * time.Duration(c.conf.ReverseReconnectInterval))
 			c.connectEvent()
@@ -134,15 +134,15 @@ func (c *WebSocketClient) connectEvent() {
 		c.bot.Client.Uin, time.Now().Unix())
 	err = conn.WriteMessage(websocket.TextMessage, []byte(handshake))
 	if err != nil {
-		log.Warnf("反向Websocket 握手时出现错误: %v", err)
+		log.Warnf("反向WebSocket 握手时出现错误: %v", err)
 	}
 
-	log.Infof("已连接到反向Websocket Event服务器 %v", c.conf.ReverseEventURL)
+	log.Infof("已连接到反向WebSocket Event服务器 %v", c.conf.ReverseEventURL)
 	c.eventConn = &webSocketConn{Conn: conn}
 }
 
 func (c *WebSocketClient) connectUniversal() {
-	log.Infof("开始尝试连接到反向Websocket Universal服务器: %v", c.conf.ReverseURL)
+	log.Infof("开始尝试连接到反向WebSocket Universal服务器: %v", c.conf.ReverseURL)
 	header := http.Header{
 		"X-Client-Role": []string{"Universal"},
 		"X-Self-ID":     []string{strconv.FormatInt(c.bot.Client.Uin, 10)},
@@ -153,7 +153,7 @@ func (c *WebSocketClient) connectUniversal() {
 	}
 	conn, _, err := websocket.DefaultDialer.Dial(c.conf.ReverseURL, header)
 	if err != nil {
-		log.Warnf("连接到反向Websocket Universal服务器 %v 时出现错误: %v", c.conf.ReverseURL, err)
+		log.Warnf("连接到反向WebSocket Universal服务器 %v 时出现错误: %v", c.conf.ReverseURL, err)
 		if c.conf.ReverseReconnectInterval != 0 {
 			time.Sleep(time.Millisecond * time.Duration(c.conf.ReverseReconnectInterval))
 			c.connectUniversal()
@@ -165,7 +165,7 @@ func (c *WebSocketClient) connectUniversal() {
 		c.bot.Client.Uin, time.Now().Unix())
 	err = conn.WriteMessage(websocket.TextMessage, []byte(handshake))
 	if err != nil {
-		log.Warnf("反向Websocket 握手时出现错误: %v", err)
+		log.Warnf("反向WebSocket 握手时出现错误: %v", err)
 	}
 
 	wrappedConn := &webSocketConn{Conn: conn}
@@ -195,7 +195,7 @@ func (c *WebSocketClient) listenAPI(conn *webSocketConn, u bool) {
 
 func (c *WebSocketClient) onBotPushEvent(m coolq.MSG) {
 	if c.eventConn != nil {
-		log.Debugf("向WS服务器 %v 推送Event: %v", c.eventConn.RemoteAddr().String(), m.ToJson())
+		log.Debugf("向WS服务器 %v 推送Event: %v", c.eventConn.RemoteAddr().String(), m.ToJSON())
 		conn := c.eventConn
 		conn.Lock()
 		defer conn.Unlock()
@@ -210,7 +210,7 @@ func (c *WebSocketClient) onBotPushEvent(m coolq.MSG) {
 		}
 	}
 	if c.universalConn != nil {
-		log.Debugf("向WS服务器 %v 推送Event: %v", c.universalConn.RemoteAddr().String(), m.ToJson())
+		log.Debugf("向WS服务器 %v 推送Event: %v", c.universalConn.RemoteAddr().String(), m.ToJSON())
 		conn := c.universalConn
 		conn.Lock()
 		defer conn.Unlock()
@@ -230,7 +230,7 @@ func (s *webSocketServer) event(w http.ResponseWriter, r *http.Request) {
 	if s.token != "" {
 		if auth := r.URL.Query().Get("access_token"); auth != s.token {
 			if auth := strings.SplitN(r.Header.Get("Authorization"), " ", 2); len(auth) != 2 || auth[1] != s.token {
-				log.Warnf("已拒绝 %v 的 Websocket 请求: Token鉴权失败", r.RemoteAddr)
+				log.Warnf("已拒绝 %v 的 WebSocket 请求: Token鉴权失败", r.RemoteAddr)
 				w.WriteHeader(401)
 				return
 			}
@@ -238,17 +238,17 @@ func (s *webSocketServer) event(w http.ResponseWriter, r *http.Request) {
 	}
 	c, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Warnf("处理 Websocket 请求时出现错误: %v", err)
+		log.Warnf("处理 WebSocket 请求时出现错误: %v", err)
 		return
 	}
 	err = c.WriteMessage(websocket.TextMessage, []byte(s.handshake))
 	if err != nil {
-		log.Warnf("Websocket 握手时出现错误: %v", err)
+		log.Warnf("WebSocket 握手时出现错误: %v", err)
 		c.Close()
 		return
 	}
 
-	log.Infof("接受 Websocket 连接: %v (/event)", r.RemoteAddr)
+	log.Infof("接受 WebSocket 连接: %v (/event)", r.RemoteAddr)
 
 	conn := &webSocketConn{Conn: c}
 
@@ -261,7 +261,7 @@ func (s *webSocketServer) api(w http.ResponseWriter, r *http.Request) {
 	if s.token != "" {
 		if auth := r.URL.Query().Get("access_token"); auth != s.token {
 			if auth := strings.SplitN(r.Header.Get("Authorization"), " ", 2); len(auth) != 2 || auth[1] != s.token {
-				log.Warnf("已拒绝 %v 的 Websocket 请求: Token鉴权失败", r.RemoteAddr)
+				log.Warnf("已拒绝 %v 的 WebSocket 请求: Token鉴权失败", r.RemoteAddr)
 				w.WriteHeader(401)
 				return
 			}
@@ -269,10 +269,10 @@ func (s *webSocketServer) api(w http.ResponseWriter, r *http.Request) {
 	}
 	c, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Warnf("处理 Websocket 请求时出现错误: %v", err)
+		log.Warnf("处理 WebSocket 请求时出现错误: %v", err)
 		return
 	}
-	log.Infof("接受 Websocket 连接: %v (/api)", r.RemoteAddr)
+	log.Infof("接受 WebSocket 连接: %v (/api)", r.RemoteAddr)
 	conn := &webSocketConn{Conn: c}
 	go s.listenAPI(conn)
 }
@@ -281,7 +281,7 @@ func (s *webSocketServer) any(w http.ResponseWriter, r *http.Request) {
 	if s.token != "" {
 		if auth := r.URL.Query().Get("access_token"); auth != s.token {
 			if auth := strings.SplitN(r.Header.Get("Authorization"), " ", 2); len(auth) != 2 || auth[1] != s.token {
-				log.Warnf("已拒绝 %v 的 Websocket 请求: Token鉴权失败", r.RemoteAddr)
+				log.Warnf("已拒绝 %v 的 WebSocket 请求: Token鉴权失败", r.RemoteAddr)
 				w.WriteHeader(401)
 				return
 			}
@@ -289,16 +289,16 @@ func (s *webSocketServer) any(w http.ResponseWriter, r *http.Request) {
 	}
 	c, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Warnf("处理 Websocket 请求时出现错误: %v", err)
+		log.Warnf("处理 WebSocket 请求时出现错误: %v", err)
 		return
 	}
 	err = c.WriteMessage(websocket.TextMessage, []byte(s.handshake))
 	if err != nil {
-		log.Warnf("Websocket 握手时出现错误: %v", err)
+		log.Warnf("WebSocket 握手时出现错误: %v", err)
 		c.Close()
 		return
 	}
-	log.Infof("接受 Websocket 连接: %v (/)", r.RemoteAddr)
+	log.Infof("接受 WebSocket 连接: %v (/)", r.RemoteAddr)
 	conn := &webSocketConn{Conn: c}
 	s.eventConn = append(s.eventConn, conn)
 	s.listenAPI(conn)
@@ -353,9 +353,9 @@ func (s *webSocketServer) onBotPushEvent(m coolq.MSG) {
 	defer s.eventConnMutex.Unlock()
 	for i, l := 0, len(s.eventConn); i < l; i++ {
 		conn := s.eventConn[i]
-		log.Debugf("向WS客户端 %v 推送Event: %v", conn.RemoteAddr().String(), m.ToJson())
+		log.Debugf("向WS客户端 %v 推送Event: %v", conn.RemoteAddr().String(), m.ToJSON())
 		conn.Lock()
-		if err := conn.WriteMessage(websocket.TextMessage, []byte(m.ToJson())); err != nil {
+		if err := conn.WriteMessage(websocket.TextMessage, []byte(m.ToJSON())); err != nil {
 			_ = conn.Close()
 			next := i + 1
 			if next >= l {
@@ -557,10 +557,10 @@ var wsAPI = map[string]func(*coolq.CQBot, gjson.Result) coolq.MSG{
 		return bot.CQGetGroupRootFiles(p.Get("group_id").Int())
 	},
 	"get_group_files_by_folder": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
-		return bot.CQGetGroupFilesByFolderId(p.Get("group_id").Int(), p.Get("folder_id").Str)
+		return bot.CQGetGroupFilesByFolderID(p.Get("group_id").Int(), p.Get("folder_id").Str)
 	},
 	"get_group_file_url": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
-		return bot.CQGetGroupFileUrl(p.Get("group_id").Int(), p.Get("file_id").Str, int32(p.Get("busid").Int()))
+		return bot.CQGetGroupFileURL(p.Get("group_id").Int(), p.Get("file_id").Str, int32(p.Get("busid").Int()))
 	},
 	"upload_group_file": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		return bot.CQUploadGroupFile(p.Get("group_id").Int(), p.Get("file").Str, p.Get("name").Str, p.Get("folder").Str)
@@ -602,7 +602,7 @@ var wsAPI = map[string]func(*coolq.CQBot, gjson.Result) coolq.MSG{
 		return bot.CQGetEssenceMessageList(p.Get("group_id").Int())
 	},
 	"check_url_safely": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
-		return bot.CQCheckUrlSafely(p.Get("url").String())
+		return bot.CQCheckURLSafely(p.Get("url").String())
 	},
 	"set_group_anonymous_ban": func(bot *coolq.CQBot, p gjson.Result) coolq.MSG {
 		obj := p.Get("anonymous")

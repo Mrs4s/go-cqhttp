@@ -6,7 +6,8 @@
 
 # go-cqhttp
 
-_✨ 基于 [Mirai](https://github.com/mamoe/mirai) 以及 [MiraiGo](https://github.com/Mrs4s/MiraiGo) 的 [cqhttp](https://github.com/howmanybots/onebot/blob/master/README.md) golang 原生实现 ✨_
+_✨ 基于 [Mirai](https://github.com/mamoe/mirai) 以及 [MiraiGo](https://github.com/Mrs4s/MiraiGo) 的 [OneBot](https://github.com/howmanybots/onebot/blob/master/README.md) Golang 原生实现 ✨_  
+
 
 </div>
 
@@ -23,6 +24,9 @@ _✨ 基于 [Mirai](https://github.com/mamoe/mirai) 以及 [MiraiGo](https://git
   <a href="https://github.com/Mrs4s/go-cqhttp/actions">
     <img src="https://github.com/Mrs4s/go-cqhttp/workflows/CI/badge.svg" alt="action">
   </a>
+  <a href="https://goreportcard.com/report/github.com/Mrs4s/go-cqhttp">
+  <img src="https://goreportcard.com/badge/github.com/Mrs4s/go-cqhttp" alt="GoReportCard">
+  </a>
 </p>
 
 <p align="center">
@@ -33,13 +37,8 @@ _✨ 基于 [Mirai](https://github.com/mamoe/mirai) 以及 [MiraiGo](https://git
   <a href="https://docs.go-cqhttp.org/guide/quick_start.html">开始使用</a>
 </p>
 
----
-
-go-cqhttp 在[原版 cqhttp](https://github.com/richardchien/coolq-http-api)的基础上做了部分修改和拓展.
-
----
-
 ## 兼容性
+go-cqhttp兼容[OneBot-v11](https://github.com/howmanybots/onebot/tree/master/v11/specs)绝大多数内容，并在其基础上做了一些扩展，详情请看go-cqhttp的文档
 
 ### 接口
 
@@ -275,7 +274,8 @@ go-cqhttp 在[原版 cqhttp](https://github.com/richardchien/coolq-http-api)的�
 - 提问找不到重点
 - 重复提问
 
-> 请注意, 开发者并没有义务回复您的问题. 您应该具备基本的提问技巧。
+> 请注意, 开发者并没有义务回复您的问题. 您应该具备基本的提问技巧。  
+> 有关如何提问，请阅读[《提问的智慧》](https://github.com/ryanhanwu/How-To-Ask-Questions-The-Smart-Way/blob/main/README-zh_CN.md)
 
 ## 性能
 
