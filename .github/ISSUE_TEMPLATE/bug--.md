@@ -16,7 +16,7 @@ assignees: ''
 注: 如果您不知道如何有效、精准地表述，我们建议您先阅读《提问的智慧》 -> https://github.com/ryanhanwu/How-To-Ask-Questions-The-Smart-Way/blob/main/README-zh_CN.md
 -->
 
-- [ ] 我已经阅读"提问前需知 [图+文]": `github.com/Mrs4s/go-cqhttp/issues/633`
+- [ ] 我已经阅读"提问前需知 [图+文]": `Mrs4s/go-cqhttp/issues/633`
 
 **环境信息**
 请根据实际使用环境修改以下信息
