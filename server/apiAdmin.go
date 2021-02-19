@@ -148,7 +148,6 @@ func (s *webServer) logincore(relogin bool) {
 		} else if err == client.ErrAlreadyOnline {
 			break
 		}
-		log.Error("登录遇到错误: " + err.Error())
 
 		switch res.Error {
 		case client.SliderNeededError:
