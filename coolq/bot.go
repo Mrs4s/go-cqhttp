@@ -61,6 +61,7 @@ func NewQQBot(cli *client.QQClient, conf *global.JSONConfig) *CQBot {
 	}
 	bot.Client.OnPrivateMessage(bot.privateMessageEvent)
 	bot.Client.OnGroupMessage(bot.groupMessageEvent)
+	bot.Client.OnSelfGroupMessage(bot.groupMessageEvent)
 	bot.Client.OnTempMessage(bot.tempMessageEvent)
 	bot.Client.OnGroupMuted(bot.groupMutedEvent)
 	bot.Client.OnGroupMessageRecalled(bot.groupRecallEvent)
@@ -391,15 +392,20 @@ func (bot *CQBot) dispatchEventMessage(m MSG) {
 func (bot *CQBot) formatGroupMessage(m *message.GroupMessage) MSG {
 	cqm := ToStringMessage(m.Elements, m.GroupCode, true)
 	gm := MSG{
-		"anonymous":    nil,
-		"font":         0,
-		"group_id":     m.GroupCode,
-		"message":      ToFormattedMessage(m.Elements, m.GroupCode, false),
-		"message_type": "group",
-		"message_seq":  m.Id,
-		"post_type":    "message",
-		"raw_message":  cqm,
-		"self_id":      bot.Client.Uin,
+		"anonymous": nil,
+		"font":      0,
+		"group_id":  m.GroupCode,
+		"message":   ToFormattedMessage(m.Elements, m.GroupCode, false),
+		"message_type": func() string {
+			if m.Sender.Uin == bot.Client.Uin {
+				return "group_self"
+			}
+			return "group"
+		}(),
+		"message_seq": m.Id,
+		"post_type":   "message",
+		"raw_message": cqm,
+		"self_id":     bot.Client.Uin,
 		"sender": MSG{
 			"age":     0,
 			"area":    "",
@@ -422,7 +428,7 @@ func (bot *CQBot) formatGroupMessage(m *message.GroupMessage) MSG {
 	} else {
 		group := bot.Client.FindGroup(m.GroupCode)
 		mem := group.FindMember(m.Sender.Uin)
-		if mem == nil{
+		if mem == nil {
 			log.Warnf("获取 %v 成员信息失败，尝试刷新成员列表", m.Sender.Uin)
 			t, err := bot.Client.GetGroupMembers(group)
 			if err != nil {
@@ -431,8 +437,8 @@ func (bot *CQBot) formatGroupMessage(m *message.GroupMessage) MSG {
 			}
 			group.Members = t
 			mem = group.FindMember(m.Sender.Uin)
-			if  mem != nil{
-				return Failed(100,"MEMBER_NOT_FOUND","群员不存在")
+			if mem != nil {
+				return Failed(100, "MEMBER_NOT_FOUND", "群员不存在")
 			}
 		}
 		ms := gm["sender"].(MSG)
