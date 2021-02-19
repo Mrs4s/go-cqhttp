@@ -8,14 +8,12 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        # build and publish in parallel: linux/386, linux/amd64, windows/386, windows/amd64, darwin/386, darwin/amd64 
+        # build and publish in parallel: linux/386, linux/amd64, windows/386, windows/amd64, darwin/386, darwin/amd64, darwin/arm64
         goos: [linux, windows, darwin]
         goarch: ["386", amd64, arm, arm64]
         exclude: 
           - goos: darwin
             goarch: arm
-          - goos: darwin
-            goarch: arm64
           - goos: darwin
             goarch: "386"
           - goos: windows
@@ -32,6 +30,6 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           goos: ${{ matrix.goos }}
           goarch: ${{ matrix.goarch }}
-          goversion: "https://golang.org/dl/go1.15.3.linux-amd64.tar.gz"
+          goversion: "https://golang.org/dl/go1.16.linux-amd64.tar.gz"
           ldflags: -w -s -X "github.com/Mrs4s/go-cqhttp/coolq.Version=${{ env.RELEASE_VERSION }}"
           
