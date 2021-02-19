@@ -1,6 +1,6 @@
 module github.com/Mrs4s/go-cqhttp
 
-go 1.15
+go 1.16
 
 require (
 	github.com/Mrs4s/MiraiGo v0.0.0-20210219090120-c4288bd213f3
