@@ -3,7 +3,7 @@ module github.com/Mrs4s/go-cqhttp
 go 1.16
 
 require (
-	github.com/Mrs4s/MiraiGo v0.0.0-20210219090120-c4288bd213f3
+	github.com/Mrs4s/MiraiGo v0.0.0-20210220103625-420583e1c56a
 	github.com/dustin/go-humanize v1.0.0
 	github.com/gin-contrib/pprof v1.3.0
 	github.com/gin-gonic/gin v1.6.3

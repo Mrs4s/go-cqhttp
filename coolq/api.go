@@ -510,7 +510,10 @@ func (bot *CQBot) CQSetGroupName(groupID int64, name string) MSG {
 // https://docs.go-cqhttp.org/api/#%E5%8F%91%E9%80%81%E7%BE%A4%E5%85%AC%E5%91%8A
 func (bot *CQBot) CQSetGroupMemo(groupID int64, msg string) MSG {
 	if g := bot.Client.FindGroup(groupID); g != nil {
-		g.UpdateMemo(msg)
+		if g.SelfPermission() == client.Member {
+			return Failed(100, "PERMISSION_DENIED", "权限不足")
+		}
+		_ = bot.Client.AddGroupNoticeSimple(groupID, msg)
 		return OK(nil)
 	}
 	return Failed(100, "GROUP_NOT_FOUND", "群聊不存在")
