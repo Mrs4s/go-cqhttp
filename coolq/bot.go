@@ -392,18 +392,18 @@ func (bot *CQBot) dispatchEventMessage(m MSG) {
 func (bot *CQBot) formatGroupMessage(m *message.GroupMessage) MSG {
 	cqm := ToStringMessage(m.Elements, m.GroupCode, true)
 	gm := MSG{
-		"anonymous": nil,
-		"font":      0,
-		"group_id":  m.GroupCode,
-		"message":   ToFormattedMessage(m.Elements, m.GroupCode, false),
-		"message_type": func() string {
+		"anonymous":    nil,
+		"font":         0,
+		"group_id":     m.GroupCode,
+		"message":      ToFormattedMessage(m.Elements, m.GroupCode, false),
+		"message_type": "group",
+		"message_seq":  m.Id,
+		"post_type": func() string {
 			if m.Sender.Uin == bot.Client.Uin {
-				return "group_self"
+				return "message_sent"
 			}
-			return "group"
+			return "message"
 		}(),
-		"message_seq": m.Id,
-		"post_type":   "message",
 		"raw_message": cqm,
 		"self_id":     bot.Client.Uin,
 		"sender": MSG{
