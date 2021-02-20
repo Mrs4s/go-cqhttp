@@ -249,11 +249,15 @@ func (bot *CQBot) CQGetWordSlices(content string) MSG {
 // https://git.io/Jtz1c
 func (bot *CQBot) CQSendGroupMessage(groupID int64, i interface{}, autoEscape bool) MSG {
 	var str string
+	group := bot.Client.FindGroup(groupID)
+	if group == nil {
+		return Failed(100, "GROUP_NOT_FOUND", "群聊不存在")
+	}
 	fixAt := func(elem []message.IMessageElement) {
 		for _, e := range elem {
 			if at, ok := e.(*message.AtElement); ok && at.Target != 0 {
 				at.Display = "@" + func() string {
-					mem := bot.Client.FindGroup(groupID).FindMember(at.Target)
+					mem := group.FindMember(at.Target)
 					if mem != nil {
 						return mem.DisplayName()
 					}

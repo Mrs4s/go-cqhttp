@@ -170,6 +170,7 @@ func (bot *CQBot) UploadLocalImageAsPrivate(userID int64, img *LocalImageElement
 // SendGroupMessage 发送群消息
 func (bot *CQBot) SendGroupMessage(groupID int64, m *message.SendingMessage) int32 {
 	var newElem []message.IMessageElement
+	group := bot.Client.FindGroup(groupID)
 	for _, elem := range m.Elements {
 		if i, ok := elem.(*LocalImageElement); ok {
 			gm, err := bot.UploadLocalImageAsGroup(groupID, i)
@@ -217,6 +218,10 @@ func (bot *CQBot) SendGroupMessage(groupID int64, m *message.SendingMessage) int
 				return -1
 			}
 			return bot.InsertGroupMessage(ret)
+		}
+		if i, ok := elem.(*message.AtElement); ok && i.Target == 0 && group.SelfPermission() == client.Member {
+			newElem = append(newElem, message.NewText("@全体成员"))
+			continue
 		}
 		newElem = append(newElem, elem)
 	}
