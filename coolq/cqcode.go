@@ -792,6 +792,7 @@ func (bot *CQBot) ToElement(t string, d map[string]string, isGroup bool) (m inte
 	case "cardimage":
 		source := d["source"]
 		icon := d["icon"]
+		brief := d["brief"]
 		minWidth, _ := strconv.ParseInt(d["minwidth"], 10, 64)
 		if minWidth == 0 {
 			minWidth = 200
@@ -812,7 +813,7 @@ func (bot *CQBot) ToElement(t string, d map[string]string, isGroup bool) (m inte
 		if err != nil {
 			return nil, errors.New("send cardimage faild")
 		}
-		return bot.makeShowPic(img, source, icon, minWidth, minHeight, maxWidth, maxHeight, isGroup)
+		return bot.makeShowPic(img, source, brief, icon, minWidth, minHeight, maxWidth, maxHeight, isGroup)
 	case "video":
 		cache := d["cache"]
 		if cache == "" {
@@ -1102,9 +1103,12 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video, group bool) (
 }
 
 // makeShowPic 一种xml 方式发送的群消息图片
-func (bot *CQBot) makeShowPic(elem message.IMessageElement, source string, icon string, minWidth int64, minHeight int64, maxWidth int64, maxHeight int64, group bool) ([]message.IMessageElement, error) {
+func (bot *CQBot) makeShowPic(elem message.IMessageElement, source string, brief string, icon string, minWidth int64, minHeight int64, maxWidth int64, maxHeight int64, group bool) ([]message.IMessageElement, error) {
 	xml := ""
 	var suf message.IMessageElement
+	if brief == "" {
+		brief = "&#91;分享&#93;我看到一张很赞的图片，分享给你，快来看！"
+	}
 	if i, ok := elem.(*LocalImageElement); ok {
 		if !group {
 			gm, err := bot.UploadLocalImageAsPrivate(1, i)
@@ -1113,7 +1117,7 @@ func (bot *CQBot) makeShowPic(elem message.IMessageElement, source string, icon 
 				return nil, err
 			}
 			suf = gm
-			xml = fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="5" templateID="12345" action="" brief="&#91;分享&#93;我看到一张很赞的图片，分享给你，快来看！" sourceMsgId="0" url="%s" flag="0" adverSign="0" multiMsgFlag="0"><item layout="0" advertiser_id="0" aid="0"><image uuid="%x" md5="%x" GroupFiledid="0" filesize="%d" local_path="%s" minWidth="%d" minHeight="%d" maxWidth="%d" maxHeight="%d" /></item><source name="%s" icon="%s" action="" appid="-1" /></msg>`, "", gm.Md5, gm.Md5, len(i.Data), "", minWidth, minHeight, maxWidth, maxHeight, source, icon)
+			xml = fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="5" templateID="12345" action="" brief="%s" sourceMsgId="0" url="%s" flag="0" adverSign="0" multiMsgFlag="0"><item layout="0" advertiser_id="0" aid="0"><image uuid="%x" md5="%x" GroupFiledid="0" filesize="%d" local_path="%s" minWidth="%d" minHeight="%d" maxWidth="%d" maxHeight="%d" /></item><source name="%s" icon="%s" action="" appid="-1" /></msg>`, brief, "", gm.Md5, gm.Md5, len(i.Data), "", minWidth, minHeight, maxWidth, maxHeight, source, icon)
 		} else {
 			gm, err := bot.UploadLocalImageAsGroup(1, i)
 			if err != nil {
@@ -1121,16 +1125,16 @@ func (bot *CQBot) makeShowPic(elem message.IMessageElement, source string, icon 
 				return nil, err
 			}
 			suf = gm
-			xml = fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="5" templateID="12345" action="" brief="&#91;分享&#93;我看到一张很赞的图片，分享给你，快来看！" sourceMsgId="0" url="%s" flag="0" adverSign="0" multiMsgFlag="0"><item layout="0" advertiser_id="0" aid="0"><image uuid="%x" md5="%x" GroupFiledid="0" filesize="%d" local_path="%s" minWidth="%d" minHeight="%d" maxWidth="%d" maxHeight="%d" /></item><source name="%s" icon="%s" action="" appid="-1" /></msg>`, "", gm.Md5, gm.Md5, len(i.Data), "", minWidth, minHeight, maxWidth, maxHeight, source, icon)
+			xml = fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="5" templateID="12345" action="" brief="%s" sourceMsgId="0" url="%s" flag="0" adverSign="0" multiMsgFlag="0"><item layout="0" advertiser_id="0" aid="0"><image uuid="%x" md5="%x" GroupFiledid="0" filesize="%d" local_path="%s" minWidth="%d" minHeight="%d" maxWidth="%d" maxHeight="%d" /></item><source name="%s" icon="%s" action="" appid="-1" /></msg>`, brief, "", gm.Md5, gm.Md5, len(i.Data), "", minWidth, minHeight, maxWidth, maxHeight, source, icon)
 		}
 	}
 
 	if i, ok := elem.(*message.GroupImageElement); ok {
-		xml = fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="5" templateID="12345" action="" brief="&#91;分享&#93;我看到一张很赞的图片，分享给你，快来看！" sourceMsgId="0" url="%s" flag="0" adverSign="0" multiMsgFlag="0"><item layout="0" advertiser_id="0" aid="0"><image uuid="%x" md5="%x" GroupFiledid="0" filesize="%d" local_path="%s" minWidth="%d" minHeight="%d" maxWidth="%d" maxHeight="%d" /></item><source name="%s" icon="%s" action="" appid="-1" /></msg>`, "", i.Md5, i.Md5, 0, "", minWidth, minHeight, maxWidth, maxHeight, source, icon)
+		xml = fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="5" templateID="12345" action="" brief="%s" sourceMsgId="0" url="%s" flag="0" adverSign="0" multiMsgFlag="0"><item layout="0" advertiser_id="0" aid="0"><image uuid="%x" md5="%x" GroupFiledid="0" filesize="%d" local_path="%s" minWidth="%d" minHeight="%d" maxWidth="%d" maxHeight="%d" /></item><source name="%s" icon="%s" action="" appid="-1" /></msg>`, brief, "", i.Md5, i.Md5, 0, "", minWidth, minHeight, maxWidth, maxHeight, source, icon)
 		suf = i
 	}
 	if i, ok := elem.(*message.FriendImageElement); ok {
-		xml = fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="5" templateID="12345" action="" brief="&#91;分享&#93;我看到一张很赞的图片，分享给你，快来看！" sourceMsgId="0" url="%s" flag="0" adverSign="0" multiMsgFlag="0"><item layout="0" advertiser_id="0" aid="0"><image uuid="%x" md5="%x" GroupFiledid="0" filesize="%d" local_path="%s" minWidth="%d" minHeight="%d" maxWidth="%d" maxHeight="%d" /></item><source name="%s" icon="%s" action="" appid="-1" /></msg>`, "", i.Md5, i.Md5, 0, "", minWidth, minHeight, maxWidth, maxHeight, source, icon)
+		xml = fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="5" templateID="12345" action="" brief="%s" sourceMsgId="0" url="%s" flag="0" adverSign="0" multiMsgFlag="0"><item layout="0" advertiser_id="0" aid="0"><image uuid="%x" md5="%x" GroupFiledid="0" filesize="%d" local_path="%s" minWidth="%d" minHeight="%d" maxWidth="%d" maxHeight="%d" /></item><source name="%s" icon="%s" action="" appid="-1" /></msg>`, brief, "", i.Md5, i.Md5, 0, "", minWidth, minHeight, maxWidth, maxHeight, source, icon)
 		suf = i
 	}
 	if xml != "" {
