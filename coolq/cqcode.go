@@ -4,21 +4,23 @@ import (
 	"bytes"
 	"crypto/md5"
 	"encoding/base64"
+	goBinary "encoding/binary"
 	"encoding/hex"
 	xml2 "encoding/xml"
 	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
-	"math"
 	"math/rand"
 	"net/url"
 	"os"
 	"path"
+	"reflect"
 	"runtime"
 	"strconv"
 	"strings"
 	"time"
+	"unsafe"
 
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/message"
@@ -39,6 +41,26 @@ var IgnoreInvalidCQCode = false
 
 // SplitURL 是否分割URL
 var SplitURL = false
+
+// magicCQ 代表 uint32([]byte("[CQ:"))
+var magicCQ = uint32(0)
+
+func init() {
+	const sizeInt = int(unsafe.Sizeof(0))
+	x := 0x1234
+	p := unsafe.Pointer(&x)
+	p2 := (*[sizeInt]byte)(p)
+	if p2[0] == 0 {
+		magicCQ = goBinary.BigEndian.Uint32([]byte("[CQ:"))
+	} else {
+		magicCQ = goBinary.LittleEndian.Uint32([]byte("[CQ:"))
+	}
+}
+
+// add 指针运算
+func add(ptr unsafe.Pointer, offset uintptr) unsafe.Pointer {
+	return unsafe.Pointer(uintptr(ptr) + offset)
+}
 
 const maxImageSize = 1024 * 1024 * 30  // 30MB
 const maxVideoSize = 1024 * 1024 * 100 // 100MB
@@ -335,66 +357,14 @@ func ToStringMessage(e []message.IMessageElement, id int64, isRaw ...bool) (r st
 }
 
 // ConvertStringMessage 将消息字符串转为消息元素数组
-func (bot *CQBot) ConvertStringMessage(msg string, isGroup bool) (r []message.IMessageElement) {
-	index := 0
-	stat := 0
-	rMsg := []rune(msg)
-	var tempText, cqCode []rune
-	hasNext := func() bool {
-		return index < len(rMsg)
-	}
-	next := func() rune {
-		r := rMsg[index]
-		index++
-		return r
-	}
-	move := func(steps int) {
-		index += steps
-	}
-	peekN := func(count int) string {
-		lastIdx := int(math.Min(float64(index+count), float64(len(rMsg))))
-		return string(rMsg[index:lastIdx])
-	}
-	isCQCodeBegin := func(r rune) bool {
-		return r == '[' && peekN(3) == "CQ:"
-	}
-	saveTempText := func() {
-		if len(tempText) != 0 {
-			if SplitURL {
-				for _, t := range global.SplitURL(CQCodeUnescapeText(string(tempText))) {
-					r = append(r, message.NewText(t))
-				}
-			} else {
-				r = append(r, message.NewText(CQCodeUnescapeText(string(tempText))))
-			}
-		}
-		tempText = []rune{}
-		cqCode = []rune{}
-	}
+func (bot *CQBot) ConvertStringMessage(s string, isGroup bool) (r []message.IMessageElement) {
+	var t, key = "", ""
+	var d map[string]string
+	ptr := unsafe.Pointer((*reflect.SliceHeader)(unsafe.Pointer(&s)).Data)
+	l := len(s)
+	i, j, CQBegin := 0, 0, 0
+
 	saveCQCode := func() {
-		defer func() {
-			cqCode = []rune{}
-			tempText = []rune{}
-		}()
-		s := strings.SplitN(string(cqCode), ",", -1)
-		if len(s) == 0 {
-			return
-		}
-		t := s[0]
-		params := make(map[string]string)
-		for i := 1; i < len(s); i++ {
-			p := s[i]
-			p = strings.TrimSpace(p)
-			if p == "" {
-				continue
-			}
-			data := strings.SplitN(p, "=", 2)
-			if len(data) == 2 {
-				params[data[0]] = CQCodeUnescapeValue(data[1])
-			} else {
-				params[p] = ""
-			}
-		}
 		if t == "reply" { // reply 特殊处理
 			if len(r) > 0 {
 				if _, ok := r[0].(*message.ReplyElement); ok {
@@ -402,8 +372,8 @@ func (bot *CQBot) ConvertStringMessage(msg string, isGroup bool) (r []message.IM
 					return
 				}
 			}
-			mid, err := strconv.Atoi(params["id"])
-			customText := params["text"]
+			mid, err := strconv.Atoi(d["id"])
+			customText := d["text"]
 			if err == nil {
 				org := bot.GetMessage(int32(mid))
 				if org != nil {
@@ -418,12 +388,12 @@ func (bot *CQBot) ConvertStringMessage(msg string, isGroup bool) (r []message.IM
 					return
 				}
 			} else if customText != "" {
-				sender, err := strconv.ParseInt(params["qq"], 10, 64)
+				sender, err := strconv.ParseInt(d["qq"], 10, 64)
 				if err != nil {
 					log.Warnf("警告:自定义 Reply 元素中必须包含Uin")
 					return
 				}
-				msgTime, err := strconv.ParseInt(params["time"], 10, 64)
+				msgTime, err := strconv.ParseInt(d["time"], 10, 64)
 				if err != nil {
 					msgTime = time.Now().Unix()
 				}
@@ -439,14 +409,14 @@ func (bot *CQBot) ConvertStringMessage(msg string, isGroup bool) (r []message.IM
 			}
 		}
 		if t == "forward" { // 单独处理转发
-			if id, ok := params["id"]; ok {
+			if id, ok := d["id"]; ok {
 				r = []message.IMessageElement{bot.Client.DownloadForwardMessage(id)}
 				return
 			}
 		}
-		elem, err := bot.ToElement(t, params, isGroup)
+		elem, err := bot.ToElement(t, d, isGroup)
 		if err != nil {
-			org := "[CQ:" + string(cqCode) + "]"
+			org := s[CQBegin:i]
 			if !IgnoreInvalidCQCode {
 				log.Warnf("转换CQ码 %v 时出现错误: %v 将原样发送.", org, err)
 				r = append(r, message.NewText(org))
@@ -462,32 +432,70 @@ func (bot *CQBot) ConvertStringMessage(msg string, isGroup bool) (r []message.IM
 			r = append(r, i...)
 		}
 	}
-	for hasNext() {
-		ch := next()
-		switch stat {
-		case 0:
-			if isCQCodeBegin(ch) {
-				saveTempText()
-				tempText = append(tempText, []rune("[CQ:")...)
-				move(3)
-				stat = 1
-			} else {
-				tempText = append(tempText, ch)
+
+S1: // Plain Text
+	for ; i < l; i++ {
+		if *(*byte)(add(ptr, uintptr(i))) == '[' && i+4 < l &&
+			*(*uint32)(add(ptr, uintptr(i))) == magicCQ { // Magic :uint32([]byte("[CQ:"))
+			if i > j {
+				r = append(r, message.NewText(CQCodeUnescapeText(s[j:i])))
 			}
-		case 1:
-			if isCQCodeBegin(ch) {
-				move(-1)
-				stat = 0
-			} else if ch == ']' {
-				saveCQCode()
-				stat = 0
-			} else {
-				cqCode = append(cqCode, ch)
-				tempText = append(tempText, ch)
-			}
+			CQBegin = i
+			i += 4
+			j = i
+			goto S2
 		}
 	}
-	saveTempText()
+	goto End
+S2: // CQCode Type
+	d = make(map[string]string)
+	for ; i < l; i++ {
+		switch *(*byte)(add(ptr, uintptr(i))) {
+		case ',': // CQ Code with params
+			t = s[j:i]
+			i++
+			j = i
+			goto S3
+		case ']': // CQ Code without params
+			t = s[j:i]
+			i++
+			j = i
+			saveCQCode()
+			goto S1
+		}
+	}
+	goto End
+S3: // CQCode param key
+	for ; i < l; i++ {
+		if *(*byte)(add(ptr, uintptr(i))) == '=' {
+			key = s[j:i]
+			i++
+			j = i
+			goto S4
+		}
+	}
+	goto End
+S4: // CQCode param value
+	for ; i < l; i++ {
+		switch *(*byte)(add(ptr, uintptr(i))) {
+		case ',': // more param
+			d[key] = CQCodeUnescapeValue(s[j:i])
+			i++
+			j = i
+			goto S3
+		case ']':
+			d[key] = CQCodeUnescapeValue(s[j:i])
+			i++
+			j = i
+			saveCQCode()
+			goto S1
+		}
+	}
+	goto End
+End:
+	if i > j {
+		r = append(r, message.NewText(CQCodeUnescapeText(s[j:i])))
+	}
 	return
 }
 
