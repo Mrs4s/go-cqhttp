@@ -359,7 +359,7 @@ func ToStringMessage(e []message.IMessageElement, id int64, isRaw ...bool) (r st
 // ConvertStringMessage 将消息字符串转为消息元素数组
 func (bot *CQBot) ConvertStringMessage(s string, isGroup bool) (r []message.IMessageElement) {
 	var t, key string
-	var d map[string]string
+	var d = map[string]string{}
 	ptr := unsafe.Pointer((*reflect.SliceHeader)(unsafe.Pointer(&s)).Data)
 	l := len(s)
 	i, j, CQBegin := 0, 0, 0
@@ -448,7 +448,9 @@ S1: // Plain Text
 	}
 	goto End
 S2: // CQCode Type
-	d = make(map[string]string)
+	for k := range d { // 内存复用，减小GC压力
+		delete(d, k)
+	}
 	for ; i < l; i++ {
 		switch *(*byte)(add(ptr, uintptr(i))) {
 		case ',': // CQ Code with params
