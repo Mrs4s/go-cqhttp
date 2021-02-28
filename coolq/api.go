@@ -270,12 +270,12 @@ func (bot *CQBot) CQSendGroupMessage(groupID int64, i interface{}, autoEscape bo
 		if m.Type == gjson.JSON {
 			elem := bot.ConvertObjectMessage(m, true)
 			fixAt(elem)
-			mid := bot.SendGroupMessage(groupID, &message.SendingMessage{Elements: elem})
+			mid, seq, internalId := bot.SendGroupMessage(groupID, &message.SendingMessage{Elements: elem})
 			if mid == -1 {
 				return Failed(100, "SEND_MSG_API_ERROR", "请参考输出")
 			}
 			log.Infof("发送群 %v(%v)  的消息: %v (%v)", groupID, groupID, limitedString(m.String()), mid)
-			return OK(MSG{"message_id": mid})
+			return OK(MSG{"message_id": mid, "group_id": groupID, "message_seq": seq, "internal_id": internalId})
 		}
 		str = func() string {
 			if m.Str != "" {
@@ -297,12 +297,12 @@ func (bot *CQBot) CQSendGroupMessage(groupID int64, i interface{}, autoEscape bo
 		elem = bot.ConvertStringMessage(str, true)
 	}
 	fixAt(elem)
-	mid := bot.SendGroupMessage(groupID, &message.SendingMessage{Elements: elem})
+	mid, seq, internalId := bot.SendGroupMessage(groupID, &message.SendingMessage{Elements: elem})
 	if mid == -1 {
 		return Failed(100, "SEND_MSG_API_ERROR", "请参考输出")
 	}
 	log.Infof("发送群 %v(%v)  的消息: %v (%v)", groupID, groupID, limitedString(str), mid)
-	return OK(MSG{"message_id": mid})
+	return OK(MSG{"message_id": mid, "group_id": groupID, "message_seq": seq, "internal_id": internalId})
 }
 
 // CQSendGroupForwardMessage 扩展API-发送合并转发(群)
@@ -423,10 +423,11 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) MSG {
 		sendNodes = convert(m)
 	}
 	if len(sendNodes) > 0 {
-		gm := bot.Client.SendGroupForwardMessage(groupID, &message.ForwardMessage{Nodes: sendNodes})
-		return OK(MSG{
-			"message_id": bot.InsertGroupMessage(gm),
-		})
+		mid, seq, internalId := bot.SendGroupForwardMessage(groupID, &message.ForwardMessage{Nodes: sendNodes})
+		if mid == -1 {
+			return Failed(100, "SEND_MSG_API_ERROR", "请参考输出")
+		}
+		return OK(MSG{"message_id": mid, "group_id": groupID, "message_seq": seq, "internal_id": internalId})
 	}
 	return Failed(100)
 }
@@ -439,12 +440,12 @@ func (bot *CQBot) CQSendPrivateMessage(userID int64, i interface{}, autoEscape b
 	if m, ok := i.(gjson.Result); ok {
 		if m.Type == gjson.JSON {
 			elem := bot.ConvertObjectMessage(m, false)
-			mid := bot.SendPrivateMessage(userID, &message.SendingMessage{Elements: elem})
+			mid, seqId, internalId := bot.SendPrivateMessage(userID, &message.SendingMessage{Elements: elem})
 			if mid == -1 {
 				return Failed(100, "SEND_MSG_API_ERROR", "请参考输出")
 			}
 			log.Infof("发送好友 %v(%v)  的消息: %v (%v)", userID, userID, limitedString(m.String()), mid)
-			return OK(MSG{"message_id": mid})
+			return OK(MSG{"message_id": mid, "user_id": userID, "message_seq": seqId, "internal_id": internalId})
 		}
 		str = func() string {
 			if m.Str != "" {
@@ -464,12 +465,12 @@ func (bot *CQBot) CQSendPrivateMessage(userID int64, i interface{}, autoEscape b
 	} else {
 		elem = bot.ConvertStringMessage(str, false)
 	}
-	mid := bot.SendPrivateMessage(userID, &message.SendingMessage{Elements: elem})
+	mid, seqId, internalId := bot.SendPrivateMessage(userID, &message.SendingMessage{Elements: elem})
 	if mid == -1 {
 		return Failed(100, "SEND_MSG_API_ERROR", "请参考输出")
 	}
 	log.Infof("发送好友 %v(%v)  的消息: %v (%v)", userID, userID, limitedString(str), mid)
-	return OK(MSG{"message_id": mid})
+	return OK(MSG{"message_id": mid, "user_id": userID, "message_seq": seqId, "internal_id": internalId})
 }
 
 // CQSetGroupCard 设置群名片(群备注)
@@ -547,7 +548,7 @@ func (bot *CQBot) CQSetGroupBan(groupID, userID int64, duration uint32) MSG {
 		if m := g.FindMember(userID); m != nil {
 			err := m.Mute(duration)
 			if err != nil {
-				if duration >= 2592000 {
+				if duration > 2592000 {
 					return Failed(100, "DURATION_IS_NOT_IN_RANGE", "非法的禁言时长")
 				}
 				return Failed(100, "NOT_MANAGEABLE", "机器人权限不足")
@@ -657,22 +658,19 @@ func (bot *CQBot) CQProcessGroupRequest(flag, subType, reason string, approve bo
 // CQDeleteMessage 撤回消息
 //
 // https:// git.io/Jtz1y
-func (bot *CQBot) CQDeleteMessage(messageID int32) MSG {
-	msg := bot.GetMessage(messageID)
-	if msg == nil {
-		return Failed(100, "MESSAGE_NOT_FOUND", "消息不存在")
+func (bot *CQBot) CQDeleteMessage(messageID int32, internalId int32, groupId int64) MSG {
+	if internalId == 0 || groupId == 0 {
+		msg := bot.GetMessage(messageID)
+		if msg == nil {
+			return Failed(100, "MESSAGE_NOT_FOUND", "消息不存在")
+		}
+		if _, ok := msg["group"]; ok {
+			groupId, messageID, internalId = msg["group"].(int64), msg["message-id"].(int32), msg["internal-id"].(int32)
+		}
 	}
-	if _, ok := msg["group"]; ok {
-		if err := bot.Client.RecallGroupMessage(msg["group"].(int64), msg["message-id"].(int32), msg["internal-id"].(int32)); err != nil {
-			log.Warnf("撤回 %v 失败: %v", messageID, err)
-			return Failed(100, "RECALL_API_ERROR", err.Error())
-		}
-	} else {
-		if msg["sender"].(message.Sender).Uin != bot.Client.Uin {
-			log.Warnf("撤回 %v 失败: 好友会话无法撤回对方消息.", messageID)
-			return Failed(100, "CANNOT_RECALL_FRIEND_MSG", "无法撤回对方消息")
-		}
-		if err := bot.Client.RecallPrivateMessage(msg["target"].(int64), int64(msg["time"].(int32)), msg["message-id"].(int32), msg["internal-id"].(int32)); err != nil {
+
+	if groupId != 0 {
+		if err := bot.Client.RecallGroupMessage(groupId, messageID, internalId); err != nil {
 			log.Warnf("撤回 %v 失败: %v", messageID, err)
 			return Failed(100, "RECALL_API_ERROR", err.Error())
 		}
@@ -870,7 +868,12 @@ func (bot *CQBot) CQHandleQuickOperation(context, operation gjson.Result) MSG {
 		}
 		if msgType == "group" {
 			if operation.Get("delete").Bool() {
-				bot.CQDeleteMessage(int32(context.Get("message_id").Int()))
+				msgSeq, internalId, groupId := context.Get("message_seq").Int(), context.Get("internal_id").Int(), context.Get("group_id").Int()
+				if msgSeq != 0 && internalId != 0 && groupId != 0 {
+					bot.CQDeleteMessage(int32(msgSeq), int32(internalId), int64(groupId))
+				} else {
+					bot.CQDeleteMessage(int32(context.Get("message_id").Int()), 0, 0)
+				}
 			}
 			if operation.Get("kick").Bool() && !isAnonymous {
 				bot.CQSetGroupKick(context.Get("group_id").Int(), context.Get("user_id").Int(), "", operation.Get("reject_add_request").Bool())

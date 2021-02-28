@@ -74,7 +74,13 @@ func sendPrivateMSG(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 }
 
 func deleteMSG(bot *coolq.CQBot, p resultGetter) coolq.MSG {
-	return bot.CQDeleteMessage(int32(p.Get("message_id").Int()))
+	messageSeq := int32(p.Get("message_seq").Int())
+	internalId := int32(p.Get("internal_id").Int())
+	groupId := p.Get("group_id").Int()
+	if messageSeq != 0 && internalId != 0 && groupId != 0 {
+		return bot.CQDeleteMessage(messageSeq, internalId, groupId)
+	}
+	return bot.CQDeleteMessage(int32(p.Get("message_id").Int()), 0, 0)
 }
 
 func setFriendAddRequest(bot *coolq.CQBot, p resultGetter) coolq.MSG {
