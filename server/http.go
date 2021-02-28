@@ -23,7 +23,7 @@ type httpServer struct {
 	engine *gin.Engine
 	bot    *coolq.CQBot
 	HTTP   *http.Server
-	api    *apiCaller
+	api    apiCaller
 }
 
 type httpClient struct {
@@ -46,7 +46,7 @@ func (s *httpServer) Run(addr, authToken string, bot *coolq.CQBot) {
 	gin.SetMode(gin.ReleaseMode)
 	s.engine = gin.New()
 	s.bot = bot
-	s.api = &apiCaller{s.bot}
+	s.api = apiCaller{s.bot}
 	s.engine.Use(func(c *gin.Context) {
 		if c.Request.Method != "GET" && c.Request.Method != "POST" {
 			log.Warnf("已拒绝客户端 %v 的请求: 方法错误", c.Request.RemoteAddr)
@@ -182,7 +182,7 @@ func (h httpContext) Get(k string) gjson.Result {
 			}
 		}
 	}
-	return gjson.Result{Type: gjson.String, Str: ""}
+	return gjson.Result{Type: gjson.Null, Str: ""}
 }
 
 func (s *httpServer) ShutDown() {
