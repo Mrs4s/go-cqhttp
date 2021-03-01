@@ -438,12 +438,12 @@ func (bot *CQBot) formatGroupMessage(m *message.GroupMessage) MSG {
 			t, err := bot.Client.GetGroupMembers(group)
 			if err != nil {
 				log.Warnf("刷新群 %v 成员列表失败: %v", group.Uin, err)
-				return Failed(100, "GET_MEMBERS_API_ERROR", err.Error())
+				return nil
 			}
 			group.Members = t
 			mem = group.FindMember(m.Sender.Uin)
 			if mem != nil {
-				return Failed(100, "MEMBER_NOT_FOUND", "群员不存在")
+				return nil
 			}
 		}
 		ms := gm["sender"].(MSG)

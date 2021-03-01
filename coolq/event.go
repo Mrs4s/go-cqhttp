@@ -94,6 +94,9 @@ func (bot *CQBot) groupMessageEvent(c *client.QQClient, m *message.GroupMessage)
 	}
 	log.Infof("收到群 %v(%v) 内 %v(%v) 的消息: %v (%v)", m.GroupName, m.GroupCode, m.Sender.DisplayName(), m.Sender.Uin, cqm, id)
 	gm := bot.formatGroupMessage(m)
+	if gm == nil {
+		return
+	}
 	gm["message_id"] = id
 	bot.dispatchEventMessage(gm)
 }
