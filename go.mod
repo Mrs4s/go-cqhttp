@@ -3,14 +3,13 @@ module github.com/Mrs4s/go-cqhttp
 go 1.16
 
 require (
-	github.com/Mrs4s/MiraiGo v0.0.0-20210220103625-420583e1c56a
+	github.com/Mrs4s/MiraiGo v0.0.0-20210301012739-a72d7f4db50d
 	github.com/dustin/go-humanize v1.0.0
 	github.com/gin-contrib/pprof v1.3.0
 	github.com/gin-gonic/gin v1.6.3
 	github.com/gorilla/websocket v1.4.2
 	github.com/guonaihong/gout v0.1.4
 	github.com/hjson/hjson-go v3.1.0+incompatible
-	github.com/jonboulle/clockwork v0.2.2 // indirect
 	github.com/json-iterator/go v1.1.10
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
@@ -26,5 +25,4 @@ require (
 	golang.org/x/net v0.0.0-20201021035429-f5854403a974 // indirect
 	golang.org/x/term v0.0.0-20201210144234-2321bbc49cbf
 	golang.org/x/time v0.0.0-20201208040808-7e3f01d25324
-	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 )
