@@ -442,7 +442,7 @@ func (bot *CQBot) formatGroupMessage(m *message.GroupMessage) MSG {
 			}
 			group.Members = t
 			mem = group.FindMember(m.Sender.Uin)
-			if mem != nil {
+			if mem == nil {
 				return nil
 			}
 		}
