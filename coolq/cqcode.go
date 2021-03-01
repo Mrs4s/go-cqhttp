@@ -390,16 +390,20 @@ func (bot *CQBot) ConvertStringMessage(s string, isGroup bool) (r []message.IMes
 			} else if customText != "" {
 				sender, err := strconv.ParseInt(d["qq"], 10, 64)
 				if err != nil {
-					log.Warnf("警告:自定义 Reply 元素中必须包含Uin")
+					log.Warnf("警告:自定义 Reply 元素中必须包含 Uin")
 					return
 				}
 				msgTime, err := strconv.ParseInt(d["time"], 10, 64)
 				if err != nil {
 					msgTime = time.Now().Unix()
 				}
+				messageSeq, err := strconv.ParseInt(d["seq"], 10, 64)
+				if err != nil {
+					messageSeq = 0
+				}
 				r = append([]message.IMessageElement{
 					&message.ReplyElement{
-						ReplySeq: int32(0),
+						ReplySeq: int32(messageSeq),
 						Sender:   sender,
 						Time:     int32(msgTime),
 						Elements: bot.ConvertStringMessage(customText, isGroup),
@@ -530,16 +534,20 @@ func (bot *CQBot) ConvertObjectMessage(m gjson.Result, isGroup bool) (r []messag
 			} else if customText != "" {
 				sender, err := strconv.ParseInt(e.Get("data").Get("qq").String(), 10, 64)
 				if err != nil {
-					log.Warnf("警告:自定义 Reply 元素中必须包含Uin")
+					log.Warnf("警告:自定义 Reply 元素中必须包含 Uin")
 					return
 				}
 				msgTime, err := strconv.ParseInt(e.Get("data").Get("time").String(), 10, 64)
 				if err != nil {
 					msgTime = time.Now().Unix()
 				}
+				messageSeq, err := strconv.ParseInt(e.Get("data").Get("seq").String(), 10, 64)
+				if err != nil {
+					messageSeq = 0
+				}
 				r = append([]message.IMessageElement{
 					&message.ReplyElement{
-						ReplySeq: int32(0),
+						ReplySeq: int32(messageSeq),
 						Sender:   sender,
 						Time:     int32(msgTime),
 						Elements: bot.ConvertStringMessage(customText, isGroup),

@@ -423,9 +423,13 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) MSG {
 		sendNodes = convert(m)
 	}
 	if len(sendNodes) > 0 {
-		gm := bot.Client.SendGroupForwardMessage(groupID, &message.ForwardMessage{Nodes: sendNodes})
+		ret := bot.Client.SendGroupForwardMessage(groupID, &message.ForwardMessage{Nodes: sendNodes})
+		if ret == nil || ret.Id == -1 {
+			log.Warnf("合并转发(群)消息发送失败: 账号可能被风控.")
+			return Failed(100, "SEND_MSG_API_ERROR", "请参考输出")
+		}
 		return OK(MSG{
-			"message_id": bot.InsertGroupMessage(gm),
+			"message_id": bot.InsertGroupMessage(ret),
 		})
 	}
 	return Failed(100)
@@ -547,7 +551,7 @@ func (bot *CQBot) CQSetGroupBan(groupID, userID int64, duration uint32) MSG {
 		if m := g.FindMember(userID); m != nil {
 			err := m.Mute(duration)
 			if err != nil {
-				if duration >= 2592000 {
+				if duration > 2592000 {
 					return Failed(100, "DURATION_IS_NOT_IN_RANGE", "非法的禁言时长")
 				}
 				return Failed(100, "NOT_MANAGEABLE", "机器人权限不足")
@@ -663,6 +667,11 @@ func (bot *CQBot) CQDeleteMessage(messageID int32) MSG {
 		return Failed(100, "MESSAGE_NOT_FOUND", "消息不存在")
 	}
 	if _, ok := msg["group"]; ok {
+		if msg["internal-id"] == nil {
+			// TODO 撤回临时对话消息
+			log.Warnf("撤回 %v 失败: 无法撤回临时对话消息", messageID)
+			return Failed(100, "CANNOT_RECALL_TEMP_MSG", "无法撤回临时对话消息")
+		}
 		if err := bot.Client.RecallGroupMessage(msg["group"].(int64), msg["message-id"].(int32), msg["internal-id"].(int32)); err != nil {
 			log.Warnf("撤回 %v 失败: %v", messageID, err)
 			return Failed(100, "RECALL_API_ERROR", err.Error())
