@@ -111,12 +111,13 @@ Type : `reply`
 | `text` | string | 自定义回复的信息                                    |
 | `qq`   | int64  | 自定义回复时的自定义QQ, 如果使用自定义信息必须指定. |
 | `time` | int64  | 可选. 自定义回复时的时间, 格式为Unix时间 |
+| `seq` | int64  | 起始消息序号, 可通过 `get_msg` 获得 |
 
 
 
 示例: `[CQ:reply,id=123456]` 
 \
-自定义回复示例: `[CQ:reply,text=Hello World,qq=10086,time=3376656000]`
+自定义回复示例: `[CQ:reply,text=Hello World,qq=10086,time=3376656000,seq=5123]`
 
 ### 音乐分享 <Badge text="发"/>
 
@@ -263,8 +264,9 @@ Type: `node`
 | `name`    | string  | 发送者显示名字 | 用于自定义消息 (自定义消息并合并转发，实际查看顺序为自定义消息段顺序)                  |
 | `uin`     | int64   | 发送者QQ号     | 用于自定义消息                                                                         |
 | `content` | message | 具体消息       | 用于自定义消息                                                                         |
+| `seq`     | message | 具体消息       | 用于自定义消息                                                                         |
 
-特殊说明: **需要使用单独的API `/send_group_forward_msg` 发送，并且由于消息段较为复杂，仅支持Array形式入参。 如果引用消息和自定义消息同时出现，实际查看顺序将取消息段顺序.  另外按 [CQHTTP](https://cqhttp.cc/docs/4.15/#/Message?id=格式) 文档说明, `data` 应全为字符串, 但由于需要接收`message` 类型的消息, 所以 *仅限此Type的content字段* 支持Array套娃**
+特殊说明: **需要使用单独的API `/send_group_forward_msg` 发送，并且由于消息段较为复杂，仅支持Array形式入参。 如果引用消息和自定义消息同时出现，实际查看顺序将取消息段顺序.  另外按 [CQHTTP](https://git.io/JtxtN) 文档说明, `data` 应全为字符串, 但由于需要接收`message` 类型的消息, 所以 *仅限此Type的content字段* 支持Array套娃**
 
 示例: 
 
@@ -325,6 +327,7 @@ Type: `node`
             "name": "自定义发送者",
             "uin": "10086",
             "content": "我是自定义消息",
+            "seq": "5123",
             "time": "3376656000"
         }
     },
@@ -603,10 +606,10 @@ Type: `tts`
 | 字段       | 类型           | 说明                         |
 | ---------- | -------------- | ---------------------------- |
 | `group_id` | int64          | 群号                         |
-| `messages` | forward node[] | 自定义转发消息, 具体看CQCode |
+| `messages` | forward node[] | 自定义转发消息, 具体看 [CQCode](https://github.com/Mrs4s/go-cqhttp/blob/master/docs/cqhttp.md#%E5%90%88%E5%B9%B6%E8%BD%AC%E5%8F%91%E6%B6%88%E6%81%AF%E8%8A%82%E7%82%B9) |
 
 响应数据
-
+    
 | 字段         | 类型   | 说明   |
 | ------------ | ------ | ------ |
 | `message_id` | string | 消息id |

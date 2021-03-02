@@ -103,16 +103,20 @@ func (bot *CQBot) groupMessageEvent(c *client.QQClient, m *message.GroupMessage)
 
 func (bot *CQBot) tempMessageEvent(c *client.QQClient, m *message.TempMessage) {
 	bot.checkMedia(m.Elements)
-	cqm := ToStringMessage(m.Elements, 0, true)
+	cqm := ToStringMessage(m.Elements, m.Sender.Uin, true)
 	bot.tempMsgCache.Store(m.Sender.Uin, m.GroupCode)
+	id := m.Id
+	if bot.db != nil {
+		id = bot.InsertTempMessage(m.Sender.Uin, m)
+	}
 	log.Infof("收到来自群 %v(%v) 内 %v(%v) 的临时会话消息: %v", m.GroupName, m.GroupCode, m.Sender.DisplayName(), m.Sender.Uin, cqm)
 	tm := MSG{
 		"post_type":    "message",
 		"message_type": "private",
 		"sub_type":     "group",
-		"message_id":   m.Id,
+		"message_id":   id,
 		"user_id":      m.Sender.Uin,
-		"message":      ToFormattedMessage(m.Elements, 0, false),
+		"message":      ToFormattedMessage(m.Elements, m.Sender.Uin, false),
 		"raw_message":  cqm,
 		"font":         0,
 		"self_id":      c.Uin,
