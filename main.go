@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
+	"github.com/Mrs4s/go-cqhttp/global/terminal"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	easy "github.com/t-tomalak/logrus-easy-formatter"
 	"io"
@@ -53,6 +54,11 @@ func init() {
 		panic(err)
 	}
 
+	conf = getConfig()
+	if conf == nil {
+		os.Exit(1)
+	}
+
 	// 在debug模式下,将在标准输出中打印当前执行行数
 	if conf.Debug {
 		log.SetReportCaller(true)
@@ -90,11 +96,6 @@ func init() {
 		_ = os.Remove("cqhttp.json")
 	}
 
-	conf = getConfig()
-	if conf == nil {
-		os.Exit(1)
-	}
-
 	if !global.PathExists(global.ImagePath) {
 		if err := os.MkdirAll(global.ImagePath, 0755); err != nil {
 			log.Fatalf("创建图片缓存文件夹失败: %v", err)
@@ -118,7 +119,11 @@ func init() {
 }
 
 func main() {
-
+	if terminal.RunningByDoubleClick() {
+		log.Warning("警告: 强烈不推荐通过双击直接运行本程序, 这将导致一些非预料的后果.")
+		log.Warning("将等待10s后启动")
+		time.Sleep(time.Second * 10)
+	}
 	var byteKey []byte
 	arg := os.Args
 	if len(arg) > 1 {
