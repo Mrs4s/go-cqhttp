@@ -8,6 +8,8 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
+	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
+	easy "github.com/t-tomalak/logrus-easy-formatter"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -33,9 +35,7 @@ import (
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
 	jsoniter "github.com/json-iterator/go"
-	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	log "github.com/sirupsen/logrus"
-	easy "github.com/t-tomalak/logrus-easy-formatter"
 )
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
@@ -43,6 +43,23 @@ var conf *global.JSONConfig
 var isFastStart = false
 
 func init() {
+	logFormatter := &easy.Formatter{
+		TimestampFormat: "2006-01-02 15:04:05",
+		LogFormat:       "[%time%] [%lvl%]: %msg% \n",
+	}
+	w, err := rotatelogs.New(path.Join("logs", "%Y-%m-%d.log"), rotatelogs.WithRotationTime(time.Hour*24))
+	if err != nil {
+		log.Errorf("rotatelogs init err: %v", err)
+		panic(err)
+	}
+
+	// 在debug模式下,将在标准输出中打印当前执行行数
+	if conf.Debug {
+		log.SetReportCaller(true)
+	}
+
+	log.AddHook(global.NewLocalHook(w, logFormatter, global.GetLogLevel(conf.LogLevel)...))
+
 	if global.PathExists("cqhttp.json") {
 		log.Info("发现 cqhttp.json 将在五秒后尝试导入配置，按 Ctrl+C 取消.")
 		log.Warn("警告: 该操作会删除 cqhttp.json 并覆盖 config.hjson 文件.")
@@ -77,23 +94,6 @@ func init() {
 	if conf == nil {
 		os.Exit(1)
 	}
-
-	logFormatter := &easy.Formatter{
-		TimestampFormat: "2006-01-02 15:04:05",
-		LogFormat:       "[%time%] [%lvl%]: %msg% \n",
-	}
-	w, err := rotatelogs.New(path.Join("logs", "%Y-%m-%d.log"), rotatelogs.WithRotationTime(time.Hour*24))
-	if err != nil {
-		log.Errorf("rotatelogs init err: %v", err)
-		panic(err)
-	}
-
-	// 在debug模式下,将在标准输出中打印当前执行行数
-	if conf.Debug {
-		log.SetReportCaller(true)
-	}
-
-	log.AddHook(global.NewLocalHook(w, logFormatter, global.GetLogLevel(conf.LogLevel)...))
 
 	if !global.PathExists(global.ImagePath) {
 		if err := os.MkdirAll(global.ImagePath, 0755); err != nil {
