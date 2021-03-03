@@ -145,6 +145,7 @@ type JSONConfig struct {
 	EncryptPassword   bool   `json:"encrypt_password"`
 	PasswordEncrypted string `json:"password_encrypted"`
 	EnableDB          bool   `json:"enable_db"`
+	EnableSelfMessage bool   `json:"enable_self_message"`
 	AccessToken       string `json:"access_token"`
 	ReLogin           struct {
 		Enabled         bool `json:"enabled"`

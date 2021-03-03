@@ -4,7 +4,7 @@ go-cqhttp 包含 `config.hjson` 和 `device.json` 两个配置文件, 其中 `co
 
 ## 从原CQHTTP导入配置
 
-go-cqhttp 支持导入CQHTTP的配置文件, 具体步骤为: 
+go-cqhttp 支持导入CQHTTP的配置文件, 具体步骤为:
 
 1. 找到CQHTTP原配置文件 `{CQ工作目录}/app/io.github.richardchien.coolqhttpapi/config/{qq号}.json`
 2. 将文件复制到go-cqhttp根目录并重命名为 `cqhttp.json`
@@ -12,52 +12,55 @@ go-cqhttp 支持导入CQHTTP的配置文件, 具体步骤为:
 
 ## 配置信息
 
-默认生成的配置文件如下所示: 
+默认生成的配置文件如下所示:
 
 ````json
 {
-	"uin": 0,
-	"password": "",
-	"encrypt_password": false,
-	"password_encrypted": "",
-	"enable_db": true,
-	"access_token": "",
-	"relogin": {
-		"enabled": true,
-		"relogin_delay": 3,
-		"max_relogin_times": 0
-	},
-    "_rate_limit": {
-		"enabled": false,
-		"frequency": 1,
-		"bucket_size": 1
-    },
-	"post_message_format": "string",
-	"ignore_invalid_cqcode": false,
-	"force_fragmented": true,
-	"heartbeat_interval": 5,
-    "use_sso_address": false,
-	"http_config": {
-		"enabled": true,
-		"host": "0.0.0.0",
-		"port": 5700,
-		"timeout": 5,
-		"post_urls": {"url:port": "secret"}
-	},
-	"ws_config": {
-		"enabled": true,
-		"host": "0.0.0.0",
-		"port": 6700
-	},
-	"ws_reverse_servers": [
-		{
-			"enabled": false,
-			"reverse_url": "ws://you_websocket_universal.server",
-			"reverse_api_url": "ws://you_websocket_api.server",
-			"reverse_event_url": "ws://you_websocket_event.server",
-			"reverse_reconnect_interval": 3000
-		}
-	]
+  "uin": 0,
+  "password": "",
+  "encrypt_password": false,
+  "password_encrypted": "",
+  "enable_db": true,
+  "enable_self_message": false,
+  "access_token": "",
+  "relogin": {
+    "enabled": true,
+    "relogin_delay": 3,
+    "max_relogin_times": 0
+  },
+  "_rate_limit": {
+    "enabled": false,
+    "frequency": 1,
+    "bucket_size": 1
+  },
+  "post_message_format": "string",
+  "ignore_invalid_cqcode": false,
+  "force_fragmented": true,
+  "heartbeat_interval": 5,
+  "use_sso_address": false,
+  "http_config": {
+    "enabled": true,
+    "host": "0.0.0.0",
+    "port": 5700,
+    "timeout": 5,
+    "post_urls": {
+      "url:port": "secret"
+    }
+  },
+  "ws_config": {
+    "enabled": true,
+    "host": "0.0.0.0",
+    "port": 6700
+  },
+  "ws_reverse_servers": [
+    {
+      "enabled": false,
+      "reverse_url": "ws://you_websocket_universal.server",
+      "reverse_api_url": "ws://you_websocket_api.server",
+      "reverse_event_url": "ws://you_websocket_event.server",
+      "reverse_reconnect_interval": 3000
+    }
+  ]
 }
 ````
 
@@ -68,6 +71,7 @@ go-cqhttp 支持导入CQHTTP的配置文件, 具体步骤为:
 | encrypt_password      | bool     | 是否对密码进行加密.                                                                      |
 | password_encrypted    | string   | 加密后的密码(请勿修改)                                                                   |
 | enable_db             | bool     | 是否开启内置数据库, 关闭后将无法使用 **回复/撤回** 等上下文相关接口                      |
+| enable_self_message   | bool     | 是否启用 `message_sent` 事件                                                       |
 | access_token          | string   | 同CQHTTP的 `access_token`  用于身份验证                                                  |
 | relogin               | bool     | 是否自动重新登录                                                                         |
 | relogin_delay         | int      | 重登录延时（秒）                                                                         |
@@ -96,7 +100,7 @@ go-cqhttp 支持导入CQHTTP的配置文件, 具体步骤为:
 
 ## 设备信息
 
-默认生成的设备信息如下所示: 
+默认生成的设备信息如下所示:
 
 ``` json
 {
@@ -109,7 +113,7 @@ go-cqhttp 支持导入CQHTTP的配置文件, 具体步骤为:
 }
 ```
 
-在大部分情况下 我们只需要关心 `protocol` 字段: 
+在大部分情况下 我们只需要关心 `protocol` 字段:
 
 | 值  | 类型          | 限制                                                             |
 | --- | ------------- | ---------------------------------------------------------------- |
@@ -127,6 +131,7 @@ go-cqhttp 支持导入CQHTTP的配置文件, 具体步骤为:
 将文件 `address.txt` 创建到 `go-cqhttp` 工作目录, 并键入 `IP:PORT` 以换行符为分割即可.
 
 示例:
+
 ````
 1.1.1.1:53
 1.1.2.2:8899
