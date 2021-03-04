@@ -123,6 +123,7 @@ func (bot *CQBot) tempMessageEvent(c *client.QQClient, m *message.TempMessage) {
 		"time":         time.Now().Unix(),
 		"sender": MSG{
 			"user_id":  m.Sender.Uin,
+			"group_id":     m.GroupCode,
 			"nickname": m.Sender.Nickname,
 			"sex":      "unknown",
 			"age":      0,
