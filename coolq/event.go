@@ -115,6 +115,7 @@ func (bot *CQBot) tempMessageEvent(c *client.QQClient, m *message.TempMessage) {
 		"message_type": "private",
 		"sub_type":     "group",
 		"message_id":   id,
+		"group_id":     m.GroupCode,
 		"user_id":      m.Sender.Uin,
 		"message":      ToFormattedMessage(m.Elements, m.Sender.Uin, false),
 		"raw_message":  cqm,
