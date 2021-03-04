@@ -119,11 +119,6 @@ func init() {
 }
 
 func main() {
-	if terminal.RunningByDoubleClick() {
-		log.Warning("警告: 强烈不推荐通过双击直接运行本程序, 这将导致一些非预料的后果.")
-		log.Warning("将等待10s后启动")
-		time.Sleep(time.Second * 10)
-	}
 	var byteKey []byte
 	arg := os.Args
 	if len(arg) > 1 {
@@ -145,7 +140,11 @@ func main() {
 			}
 		}
 	}
-
+	if terminal.RunningByDoubleClick() && !isFastStart {
+		log.Warning("警告: 强烈不推荐通过双击直接运行本程序, 这将导致一些非预料的后果.")
+		log.Warning("将等待10s后启动")
+		time.Sleep(time.Second * 10)
+	}
 	if conf.Uin == 0 || (conf.Password == "" && conf.PasswordEncrypted == "") {
 		log.Warnf("请修改 config.hjson 以添加账号密码.")
 		if !isFastStart {
