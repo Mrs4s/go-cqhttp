@@ -45,16 +45,16 @@ func getGroupMemberInfo(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 func sendMSG(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 	autoEscape := global.EnsureBool(p.Get("auto_escape"), false)
 	if p.Get("message_type").Str == "private" {
-		return bot.CQSendPrivateMessage(p.Get("user_id").Int(), p.Get("message"), autoEscape)
+		return bot.CQSendPrivateMessage(p.Get("user_id").Int(), p.Get("group_id").Int(), p.Get("message"), autoEscape)
 	}
 	if p.Get("message_type").Str == "group" {
 		return bot.CQSendGroupMessage(p.Get("group_id").Int(), p.Get("message"), autoEscape)
 	}
+	if p.Get("user_id").Int() != 0 {
+		return bot.CQSendPrivateMessage(p.Get("user_id").Int(), p.Get("group_id").Int(), p.Get("message"), autoEscape)
+	}
 	if p.Get("group_id").Int() != 0 {
 		return bot.CQSendGroupMessage(p.Get("group_id").Int(), p.Get("message"), autoEscape)
-	}
-	if p.Get("user_id").Int() != 0 {
-		return bot.CQSendPrivateMessage(p.Get("user_id").Int(), p.Get("message"), autoEscape)
 	}
 	return coolq.MSG{}
 }
@@ -69,7 +69,7 @@ func sendGroupForwardMSG(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 }
 
 func sendPrivateMSG(bot *coolq.CQBot, p resultGetter) coolq.MSG {
-	return bot.CQSendPrivateMessage(p.Get("user_id").Int(), p.Get("message"),
+	return bot.CQSendPrivateMessage(p.Get("user_id").Int(), p.Get("group_id").Int(), p.Get("message"),
 		global.EnsureBool(p.Get("auto_escape"), false))
 }
 
