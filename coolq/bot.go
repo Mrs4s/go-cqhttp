@@ -242,7 +242,7 @@ func (bot *CQBot) SendGroupMessage(groupID int64, m *message.SendingMessage) int
 }
 
 // SendPrivateMessage 发送私聊消息
-func (bot *CQBot) SendPrivateMessage(target int64, m *message.SendingMessage) int32 {
+func (bot *CQBot) SendPrivateMessage(target int64, groupId int64, m *message.SendingMessage) int32 {
 	var newElem []message.IMessageElement
 	for _, elem := range m.Elements {
 		if i, ok := elem.(*LocalImageElement); ok {
@@ -294,16 +294,33 @@ func (bot *CQBot) SendPrivateMessage(target int64, m *message.SendingMessage) in
 		if msg != nil {
 			id = bot.InsertPrivateMessage(msg)
 		}
-	} else if code, ok := bot.tempMsgCache.Load(target); ok { // 临时会话
-		msg := bot.Client.SendTempMessage(code.(int64), target, m)
-		if msg != nil {
-			id = bot.InsertTempMessage(target, msg)
+	} else if code, ok := bot.tempMsgCache.Load(target); ok || groupId != 0 { // 临时会话
+		if groupId != 0 && !bot.Client.FindGroup(groupId).AdministratorOrOwner() {
+			log.Errorf("错误: 机器人在群(%v) 为非管理员或群主, 无法主动发起临时会话", groupId)
+			id = -1
+		} else if groupId != 0 && bot.Client.FindGroup(groupId).FindMember(target) == nil {
+			log.Errorf("错误: 群员(%v) 不在 群(%v), 无法发起临时会话", target, groupId)
+			id = -1
+		} else {
+			if code != nil {
+				groupId = code.(int64)
+			}
+			msg := bot.Client.SendTempMessage(groupId, target, m)
+			if msg != nil {
+				id = bot.InsertTempMessage(target, msg)
+			}
 		}
 	} else if _, ok := bot.oneWayMsgCache.Load(target); ok { // 单向好友
 		msg := bot.Client.SendPrivateMessage(target, m)
 		if msg != nil {
 			id = bot.InsertPrivateMessage(msg)
 		}
+	} else {
+		nickname := "Unknown"
+		if summaryInfo, _ := bot.Client.GetSummaryInfo(target); summaryInfo != nil {
+			nickname = summaryInfo.Nickname
+		}
+		log.Errorf("错误: 请先添加 %v(%v) 为好友", nickname, target)
 	}
 	if id == -1 {
 		return -1
