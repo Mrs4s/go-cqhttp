@@ -831,9 +831,9 @@ func (bot *CQBot) CQHandleQuickOperation(context, operation gjson.Result) MSG {
 		if reply.Exists() {
 			autoEscape := global.EnsureBool(operation.Get("auto_escape"), false)
 
-			at := !isAnonymous // 除匿名消息场合外默认 true
+			at := !isAnonymous && msgType == "group" // 除匿名消息场合外默认 true
 			if operation.Get("at_sender").Exists() {
-				at = operation.Get("at_sender").Bool() && !isAnonymous
+				at = operation.Get("at_sender").Bool() && !isAnonymous && msgType == "group"
 			}
 
 			if at && reply.IsArray() {
