@@ -360,7 +360,7 @@ func ToStringMessage(e []message.IMessageElement, id int64, isRaw ...bool) (r st
 func (bot *CQBot) ConvertStringMessage(s string, isGroup bool) (r []message.IMessageElement) {
 	var t, key string
 	var d = map[string]string{}
-	ptr := unsafe.Pointer((*reflect.SliceHeader)(unsafe.Pointer(&s)).Data)
+	ptr := unsafe.Pointer((*reflect.StringHeader)(unsafe.Pointer(&s)).Data)
 	l := len(s)
 	i, j, CQBegin := 0, 0, 0
 
