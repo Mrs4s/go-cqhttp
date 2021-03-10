@@ -22,7 +22,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// Version go-cqhttp的版本信息，在编译时使用ldfalgs进行覆盖
+// Version go-cqhttp的版本信息，在编译时使用ldflags进行覆盖
 var Version = "unknown"
 
 // CQGetLoginInfo 获取登录号信息
