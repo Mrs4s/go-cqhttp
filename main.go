@@ -7,6 +7,7 @@ import (
 	"crypto/sha1"
 	"encoding/base64"
 	"encoding/hex"
+	"flag"
 	"fmt"
 	"github.com/Mrs4s/go-cqhttp/global/terminal"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
@@ -119,6 +120,13 @@ func init() {
 }
 
 func main() {
+
+	var d     bool
+	flag.BoolVar(&d, "d", false, "running as a daemon")
+	flag.Parse()
+	if d {
+		server.Daemon()
+	}
 	var byteKey []byte
 	arg := os.Args
 	if len(arg) > 1 {
