@@ -535,6 +535,7 @@ func getConfig() *global.JSONConfig {
 	return conf
 }
 
+// help cli命令行-h的帮助提示
 func help() {
 	fmt.Printf(`go-cqhttp service
 version: %s

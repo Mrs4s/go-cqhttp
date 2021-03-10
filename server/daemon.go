@@ -13,6 +13,7 @@ import (
 	"strings"
 )
 
+// Daemon go-cqhttp server 的 daemon的实现函数
 func Daemon() {
 	args := os.Args[1:]
 
@@ -44,10 +45,12 @@ func Daemon() {
 	os.Exit(0)
 }
 
+// savePid 保存pid到文件中，便于后续restart/stop的时候kill pid用。
 func savePid(path string,data string) error {
 	return global.WriteAllText(path, data)
 }
 
+// GetCurrentPath 预留,获取当前目录地址
 func GetCurrentPath() (string, error) {
 	file, err := exec.LookPath(os.Args[0])
 	if err != nil {
