@@ -2,7 +2,10 @@
 package server
 
 import (
+	"errors"
 	"fmt"
+	"github.com/Mrs4s/go-cqhttp/global"
+	log "github.com/sirupsen/logrus"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -31,9 +34,18 @@ func Daemon() {
 		panic(err)
 	}
 
-	fmt.Println("[PID] ", proc.Process.Pid)
+	log.Info("[PID] ", proc.Process.Pid)
+	//pid写入到pid文件中，方便后续stop的时候kill
+	pidErr:=savePid("go-cqhttp.pid",fmt.Sprintf("%d",proc.Process.Pid))
+	if pidErr != nil{
+		log.Errorf("save pid file error: %v",pidErr)
+	}
 
 	os.Exit(0)
+}
+
+func savePid(path string,data string) error {
+	return global.WriteAllText(path, data)
 }
 
 func GetCurrentPath() (string, error) {
@@ -52,7 +64,7 @@ func GetCurrentPath() (string, error) {
 	//fmt.Println("path222:", path)
 	i := strings.LastIndex(path, "/")
 	if i < 0 {
-		//return "", errors.New("system/path_error", `Can't find "/" or "\".`)
+		return "",errors.New("system/path_error,Can't find '/' or '\\'");
 	}
 	//fmt.Println("path333:", path)
 	return string(path[0 : i+1]), nil

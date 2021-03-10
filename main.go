@@ -43,8 +43,15 @@ import (
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 var conf *global.JSONConfig
 var isFastStart = false
+var d bool
+var h bool
 
 func init() {
+
+	flag.BoolVar(&d, "d", false, "running as a daemon")
+	flag.BoolVar(&h, "h", false, "this help")
+	flag.Parse()
+
 	logFormatter := &easy.Formatter{
 		TimestampFormat: "2006-01-02 15:04:05",
 		LogFormat:       "[%time%] [%lvl%]: %msg% \n",
@@ -120,10 +127,9 @@ func init() {
 }
 
 func main() {
-
-	var d     bool
-	flag.BoolVar(&d, "d", false, "running as a daemon")
-	flag.Parse()
+	if h {
+		help()
+	}
 	if d {
 		server.Daemon()
 	}
@@ -527,4 +533,19 @@ func getConfig() *global.JSONConfig {
 		return nil
 	}
 	return conf
+}
+
+func help() {
+	fmt.Printf(`go-cqhttp service
+version: %s
+
+Usage:
+
+server [OPTIONS]
+
+Options:
+`, coolq.Version)
+
+	flag.PrintDefaults()
+	os.Exit(0)
 }
