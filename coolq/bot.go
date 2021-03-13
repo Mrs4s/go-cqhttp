@@ -295,7 +295,10 @@ func (bot *CQBot) SendPrivateMessage(target int64, groupId int64, m *message.Sen
 			id = bot.InsertPrivateMessage(msg)
 		}
 	} else if code, ok := bot.tempMsgCache.Load(target); ok || groupId != 0 { // 临时会话
-		if groupId != 0 && !bot.Client.FindGroup(groupId).AdministratorOrOwner() {
+		if bot.Client.FindGroup(groupId) == nil {
+			log.Errorf("错误: 找不到群(%v)", groupId)
+			id = -1
+		} else if groupId != 0 && !bot.Client.FindGroup(groupId).AdministratorOrOwner() {
 			log.Errorf("错误: 机器人在群(%v) 为非管理员或群主, 无法主动发起临时会话", groupId)
 			id = -1
 		} else if groupId != 0 && bot.Client.FindGroup(groupId).FindMember(target) == nil {
