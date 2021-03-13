@@ -12,6 +12,7 @@ import (
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
+
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
@@ -97,7 +98,7 @@ func (c *WebSocketClient) connectAPI() {
 	if c.token != "" {
 		header["Authorization"] = []string{"Token " + c.token}
 	}
-	conn, _, err := websocket.DefaultDialer.Dial(c.conf.ReverseAPIURL, header)
+	conn, _, err := websocket.DefaultDialer.Dial(c.conf.ReverseAPIURL, header) // nolint
 	if err != nil {
 		log.Warnf("连接到反向WebSocket API服务器 %v 时出现错误: %v", c.conf.ReverseAPIURL, err)
 		if c.conf.ReverseReconnectInterval != 0 {
@@ -121,7 +122,7 @@ func (c *WebSocketClient) connectEvent() {
 	if c.token != "" {
 		header["Authorization"] = []string{"Token " + c.token}
 	}
-	conn, _, err := websocket.DefaultDialer.Dial(c.conf.ReverseEventURL, header)
+	conn, _, err := websocket.DefaultDialer.Dial(c.conf.ReverseEventURL, header) // nolint
 	if err != nil {
 		log.Warnf("连接到反向WebSocket Event服务器 %v 时出现错误: %v", c.conf.ReverseEventURL, err)
 		if c.conf.ReverseReconnectInterval != 0 {
@@ -152,7 +153,7 @@ func (c *WebSocketClient) connectUniversal() {
 	if c.token != "" {
 		header["Authorization"] = []string{"Token " + c.token}
 	}
-	conn, _, err := websocket.DefaultDialer.Dial(c.conf.ReverseURL, header)
+	conn, _, err := websocket.DefaultDialer.Dial(c.conf.ReverseURL, header) // nolint
 	if err != nil {
 		log.Warnf("连接到反向WebSocket Universal服务器 %v 时出现错误: %v", c.conf.ReverseURL, err)
 		if c.conf.ReverseReconnectInterval != 0 {
@@ -161,7 +162,6 @@ func (c *WebSocketClient) connectUniversal() {
 		}
 		return
 	}
-
 	handshake := fmt.Sprintf(`{"meta_event_type":"lifecycle","post_type":"meta_event","self_id":%d,"sub_type":"connect","time":%d}`,
 		c.bot.Client.Uin, time.Now().Unix())
 	err = conn.WriteMessage(websocket.TextMessage, []byte(handshake))
@@ -184,7 +184,6 @@ func (c *WebSocketClient) listenAPI(conn *webSocketConn, u bool) {
 		}
 
 		go conn.handleRequest(c.bot, buf)
-
 	}
 	if c.conf.ReverseReconnectInterval != 0 {
 		time.Sleep(time.Millisecond * time.Duration(c.conf.ReverseReconnectInterval))

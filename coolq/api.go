@@ -4,10 +4,6 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
-	"github.com/Mrs4s/MiraiGo/binary"
-	"github.com/Mrs4s/MiraiGo/client"
-	"github.com/Mrs4s/MiraiGo/message"
-	"github.com/tidwall/gjson"
 	"io/ioutil"
 	"math"
 	"os"
@@ -19,7 +15,12 @@ import (
 	"time"
 
 	"github.com/Mrs4s/go-cqhttp/global"
+
+	"github.com/Mrs4s/MiraiGo/binary"
+	"github.com/Mrs4s/MiraiGo/client"
+	"github.com/Mrs4s/MiraiGo/message"
 	log "github.com/sirupsen/logrus"
+	"github.com/tidwall/gjson"
 )
 
 // Version go-cqhttp的版本信息，在编译时使用ldflags进行覆盖
@@ -438,12 +439,12 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) MSG {
 // CQSendPrivateMessage 发送私聊消息
 //
 // https://git.io/Jtz1l
-func (bot *CQBot) CQSendPrivateMessage(userID int64, groupId int64, i interface{}, autoEscape bool) MSG {
+func (bot *CQBot) CQSendPrivateMessage(userID int64, groupID int64, i interface{}, autoEscape bool) MSG {
 	var str string
 	if m, ok := i.(gjson.Result); ok {
 		if m.Type == gjson.JSON {
 			elem := bot.ConvertObjectMessage(m, false)
-			mid := bot.SendPrivateMessage(userID, groupId, &message.SendingMessage{Elements: elem})
+			mid := bot.SendPrivateMessage(userID, groupID, &message.SendingMessage{Elements: elem})
 			if mid == -1 {
 				return Failed(100, "SEND_MSG_API_ERROR", "请参考输出")
 			}
@@ -468,7 +469,7 @@ func (bot *CQBot) CQSendPrivateMessage(userID int64, groupId int64, i interface{
 	} else {
 		elem = bot.ConvertStringMessage(str, false)
 	}
-	mid := bot.SendPrivateMessage(userID, groupId, &message.SendingMessage{Elements: elem})
+	mid := bot.SendPrivateMessage(userID, groupID, &message.SendingMessage{Elements: elem})
 	if mid == -1 {
 		return Failed(100, "SEND_MSG_API_ERROR", "请参考输出")
 	}
@@ -1053,7 +1054,7 @@ func (bot *CQBot) CQGetGroupMessageHistory(groupID int64, seq int64) MSG {
 		log.Warnf("获取群历史消息失败: %v", err)
 		return Failed(100, "MESSAGES_API_ERROR", err.Error())
 	}
-	var ms []MSG
+	var ms = make([]MSG, len(msg))
 	for _, m := range msg {
 		id := m.Id
 		bot.checkMedia(m.Elements)
@@ -1079,7 +1080,7 @@ func (bot *CQBot) CQGetOnlineClients(noCache bool) MSG {
 			return Failed(100, "REFRESH_STATUS_ERROR", err.Error())
 		}
 	}
-	var d []MSG
+	var d = make([]MSG, len(bot.Client.OnlineClients))
 	for _, oc := range bot.Client.OnlineClients {
 		d = append(d, MSG{
 			"app_id":      oc.AppId,
@@ -1342,6 +1343,8 @@ func convertGroupMemberInfo(groupID int64, m *client.GroupMemberInfo) MSG {
 				return "owner"
 			case client.Administrator:
 				return "admin"
+			case client.Member:
+				return "member"
 			default:
 				return "member"
 			}
