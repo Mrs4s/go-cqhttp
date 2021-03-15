@@ -1039,6 +1039,7 @@ func (bot *CQBot) CQGetGroupSystemMessages() MSG {
 // https://docs.go-cqhttp.org/api/#%E8%8E%B7%E5%8F%96%E7%BE%A4%E6%B6%88%E6%81%AF%E5%8E%86%E5%8F%B2%E8%AE%B0%E5%BD%95
 func (bot *CQBot) CQGetGroupMessageHistory(groupID int64, seq int64) MSG {
 	if g := bot.Client.FindGroup(groupID); g == nil {
+		log.Warnf("错误: 获取群消息历史记录失败, 群 %v 不存在", groupID)
 		return Failed(100, "GROUP_NOT_FOUND", "群聊不存在")
 	}
 	if seq == 0 {
