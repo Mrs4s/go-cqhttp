@@ -48,7 +48,6 @@ var d bool
 var h bool
 
 func init() {
-
 	var debug bool
 	flag.StringVar(&c, "c", global.DefaultConfFile, "configuration filename default is config.hjson")
 	flag.BoolVar(&d, "d", false, "running as a daemon")
@@ -56,7 +55,7 @@ func init() {
 	flag.BoolVar(&h, "h", false, "this help")
 	flag.Parse()
 
-	//通过-c 参数替换 配置文件路径
+	// 通过-c 参数替换 配置文件路径
 	global.DefaultConfFile = c
 	logFormatter := &easy.Formatter{
 		TimestampFormat: "2006-01-02 15:04:05",
@@ -74,10 +73,10 @@ func init() {
 	}
 
 	if debug {
-		conf.Debug=true
+		conf.Debug = true
 	}
 	// 在debug模式下,将在标准输出中打印当前执行行数
-	if conf.Debug{
+	if conf.Debug {
 		log.SetReportCaller(true)
 	}
 
