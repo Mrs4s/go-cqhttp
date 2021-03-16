@@ -20,7 +20,7 @@ require (
 	github.com/syndtr/goleveldb v1.0.0
 	github.com/t-tomalak/logrus-easy-formatter v0.0.0-20190827215021-c074f06c5816
 	github.com/tidwall/gjson v1.6.8
-	github.com/wdvxdr1123/go-silk v0.0.0-20210222130408-591ac9cef582
+	github.com/wdvxdr1123/go-silk v0.0.0-20210316130616-d47b553def60
 	github.com/yinghau76/go-ascii-art v0.0.0-20190517192627-e7f465a30189
 	golang.org/x/crypto v0.0.0-20210314154223-e6e6c4f2bb5b
 	golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d
