@@ -349,5 +349,5 @@ func GetCurrentPath() (string, error) {
 	if i < 0 {
 		return "", errors.New("system/path_error,Can't find '/' or '\\'")
 	}
-	return string(fpath[0 : i+1]), nil
+	return fpath[0 : i+1], nil
 }

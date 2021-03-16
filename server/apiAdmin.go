@@ -22,10 +22,10 @@ import (
 	"github.com/Mrs4s/MiraiGo/utils"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
-	"github.com/json-iterator/go"
+	jsoniter "github.com/json-iterator/go"
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
-	"github.com/yinghau76/go-ascii-art"
+	asciiart "github.com/yinghau76/go-ascii-art"
 )
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary

@@ -35,7 +35,7 @@ func Daemon() {
 	}
 
 	log.Info("[PID] ", proc.Process.Pid)
-	//pid写入到pid文件中，方便后续stop的时候kill
+	// pid写入到pid文件中，方便后续stop的时候kill
 	pidErr := savePid("go-cqhttp.pid", fmt.Sprintf("%d", proc.Process.Pid))
 	if pidErr != nil {
 		log.Errorf("save pid file error: %v", pidErr)
