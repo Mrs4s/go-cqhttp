@@ -8,6 +8,7 @@ import (
 	"path"
 
 	"github.com/Mrs4s/go-cqhttp/global/codec"
+
 	"github.com/pkg/errors"
 )
 

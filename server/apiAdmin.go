@@ -15,12 +15,12 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Mrs4s/MiraiGo/utils"
-	"github.com/gin-contrib/pprof"
-
-	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
+
+	"github.com/Mrs4s/MiraiGo/client"
+	"github.com/Mrs4s/MiraiGo/utils"
+	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	jsoniter "github.com/json-iterator/go"
 	log "github.com/sirupsen/logrus"
@@ -31,7 +31,7 @@ import (
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 // WebInput 网页输入channel
-var WebInput = make(chan string, 1) //长度1，用于阻塞
+var WebInput = make(chan string, 1) // 长度1，用于阻塞
 
 // Console 控制台channel
 var Console = make(chan os.Signal, 1)
@@ -46,7 +46,7 @@ type webServer struct {
 	engine  *gin.Engine
 	bot     *coolq.CQBot
 	Cli     *client.QQClient
-	Conf    *global.JSONConfig //old config
+	Conf    *global.JSONConfig // old config
 	Console *bufio.Reader
 }
 
@@ -55,17 +55,17 @@ var WebServer = &webServer{}
 
 // APIAdminRoutingTable Admin子站的路由映射
 var APIAdminRoutingTable = map[string]func(s *webServer, c *gin.Context){
-	"do_restart":         AdminDoRestart,         //热重启
-	"do_process_restart": AdminProcessRestart,    //进程重启
-	"get_web_write":      AdminWebWrite,          //获取是否验证码输入
-	"do_web_write":       AdminDoWebWrite,        //web上进行输入操作
-	"do_restart_docker":  AdminDoRestartDocker,   //直接停止（依赖supervisord/docker）重新拉起
-	"do_config_base":     AdminDoConfigBase,      //修改config.json中的基础部分
-	"do_config_http":     AdminDoConfigHTTP,      //修改config.json的http部分
-	"do_config_ws":       AdminDoConfigWS,        //修改config.json的正向ws部分
-	"do_config_reverse":  AdminDoConfigReverseWS, //修改config.json 中的反向ws部分
-	"do_config_json":     AdminDoConfigJSON,      //直接修改 config.json配置
-	"get_config_json":    AdminGetConfigJSON,     //拉取 当前的config.json配置
+	"do_restart":         AdminDoRestart,         // 热重启
+	"do_process_restart": AdminProcessRestart,    // 进程重启
+	"get_web_write":      AdminWebWrite,          // 获取是否验证码输入
+	"do_web_write":       AdminDoWebWrite,        // web上进行输入操作
+	"do_restart_docker":  AdminDoRestartDocker,   // 直接停止（依赖supervisord/docker）重新拉起
+	"do_config_base":     AdminDoConfigBase,      // 修改config.json中的基础部分
+	"do_config_http":     AdminDoConfigHTTP,      // 修改config.json的http部分
+	"do_config_ws":       AdminDoConfigWS,        // 修改config.json的正向ws部分
+	"do_config_reverse":  AdminDoConfigReverseWS, // 修改config.json 中的反向ws部分
+	"do_config_json":     AdminDoConfigJSON,      // 直接修改 config.json配置
+	"get_config_json":    AdminGetConfigJSON,     // 拉取 当前的config.json配置
 }
 
 // Failed 构建失败返回MSG
@@ -119,7 +119,6 @@ func (s *webServer) Run(addr string, cli *client.QQClient) *coolq.CQBot {
 
 // logincore 登录核心实现
 func (s *webServer) logincore(relogin bool) {
-
 	s.Console = bufio.NewReader(os.Stdin)
 	readLine := func() (str string) {
 		str, _ = s.Console.ReadString('\n')
@@ -134,7 +133,6 @@ func (s *webServer) logincore(relogin bool) {
 
 	var times uint = 1 // 重试次数
 	for res, err := s.Cli.Login(); ; res, err = s.Cli.Login() {
-
 		var text string
 		count := 0
 
@@ -270,7 +268,7 @@ func (s *webServer) logincore(relogin bool) {
 			}
 			log.Info(text)
 			continue
-		case client.OtherLoginError, client.UnknownLoginError:
+		case client.OtherLoginError, client.UnknownLoginError, client.TooManySMSRequestError:
 			msg := res.ErrorMessage
 			if strings.Contains(msg, "版本") {
 				msg = "密码错误或账号被冻结"
@@ -312,7 +310,6 @@ func (s *webServer) logincore(relogin bool) {
 
 // Dologin 主程序登录
 func (s *webServer) Dologin() {
-
 	s.Cli.AllowSlider = true
 	s.logincore(false)
 	log.Infof("登录成功 欢迎使用: %v", s.Cli.Nickname)
@@ -407,15 +404,18 @@ func AuthMiddleWare() gin.HandlerFunc {
 			c.Set("json_body", gjson.ParseBytes(d))
 		}
 		authToken := conf.AccessToken
-		if auth := c.Request.Header.Get("Authorization"); auth != "" {
+		auth := c.Request.Header.Get("Authorization")
+		switch {
+		case auth != "":
 			if strings.SplitN(auth, " ", 2)[1] != authToken {
 				c.AbortWithStatus(401)
 				return
 			}
-		} else if c.Query("access_token") != authToken {
+			c.Next()
+		case c.Query("access_token") != authToken:
 			c.AbortWithStatus(401)
 			return
-		} else {
+		default:
 			c.Next()
 		}
 	}
@@ -536,8 +536,8 @@ func AdminWebWrite(s *webServer, c *gin.Context) {
 		ispic = true
 	}
 	c.JSON(200, coolq.OK(coolq.MSG{
-		"ispic":     ispic,     //为空则为 设备锁 或者没有需要输入
-		"picbase64": picbase64, //web上显示图片
+		"ispic":     ispic,     // 为空则为 设备锁 或者没有需要输入
+		"picbase64": picbase64, // web上显示图片
 	}))
 }
 
@@ -658,5 +658,4 @@ func AdminDoConfigJSON(s *webServer, c *gin.Context) {
 func AdminGetConfigJSON(s *webServer, c *gin.Context) {
 	conf := GetConf()
 	c.JSON(200, coolq.OK(coolq.MSG{"config": conf}))
-
 }

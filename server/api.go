@@ -6,6 +6,7 @@ import (
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
+
 	"github.com/tidwall/gjson"
 )
 
@@ -202,7 +203,6 @@ func setRestart(_ *coolq.CQBot, p resultGetter) coolq.MSG {
 		Restart <- struct{}{}
 	}(delay)
 	return coolq.MSG{"data": nil, "retcode": 0, "status": "async"}
-
 }
 
 func canSendImage(bot *coolq.CQBot, _ resultGetter) coolq.MSG {
@@ -293,7 +293,7 @@ func getEssenceMsgList(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 	return bot.CQGetEssenceMessageList(p.Get("group_id").Int())
 }
 
-func checkUrlSafely(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func checkURLSafely(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 	return bot.CQCheckURLSafely(p.Get("url").String())
 }
 
@@ -368,7 +368,7 @@ var API = map[string]func(*coolq.CQBot, resultGetter) coolq.MSG{
 	"set_essence_msg":            setEssenceMSG,
 	"delete_essence_msg":         deleteEssenceMSG,
 	"get_essence_msg_list":       getEssenceMsgList,
-	"check_url_safely":           checkUrlSafely,
+	"check_url_safely":           checkURLSafely,
 	"set_group_anonymous_ban":    setGroupAnonymousBan,
 	".handle_quick_operation":    handleQuickOperation,
 }
@@ -376,7 +376,6 @@ var API = map[string]func(*coolq.CQBot, resultGetter) coolq.MSG{
 func (api *apiCaller) callAPI(action string, p resultGetter) coolq.MSG {
 	if f, ok := API[action]; ok {
 		return f(api.bot, p)
-	} else {
-		return coolq.Failed(404, "API_NOT_FOUND", "API不存在")
 	}
+	return coolq.Failed(404, "API_NOT_FOUND", "API不存在")
 }
