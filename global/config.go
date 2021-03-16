@@ -341,15 +341,13 @@ func GetCurrentPath() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	//fmt.Println("path111:", path)
 	if runtime.GOOS == "windows" {
-		fpath = strings.Replace(fpath, "\\", "/", -1)
+		// fpath = strings.Replace(fpath, "\\", "/", -1)
+		fpath = strings.ReplaceAll(fpath, "\\", "/")
 	}
-	//fmt.Println("path222:", path)
 	i := strings.LastIndex(fpath, "/")
 	if i < 0 {
 		return "", errors.New("system/path_error,Can't find '/' or '\\'")
 	}
-	//fmt.Println("path333:", path)
 	return string(fpath[0 : i+1]), nil
 }
