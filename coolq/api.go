@@ -37,7 +37,7 @@ func (bot *CQBot) CQGetLoginInfo() MSG {
 //
 // https://git.io/Jtz1L
 func (bot *CQBot) CQGetFriendList() MSG {
-	fs := make([]MSG, 0)
+	fs := make([]MSG, 0, len(bot.Client.FriendList))
 	for _, f := range bot.Client.FriendList {
 		fs = append(fs, MSG{
 			"nickname": f.Nickname,
@@ -52,7 +52,7 @@ func (bot *CQBot) CQGetFriendList() MSG {
 //
 // https://git.io/Jtz1t
 func (bot *CQBot) CQGetGroupList(noCache bool) MSG {
-	gs := make([]MSG, 0)
+	gs := make([]MSG, 0, len(bot.Client.GroupList))
 	if noCache {
 		_ = bot.Client.ReloadGroupList()
 	}
@@ -121,7 +121,7 @@ func (bot *CQBot) CQGetGroupMemberList(groupID int64, noCache bool) MSG {
 		}
 		group.Members = t
 	}
-	members := make([]MSG, 0)
+	members := make([]MSG, 0, len(group.Members))
 	for _, m := range group.Members {
 		members = append(members, convertGroupMemberInfo(groupID, m))
 	}
@@ -968,7 +968,7 @@ func (bot *CQBot) CQGetForwardMessage(resID string) MSG {
 	if m == nil {
 		return Failed(100, "MSG_NOT_FOUND", "消息不存在")
 	}
-	r := make([]MSG, 0)
+	r := make([]MSG, 0, len(m.Nodes))
 	for _, n := range m.Nodes {
 		bot.checkMedia(n.Message)
 		r = append(r, MSG{
@@ -1054,7 +1054,7 @@ func (bot *CQBot) CQGetGroupMessageHistory(groupID int64, seq int64) MSG {
 		log.Warnf("获取群历史消息失败: %v", err)
 		return Failed(100, "MESSAGES_API_ERROR", err.Error())
 	}
-	var ms = make([]MSG, len(msg))
+	var ms = make([]MSG, 0, len(msg))
 	for _, m := range msg {
 		id := m.Id
 		bot.checkMedia(m.Elements)
@@ -1080,7 +1080,7 @@ func (bot *CQBot) CQGetOnlineClients(noCache bool) MSG {
 			return Failed(100, "REFRESH_STATUS_ERROR", err.Error())
 		}
 	}
-	var d = make([]MSG, len(bot.Client.OnlineClients))
+	var d = make([]MSG, 0, len(bot.Client.OnlineClients))
 	for _, oc := range bot.Client.OnlineClients {
 		d = append(d, MSG{
 			"app_id":      oc.AppId,
@@ -1238,7 +1238,7 @@ func (bot *CQBot) CQGetEssenceMessageList(groupCode int64) MSG {
 	if err != nil {
 		return Failed(100, "GET_ESSENCE_LIST_FOUND", err.Error())
 	}
-	list := make([]MSG, 0)
+	list := make([]MSG, 0, len(msgList))
 	for _, m := range msgList {
 		var msg = MSG{
 			"sender_nick":   m.SenderNick,
