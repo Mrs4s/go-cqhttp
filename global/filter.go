@@ -83,21 +83,22 @@ func andOperatorConstruct(argument gjson.Result) *AndOperator {
 	}
 	op := new(AndOperator)
 	argument.ForEach(func(key, value gjson.Result) bool {
-		if key.Str[0] == '.' {
+		switch {
+		case key.Str[0] == '.':
 			// is an operator
 			//   ".foo": {
 			//       "bar": "baz"
 			//   }
 			opKey := key.Str[1:]
 			op.operands = append(op.operands, operationNode{"", Generate(opKey, value)})
-		} else if value.IsObject() {
+		case value.IsObject():
 			// is an normal key with an object as the value
 			//   "foo": {
 			//       ".bar": "baz"
 			//   }
 			opKey := key.String()
 			op.operands = append(op.operands, operationNode{opKey, Generate("and", value)})
-		} else {
+		default:
 			// is an normal key with a non-object as the value
 			//   "foo": "bar"
 			opKey := key.String()
@@ -112,7 +113,6 @@ func andOperatorConstruct(argument gjson.Result) *AndOperator {
 func (op *AndOperator) Eval(payload MSG) bool {
 	res := true
 	for _, operand := range op.operands {
-
 		if len(operand.key) == 0 {
 			// is an operator
 			res = res && operand.filter.Eval(payload)

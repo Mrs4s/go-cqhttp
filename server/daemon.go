@@ -1,13 +1,15 @@
-//daemon 功能写在这，目前仅支持了-d 作为后台运行参数，stop，start，restart这些功能目前看起来并不需要，可以通过api控制，后续需要的话再补全。
+// daemon 功能写在这，目前仅支持了-d 作为后台运行参数，stop，start，restart这些功能目前看起来并不需要，可以通过api控制，后续需要的话再补全。
 package server
 
 import (
 	"fmt"
-	"github.com/Mrs4s/go-cqhttp/global"
-	log "github.com/sirupsen/logrus"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/Mrs4s/go-cqhttp/global"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // Daemon go-cqhttp server 的 daemon的实现函数

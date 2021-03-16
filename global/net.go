@@ -140,7 +140,6 @@ func DownloadFileMultiThreading(url, path string, limit int64, threadCount int, 
 
 		for k, v := range headers {
 			req.Header.Set(k, v)
-
 		}
 		if _, ok := headers["User-Agent"]; !ok {
 			req.Header["User-Agent"] = []string{UserAgent}
@@ -150,6 +149,7 @@ func DownloadFileMultiThreading(url, path string, limit int64, threadCount int, 
 		if err != nil {
 			return err
 		}
+		defer resp.Body.Close()
 		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 			return errors.New("response status unsuccessful: " + strconv.FormatInt(int64(resp.StatusCode), 10))
 		}
@@ -169,7 +169,6 @@ func DownloadFileMultiThreading(url, path string, limit int64, threadCount int, 
 					return (contentLength / int64(threadCount)) - 10
 				}
 				return contentLength
-
 			}()
 			if blockSize == contentLength {
 				return copyStream(resp.Body)

@@ -83,11 +83,12 @@ func IsAMRorSILK(b []byte) bool {
 	return bytes.HasPrefix(b, HeaderAmr) || bytes.HasPrefix(b, HeaderSilk)
 }
 
-// FindFile 从给定的File寻找文件，并返回文件byte数组。File是一个合法的URL。Path为文件寻找位置。
+// FindFile 从给定的File寻找文件，并返回文件byte数组。File是一个合法的URL。p为文件寻找位置。
 // 对于HTTP/HTTPS形式的URL，Cache为"1"或空时表示启用缓存
-func FindFile(file, cache, PATH string) (data []byte, err error) {
+func FindFile(file, cache, p string) (data []byte, err error) {
 	data, err = nil, ErrSyntax
-	if strings.HasPrefix(file, "http") || strings.HasPrefix(file, "https") {
+	switch {
+	case strings.HasPrefix(file, "http") || strings.HasPrefix(file, "https"):
 		if cache == "" {
 			cache = "1"
 		}
@@ -101,12 +102,12 @@ func FindFile(file, cache, PATH string) (data []byte, err error) {
 		if err != nil {
 			return nil, err
 		}
-	} else if strings.HasPrefix(file, "base64") {
+	case strings.HasPrefix(file, "base64"):
 		data, err = base64.StdEncoding.DecodeString(strings.ReplaceAll(file, "base64://", ""))
 		if err != nil {
 			return nil, err
 		}
-	} else if strings.HasPrefix(file, "file") {
+	case strings.HasPrefix(file, "file"):
 		var fu *url.URL
 		fu, err = url.Parse(file)
 		if err != nil {
@@ -119,8 +120,8 @@ func FindFile(file, cache, PATH string) (data []byte, err error) {
 		if err != nil {
 			return nil, err
 		}
-	} else if PathExists(path.Join(PATH, file)) {
-		data, err = ioutil.ReadFile(path.Join(PATH, file))
+	case PathExists(path.Join(p, file)):
+		data, err = ioutil.ReadFile(path.Join(p, file))
 		if err != nil {
 			return nil, err
 		}

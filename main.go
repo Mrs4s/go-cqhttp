@@ -9,9 +9,6 @@ import (
 	"encoding/hex"
 	"flag"
 	"fmt"
-	"github.com/Mrs4s/go-cqhttp/global/terminal"
-	"github.com/lestrrat-go/file-rotatelogs"
-	"github.com/t-tomalak/logrus-easy-formatter"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -26,18 +23,21 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Mrs4s/go-cqhttp/coolq"
+	"github.com/Mrs4s/go-cqhttp/global"
+	"github.com/Mrs4s/go-cqhttp/global/terminal"
 	"github.com/Mrs4s/go-cqhttp/server"
-	"github.com/guonaihong/gout"
-	"github.com/tidwall/gjson"
-	"golang.org/x/crypto/pbkdf2"
-	"golang.org/x/term"
 
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/client"
-	"github.com/Mrs4s/go-cqhttp/coolq"
-	"github.com/Mrs4s/go-cqhttp/global"
-	"github.com/json-iterator/go"
+	"github.com/guonaihong/gout"
+	jsoniter "github.com/json-iterator/go"
+	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	log "github.com/sirupsen/logrus"
+	easy "github.com/t-tomalak/logrus-easy-formatter"
+	"github.com/tidwall/gjson"
+	"golang.org/x/crypto/pbkdf2"
+	"golang.org/x/term"
 )
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
@@ -433,14 +433,14 @@ func selfUpdate(imageURL string) {
 				runtime.GOARCH,
 			)
 			if runtime.GOOS == "windows" {
-				url = url + ".exe"
+				url += ".exe"
 			}
 			resp, err := http.Get(url)
 			if err != nil {
-				fmt.Println(err)
-				log.Error("更新失败!")
+				log.Error("更新失败: ", err)
 				return
 			}
+			defer resp.Body.Close()
 			wc := global.WriteCounter{}
 			err, _ = global.UpdateFromStream(io.TeeReader(resp.Body, &wc))
 			fmt.Println()
@@ -464,10 +464,10 @@ func selfUpdate(imageURL string) {
 	os.Exit(0)
 }
 
-func restart(Args []string) {
+func restart(args []string) {
 	var cmd *exec.Cmd
 	if runtime.GOOS == "windows" {
-		file, err := exec.LookPath(Args[0])
+		file, err := exec.LookPath(args[0])
 		if err != nil {
 			log.Errorf("重启失败:%s", err.Error())
 			return
@@ -476,18 +476,18 @@ func restart(Args []string) {
 		if err != nil {
 			log.Errorf("重启失败:%s", err.Error())
 		}
-		Args = append([]string{"/c", "start ", path, "faststart"}, Args[1:]...)
+		args = append([]string{"/c", "start ", path, "faststart"}, args[1:]...)
 		cmd = &exec.Cmd{
 			Path:   "cmd.exe",
-			Args:   Args,
+			Args:   args,
 			Stderr: os.Stderr,
 			Stdout: os.Stdout,
 		}
 	} else {
-		Args = append(Args, "faststart")
+		args = append(args, "faststart")
 		cmd = &exec.Cmd{
-			Path:   Args[0],
-			Args:   Args,
+			Path:   args[0],
+			Args:   args,
 			Stderr: os.Stderr,
 			Stdout: os.Stdout,
 		}
@@ -497,11 +497,12 @@ func restart(Args []string) {
 
 func getConfig() *global.JSONConfig {
 	var conf *global.JSONConfig
-	if global.PathExists("config.json") {
+	switch {
+	case global.PathExists("config.json"):
 		conf = global.LoadConfig("config.json")
 		_ = conf.Save("config.hjson")
 		_ = os.Remove("config.json")
-	} else if os.Getenv("UIN") != "" {
+	case os.Getenv("UIN") != "":
 		log.Infof("将从环境变量加载配置.")
 		uin, _ := strconv.ParseInt(os.Getenv("UIN"), 10, 64)
 		pwd := os.Getenv("PASS")
@@ -526,7 +527,7 @@ func getConfig() *global.JSONConfig {
 		if post != "" {
 			conf.HTTPConfig.PostUrls[post] = os.Getenv("HTTP_SECRET")
 		}
-	} else {
+	default:
 		conf = global.LoadConfig(global.DefaultConfFile)
 	}
 	if conf == nil {
