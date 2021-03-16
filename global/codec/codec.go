@@ -1,4 +1,4 @@
-// +build linux windows,!arm darwin,!arm64
+// +build linux windows,!arm darwin
 // +build 386 amd64 arm arm64
 
 // Package codec Slik编码核心模块
