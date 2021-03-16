@@ -12,14 +12,14 @@ import (
 	"time"
 
 	"github.com/hjson/hjson-go"
-	"github.com/json-iterator/go"
+	jsoniter "github.com/json-iterator/go"
 	log "github.com/sirupsen/logrus"
 )
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
-var currentPath=getCurrentPath()
-var DefaultConfFile =path.Join(currentPath,"config.hjson")
+var currentPath = getCurrentPath()
+var DefaultConfFile = path.Join(currentPath, "config.hjson")
 
 // DefaultConfigWithComments 为go-cqhttp的默认配置文件
 var DefaultConfigWithComments = `
@@ -321,6 +321,7 @@ func (c *JSONConfig) Save(path string) error {
 	}
 	return WriteAllText(path, string(data))
 }
+
 // getCurrentPath 获取当前文件的路径，直接返回string
 func getCurrentPath() string {
 	cwd, e := GetCurrentPath()
@@ -347,7 +348,7 @@ func GetCurrentPath() (string, error) {
 	//fmt.Println("path222:", path)
 	i := strings.LastIndex(fpath, "/")
 	if i < 0 {
-		return "", errors.New("system/path_error,Can't find '/' or '\\'");
+		return "", errors.New("system/path_error,Can't find '/' or '\\'")
 	}
 	//fmt.Println("path333:", path)
 	return string(fpath[0 : i+1]), nil
