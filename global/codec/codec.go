@@ -18,7 +18,7 @@ const (
 	silkCachePath = "data/cache"
 )
 
-//EncodeToSilk 将音频编码为Silk
+// EncodeToSilk 将音频编码为Silk
 func EncodeToSilk(record []byte, tempName string, useCache bool) (silkWav []byte, err error) {
 	// 1. 写入缓存文件
 	rawPath := path.Join(silkCachePath, tempName+".wav")
