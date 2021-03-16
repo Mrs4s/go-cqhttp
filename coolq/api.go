@@ -72,6 +72,9 @@ func (bot *CQBot) CQGetGroupList(noCache bool) MSG {
 // https://git.io/Jtz1O
 func (bot *CQBot) CQGetGroupInfo(groupID int64, noCache bool) MSG {
 	group := bot.Client.FindGroup(groupID)
+	if group == nil || noCache {
+		group, _ = bot.Client.GetGroupInfo(groupID)
+	}
 	if group == nil {
 		gid := strconv.FormatInt(groupID, 10)
 		info, err := bot.Client.SearchGroupByKeyword(gid)
@@ -81,28 +84,28 @@ func (bot *CQBot) CQGetGroupInfo(groupID int64, noCache bool) MSG {
 		for _, g := range info {
 			if g.Code == groupID {
 				return OK(MSG{
-					"group_id":         g.Code,
-					"group_name":       g.Name,
-					"max_member_count": 0,
-					"member_count":     0,
+					"group_id":          g.Code,
+					"group_name":        g.Name,
+					"group_memo":        g.Memo,
+					"group_create_time": 0,
+					"group_level":       0,
+					"max_member_count":  0,
+					"member_count":      0,
 				})
 			}
 		}
-		return Failed(100, "GROUP_NOT_FOUND", "群聊不存在失败")
+	} else {
+		return OK(MSG{
+			"group_id":          group.Code,
+			"group_name":        group.Name,
+			"group_memo":        group.Memo,
+			"group_create_time": group.GroupCreateTime,
+			"group_level":       group.GroupLevel,
+			"max_member_count":  group.MaxMemberCount,
+			"member_count":      group.MemberCount,
+		})
 	}
-	if noCache {
-		var err error
-		group, err = bot.Client.GetGroupInfo(groupID)
-		if err != nil {
-			return Failed(100, "GET_GROUP_INFO_API_ERROR", err.Error())
-		}
-	}
-	return OK(MSG{
-		"group_id":         group.Code,
-		"group_name":       group.Name,
-		"max_member_count": group.MaxMemberCount,
-		"member_count":     group.MemberCount,
-	})
+	return Failed(100, "GROUP_NOT_FOUND", "群聊不存在")
 }
 
 // CQGetGroupMemberList 获取群成员列表
