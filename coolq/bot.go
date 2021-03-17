@@ -143,13 +143,14 @@ func (bot *CQBot) UploadLocalImageAsGroup(groupCode int64, img *LocalImageElemen
 // UploadLocalVideo 上传本地短视频至群聊
 func (bot *CQBot) UploadLocalVideo(target int64, v *LocalVideoElement) (*message.ShortVideoElement, error) {
 	if v.File != "" {
+
 		video, err := os.Open(v.File)
 		if err != nil {
 			return nil, err
 		}
 		defer video.Close()
 		hash, _ := utils.ComputeMd5AndLength(io.MultiReader(video, v.thumb))
-		cacheFile := path.Join(global.CachePath, hex.EncodeToString(hash)+".cache")
+		cacheFile := path.Join(global.CachePath, hex.EncodeToString(hash[:])+".cache")
 		_, _ = video.Seek(0, io.SeekStart)
 		_, _ = v.thumb.Seek(0, io.SeekStart)
 		return bot.Client.UploadGroupShortVideo(target, video, v.thumb, cacheFile)
@@ -176,6 +177,7 @@ func (bot *CQBot) SendGroupMessage(groupID int64, m *message.SendingMessage) int
 	var newElem = make([]message.IMessageElement, 0, len(m.Elements))
 	group := bot.Client.FindGroup(groupID)
 	for _, elem := range m.Elements {
+
 		if i, ok := elem.(*LocalImageElement); ok {
 			gm, err := bot.UploadLocalImageAsGroup(groupID, i)
 			if err != nil {
@@ -186,6 +188,7 @@ func (bot *CQBot) SendGroupMessage(groupID int64, m *message.SendingMessage) int
 			continue
 		}
 		if i, ok := elem.(*message.VoiceElement); ok {
+
 			gv, err := bot.Client.UploadGroupPtt(groupID, bytes.NewReader(i.Data))
 			if err != nil {
 				log.Warnf("警告: 群 %v 消息语音上传失败: %v", groupID, err)

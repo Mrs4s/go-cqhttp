@@ -4,6 +4,12 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
+	"github.com/Mrs4s/MiraiGo/binary"
+	"github.com/Mrs4s/MiraiGo/client"
+	"github.com/Mrs4s/MiraiGo/message"
+	"github.com/Mrs4s/go-cqhttp/global"
+	log "github.com/sirupsen/logrus"
+	"github.com/tidwall/gjson"
 	"io/ioutil"
 	"math"
 	"os"
@@ -13,14 +19,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/Mrs4s/go-cqhttp/global"
-
-	"github.com/Mrs4s/MiraiGo/binary"
-	"github.com/Mrs4s/MiraiGo/client"
-	"github.com/Mrs4s/MiraiGo/message"
-	log "github.com/sirupsen/logrus"
-	"github.com/tidwall/gjson"
 )
 
 // Version go-cqhttp的版本信息，在编译时使用ldflags进行覆盖
