@@ -58,10 +58,13 @@ func (bot *CQBot) CQGetGroupList(noCache bool) MSG {
 	}
 	for _, g := range bot.Client.GroupList {
 		gs = append(gs, MSG{
-			"group_id":         g.Code,
-			"group_name":       g.Name,
-			"max_member_count": g.MaxMemberCount,
-			"member_count":     g.MemberCount,
+			"group_id":          g.Code,
+			"group_name":        g.Name,
+			"group_memo":        g.Memo,
+			"group_create_time": g.GroupCreateTime,
+			"group_level":       g.GroupLevel,
+			"max_member_count":  g.MaxMemberCount,
+			"member_count":      g.MemberCount,
 		})
 	}
 	return OK(gs)
