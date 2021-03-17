@@ -361,7 +361,7 @@ func GetConf() *global.JSONConfig {
 	if JSONConfig != nil {
 		return JSONConfig
 	}
-	conf := global.LoadConfig("config.hjson")
+	conf := global.LoadConfig(global.DefaultConfFile)
 	return conf
 }
 
@@ -559,9 +559,9 @@ func AdminDoConfigBase(s *webServer, c *gin.Context) {
 		conf.EnableDB = false
 	}
 	conf.AccessToken = c.PostForm("access_token")
-	if err := conf.Save("config.hjson"); err != nil {
-		log.Fatalf("保存 config.hjson 时出现错误: %v", err)
-		c.JSON(200, Failed(502, "保存 config.hjson 时出现错误:"+fmt.Sprintf("%v", err)))
+	if err := conf.Save(global.DefaultConfFile); err != nil {
+		log.Fatalf("保存 %s 时出现错误: %v", global.DefaultConfFile, err)
+		c.JSON(200, Failed(502, "保存 "+global.DefaultConfFile+" 时出现错误:"+fmt.Sprintf("%v", err)))
 	} else {
 		JSONConfig = nil
 		c.JSON(200, coolq.OK(coolq.MSG{}))
@@ -584,9 +584,9 @@ func AdminDoConfigHTTP(s *webServer, c *gin.Context) {
 	if c.PostForm("post_url") != "" {
 		conf.HTTPConfig.PostUrls[c.PostForm("post_url")] = c.PostForm("post_secret")
 	}
-	if err := conf.Save("config.hjson"); err != nil {
-		log.Fatalf("保存 config.hjson 时出现错误: %v", err)
-		c.JSON(200, Failed(502, "保存 config.hjson 时出现错误:"+fmt.Sprintf("%v", err)))
+	if err := conf.Save(global.DefaultConfFile); err != nil {
+		log.Fatalf("保存 %s 时出现错误: %v", global.DefaultConfFile, err)
+		c.JSON(200, Failed(502, "保存 "+global.DefaultConfFile+" 时出现错误:"+fmt.Sprintf("%v", err)))
 	} else {
 		JSONConfig = nil
 		c.JSON(200, coolq.OK(coolq.MSG{}))
@@ -604,9 +604,9 @@ func AdminDoConfigWS(s *webServer, c *gin.Context) {
 	} else {
 		conf.WSConfig.Enabled = false
 	}
-	if err := conf.Save("config.hjson"); err != nil {
-		log.Fatalf("保存 config.hjson 时出现错误: %v", err)
-		c.JSON(200, Failed(502, "保存 config.hjson 时出现错误:"+fmt.Sprintf("%v", err)))
+	if err := conf.Save(global.DefaultConfFile); err != nil {
+		log.Fatalf("保存 %s 时出现错误: %v", global.DefaultConfFile, err)
+		c.JSON(200, Failed(502, "保存 "+global.DefaultConfFile+" 时出现错误:"+fmt.Sprintf("%v", err)))
 	} else {
 		JSONConfig = nil
 		c.JSON(200, coolq.OK(coolq.MSG{}))
@@ -626,9 +626,9 @@ func AdminDoConfigReverseWS(s *webServer, c *gin.Context) {
 	} else {
 		conf.ReverseServers[0].Enabled = false
 	}
-	if err := conf.Save("config.hjson"); err != nil {
-		log.Fatalf("保存 config.hjson 时出现错误: %v", err)
-		c.JSON(200, Failed(502, "保存 config.hjson 时出现错误:"+fmt.Sprintf("%v", err)))
+	if err := conf.Save(global.DefaultConfFile); err != nil {
+		log.Fatalf("保存 %s 时出现错误: %v", global.DefaultConfFile, err)
+		c.JSON(200, Failed(502, "保存 "+global.DefaultConfFile+" 时出现错误:"+fmt.Sprintf("%v", err)))
 	} else {
 		JSONConfig = nil
 		c.JSON(200, coolq.OK(coolq.MSG{}))
@@ -641,13 +641,13 @@ func AdminDoConfigJSON(s *webServer, c *gin.Context) {
 	JSON := c.PostForm("json")
 	err := json.Unmarshal([]byte(JSON), &conf)
 	if err != nil {
-		log.Warnf("尝试加载配置文件 %v 时出现错误: %v", "config.hjson", err)
-		c.JSON(200, Failed(502, "保存 config.hjson 时出现错误:"+fmt.Sprintf("%v", err)))
+		log.Warnf("尝试加载配置文件 %v 时出现错误: %v", global.DefaultConfFile, err)
+		c.JSON(200, Failed(502, "保存 "+global.DefaultConfFile+" 时出现错误:"+fmt.Sprintf("%v", err)))
 		return
 	}
-	if err := conf.Save("config.hjson"); err != nil {
-		log.Fatalf("保存 config.hjson 时出现错误: %v", err)
-		c.JSON(200, Failed(502, "保存 config.hjson 时出现错误:"+fmt.Sprintf("%v", err)))
+	if err := conf.Save(global.DefaultConfFile); err != nil {
+		log.Fatalf("保存 %s 时出现错误: %v", global.DefaultConfFile, err)
+		c.JSON(200, Failed(502, "保存 "+global.DefaultConfFile+" 时出现错误:"+fmt.Sprintf("%v", err)))
 	} else {
 		JSONConfig = nil
 		c.JSON(200, coolq.OK(coolq.MSG{}))

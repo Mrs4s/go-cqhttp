@@ -43,14 +43,20 @@ import (
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 var conf *global.JSONConfig
 var isFastStart = false
+var c string
 var d bool
 var h bool
 
 func init() {
+	var debug bool
+	flag.StringVar(&c, "c", global.DefaultConfFile, "configuration filename default is config.hjson")
 	flag.BoolVar(&d, "d", false, "running as a daemon")
+	flag.BoolVar(&debug, "D", false, "debug mode")
 	flag.BoolVar(&h, "h", false, "this help")
 	flag.Parse()
 
+	// 通过-c 参数替换 配置文件路径
+	global.DefaultConfFile = c
 	logFormatter := &easy.Formatter{
 		TimestampFormat: "2006-01-02 15:04:05",
 		LogFormat:       "[%time%] [%lvl%]: %msg% \n",
@@ -66,6 +72,9 @@ func init() {
 		os.Exit(1)
 	}
 
+	if debug {
+		conf.Debug = true
+	}
 	// 在debug模式下,将在标准输出中打印当前执行行数
 	if conf.Debug {
 		log.SetReportCaller(true)
@@ -97,8 +106,8 @@ func init() {
 			goConf.ReverseServers[0].ReverseEventURL = conf.WSReverseEventURL
 			goConf.ReverseServers[0].ReverseReconnectInterval = conf.WSReverseReconnectInterval
 		}
-		if err := goConf.Save("config.hjson"); err != nil {
-			log.Fatalf("保存 config.hjson 时出现错误: %v", err)
+		if err := goConf.Save(global.DefaultConfFile); err != nil {
+			log.Fatalf("保存 %s 时出现错误: %v", global.DefaultConfFile, err)
 		}
 		_ = os.Remove("cqhttp.json")
 	}
@@ -159,7 +168,7 @@ func main() {
 		time.Sleep(time.Second * 10)
 	}
 	if conf.Uin == 0 || (conf.Password == "" && conf.PasswordEncrypted == "") {
-		log.Warnf("请修改 config.hjson 以添加账号密码.")
+		log.Warnf("请修改 %s 以添加账号密码.", global.DefaultConfFile)
 		if !isFastStart {
 			time.Sleep(time.Second * 5)
 		}
@@ -194,7 +203,7 @@ func main() {
 		global.PasswordHash = md5.Sum([]byte(conf.Password))
 		conf.Password = ""
 		conf.PasswordEncrypted = "AES:" + PasswordHashEncrypt(global.PasswordHash[:], byteKey)
-		_ = conf.Save("config.hjson")
+		_ = conf.Save(global.DefaultConfFile)
 	}
 	if conf.PasswordEncrypted != "" {
 		if len(byteKey) == 0 {
@@ -223,7 +232,7 @@ func main() {
 			passwordHash := md5.Sum([]byte(password))
 			newPasswordHash := PasswordHashEncrypt(passwordHash[:], byteKey)
 			conf.PasswordEncrypted = "AES:" + newPasswordHash
-			_ = conf.Save("config.hjson")
+			_ = conf.Save(global.DefaultConfFile)
 			log.Debug("密码加密方案升级完成")
 		}
 
@@ -518,15 +527,15 @@ func getConfig() *global.JSONConfig {
 			conf.HTTPConfig.PostUrls[post] = os.Getenv("HTTP_SECRET")
 		}
 	default:
-		conf = global.LoadConfig("config.hjson")
+		conf = global.LoadConfig(global.DefaultConfFile)
 	}
 	if conf == nil {
-		err := global.WriteAllText("config.hjson", global.DefaultConfigWithComments)
+		err := global.WriteAllText(global.DefaultConfFile, global.DefaultConfigWithComments)
 		if err != nil {
 			log.Fatalf("创建默认配置文件时出现错误: %v", err)
 			return nil
 		}
-		log.Infof("默认配置文件已生成, 请编辑 config.hjson 后重启程序.")
+		log.Infof("默认配置文件已生成, 请编辑 %s 后重启程序.", global.DefaultConfFile)
 		if !isFastStart {
 			time.Sleep(time.Second * 5)
 		}

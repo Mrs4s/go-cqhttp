@@ -2,12 +2,9 @@
 package server
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
-	"runtime"
 	"strings"
 
 	"github.com/Mrs4s/go-cqhttp/global"
@@ -50,24 +47,4 @@ func Daemon() {
 // savePid 保存pid到文件中，便于后续restart/stop的时候kill pid用。
 func savePid(path string, data string) error {
 	return global.WriteAllText(path, data)
-}
-
-// GetCurrentPath 预留,获取当前目录地址
-func GetCurrentPath() (string, error) {
-	file, err := exec.LookPath(os.Args[0])
-	if err != nil {
-		return "", err
-	}
-	path, err := filepath.Abs(file)
-	if err != nil {
-		return "", err
-	}
-	if runtime.GOOS == "windows" {
-		path = strings.ReplaceAll(path, "\\", "/")
-	}
-	i := strings.LastIndex(path, "/")
-	if i < 0 {
-		return "", errors.New("system/path_error,Can't find '/' or '\\'")
-	}
-	return path[0 : i+1], nil
 }
