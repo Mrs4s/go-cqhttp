@@ -86,3 +86,7 @@ output:
   print-issued-lines: true
   print-linter-name: true
   uniq-by-line: true
+
+issues:
+  # Fix found issues (if it's supported by the linter)
+  fix: true

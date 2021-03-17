@@ -1,0 +1,24 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  golangci:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: latest
+
+      - name: Commit back
+        continue-on-error: true
+        run: |
+          git config --local user.name 'Github Actions'
+          git config --local user.email 'github-actions@users.noreply.github.com'
+          git add --all
+          git commit -m "ci(chore): Fix stylings"
+          git push
