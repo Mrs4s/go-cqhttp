@@ -22,10 +22,11 @@ import (
 	"time"
 	"unsafe"
 
+	"github.com/Mrs4s/go-cqhttp/global"
+
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/Mrs4s/MiraiGo/utils"
-	"github.com/Mrs4s/go-cqhttp/global"
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 )
@@ -867,7 +868,7 @@ func (bot *CQBot) ToElement(t string, d map[string]string, isGroup bool) (m inte
 		if !bytes.Equal(header, []byte{0x66, 0x74, 0x79, 0x70}) { // check file header ftyp
 			_, _ = video.Seek(0, io.SeekStart)
 			hash, _ := utils.ComputeMd5AndLength(video)
-			cacheFile := path.Join(global.CachePath, hex.EncodeToString(hash[:])+".mp4")
+			cacheFile := path.Join(global.CachePath, hex.EncodeToString(hash)+".mp4")
 			if global.PathExists(cacheFile) && cache == "1" {
 				goto ok
 			}

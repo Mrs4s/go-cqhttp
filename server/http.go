@@ -12,6 +12,7 @@ import (
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
+
 	"github.com/gin-gonic/gin"
 	"github.com/guonaihong/gout"
 	"github.com/guonaihong/gout/dataflow"
@@ -72,15 +73,15 @@ func (s *httpServer) Run(addr, authToken string, bot *coolq.CQBot) {
 
 	if authToken != "" {
 		s.engine.Use(func(c *gin.Context) {
-			if auth := c.Request.Header.Get("Authorization"); auth != "" {
-				if strings.SplitN(auth, " ", 2)[1] != authToken {
-					c.AbortWithStatus(401)
-					return
-				}
-			} else if c.Query("access_token") != authToken {
+			auth := c.Request.Header.Get("Authorization")
+			switch {
+			case auth != "" && strings.SplitN(auth, " ", 2)[1] != authToken:
 				c.AbortWithStatus(401)
 				return
-			} else {
+			case c.Query("access_token") != authToken:
+				c.AbortWithStatus(401)
+				return
+			default:
 				c.Next()
 			}
 		})
