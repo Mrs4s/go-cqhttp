@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
 
+	"github.com/Mrs4s/MiraiGo/utils"
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
@@ -193,14 +195,14 @@ func (c *WebSocketClient) listenAPI(conn *webSocketConn, u bool) {
 	}
 }
 
-func (c *WebSocketClient) onBotPushEvent(m coolq.MSG) {
+func (c *WebSocketClient) onBotPushEvent(m *bytes.Buffer) {
 	if c.eventConn != nil {
-		log.Debugf("向WS服务器 %v 推送Event: %v", c.eventConn.RemoteAddr().String(), m.ToJSON())
+		log.Debugf("向WS服务器 %v 推送Event: %v", c.eventConn.RemoteAddr().String(), utils.B2S(m.Bytes()))
 		conn := c.eventConn
 		conn.Lock()
 		defer conn.Unlock()
 		_ = c.eventConn.SetWriteDeadline(time.Now().Add(time.Second * 15))
-		if err := c.eventConn.WriteJSON(m); err != nil {
+		if err := c.eventConn.WriteMessage(websocket.TextMessage, m.Bytes()); err != nil {
 			log.Warnf("向WS服务器 %v 推送Event时出现错误: %v", c.eventConn.RemoteAddr().String(), err)
 			_ = c.eventConn.Close()
 			if c.conf.ReverseReconnectInterval != 0 {
@@ -210,12 +212,12 @@ func (c *WebSocketClient) onBotPushEvent(m coolq.MSG) {
 		}
 	}
 	if c.universalConn != nil {
-		log.Debugf("向WS服务器 %v 推送Event: %v", c.universalConn.RemoteAddr().String(), m.ToJSON())
+		log.Debugf("向WS服务器 %v 推送Event: %v", c.universalConn.RemoteAddr().String(), utils.B2S(m.Bytes()))
 		conn := c.universalConn
 		conn.Lock()
 		defer conn.Unlock()
 		_ = c.universalConn.SetWriteDeadline(time.Now().Add(time.Second * 15))
-		if err := c.universalConn.WriteJSON(m); err != nil {
+		if err := c.universalConn.WriteMessage(websocket.TextMessage, m.Bytes()); err != nil {
 			log.Warnf("向WS服务器 %v 推送Event时出现错误: %v", c.universalConn.RemoteAddr().String(), err)
 			_ = c.universalConn.Close()
 			if c.conf.ReverseReconnectInterval != 0 {
@@ -338,14 +340,14 @@ func (c *webSocketConn) handleRequest(_ *coolq.CQBot, payload []byte) {
 	_ = c.WriteJSON(ret)
 }
 
-func (s *webSocketServer) onBotPushEvent(m coolq.MSG) {
+func (s *webSocketServer) onBotPushEvent(m *bytes.Buffer) {
 	s.eventConnMutex.Lock()
 	defer s.eventConnMutex.Unlock()
 	for i, l := 0, len(s.eventConn); i < l; i++ {
 		conn := s.eventConn[i]
-		log.Debugf("向WS客户端 %v 推送Event: %v", conn.RemoteAddr().String(), m.ToJSON())
+		log.Debugf("向WS客户端 %v 推送Event: %v", conn.RemoteAddr().String(), utils.B2S(m.Bytes()))
 		conn.Lock()
-		if err := conn.WriteMessage(websocket.TextMessage, []byte(m.ToJSON())); err != nil {
+		if err := conn.WriteMessage(websocket.TextMessage, m.Bytes()); err != nil {
 			_ = conn.Close()
 			next := i + 1
 			if next >= l {

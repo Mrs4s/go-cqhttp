@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"crypto/hmac"
 	"crypto/sha1"
@@ -13,6 +14,7 @@ import (
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
 
+	"github.com/Mrs4s/MiraiGo/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/guonaihong/gout"
 	"github.com/guonaihong/gout/dataflow"
@@ -121,16 +123,16 @@ func (c *httpClient) Run(addr, secret string, timeout int32, bot *coolq.CQBot) {
 	log.Infof("HTTP POST上报器已启动: %v", addr)
 }
 
-func (c *httpClient) onBotPushEvent(m coolq.MSG) {
+func (c *httpClient) onBotPushEvent(m *bytes.Buffer) {
 	var res string
-	err := gout.POST(c.addr).SetJSON(m).BindBody(&res).SetHeader(func() gout.H {
+	err := gout.POST(c.addr).SetJSON(m.Bytes()).BindBody(&res).SetHeader(func() gout.H {
 		h := gout.H{
 			"X-Self-ID":  c.bot.Client.Uin,
 			"User-Agent": "CQHttp/4.15.0",
 		}
 		if c.secret != "" {
 			mac := hmac.New(sha1.New, []byte(c.secret))
-			_, err := mac.Write([]byte(m.ToJSON()))
+			_, err := mac.Write(m.Bytes())
 			if err != nil {
 				log.Error(err)
 				return nil
@@ -148,12 +150,12 @@ func (c *httpClient) onBotPushEvent(m coolq.MSG) {
 			return nil
 		}).Do()
 	if err != nil {
-		log.Warnf("上报Event数据 %v 到 %v 失败: %v", m.ToJSON(), c.addr, err)
+		log.Warnf("上报Event数据 %v 到 %v 失败: %v", utils.B2S(m.Bytes()), c.addr, err)
 		return
 	}
-	log.Debugf("上报Event数据 %v 到 %v", m.ToJSON(), c.addr)
+	log.Debugf("上报Event数据 %v 到 %v", utils.B2S(m.Bytes()), c.addr)
 	if gjson.Valid(res) {
-		c.bot.CQHandleQuickOperation(gjson.Parse(m.ToJSON()), gjson.Parse(res))
+		c.bot.CQHandleQuickOperation(gjson.Parse(utils.B2S(m.Bytes())), gjson.Parse(res))
 	}
 }
 
