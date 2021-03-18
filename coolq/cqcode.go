@@ -128,7 +128,7 @@ func (e *PokeElement) Type() message.ElementType {
 
 // ToArrayMessage 将消息元素数组转为MSG数组以用于消息上报
 func ToArrayMessage(e []message.IMessageElement, id int64, isRaw ...bool) (r []MSG) {
-	r = []MSG{}
+	r = make([]MSG, 0, len(e))
 	ur := false
 	if len(isRaw) != 0 {
 		ur = isRaw[0]

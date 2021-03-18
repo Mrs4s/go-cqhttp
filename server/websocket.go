@@ -179,13 +179,25 @@ func (c *WebSocketClient) connectUniversal() {
 func (c *WebSocketClient) listenAPI(conn *webSocketConn, u bool) {
 	defer conn.Close()
 	for {
-		_, buf, err := conn.ReadMessage()
+		buffer := global.NewBuffer()
+		t, reader, err := conn.NextReader()
 		if err != nil {
 			log.Warnf("监听反向WS API时出现错误: %v", err)
 			break
 		}
-
-		go conn.handleRequest(c.bot, buf)
+		_, err = buffer.ReadFrom(reader)
+		if err != nil {
+			log.Warnf("监听反向WS API时出现错误: %v", err)
+			break
+		}
+		if t == websocket.TextMessage {
+			go func(buffer *bytes.Buffer) {
+				defer global.PutBuffer(buffer)
+				conn.handleRequest(c.bot, buffer.Bytes())
+			}(buffer)
+		} else {
+			global.PutBuffer(buffer)
+		}
 	}
 	if c.conf.ReverseReconnectInterval != 0 {
 		time.Sleep(time.Millisecond * time.Duration(c.conf.ReverseReconnectInterval))
@@ -309,13 +321,23 @@ func (s *webSocketServer) any(w http.ResponseWriter, r *http.Request) {
 func (s *webSocketServer) listenAPI(c *webSocketConn) {
 	defer c.Close()
 	for {
-		t, payload, err := c.ReadMessage()
+		buffer := global.NewBuffer()
+		t, reader, err := c.NextReader()
+		if err != nil {
+			break
+		}
+		_, err = buffer.ReadFrom(reader)
 		if err != nil {
 			break
 		}
 
 		if t == websocket.TextMessage {
-			go c.handleRequest(s.bot, payload)
+			go func(buffer *bytes.Buffer) {
+				defer global.PutBuffer(buffer)
+				c.handleRequest(s.bot, buffer.Bytes())
+			}(buffer)
+		} else {
+			global.PutBuffer(buffer)
 		}
 	}
 }
