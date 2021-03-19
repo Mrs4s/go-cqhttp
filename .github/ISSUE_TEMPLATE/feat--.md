@@ -2,7 +2,7 @@
 name: 新功能提议
 about: 提出新功能
 title: ''
-labels: ''
+labels: feature request
 assignees: ''
 
 ---
