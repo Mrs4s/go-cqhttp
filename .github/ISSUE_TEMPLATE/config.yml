@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
-  - name: 提出新建议/功能
-    url: https://github.com/Mrs4s/go-cqhttp/discussions/new
-    about: 请在这里提出你的建议或功能
   - name: 不知道怎么做?
     url: https://github.com/Mrs4s/go-cqhttp/issues/633
-    about: 建议你首先查看此教程
+    about: 建议你先查看此教程
+  - name: 讨论区
+    url: https://github.com/Mrs4s/go-cqhttp/discussions/
+    about: 使用中若遇到问题或有新点子新需求，请先在这里求助和征求意见。

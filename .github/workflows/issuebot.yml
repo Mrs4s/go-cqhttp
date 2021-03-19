@@ -2,7 +2,7 @@ name: Issuebot
 
 on:
   issues:
-    types: [opened]
+    types: [opened, edited]
 
 jobs:
   new_issue:
