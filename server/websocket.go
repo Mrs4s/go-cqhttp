@@ -314,7 +314,9 @@ func (s *webSocketServer) any(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Infof("接受 WebSocket 连接: %v (/)", r.RemoteAddr)
 	conn := &webSocketConn{Conn: c, apiCaller: apiCaller{s.bot}}
+	s.eventConnMutex.Lock()
 	s.eventConn = append(s.eventConn, conn)
+	s.eventConnMutex.Unlock()
 	s.listenAPI(conn)
 }
 
