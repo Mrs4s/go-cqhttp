@@ -4,7 +4,6 @@ import (
 	"errors"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -18,8 +17,10 @@ import (
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
-var currentPath = getCurrentPath()
-var DefaultConfFile = path.Join(currentPath, "config.hjson")
+// var currentPath = getCurrentPath()
+
+// var DefaultConfFile = path.Join(currentPath, "config.hjson")
+var DefaultConfFile = "config.hjson"
 
 // DefaultConfigWithComments 为go-cqhttp的默认配置文件
 var DefaultConfigWithComments = `
