@@ -29,6 +29,7 @@ func NewCacheFileMap() *FileMapCache {
 	}
 }
 
+// stat 指定目录 进行统计
 func (c *FileMapCache) stat(dir string) (dirStat *CacheFileStat, err error) {
 	dirStat = new(CacheFileStat)
 	cacheDir, err := ioutil.ReadDir(dir)
@@ -45,6 +46,7 @@ func (c *FileMapCache) stat(dir string) (dirStat *CacheFileStat, err error) {
 	return dirStat, nil
 }
 
+// CacheStat 全量统计
 func (c *FileMapCache) CacheStat() (*CacheFileStat, error) {
 	var stat = new(CacheFileStat)
 
@@ -63,26 +65,25 @@ func (c *FileMapCache) CacheStat() (*CacheFileStat, error) {
 	return stat, nil
 }
 
+// Clean 执行目录缓存清空
 func (c *FileMapCache) Clean() {
 	c.Lock.Lock()
 	defer c.Lock.Unlock()
 
 	{
+		// 日志在控制台输出 而不是在接口中输出
 		go c.removeDirFile(CachePath)
 		go c.removeDirFile(ImagePath)
 		go c.removeDirFile(VoicePath)
 		go c.removeDirFile(VideoPath)
 	}
-
-	// 日志在控制台输出 而不是在接口中输出
-	return
 }
 
-func (c *FileMapCache) removeDirFile(dir string) error {
+func (c *FileMapCache) removeDirFile(dir string) {
 	cacheDir, err := ioutil.ReadDir(dir)
 	if err != nil {
 		log.Errorf("read cache dir err: %v", err)
-		return err
+		return
 	}
 
 	for _, info := range cacheDir {
@@ -94,20 +95,18 @@ func (c *FileMapCache) removeDirFile(dir string) error {
 		// 删除
 		DelFile(fullname)
 	}
-
-	return nil
 }
 
 func (c *FileMapCache) Store(key string) {
 	c.Lock.Lock()
-	c.Lock.Unlock()
+	defer c.Lock.Unlock()
 
 	c.CacheMap.Store(key, true)
 }
 
 func (c *FileMapCache) Delete(key string) {
 	c.Lock.Lock()
-	c.Lock.Unlock()
+	defer c.Lock.Unlock()
 
 	c.CacheMap.Delete(key)
 }
