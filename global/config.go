@@ -17,7 +17,7 @@ var json = jsoniter.ConfigCompatibleWithStandardLibrary
 // var DefaultConfFile = path.Join(currentPath, "config.hjson")
 
 // DefaultConfFile 默认的配置文件
-var DefaultConfFile string = "config.hjson"
+var DefaultConfFile = "config.hjson"
 
 // DefaultConfigWithComments 为go-cqhttp的默认配置文件
 var DefaultConfigWithComments = `
