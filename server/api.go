@@ -316,6 +316,10 @@ func handleQuickOperation(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 	return bot.CQHandleQuickOperation(p.Get("context"), p.Get("operation"))
 }
 
+func setCacheClean(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+	return bot.CQCleanCache()
+}
+
 var API = map[string]func(*coolq.CQBot, resultGetter) coolq.MSG{
 	"get_login_info":             getLoginInfo,
 	"get_friend_list":            getFriendList,
@@ -371,6 +375,7 @@ var API = map[string]func(*coolq.CQBot, resultGetter) coolq.MSG{
 	"check_url_safely":           checkUrlSafely,
 	"set_group_anonymous_ban":    setGroupAnonymousBan,
 	".handle_quick_operation":    handleQuickOperation,
+	"clean_cache":                setCacheClean,
 }
 
 func (api *apiCaller) callAPI(action string, p resultGetter) coolq.MSG {

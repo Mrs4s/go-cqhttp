@@ -138,7 +138,7 @@ func NewLocalHook(args interface{}, formatter logrus.Formatter, levels ...logrus
 //
 // 可能的值有
 //
-// "trace","debug","info","warn","warn","error"
+// "trace","debug","info","warn","error"
 func GetLogLevel(level string) []logrus.Level {
 	switch level {
 	case "trace":

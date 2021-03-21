@@ -672,6 +672,9 @@ func (bot *CQBot) ToElement(t string, d map[string]string, isGroup bool) (m inte
 		return &message.VoiceElement{Data: data}, nil
 	case "record":
 		f := d["file"]
+		// 防止清除缓存接口和该接口同时运行时 将该缓存清除
+		fileMapCache.Store(f)
+		defer fileMapCache.Delete(f)
 		data, err := global.FindFile(f, d["cache"], global.VoicePath)
 		if err == global.ErrSyntax {
 			data, err = global.FindFile(f, d["cache"], global.VoicePathOld)
@@ -847,6 +850,9 @@ func (bot *CQBot) ToElement(t string, d map[string]string, isGroup bool) (m inte
 		}
 		var data []byte
 		if cover, ok := d["cover"]; ok {
+			// 防止清除缓存接口和该接口同时运行时 将该缓存清除
+			fileMapCache.Store(cover)
+			defer fileMapCache.Delete(cover)
 			data, _ = global.FindFile(cover, cache, global.ImagePath)
 		} else {
 			_ = global.ExtractCover(v.File, v.File+".jpg")
