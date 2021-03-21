@@ -1180,7 +1180,7 @@ func (bot *CQBot) CQSetGroupAnonymousBan(groupID int64, flag string, duration in
 //
 // https://git.io/JtzMe
 func (bot *CQBot) CQGetStatus() MSG {
-	return OK(MSG{
+	rsp := MSG{
 		"app_initialized": true,
 		"app_enabled":     true,
 		"plugins_good":    nil,
@@ -1188,7 +1188,16 @@ func (bot *CQBot) CQGetStatus() MSG {
 		"online":          bot.Client.Online,
 		"good":            bot.Client.Online,
 		"stat":            bot.Client.GetStatistics(),
-	})
+	}
+
+	// 当需要实时获取data目录的信息
+	//stat, _ := fileMapCache.CacheStat()
+	//if stat != nil {
+	//	rsp["cache_size"] = stat.Size
+	//	rsp["cache_count"] = stat.Count
+	//}
+
+	return OK(rsp)
 }
 
 // CQSetEssenceMessage 扩展API-设置精华消息

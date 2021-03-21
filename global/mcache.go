@@ -7,11 +7,13 @@ import (
 	"sync"
 )
 
+// mcache.go 用于缓存文件的简单记录与操作
+
 // FileMapCache 记录当前正在写入的文件名称 让其存在于磁盘中而不执行删除
 // 防止删除正在上传的文件而导致操作失败
 type FileMapCache struct {
 	CacheMap sync.Map      //防止并发影响"写"数据
-	Lock     *sync.RWMutex //防止时序影响"读"数据 【读时不写 写时不读】(全局)
+	Lock     *sync.RWMutex //防止时序影响"读"数据
 }
 
 // CacheFileStat 缓存统计
@@ -27,6 +29,22 @@ func NewCacheFileMap() *FileMapCache {
 	}
 }
 
+func (c *FileMapCache) stat(dir string) (dirStat *CacheFileStat, err error) {
+	dirStat = new(CacheFileStat)
+	cacheDir, err := ioutil.ReadDir(dir)
+	if err != nil {
+		log.Errorf("read cache dir err: %v", err)
+		return nil, err
+	}
+
+	for _, info := range cacheDir {
+		dirStat.Count++
+		dirStat.Size += info.Size()
+	}
+
+	return dirStat, nil
+}
+
 func (c *FileMapCache) CacheStat() (*CacheFileStat, error) {
 	var stat = new(CacheFileStat)
 
@@ -40,6 +58,8 @@ func (c *FileMapCache) CacheStat() (*CacheFileStat, error) {
 		stat.Size += temp.Size
 		stat.Count += temp.Count
 	}
+
+	stat.Size /= 1024
 	return stat, nil
 }
 
@@ -56,22 +76,6 @@ func (c *FileMapCache) Clean() {
 
 	// 日志在控制台输出 而不是在接口中输出
 	return
-}
-
-func (c *FileMapCache) stat(dir string) (dirStat *CacheFileStat, err error) {
-	dirStat = new(CacheFileStat)
-	cacheDir, err := ioutil.ReadDir(dir)
-	if err != nil {
-		log.Errorf("read cache dir err: %v", err)
-		return nil, err
-	}
-
-	for _, info := range cacheDir {
-		dirStat.Count++
-		dirStat.Size += info.Size() / 1024
-	}
-
-	return dirStat, nil
 }
 
 func (c *FileMapCache) removeDirFile(dir string) error {
