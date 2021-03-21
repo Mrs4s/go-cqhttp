@@ -36,6 +36,8 @@ _✨ 基于 [Mirai](https://github.com/mamoe/mirai) 以及 [MiraiGo](https://git
   <a href="https://github.com/Mrs4s/go-cqhttp/releases">下载</a>
   ·
   <a href="https://docs.go-cqhttp.org/guide/quick_start.html">开始使用</a>
+  ·
+  <a href="https://github.com/Mrs4s/go-cqhttp/blob/master/CONTRIBUTING.md">参与贡献</a>
 </p>
 
 
