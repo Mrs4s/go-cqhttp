@@ -15,6 +15,7 @@ var json = jsoniter.ConfigCompatibleWithStandardLibrary
 // var currentPath = getCurrentPath()
 
 // var DefaultConfFile = path.Join(currentPath, "config.hjson")
+
 // DefaultConfFile 默认的配置文件
 var DefaultConfFile string = "config.hjson"
 
