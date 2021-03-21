@@ -26,7 +26,7 @@ import (
 var Version = "unknown"
 
 // fileMapCache 正在写的缓存文件 需要入内存 防止被删除
-var fileMapCache = new(global.FileMapCache)
+var fileMapCache = global.NewCacheFileMap()
 
 // CQGetLoginInfo 获取登录号信息
 //

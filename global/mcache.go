@@ -21,7 +21,10 @@ type CacheFileStat struct {
 }
 
 func NewCacheFileMap() *FileMapCache {
-	return &FileMapCache{}
+	return &FileMapCache{
+		CacheMap: sync.Map{},
+		Lock:     &sync.RWMutex{},
+	}
 }
 
 func (c *FileMapCache) CacheStat() (*CacheFileStat, error) {
