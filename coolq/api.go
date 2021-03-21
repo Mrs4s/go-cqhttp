@@ -25,7 +25,8 @@ import (
 // Version go-cqhttp的版本信息，在编译时使用ldflags进行覆盖
 var Version = "unknown"
 
-// fileMapCache 正在写的缓存文件 需要入内存 防止被删除
+// fileMapCache 正在写的缓存文件 将其path入内存 防止同时
+// 执行缓存操作和清除缓存操作接口时文件被删除
 var fileMapCache = global.NewCacheFileMap()
 
 // CQGetLoginInfo 获取登录号信息
