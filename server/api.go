@@ -2,7 +2,6 @@ package server
 
 import (
 	"strings"
-	"time"
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
@@ -192,17 +191,19 @@ func getGroupHonorInfo(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 	return bot.CQGetGroupHonorInfo(p.Get("group_id").Int(), p.Get("type").Str)
 }
 
-func setRestart(_ *coolq.CQBot, p resultGetter) coolq.MSG {
-	var delay int64
-	delay = p.Get("delay").Int()
-	if delay < 0 {
-		delay = 0
-	}
-	defer func(delay int64) {
-		time.Sleep(time.Duration(delay) * time.Millisecond)
-		Restart <- struct{}{}
-	}(delay)
-	return coolq.MSG{"data": nil, "retcode": 0, "status": "async"}
+func setRestart(_ *coolq.CQBot, _ resultGetter) coolq.MSG {
+	/*
+		var delay int64
+		delay = p.Get("delay").Int()
+		if delay < 0 {
+			delay = 0
+		}
+		defer func(delay int64) {
+			time.Sleep(time.Duration(delay) * time.Millisecond)
+			Restart <- struct{}{}
+		}(delay)
+	*/
+	return coolq.MSG{"data": nil, "retcode": 99, "msg": "restart un-supported now", "wording": "restart函数暂不兼容", "status": "failed"}
 }
 
 func canSendImage(bot *coolq.CQBot, _ resultGetter) coolq.MSG {

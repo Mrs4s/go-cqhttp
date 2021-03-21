@@ -1,14 +1,9 @@
 package global
 
 import (
-	"errors"
 	"os"
-	"os/exec"
 	"path"
-	"path/filepath"
-	"runtime"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/hjson/hjson-go"
@@ -324,13 +319,14 @@ func (c *JSONConfig) Save(path string) error {
 
 // getCurrentPath 获取当前文件的路径，直接返回string
 func getCurrentPath() string {
-	cwd, e := GetCurrentPath()
+	cwd, e := os.Getwd()
 	if e != nil {
 		panic(e)
 	}
 	return cwd
 }
 
+/*
 // GetCurrentPath 预留,获取当前目录地址
 func GetCurrentPath() (string, error) {
 	file, err := exec.LookPath(os.Args[0])
@@ -351,3 +347,4 @@ func GetCurrentPath() (string, error) {
 	}
 	return fpath[0 : i+1], nil
 }
+*/
