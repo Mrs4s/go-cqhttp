@@ -29,11 +29,11 @@ import (
 const (
 	// ImagePath go-cqhttp使用的图片缓存目录
 	ImagePath = "data/images"
-	// ImagePathOld 兼容旧版go-cqhtto使用的图片缓存目录
+	// ImagePathOld 兼容旧版go-cqhttp使用的图片缓存目录
 	ImagePathOld = "data/image"
 	// VoicePath go-cqhttp使用的语音缓存目录
 	VoicePath = "data/voices"
-	// VoicePathOld 兼容旧版go-cqhtto使用的语音缓存目录
+	// VoicePathOld 兼容旧版go-cqhttp使用的语音缓存目录
 	VoicePathOld = "data/record"
 	// VideoPath go-cqhttp使用的视频缓存目录
 	VideoPath = "data/videos"
