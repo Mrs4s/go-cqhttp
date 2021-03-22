@@ -1318,7 +1318,11 @@ func (bot *CQBot) CQGetVersionInfo() MSG {
 //
 // https://github.com/howmanybots/onebot/blob/master/v11/specs/api/public.md#clean_cache-%E6%B8%85%E7%90%86%E7%BC%93%E5%AD%98
 func (bot *CQBot) CQCleanCache() MSG {
-	fileMapCache.Clean()
+	err := fileMapCache.Clean()
+	if err != nil {
+		return Failed(100, err.Error())
+	}
+
 	return OK(nil)
 }
 

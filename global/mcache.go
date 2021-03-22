@@ -1,6 +1,7 @@
 package global
 
 import (
+	"fmt"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"path"
@@ -9,17 +10,23 @@ import (
 
 // mcache.go 用于缓存文件的简单记录与操作
 
+const (
+	MCacheStatDefault = iota
+	MCacheStatRunning
+)
+
 // FileMapCache 记录当前正在写入的文件名称 让其存在于磁盘中而不执行删除
 // 防止删除正在上传的文件而导致操作失败
 type FileMapCache struct {
 	CacheMap sync.Map      //防止并发影响"写"数据
 	Lock     *sync.RWMutex //防止时序影响"读"数据
+	Stat     uint8         //接口状态 防止多次重入
 }
 
 // CacheFileStat 缓存统计
 type CacheFileStat struct {
-	Count int32 //缓存文件数量
-	Size  int64 //缓存大小 KB
+	Count uint32 //缓存文件数量
+	Size  uint64 //缓存大小 KB
 }
 
 func NewCacheFileMap() *FileMapCache {
@@ -40,7 +47,7 @@ func (c *FileMapCache) stat(dir string) (dirStat *CacheFileStat, err error) {
 
 	for _, info := range cacheDir {
 		dirStat.Count++
-		dirStat.Size += info.Size()
+		dirStat.Size += uint64(info.Size())
 	}
 
 	return dirStat, nil
@@ -50,8 +57,9 @@ func (c *FileMapCache) stat(dir string) (dirStat *CacheFileStat, err error) {
 func (c *FileMapCache) CacheStat() (*CacheFileStat, error) {
 	var stat = new(CacheFileStat)
 
-	var dirArr = []string{CachePath, ImagePath, VoicePath, VideoPath}
-	for _, dir := range dirArr {
+	var statDir = []string{CachePath, ImagePath, VoicePath, VideoPath}
+
+	for _, dir := range statDir {
 		temp, err := c.stat(dir)
 		if err != nil {
 			// 统计失败了 跳过该文件夹
@@ -66,35 +74,47 @@ func (c *FileMapCache) CacheStat() (*CacheFileStat, error) {
 }
 
 // Clean 执行目录缓存清空
-func (c *FileMapCache) Clean() {
+func (c *FileMapCache) Clean() error {
 	c.Lock.Lock()
 	defer c.Lock.Unlock()
 
-	{
-		// 日志在控制台输出 而不是在接口中输出
-		go c.removeDirFile(CachePath)
-		go c.removeDirFile(ImagePath)
-		go c.removeDirFile(VoicePath)
-		go c.removeDirFile(VideoPath)
-	}
-}
-
-func (c *FileMapCache) removeDirFile(dir string) {
-	cacheDir, err := ioutil.ReadDir(dir)
-	if err != nil {
-		log.Errorf("read cache dir err: %v", err)
-		return
+	// 避免不必要协程开销
+	if c.Stat == MCacheStatRunning {
+		return fmt.Errorf("please do not try again, proces:clean_cache is running")
 	}
 
-	for _, info := range cacheDir {
-		fullname := path.Join(dir, info.Name())
-		if _, exist := c.CacheMap.Load(fullname); exist {
-			// 存在 跳过
-			continue
-		}
-		// 删除
-		DelFile(fullname)
+	c.Stat = MCacheStatRunning
+	var cleanDir = []string{CachePath, ImagePath, VoicePath, VideoPath}
+
+	// 日志在控制台输出 而不是在接口中输出
+	var wg = new(sync.WaitGroup)
+	for _, dir := range cleanDir {
+		wg.Add(1)
+		go func(wg *sync.WaitGroup, dir string) {
+			cacheDir, err := ioutil.ReadDir(dir)
+			if err != nil {
+				log.Errorf("read cache dir err: %v", err)
+				return
+			}
+
+			for _, info := range cacheDir {
+				fullname := path.Join(dir, info.Name())
+				if _, exist := c.CacheMap.Load(fullname); exist {
+					// 存在 跳过
+					wg.Done()
+					continue
+				}
+				// 删除
+				DelFile(fullname)
+			}
+			wg.Done()
+		}(wg, dir)
 	}
+
+	wg.Wait()
+	c.Stat = MCacheStatDefault
+
+	return nil
 }
 
 func (c *FileMapCache) Store(key string) {
