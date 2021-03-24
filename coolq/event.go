@@ -50,6 +50,7 @@ func (bot *CQBot) privateMessageEvent(c *client.QQClient, m *message.PrivateMess
 		"sub_type":     "friend",
 		"message_id":   id,
 		"user_id":      m.Sender.Uin,
+		"target_id":    m.Target,
 		"message":      ToFormattedMessage(m.Elements, m.Sender.Uin, false),
 		"raw_message":  cqm,
 		"font":         0,
