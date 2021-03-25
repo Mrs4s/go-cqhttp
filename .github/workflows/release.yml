@@ -32,5 +32,4 @@ jobs:
           goarch: ${{ matrix.goarch }}
           goversion: "https://golang.org/dl/go1.16.linux-amd64.tar.gz"
           build_flags: -trimpath
-          ldflags: -w -s -X "github.com/Mrs4s/go-cqhttp/coolq.Version=${{ env.RELEASE_VERSION }}"
-          
+          ldflags: -w -s
