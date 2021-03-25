@@ -39,7 +39,7 @@ func getGroupMemberList(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 
 func getGroupMemberInfo(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 	return bot.CQGetGroupMemberInfo(
-		p.Get("group_id").Int(), p.Get("user_id").Int(),
+		p.Get("group_id").Int(), p.Get("user_id").Int(), p.Get("no_cache").Bool(),
 	)
 }
 func sendMSG(bot *coolq.CQBot, p resultGetter) coolq.MSG {

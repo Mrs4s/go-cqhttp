@@ -139,12 +139,22 @@ func (bot *CQBot) CQGetGroupMemberList(groupID int64, noCache bool) MSG {
 // CQGetGroupMemberInfo 获取群成员信息
 //
 // https://git.io/Jtz1s
-func (bot *CQBot) CQGetGroupMemberInfo(groupID, userID int64) MSG {
+func (bot *CQBot) CQGetGroupMemberInfo(groupID, userID int64, noCache bool) MSG {
 	group := bot.Client.FindGroup(groupID)
 	if group == nil {
 		return Failed(100, "GROUP_NOT_FOUND", "群聊不存在")
 	}
-	member := group.FindMember(userID)
+	var member *client.GroupMemberInfo
+	if noCache {
+		var err error
+		member, err = bot.Client.GetMemberInfo(groupID, userID)
+		if err != nil {
+			log.Warnf("刷新群 %v 中成员 %v 失败: %v", groupID, userID, err)
+			return Failed(100, "GET_MEMBER_INFO_API_ERROR", err.Error())
+		}
+	} else {
+		member = group.FindMember(userID)
+	}
 	if member == nil {
 		return Failed(100, "MEMBER_NOT_FOUND", "群员不存在")
 	}
