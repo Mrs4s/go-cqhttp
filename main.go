@@ -311,7 +311,7 @@ func main() {
 	global.Proxy = conf.ProxyRewrite
 	// b := server.WebServer.Run(fmt.Sprintf("%s:%d", conf.WebUI.Host, conf.WebUI.WebUIPort), cli)
 	// c := server.Console
-	isQRCodeLogin := conf.Uin == 0 || len(conf.Password) == 0
+	isQRCodeLogin := (conf.Uin == 0 || len(conf.Password) == 0) && len(conf.PasswordEncrypted) == 0
 	if !isQRCodeLogin {
 		if err := commonLogin(); err != nil {
 			log.Fatalf("登录时发生致命错误: %v", err)
