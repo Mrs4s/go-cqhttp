@@ -180,9 +180,11 @@ func main() {
 		log.Warnf("已开启Debug模式.")
 		log.Debugf("开发交流群: 192548878")
 		server.Debug = true
-		if conf.WebUI == nil || !conf.WebUI.Enabled {
-			log.Warnf("警告: 在Debug模式下未启用WebUi服务, 将无法进行性能分析.")
-		}
+		/*
+			if conf.WebUI == nil || !conf.WebUI.Enabled {
+				log.Warnf("警告: 在Debug模式下未启用WebUi服务, 将无法进行性能分析.")
+			}
+		*/
 	}
 	log.Info("用户交流群: 721829413")
 	if !global.PathExists("device.json") {
