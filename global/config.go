@@ -173,7 +173,7 @@ type JSONConfig struct {
 	UseSSOAddress       bool                          `json:"use_sso_address"`
 	Debug               bool                          `json:"debug"`
 	LogLevel            string                        `json:"log_level"`
-	//WebUI               *GoCQWebUI                    `json:"web_ui"`
+	// WebUI               *GoCQWebUI                    `json:"web_ui"`
 }
 
 // CQHTTPAPIConfig HTTPAPI对应的Config结构体

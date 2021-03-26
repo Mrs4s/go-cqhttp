@@ -444,7 +444,7 @@ func OldPasswordDecrypt(encryptedPassword string, key []byte) string {
 
 func checkUpdate() {
 	log.Infof("正在检查更新.")
-	if coolq.Version == "unknown" {
+	if coolq.Version == "(devel)" {
 		log.Warnf("检查更新失败: 使用的 Actions 测试版或自编译版本.")
 		return
 	}
