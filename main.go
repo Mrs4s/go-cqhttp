@@ -361,6 +361,7 @@ func main() {
 		}
 		if err := cli.TokenLogin(global.AccountToken); err == nil {
 			saveToken()
+			return
 		}
 		if isQRCodeLogin {
 			log.Fatalf("快速重连失败")
