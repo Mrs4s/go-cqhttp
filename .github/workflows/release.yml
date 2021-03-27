@@ -36,13 +36,4 @@ jobs:
           path: upstream/dist
 
       - name: Update Dist
-        run: |
-          cp dist/*.tar.gz upstream/dist/
-          cp dist/*.zip upstream/dist/
-          cd upstream/dist
-          git config --local user.name 'Github Actions'
-          git config --local user.email 'github-actions@users.noreply.github.com'
-          git add --all
-          git commit -m "update to ${GITHUB_REF#"refs/tags/"}"
-          git push
-
+        run: ./scripts/upload_dist.sh
