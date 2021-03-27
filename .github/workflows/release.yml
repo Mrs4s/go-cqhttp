@@ -36,4 +36,6 @@ jobs:
           path: upstream/dist
 
       - name: Update Dist
-        run: ./scripts/upload_dist.sh
+        run: |
+          chmod +x /scripts/upload_dist.sh
+          ./scripts/upload_dist.sh
