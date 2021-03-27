@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/Baozisoftware/qrcode-terminal-go v0.0.0-20170407111555-c0650d8dff0f
-	github.com/Mrs4s/MiraiGo v0.0.0-20210323143736-d233c90d5083
+	github.com/Mrs4s/MiraiGo v0.0.0-20210327114026-05f0087b4f79
 	github.com/dustin/go-humanize v1.0.0
 	github.com/gin-gonic/gin v1.6.3
 	github.com/gorilla/websocket v1.4.2
@@ -26,6 +26,7 @@ require (
 	github.com/wdvxdr1123/go-silk v0.0.0-20210316130616-d47b553def60
 	github.com/willf/bitset v1.1.11 // indirect
 	golang.org/x/crypto v0.0.0-20210314154223-e6e6c4f2bb5b
+	golang.org/x/image v0.0.0-20210220032944-ac19c3e999fb // indirect
 	golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba
 )

@@ -165,7 +165,7 @@ func main() {
 		log.Warning("将等待10s后启动")
 		time.Sleep(time.Second * 10)
 	}
-	if conf.Uin == 0 || (conf.Password == "" && conf.PasswordEncrypted == "") {
+	if (conf.Uin == 0 || (conf.Password == "" && conf.PasswordEncrypted == "")) && !global.PathExists("session.token") {
 		log.Warn("账号密码未配置, 将使用二维码登录.")
 		if !isFastStart {
 			log.Warn("将在 5秒 后继续.")
@@ -313,15 +313,33 @@ func main() {
 	// b := server.WebServer.Run(fmt.Sprintf("%s:%d", conf.WebUI.Host, conf.WebUI.WebUIPort), cli)
 	// c := server.Console
 	isQRCodeLogin := (conf.Uin == 0 || len(conf.Password) == 0) && len(conf.PasswordEncrypted) == 0
-	if !isQRCodeLogin {
-		if err := commonLogin(); err != nil {
-			log.Fatalf("登录时发生致命错误: %v", err)
-		}
-	} else {
-		if err := qrcodeLogin(); err != nil {
-			log.Fatalf("登录时发生致命错误: %v", err)
+	isTokenLogin := false
+	if global.PathExists("session.token") {
+		token, err := ioutil.ReadFile("session.token")
+		if err == nil {
+			if err = cli.TokenLogin(token); err != nil {
+				log.Warnf("恢复会话失败: %v , 尝试使用正常流程登录.", err)
+			} else {
+				isTokenLogin = true
+			}
 		}
 	}
+	if !isTokenLogin {
+		if !isQRCodeLogin {
+			if err := commonLogin(); err != nil {
+				log.Fatalf("登录时发生致命错误: %v", err)
+			}
+		} else {
+			if err := qrcodeLogin(); err != nil {
+				log.Fatalf("登录时发生致命错误: %v", err)
+			}
+		}
+	}
+	saveToken := func() {
+		global.AccountToken = cli.GenToken()
+		_ = ioutil.WriteFile("session.token", global.AccountToken, 0677)
+	}
+	saveToken()
 	var times uint = 1 // 重试次数
 	var reLoginLock sync.Mutex
 	cli.OnDisconnected(func(q *client.QQClient, e *client.ClientDisconnectedEvent) {
@@ -330,9 +348,6 @@ func main() {
 		log.Warnf("Bot已离线: %v", e.Message)
 		if !conf.ReLogin.Enabled {
 			os.Exit(1)
-		}
-		if isQRCodeLogin {
-			log.Fatalf("二维码登录暂不支持重连.")
 		}
 		if times > conf.ReLogin.MaxReloginTimes && conf.ReLogin.MaxReloginTimes != 0 {
 			log.Fatalf("Bot重连次数超过限制, 停止")
@@ -343,6 +358,12 @@ func main() {
 		log.Warnf("尝试重连...")
 		if cli.Online {
 			return
+		}
+		if err := cli.TokenLogin(global.AccountToken); err == nil {
+			saveToken()
+		}
+		if isQRCodeLogin {
+			log.Fatalf("二维码登录暂不支持重连.")
 		}
 		if err := commonLogin(); err != nil {
 			log.Fatalf("登录时发生致命错误: %v", err)
