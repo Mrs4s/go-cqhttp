@@ -58,3 +58,4 @@ nfpms:
     formats:
       - deb
       - rpm
+    maintainer: Mrs4s

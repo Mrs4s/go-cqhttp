@@ -9,9 +9,7 @@ import (
 	"encoding/hex"
 	"flag"
 	"fmt"
-	"io"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"os/signal"
 	"path"
@@ -25,6 +23,7 @@ import (
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/global/terminal"
+	"github.com/Mrs4s/go-cqhttp/global/update"
 	"github.com/Mrs4s/go-cqhttp/server"
 
 	"github.com/Mrs4s/MiraiGo/binary"
@@ -488,8 +487,9 @@ func selfUpdate(imageURL string) {
 		log.Info("当前最新版本为 ", version)
 		log.Warn("是否更新(y/N): ")
 		r := strings.TrimSpace(readLine())
-
-		doUpdate := func() {
+		if r != "y" && r != "Y" {
+			log.Warn("已取消更新！")
+		} else {
 			log.Info("正在更新,请稍等...")
 			url := fmt.Sprintf(
 				"%v/Mrs4s/go-cqhttp/releases/download/%v/go-cqhttp-%v-%v-%v",
@@ -499,34 +499,14 @@ func selfUpdate(imageURL string) {
 					}
 					return "https://github.com"
 				}(),
-				version,
-				version,
-				runtime.GOOS,
-				runtime.GOARCH,
+				version, version, runtime.GOOS, runtime.GOARCH,
 			)
 			if runtime.GOOS == "windows" {
-				url += ".exe"
+				url += ".zip"
+			} else {
+				url += ".tar.gz"
 			}
-			resp, err := http.Get(url)
-			if err != nil {
-				log.Error("更新失败: ", err)
-				return
-			}
-			defer func() { _ = resp.Body.Close() }()
-			wc := global.WriteCounter{}
-			err, _ = global.UpdateFromStream(io.TeeReader(resp.Body, &wc))
-			fmt.Println()
-			if err != nil {
-				log.Error("更新失败!")
-				return
-			}
-			log.Info("更新完成！")
-		}
-
-		if r == "y" || r == "Y" {
-			doUpdate()
-		} else {
-			log.Warn("已取消更新！")
+			update.Update(url)
 		}
 	} else {
 		log.Info("当前版本已经是最新版本!")
