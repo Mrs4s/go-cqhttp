@@ -173,7 +173,7 @@ type JSONConfig struct {
 	UseSSOAddress       bool                          `json:"use_sso_address"`
 	Debug               bool                          `json:"debug"`
 	LogLevel            string                        `json:"log_level"`
-	WebUI               *GoCQWebUI                    `json:"web_ui"`
+	// WebUI               *GoCQWebUI                    `json:"web_ui"`
 }
 
 // CQHTTPAPIConfig HTTPAPI对应的Config结构体
@@ -221,6 +221,7 @@ type GoCQReverseWebSocketConfig struct {
 	ReverseReconnectInterval uint16 `json:"reverse_reconnect_interval"`
 }
 
+/*
 // GoCQWebUI WebUI对应Config结构体
 type GoCQWebUI struct {
 	Enabled   bool   `json:"enabled"`
@@ -228,6 +229,7 @@ type GoCQWebUI struct {
 	WebUIPort uint64 `json:"web_ui_port"`
 	WebInput  bool   `json:"web_input"`
 }
+*/
 
 // DefaultConfig 返回一份默认配置对应结构体
 func DefaultConfig() *JSONConfig {
@@ -272,12 +274,6 @@ func DefaultConfig() *JSONConfig {
 				ReverseEventURL:          "ws://you_websocket_event.server",
 				ReverseReconnectInterval: 3000,
 			},
-		},
-		WebUI: &GoCQWebUI{
-			Enabled:   true,
-			Host:      "127.0.0.1",
-			WebInput:  false,
-			WebUIPort: 9999,
 		},
 	}
 }

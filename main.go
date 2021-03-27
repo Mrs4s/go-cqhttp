@@ -180,9 +180,11 @@ func main() {
 		log.Warnf("已开启Debug模式.")
 		log.Debugf("开发交流群: 192548878")
 		server.Debug = true
-		if conf.WebUI == nil || !conf.WebUI.Enabled {
-			log.Warnf("警告: 在Debug模式下未启用WebUi服务, 将无法进行性能分析.")
-		}
+		/*
+			if conf.WebUI == nil || !conf.WebUI.Enabled {
+				log.Warnf("警告: 在Debug模式下未启用WebUi服务, 将无法进行性能分析.")
+			}
+		*/
 	}
 	log.Info("用户交流群: 721829413")
 	if !global.PathExists("device.json") {
@@ -311,7 +313,7 @@ func main() {
 	global.Proxy = conf.ProxyRewrite
 	// b := server.WebServer.Run(fmt.Sprintf("%s:%d", conf.WebUI.Host, conf.WebUI.WebUIPort), cli)
 	// c := server.Console
-	isQRCodeLogin := conf.Uin == 0 || len(conf.Password) == 0
+	isQRCodeLogin := (conf.Uin == 0 || len(conf.Password) == 0) && len(conf.PasswordEncrypted) == 0
 	if !isQRCodeLogin {
 		if err := commonLogin(); err != nil {
 			log.Fatalf("登录时发生致命错误: %v", err)
@@ -442,7 +444,7 @@ func OldPasswordDecrypt(encryptedPassword string, key []byte) string {
 
 func checkUpdate() {
 	log.Infof("正在检查更新.")
-	if coolq.Version == "unknown" {
+	if coolq.Version == "(devel)" {
 		log.Warnf("检查更新失败: 使用的 Actions 测试版或自编译版本.")
 		return
 	}
