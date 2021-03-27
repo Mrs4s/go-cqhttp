@@ -9,14 +9,12 @@ jobs:
   goreleaser:
     runs-on: ubuntu-latest
     steps:
-      -
-        name: Checkout
+      - name: Checkout
         uses: actions/checkout@v2.3.4
         with:
           fetch-depth: 0
 
-      -
-        name: Set up Go
+      - name: Set up Go
         uses: actions/setup-go@v2
         with:
           go-version: '1.16.2'
@@ -28,3 +26,16 @@ jobs:
           args: release --rm-dist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout Dist
+        uses: actions/checkout@v2
+        with:
+          repository: 'gocq/dist'
+          ref: master
+          ssh-key: ${{ secrets.SSH_KEY }}
+          path: upstream/dist
+
+      - name: Update Dist
+        run: |
+          chmod +x scripts/upload_dist.sh
+          ./scripts/upload_dist.sh
