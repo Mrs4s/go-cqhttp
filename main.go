@@ -363,7 +363,7 @@ func main() {
 			saveToken()
 		}
 		if isQRCodeLogin {
-			log.Fatalf("二维码登录暂不支持重连.")
+			log.Fatalf("快速重连失败")
 		}
 		if err := commonLogin(); err != nil {
 			log.Fatalf("登录时发生致命错误: %v", err)
