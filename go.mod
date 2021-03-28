@@ -9,7 +9,6 @@ require (
 	github.com/gin-gonic/gin v1.6.3
 	github.com/gorilla/websocket v1.4.2
 	github.com/guonaihong/gout v0.1.6
-	github.com/hjson/hjson-go v3.1.0+incompatible
 	github.com/jonboulle/clockwork v0.2.2 // indirect
 	github.com/json-iterator/go v1.1.10
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0
@@ -28,4 +27,5 @@ require (
 	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2
 	golang.org/x/term v0.0.0-20210317153231-de623e64d2a6
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba
+	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
 )

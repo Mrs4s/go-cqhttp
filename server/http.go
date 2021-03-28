@@ -6,6 +6,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/hex"
+	"fmt"
 	"net/http"
 	"os"
 	"strings"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
+	"github.com/Mrs4s/go-cqhttp/global/config"
 
 	"github.com/Mrs4s/MiraiGo/utils"
 	"github.com/gin-gonic/gin"
@@ -41,13 +43,15 @@ type httpContext struct {
 	ctx *gin.Context
 }
 
-// CQHTTPApiServer CQHTTPApiServer实例
-var CQHTTPApiServer = &httpServer{}
-
-// Debug 是否启用Debug模式
-var Debug = false
-
-func (s *httpServer) Run(addr, authToken string, bot *coolq.CQBot) {
+func RunHTTPServerAndClients(bot *coolq.CQBot, conf *config.HTTPServer) {
+	if conf.Disabled {
+		return
+	}
+	var (
+		s         = new(httpServer)
+		authToken = conf.AccessToken
+		addr      = fmt.Sprintf("%s:%d", conf.Host, conf.Port)
+	)
 	gin.SetMode(gin.ReleaseMode)
 	s.engine = gin.New()
 	s.bot = bot
@@ -108,10 +112,14 @@ func (s *httpServer) Run(addr, authToken string, bot *coolq.CQBot) {
 			os.Exit(1)
 		}
 	}()
+
+	for _, c := range conf.Post {
+		go newHTTPClient().Run(c.URL, c.Secret, conf.Timeout, bot)
+	}
 }
 
-// NewHTTPClient 返回反向HTTP客户端
-func NewHTTPClient() *HTTPClient {
+// newHTTPClient 返回反向HTTP客户端
+func newHTTPClient() *HTTPClient {
 	return &HTTPClient{}
 }
 

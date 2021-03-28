@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/Mrs4s/go-cqhttp/global"
+	"github.com/Mrs4s/go-cqhttp/global/config"
 
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/client"
@@ -44,11 +45,18 @@ type MSG map[string]interface{}
 var ForceFragmented = false
 
 // NewQQBot 初始化一个QQBot实例
-func NewQQBot(cli *client.QQClient, conf *global.JSONConfig) *CQBot {
+func NewQQBot(cli *client.QQClient, conf *config.Config) *CQBot {
 	bot := &CQBot{
 		Client: cli,
 	}
-	if conf.EnableDB {
+	var enableLevelDB = false
+	node, ok := conf.Database["leveldb"]
+	if ok {
+		var lconf = new(config.LevelDBConfig)
+		_ = node.Decode(lconf)
+		enableLevelDB = lconf.Enable
+	}
+	if enableLevelDB {
 		p := path.Join("data", "leveldb")
 		db, err := leveldb.OpenFile(p, nil)
 		if err != nil {
@@ -62,7 +70,7 @@ func NewQQBot(cli *client.QQClient, conf *global.JSONConfig) *CQBot {
 	}
 	bot.Client.OnPrivateMessage(bot.privateMessageEvent)
 	bot.Client.OnGroupMessage(bot.groupMessageEvent)
-	if conf.EnableSelfMessage {
+	if conf.Message.ReportSelfMessage {
 		bot.Client.OnSelfPrivateMessage(bot.privateMessageEvent)
 		bot.Client.OnSelfGroupMessage(bot.groupMessageEvent)
 	}
@@ -86,16 +94,17 @@ func NewQQBot(cli *client.QQClient, conf *global.JSONConfig) *CQBot {
 	bot.Client.OnOtherClientStatusChanged(bot.otherClientStatusChangedEvent)
 	bot.Client.OnGroupDigest(bot.groupEssenceMsg)
 	go func() {
-		i := conf.HeartbeatInterval
-		if i < 0 {
+		i := conf.Heartbeat.Interval
+		if i < 0 || conf.Heartbeat.Disabled {
 			log.Warn("警告: 心跳功能已关闭，若非预期，请检查配置文件。")
 			return
 		}
 		if i == 0 {
 			i = 5
 		}
+		t := time.NewTicker(time.Second * time.Duration(i))
 		for {
-			time.Sleep(time.Second * i)
+			<-t.C
 			bot.dispatchEventMessage(MSG{
 				"time":            time.Now().Unix(),
 				"self_id":         bot.Client.Uin,
