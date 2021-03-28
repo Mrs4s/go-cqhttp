@@ -514,14 +514,19 @@ func selfUpdate(imageURL string) {
 		} else {
 			log.Info("正在更新,请稍等...")
 			url := fmt.Sprintf(
-				"%v/Mrs4s/go-cqhttp/releases/download/%v/go-cqhttp-%v-%v-%v",
+				"%v/Mrs4s/go-cqhttp/releases/download/%v/go-cqhttp_%v_%v",
 				func() string {
 					if imageURL != "" {
 						return imageURL
 					}
 					return "https://github.com"
 				}(),
-				version, version, runtime.GOOS, runtime.GOARCH,
+				version, runtime.GOOS, func() string {
+					if runtime.GOARCH == "arm" {
+						return "armv7"
+					}
+					return runtime.GOARCH
+				}(),
 			)
 			if runtime.GOOS == "windows" {
 				url += ".zip"
