@@ -443,7 +443,13 @@ S1: // Plain Text
 		if *(*byte)(add(ptr, uintptr(i))) == '[' && i+4 < l &&
 			*(*uint32)(add(ptr, uintptr(i))) == magicCQ { // Magic :uint32([]byte("[CQ:"))
 			if i > j {
-				r = append(r, message.NewText(CQCodeUnescapeText(s[j:i])))
+				if SplitURL {
+					for _, str := range global.SplitURL(CQCodeUnescapeText(s[j:i])) {
+						r = append(r, message.NewText(str))
+					}
+				} else {
+					r = append(r, message.NewText(CQCodeUnescapeText(s[j:i])))
+				}
 			}
 			CQBegin = i
 			i += 4
@@ -501,7 +507,13 @@ S4: // CQCode param value
 	goto End
 End:
 	if i > j {
-		r = append(r, message.NewText(CQCodeUnescapeText(s[j:i])))
+		if SplitURL {
+			for _, str := range global.SplitURL(CQCodeUnescapeText(s[j:i])) {
+				r = append(r, message.NewText(str))
+			}
+		} else {
+			r = append(r, message.NewText(CQCodeUnescapeText(s[j:i])))
+		}
 	}
 	return
 }
