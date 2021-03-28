@@ -6,13 +6,14 @@ import (
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/hex"
+	"fmt"
 	"net/http"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
-	"github.com/Mrs4s/go-cqhttp/global"
+	"github.com/Mrs4s/go-cqhttp/global/config"
 
 	"github.com/Mrs4s/MiraiGo/utils"
 	"github.com/gin-gonic/gin"
@@ -26,7 +27,7 @@ type httpServer struct {
 	engine *gin.Engine
 	bot    *coolq.CQBot
 	HTTP   *http.Server
-	api    apiCaller
+	api    *apiCaller
 }
 
 // HTTPClient 反向HTTP上报客户端
@@ -34,6 +35,7 @@ type HTTPClient struct {
 	bot     *coolq.CQBot
 	secret  string
 	addr    string
+	filter  string
 	timeout int32
 }
 
@@ -41,17 +43,22 @@ type httpContext struct {
 	ctx *gin.Context
 }
 
-// CQHTTPApiServer CQHTTPApiServer实例
-var CQHTTPApiServer = &httpServer{}
-
-// Debug 是否启用Debug模式
-var Debug = false
-
-func (s *httpServer) Run(addr, authToken string, bot *coolq.CQBot) {
+func RunHTTPServerAndClients(bot *coolq.CQBot, conf *config.HTTPServer) {
+	if conf.Disabled {
+		return
+	}
+	var (
+		s         = new(httpServer)
+		authToken = conf.AccessToken
+		addr      = fmt.Sprintf("%s:%d", conf.Host, conf.Port)
+	)
 	gin.SetMode(gin.ReleaseMode)
 	s.engine = gin.New()
 	s.bot = bot
-	s.api = apiCaller{s.bot}
+	s.api = newAPICaller(s.bot)
+	if conf.RateLimit.Enabled {
+		s.api.use(rateLimit(conf.RateLimit.Frequency, conf.RateLimit.Bucket))
+	}
 	s.engine.Use(func(c *gin.Context) {
 		if c.Request.Method != "GET" && c.Request.Method != "POST" {
 			log.Warnf("已拒绝客户端 %v 的请求: 方法错误", c.Request.RemoteAddr)
@@ -108,19 +115,25 @@ func (s *httpServer) Run(addr, authToken string, bot *coolq.CQBot) {
 			os.Exit(1)
 		}
 	}()
+
+	for _, c := range conf.Post {
+		go newHTTPClient().Run(c.URL, c.Secret, conf.Filter, conf.Timeout, bot)
+	}
 }
 
-// NewHTTPClient 返回反向HTTP客户端
-func NewHTTPClient() *HTTPClient {
+// newHTTPClient 返回反向HTTP客户端
+func newHTTPClient() *HTTPClient {
 	return &HTTPClient{}
 }
 
 // Run 运行反向HTTP服务
-func (c *HTTPClient) Run(addr, secret string, timeout int32, bot *coolq.CQBot) {
+func (c *HTTPClient) Run(addr, secret, filter string, timeout int32, bot *coolq.CQBot) {
 	c.bot = bot
 	c.secret = secret
 	c.addr = addr
 	c.timeout = timeout
+	c.filter = filter
+	addFilter(filter)
 	if c.timeout < 5 {
 		c.timeout = 5
 	}
@@ -130,6 +143,14 @@ func (c *HTTPClient) Run(addr, secret string, timeout int32, bot *coolq.CQBot) {
 
 func (c *HTTPClient) onBotPushEvent(m *bytes.Buffer) {
 	var res string
+	if c.filter != "" {
+		filter := findFilter(c.filter)
+		if filter != nil && !filter.Eval(gjson.Parse(utils.B2S(m.Bytes()))) {
+			log.Debugf("上报Event %v 到 HTTP 服务器 %v 时被过滤.", c.addr, utils.B2S(m.Bytes()))
+			return
+		}
+	}
+
 	err := gout.POST(c.addr).SetJSON(m.Bytes()).BindBody(&res).SetHeader(func() gout.H {
 		h := gout.H{
 			"X-Self-ID":  c.bot.Client.Uin,
@@ -165,7 +186,6 @@ func (c *HTTPClient) onBotPushEvent(m *bytes.Buffer) {
 }
 
 func (s *httpServer) HandleActions(c *gin.Context) {
-	global.RateLimit(context.Background())
 	action := strings.ReplaceAll(c.Param("action"), "_async", "")
 	log.Debugf("HTTPServer接收到API调用: %v", action)
 	c.JSON(200, s.api.callAPI(action, httpContext{ctx: c}))

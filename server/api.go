@@ -13,8 +13,11 @@ type resultGetter interface {
 	Get(string) gjson.Result
 }
 
+type handler func(action string, p resultGetter) coolq.MSG
+
 type apiCaller struct {
-	bot *coolq.CQBot
+	bot      *coolq.CQBot
+	handlers []handler
 }
 
 func getLoginInfo(bot *coolq.CQBot, _ resultGetter) coolq.MSG {
@@ -259,8 +262,9 @@ func getVipInfo(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 	return bot.CQGetVipInfo(p.Get("user_id").Int())
 }
 
-func reloadEventFilter(bot *coolq.CQBot, _ resultGetter) coolq.MSG {
-	return bot.CQReloadEventFilter()
+func reloadEventFilter(_ *coolq.CQBot, p resultGetter) coolq.MSG {
+	addFilter(p.Get("file").String())
+	return coolq.OK(nil)
 }
 
 func getGroupAtAllRemain(bot *coolq.CQBot, p resultGetter) coolq.MSG {
@@ -376,8 +380,24 @@ var API = map[string]func(*coolq.CQBot, resultGetter) coolq.MSG{
 }
 
 func (api *apiCaller) callAPI(action string, p resultGetter) coolq.MSG {
+	for _, fn := range api.handlers {
+		if ret := fn(action, p); ret != nil {
+			return ret
+		}
+	}
 	if f, ok := API[action]; ok {
 		return f(api.bot, p)
 	}
 	return coolq.Failed(404, "API_NOT_FOUND", "API不存在")
+}
+
+func (api *apiCaller) use(middlewares ...handler) {
+	api.handlers = append(api.handlers, middlewares...)
+}
+
+func newAPICaller(bot *coolq.CQBot) *apiCaller {
+	return &apiCaller{
+		bot:      bot,
+		handlers: []handler{},
+	}
 }

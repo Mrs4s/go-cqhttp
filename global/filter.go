@@ -1,51 +1,15 @@
 package global
 
 import (
-	"fmt"
-	"io/ioutil"
 	"regexp"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 )
 
-// MSG 消息Map
-type MSG map[string]interface{}
-
-// Get 尝试从消息Map中取出key为s的值,若不存在则返回MSG{}
-//
-// 若所给key对应的值的类型是global.MSG,则返回此值
-//
-// 若所给key对应值的类型不是global.MSG,则返回MSG{"__str__": Val}
-func (m MSG) Get(s string) MSG {
-	if v, ok := m[s]; ok {
-		if msg, ok := v.(MSG); ok {
-			return msg
-		}
-		return MSG{"__str__": v} // 用这个名字应该没问题吧
-	}
-	return nil // 不存在为空
-}
-
-// String 将消息Map转化为String。若Map存在key "__str__",则返回此key对应的值,否则将输出整张消息Map对应的JSON字符串
-func (m MSG) String() string {
-	if m == nil {
-		return "" // 空 JSON
-	}
-	if str, ok := m["__str__"]; ok {
-		if str == nil {
-			return "" // 空 JSON
-		}
-		return fmt.Sprint(str)
-	}
-	str, _ := json.MarshalToString(m)
-	return str
-}
-
 // Filter 定义了一个消息上报过滤接口
 type Filter interface {
-	Eval(payload MSG) bool
+	Eval(payload gjson.Result) bool
 }
 
 type operationNode struct {
@@ -68,7 +32,7 @@ func notOperatorConstruct(argument gjson.Result) *NotOperator {
 }
 
 // Eval 对payload执行Not过滤
-func (op *NotOperator) Eval(payload MSG) bool {
+func (op *NotOperator) Eval(payload gjson.Result) bool {
 	return !op.operand.Eval(payload)
 }
 
@@ -110,7 +74,7 @@ func andOperatorConstruct(argument gjson.Result) *AndOperator {
 }
 
 // Eval 对payload执行And过滤
-func (op *AndOperator) Eval(payload MSG) bool {
+func (op *AndOperator) Eval(payload gjson.Result) bool {
 	res := true
 	for _, operand := range op.operands {
 		if len(operand.key) == 0 {
@@ -147,7 +111,7 @@ func orOperatorConstruct(argument gjson.Result) *OrOperator {
 }
 
 // Eval 对payload执行Or过滤
-func (op *OrOperator) Eval(payload MSG) bool {
+func (op *OrOperator) Eval(payload gjson.Result) bool {
 	res := false
 	for _, operand := range op.operands {
 		res = res || operand.Eval(payload)
@@ -170,7 +134,7 @@ func equalOperatorConstruct(argument gjson.Result) *EqualOperator {
 }
 
 // Eval 对payload执行Equal过滤
-func (op *EqualOperator) Eval(payload MSG) bool {
+func (op *EqualOperator) Eval(payload gjson.Result) bool {
 	return payload.String() == op.operand
 }
 
@@ -186,7 +150,7 @@ func notEqualOperatorConstruct(argument gjson.Result) *NotEqualOperator {
 }
 
 // Eval 对payload执行NotEqual过滤
-func (op *NotEqualOperator) Eval(payload MSG) bool {
+func (op *NotEqualOperator) Eval(payload gjson.Result) bool {
 	return !(payload.String() == op.operand)
 }
 
@@ -214,7 +178,7 @@ func inOperatorConstruct(argument gjson.Result) *InOperator {
 }
 
 // Eval 对payload执行In过滤
-func (op *InOperator) Eval(payload MSG) bool {
+func (op *InOperator) Eval(payload gjson.Result) bool {
 	payloadStr := payload.String()
 	if op.operandArray != nil {
 		for _, value := range op.operandArray {
@@ -242,7 +206,7 @@ func containsOperatorConstruct(argument gjson.Result) *ContainsOperator {
 }
 
 // Eval 对payload执行Contains过滤
-func (op *ContainsOperator) Eval(payload MSG) bool {
+func (op *ContainsOperator) Eval(payload gjson.Result) bool {
 	return strings.Contains(payload.String(), op.operand)
 }
 
@@ -261,7 +225,7 @@ func regexOperatorConstruct(argument gjson.Result) *RegexOperator {
 }
 
 // Eval 对payload执行RegexO过滤
-func (op *RegexOperator) Eval(payload MSG) bool {
+func (op *RegexOperator) Eval(payload gjson.Result) bool {
 	matched := op.regex.MatchString(payload.String())
 	return matched
 }
@@ -287,26 +251,5 @@ func Generate(opName string, argument gjson.Result) Filter {
 		return regexOperatorConstruct(argument)
 	default:
 		panic("the operator " + opName + " is not supported")
-	}
-}
-
-// EventFilter 初始化一个nil过滤器
-var EventFilter Filter
-
-// BootFilter 启动事件过滤器
-func BootFilter() {
-	defer func() {
-		if e := recover(); e != nil {
-			log.Warnf("事件过滤器启动失败: %v", e)
-			EventFilter = nil
-		} else {
-			log.Info("事件过滤器启动成功.")
-		}
-	}()
-	f, err := ioutil.ReadFile("filter.json")
-	if err != nil {
-		panic(err)
-	} else {
-		EventFilter = Generate("and", gjson.ParseBytes(f))
 	}
 }
