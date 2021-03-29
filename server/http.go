@@ -79,9 +79,10 @@ func (s *httpServer) Run(addr, authToken string, bot *coolq.CQBot) {
 		s.engine.Use(func(c *gin.Context) {
 			auth := c.Request.Header.Get("Authorization")
 			switch {
-			case auth != "" && strings.SplitN(auth, " ", 2)[1] != authToken:
-				c.AbortWithStatus(401)
-				return
+			case auth != "":
+				if strings.SplitN(auth, " ", 2)[1] != authToken {
+					c.AbortWithStatus(401)
+				}
 			case c.Query("access_token") != authToken:
 				c.AbortWithStatus(401)
 				return
