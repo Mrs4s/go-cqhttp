@@ -261,8 +261,9 @@ func getVipInfo(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 	return bot.CQGetVipInfo(p.Get("user_id").Int())
 }
 
-func reloadEventFilter(bot *coolq.CQBot, _ resultGetter) coolq.MSG {
-	return bot.CQReloadEventFilter()
+func reloadEventFilter(_ *coolq.CQBot, p resultGetter) coolq.MSG {
+	addFilter(p.Get("file").String())
+	return coolq.OK(nil)
 }
 
 func getGroupAtAllRemain(bot *coolq.CQBot, p resultGetter) coolq.MSG {

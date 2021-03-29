@@ -28,6 +28,7 @@ type webSocketServer struct {
 	eventConnMutex sync.Mutex
 	token          string
 	handshake      string
+	filter         string
 }
 
 // WebSocketClient WebSocket客户端实例
@@ -38,6 +39,7 @@ type WebSocketClient struct {
 	universalConn *webSocketConn
 	eventConn     *webSocketConn
 	token         string
+	filter        string
 }
 
 type webSocketConn struct {
@@ -58,6 +60,8 @@ func RunWebSocketServer(b *coolq.CQBot, conf *config.WebsocketServer) {
 	s.conf = conf
 	s.bot = b
 	s.token = conf.AccessToken
+	s.filter = conf.Filter
+	addFilter(s.filter)
 	addr := fmt.Sprintf("%s:%d", conf.Host, conf.Port)
 	s.handshake = fmt.Sprintf(`{"_post_method":2,"meta_event_type":"lifecycle","post_type":"meta_event","self_id":%d,"sub_type":"connect","time":%d}`,
 		b.Client.Uin, time.Now().Unix())
@@ -80,6 +84,8 @@ func RunWebSocketClient(b *coolq.CQBot, conf *config.WebsocketReverse) {
 	c.bot = b
 	c.conf = conf
 	c.token = conf.AccessToken
+	c.filter = conf.Filter
+	addFilter(c.filter)
 	if c.conf.Universal != "" {
 		c.connectUniversal()
 	} else {
@@ -217,6 +223,12 @@ func (c *WebSocketClient) listenAPI(conn *webSocketConn, u bool) {
 }
 
 func (c *WebSocketClient) onBotPushEvent(m *bytes.Buffer) {
+	filter := findFilter(c.filter)
+	if filter != nil && !filter.Eval(gjson.Parse(utils.B2S(m.Bytes()))) {
+		log.Debugf("上报Event %v 到 WS客户端 时被过滤.", utils.B2S(m.Bytes()))
+		return
+	}
+
 	if c.eventConn != nil {
 		log.Debugf("向WS服务器 %v 推送Event: %v", c.eventConn.RemoteAddr().String(), utils.B2S(m.Bytes()))
 		conn := c.eventConn
@@ -381,6 +393,14 @@ func (c *webSocketConn) handleRequest(_ *coolq.CQBot, payload []byte) {
 func (s *webSocketServer) onBotPushEvent(m *bytes.Buffer) {
 	s.eventConnMutex.Lock()
 	defer s.eventConnMutex.Unlock()
+
+	filter := findFilter(s.filter)
+	if filter != nil && !filter.Eval(gjson.Parse(utils.B2S(m.Bytes()))) {
+		fmt.Printf("1213")
+		log.Debugf("上报Event %v 到 WS客户端 时被过滤.", utils.B2S(m.Bytes()))
+		return
+	}
+
 	for i, l := 0, len(s.eventConn); i < l; i++ {
 		conn := s.eventConn[i]
 		log.Debugf("向WS客户端 %v 推送Event: %v", conn.RemoteAddr().String(), utils.B2S(m.Bytes()))

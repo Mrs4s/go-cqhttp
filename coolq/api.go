@@ -1147,14 +1147,6 @@ func (bot *CQBot) CQOcrImage(imageID string) MSG {
 	return OK(rsp)
 }
 
-// CQReloadEventFilter 扩展API-重载事件过滤器
-//
-// https://docs.go-cqhttp.org/api/#%E9%87%8D%E8%BD%BD%E4%BA%8B%E4%BB%B6%E8%BF%87%E6%BB%A4%E5%99%A8
-func (bot *CQBot) CQReloadEventFilter() MSG {
-	global.BootFilter()
-	return OK(nil)
-}
-
 // CQSetGroupPortrait 扩展API-设置群头像
 //
 // https://docs.go-cqhttp.org/api/#%E8%AE%BE%E7%BD%AE%E7%BE%A4%E5%A4%B4%E5%83%8F

@@ -35,6 +35,7 @@ type HTTPClient struct {
 	bot     *coolq.CQBot
 	secret  string
 	addr    string
+	filter  string
 	timeout int32
 }
 
@@ -116,7 +117,7 @@ func RunHTTPServerAndClients(bot *coolq.CQBot, conf *config.HTTPServer) {
 	}()
 
 	for _, c := range conf.Post {
-		go newHTTPClient().Run(c.URL, c.Secret, conf.Timeout, bot)
+		go newHTTPClient().Run(c.URL, c.Secret, conf.Filter, conf.Timeout, bot)
 	}
 }
 
@@ -126,11 +127,13 @@ func newHTTPClient() *HTTPClient {
 }
 
 // Run 运行反向HTTP服务
-func (c *HTTPClient) Run(addr, secret string, timeout int32, bot *coolq.CQBot) {
+func (c *HTTPClient) Run(addr, secret, filter string, timeout int32, bot *coolq.CQBot) {
 	c.bot = bot
 	c.secret = secret
 	c.addr = addr
 	c.timeout = timeout
+	c.filter = filter
+	addFilter(filter)
 	if c.timeout < 5 {
 		c.timeout = 5
 	}
@@ -140,6 +143,14 @@ func (c *HTTPClient) Run(addr, secret string, timeout int32, bot *coolq.CQBot) {
 
 func (c *HTTPClient) onBotPushEvent(m *bytes.Buffer) {
 	var res string
+	if c.filter != "" {
+		filter := findFilter(c.filter)
+		if filter != nil && !filter.Eval(gjson.Parse(utils.B2S(m.Bytes()))) {
+			log.Debugf("上报Event %v 到 HTTP 服务器 %v 时被过滤.", c.addr, utils.B2S(m.Bytes()))
+			return
+		}
+	}
+
 	err := gout.POST(c.addr).SetJSON(m.Bytes()).BindBody(&res).SetHeader(func() gout.H {
 		h := gout.H{
 			"X-Self-ID":  c.bot.Client.Uin,

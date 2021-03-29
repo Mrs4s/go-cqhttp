@@ -15,7 +15,7 @@ account: # 账号相关
   use-sso-address: true
 
 heartbeat:
-  disable: false # 是否开启心跳事件上报
+  disabled: false # 是否开启心跳事件上报
   # 心跳频率, 单位秒
   # -1 为关闭心跳
   interval: 5
