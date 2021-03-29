@@ -1,10 +1,5 @@
 package global
 
-import (
-	jsoniter "github.com/json-iterator/go"
-)
-
-var json = jsoniter.ConfigCompatibleWithStandardLibrary
 var AccountToken []byte
 
 // PasswordHash 存储QQ密码哈希供登录使用

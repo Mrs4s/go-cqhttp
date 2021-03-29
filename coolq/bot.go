@@ -438,10 +438,6 @@ func (bot *CQBot) Release() {
 }
 
 func (bot *CQBot) dispatchEventMessage(m MSG) {
-	if global.EventFilter != nil && !global.EventFilter.Eval(global.MSG(m)) {
-		log.Debug("Event filtered!")
-		return
-	}
 	buf := global.NewBuffer()
 	wg := sync.WaitGroup{}
 	wg.Add(len(bot.events))
@@ -454,6 +450,7 @@ func (bot *CQBot) dispatchEventMessage(m MSG) {
 					log.Warnf("处理事件 %v 时出现错误: %v \n%s", m, pan, debug.Stack())
 				}
 			}()
+
 			start := time.Now()
 			fn(buf)
 			end := time.Now()
