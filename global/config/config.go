@@ -60,7 +60,7 @@ type MiddleWares struct {
 	AccessToken string `yaml:"access-token"`
 	Filter      string `yaml:"filter"`
 	RateLimit   struct {
-		Disabled  bool    `yaml:"disabled"`
+		Enabled   bool    `yaml:"enabled"`
 		Frequency float64 `yaml:"frequency"`
 		Bucket    int     `yaml:"bucket"`
 	} `yaml:"rate-limit"`

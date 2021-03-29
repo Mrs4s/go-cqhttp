@@ -2,7 +2,6 @@ package server
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"net/http"
 	"runtime/debug"
@@ -44,7 +43,7 @@ type WebSocketClient struct {
 type webSocketConn struct {
 	*websocket.Conn
 	sync.Mutex
-	apiCaller apiCaller
+	apiCaller *apiCaller
 }
 
 var upgrader = websocket.Upgrader{
@@ -56,6 +55,7 @@ var upgrader = websocket.Upgrader{
 // RunWebSocketServer 运行一个正向WS server
 func RunWebSocketServer(b *coolq.CQBot, conf *config.WebsocketServer) {
 	var s = new(webSocketServer)
+	s.conf = conf
 	s.bot = b
 	s.token = conf.AccessToken
 	addr := fmt.Sprintf("%s:%d", conf.Host, conf.Port)
@@ -113,7 +113,10 @@ func (c *WebSocketClient) connectAPI() {
 		return
 	}
 	log.Infof("已连接到反向WebSocket API服务器 %v", c.conf.API)
-	wrappedConn := &webSocketConn{Conn: conn, apiCaller: apiCaller{c.bot}}
+	wrappedConn := &webSocketConn{Conn: conn, apiCaller: newAPICaller(c.bot)}
+	if c.conf.RateLimit.Enabled {
+		wrappedConn.apiCaller.use(rateLimit(c.conf.RateLimit.Frequency, c.conf.RateLimit.Bucket))
+	}
 	go c.listenAPI(wrappedConn, false)
 }
 
@@ -145,7 +148,7 @@ func (c *WebSocketClient) connectEvent() {
 	}
 
 	log.Infof("已连接到反向WebSocket Event服务器 %v", c.conf.Event)
-	c.eventConn = &webSocketConn{Conn: conn, apiCaller: apiCaller{c.bot}}
+	c.eventConn = &webSocketConn{Conn: conn, apiCaller: newAPICaller(c.bot)}
 }
 
 func (c *WebSocketClient) connectUniversal() {
@@ -174,7 +177,10 @@ func (c *WebSocketClient) connectUniversal() {
 		log.Warnf("反向WebSocket 握手时出现错误: %v", err)
 	}
 
-	wrappedConn := &webSocketConn{Conn: conn, apiCaller: apiCaller{c.bot}}
+	wrappedConn := &webSocketConn{Conn: conn, apiCaller: newAPICaller(c.bot)}
+	if c.conf.RateLimit.Enabled {
+		wrappedConn.apiCaller.use(rateLimit(c.conf.RateLimit.Frequency, c.conf.RateLimit.Bucket))
+	}
 	go c.listenAPI(wrappedConn, true)
 	c.universalConn = wrappedConn
 }
@@ -267,7 +273,7 @@ func (s *webSocketServer) event(w http.ResponseWriter, r *http.Request) {
 
 	log.Infof("接受 WebSocket 连接: %v (/event)", r.RemoteAddr)
 
-	conn := &webSocketConn{Conn: c, apiCaller: apiCaller{s.bot}}
+	conn := &webSocketConn{Conn: c, apiCaller: newAPICaller(s.bot)}
 
 	s.eventConnMutex.Lock()
 	s.eventConn = append(s.eventConn, conn)
@@ -290,7 +296,10 @@ func (s *webSocketServer) api(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Infof("接受 WebSocket 连接: %v (/api)", r.RemoteAddr)
-	conn := &webSocketConn{Conn: c, apiCaller: apiCaller{s.bot}}
+	conn := &webSocketConn{Conn: c, apiCaller: newAPICaller(s.bot)}
+	if s.conf.RateLimit.Enabled {
+		conn.apiCaller.use(rateLimit(s.conf.RateLimit.Frequency, s.conf.RateLimit.Bucket))
+	}
 	go s.listenAPI(conn)
 }
 
@@ -316,7 +325,10 @@ func (s *webSocketServer) any(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Infof("接受 WebSocket 连接: %v (/)", r.RemoteAddr)
-	conn := &webSocketConn{Conn: c, apiCaller: apiCaller{s.bot}}
+	conn := &webSocketConn{Conn: c, apiCaller: newAPICaller(s.bot)}
+	if s.conf.RateLimit.Enabled {
+		conn.apiCaller.use(rateLimit(s.conf.RateLimit.Frequency, s.conf.RateLimit.Bucket))
+	}
 	s.eventConnMutex.Lock()
 	s.eventConn = append(s.eventConn, conn)
 	s.eventConnMutex.Unlock()
@@ -354,7 +366,6 @@ func (c *webSocketConn) handleRequest(_ *coolq.CQBot, payload []byte) {
 			_ = c.Close()
 		}
 	}()
-	global.RateLimit(context.Background())
 	j := gjson.ParseBytes(payload)
 	t := strings.ReplaceAll(j.Get("action").Str, "_async", "")
 	log.Debugf("WS接收到API调用: %v 参数: %v", t, j.Get("params").Raw)
