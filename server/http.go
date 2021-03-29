@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
-	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/global/config"
 
 	"github.com/Mrs4s/MiraiGo/utils"
@@ -28,7 +27,7 @@ type httpServer struct {
 	engine *gin.Engine
 	bot    *coolq.CQBot
 	HTTP   *http.Server
-	api    apiCaller
+	api    *apiCaller
 }
 
 // HTTPClient 反向HTTP上报客户端
@@ -55,7 +54,10 @@ func RunHTTPServerAndClients(bot *coolq.CQBot, conf *config.HTTPServer) {
 	gin.SetMode(gin.ReleaseMode)
 	s.engine = gin.New()
 	s.bot = bot
-	s.api = apiCaller{s.bot}
+	s.api = newAPICaller(s.bot)
+	if conf.RateLimit.Enabled {
+		s.api.use(rateLimit(conf.RateLimit.Frequency, conf.RateLimit.Bucket))
+	}
 	s.engine.Use(func(c *gin.Context) {
 		if c.Request.Method != "GET" && c.Request.Method != "POST" {
 			log.Warnf("已拒绝客户端 %v 的请求: 方法错误", c.Request.RemoteAddr)
@@ -173,7 +175,6 @@ func (c *HTTPClient) onBotPushEvent(m *bytes.Buffer) {
 }
 
 func (s *httpServer) HandleActions(c *gin.Context) {
-	global.RateLimit(context.Background())
 	action := strings.ReplaceAll(c.Param("action"), "_async", "")
 	log.Debugf("HTTPServer接收到API调用: %v", action)
 	c.JSON(200, s.api.callAPI(action, httpContext{ctx: c}))

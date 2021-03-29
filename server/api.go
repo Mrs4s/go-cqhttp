@@ -13,8 +13,11 @@ type resultGetter interface {
 	Get(string) gjson.Result
 }
 
+type handler func(action string, p resultGetter) coolq.MSG
+
 type apiCaller struct {
-	bot *coolq.CQBot
+	bot      *coolq.CQBot
+	handlers []handler
 }
 
 func getLoginInfo(bot *coolq.CQBot, _ resultGetter) coolq.MSG {
@@ -375,8 +378,24 @@ var API = map[string]func(*coolq.CQBot, resultGetter) coolq.MSG{
 }
 
 func (api *apiCaller) callAPI(action string, p resultGetter) coolq.MSG {
+	for _, fn := range api.handlers {
+		if ret := fn(action, p); ret != nil {
+			return ret
+		}
+	}
 	if f, ok := API[action]; ok {
 		return f(api.bot, p)
 	}
 	return coolq.Failed(404, "API_NOT_FOUND", "API不存在")
+}
+
+func (api *apiCaller) use(middlewares ...handler) {
+	api.handlers = append(api.handlers, middlewares...)
+}
+
+func newAPICaller(bot *coolq.CQBot) *apiCaller {
+	return &apiCaller{
+		bot:      bot,
+		handlers: []handler{},
+	}
 }

@@ -54,7 +54,7 @@ default-middlewares: &default
   # 目前该限速设置为令牌桶算法, 请参考:
   # https://baike.baidu.com/item/%E4%BB%A4%E7%89%8C%E6%A1%B6%E7%AE%97%E6%B3%95/6597000?fr=aladdin
   rate-limit:
-    disable: true # 是否启用限速
+    enabled: false # 是否启用限速
     frequency: 1  # 令牌回复频率, 单位秒
     bucket: 1     # 令牌桶大小
 
@@ -76,6 +76,9 @@ servers:
       post:
         - url: 127.0.0.1:5701 # 地址
           secret: ''          # 密钥
+        #- url: 127.0.0.1:5701 # 地址
+        #  secret: ''          # 密钥
+
   # 正向WS设置
   - ws:
       # 是否禁用当前服务
@@ -100,6 +103,7 @@ servers:
       reconnect-interval: 3000
       middlewares:
         <<: *default
+  #- ws-reverse: # 可添加多个
 
 database: # 数据库相关设置
   leveldb:
