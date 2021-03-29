@@ -1398,5 +1398,3 @@ func limitedString(str string) string {
 	}
 	return string(limited) + " ..."
 }
-
-
