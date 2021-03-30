@@ -31,6 +31,7 @@ func addFilter(file string) {
 	bs, err := os.ReadFile(file)
 	if err != nil {
 		log.Error("init filter error: ", err)
+		return
 	}
 	defer func() {
 		if err := recover(); err != nil {
