@@ -78,7 +78,7 @@ func qrcodeLogin() error {
 		if s.State == client.QRCodeConfirmed {
 			res, err := cli.QRCodeLogin(s.LoginInfo)
 			if err != nil {
-				return nil
+				return err
 			}
 			return loginResponseProcessor(res)
 		}
