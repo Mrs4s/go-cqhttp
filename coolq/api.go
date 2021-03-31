@@ -857,7 +857,7 @@ func (bot *CQBot) CQHandleQuickOperation(context, operation gjson.Result) MSG {
 		isAnonymous := anonymous.Type != gjson.Null
 		msgType := context.Get("message_type").Str
 		reply := operation.Get("reply")
-
+		senderUserID := context.Get("sender.user_id")
 		if reply.Exists() {
 			autoEscape := global.EnsureBool(operation.Get("auto_escape"), false)
 
@@ -870,13 +870,14 @@ func (bot *CQBot) CQHandleQuickOperation(context, operation gjson.Result) MSG {
 				// 在 reply 数组头部插入CQ码
 				replySegments := make([]MSG, 0)
 				segments := make([]MSG, 0)
-				segments = append(segments, MSG{
-					"type": "at",
-					"data": MSG{
-						"qq": context.Get("sender.user_id").Int(),
-					},
-				})
-
+				if senderUserID.Exists() {
+					segments = append(segments, MSG{
+						"type": "at",
+						"data": MSG{
+							"qq": senderUserID.Int(),
+						},
+					})
+				}
 				err := json.UnmarshalFromString(reply.Raw, &replySegments)
 				if err != nil {
 					log.WithError(err).Warnf("处理 at_sender 过程中发生错误")
@@ -892,10 +893,10 @@ func (bot *CQBot) CQHandleQuickOperation(context, operation gjson.Result) MSG {
 				}
 
 				reply = gjson.Parse(modified)
-			} else if at && reply.Type == gjson.String {
+			} else if at && reply.Type == gjson.String && senderUserID.Exists() {
 				reply = gjson.Parse(fmt.Sprintf(
 					"\"[CQ:at,qq=%d]%s\"",
-					context.Get("sender.user_id").Int(),
+					senderUserID.Int(),
 					reply.String(),
 				))
 			}
