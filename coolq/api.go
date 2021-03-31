@@ -860,12 +860,7 @@ func (bot *CQBot) CQHandleQuickOperation(context, operation gjson.Result) MSG {
 
 		if reply.Exists() {
 			autoEscape := global.EnsureBool(operation.Get("auto_escape"), false)
-
-			at := !isAnonymous && msgType == "group" // 除匿名消息场合外默认 true
-			if operation.Get("at_sender").Exists() {
-				at = operation.Get("at_sender").Bool() && !isAnonymous && msgType == "group"
-			}
-
+			at := operation.Get("at_sender").Bool() && !isAnonymous && msgType == "group"
 			if at && reply.IsArray() {
 				// 在 reply 数组头部插入CQ码
 				replySegments := make([]MSG, 0)
