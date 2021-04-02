@@ -299,7 +299,7 @@ func (bot *CQBot) SendPrivateMessage(target int64, groupID int64, m *message.Sen
 		}
 	} else if code, ok := bot.tempMsgCache.Load(target); ok || groupID != 0 { // 临时会话
 		switch {
-		case bot.Client.FindGroup(groupID) == nil:
+		case groupID != 0 && bot.Client.FindGroup(groupID) == nil:
 			log.Errorf("错误: 找不到群(%v)", groupID)
 			id = -1
 		case groupID != 0 && !bot.Client.FindGroup(groupID).AdministratorOrOwner():
@@ -309,7 +309,7 @@ func (bot *CQBot) SendPrivateMessage(target int64, groupID int64, m *message.Sen
 			log.Errorf("错误: 群员(%v) 不在 群(%v), 无法发起临时会话", target, groupID)
 			id = -1
 		default:
-			if code != nil {
+			if code != nil && groupID == 0 {
 				groupID = code.(int64)
 			}
 			msg := bot.Client.SendTempMessage(groupID, target, m)
