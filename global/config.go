@@ -15,6 +15,7 @@ var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 var currentPath = getCurrentPath()
 var DefaultConfFile = path.Join(currentPath, "config.hjson")
+var AccountToken []byte
 
 // DefaultConfigWithComments 为go-cqhttp的默认配置文件
 var DefaultConfigWithComments = `

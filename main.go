@@ -9,9 +9,7 @@ import (
 	"encoding/hex"
 	"flag"
 	"fmt"
-	"io"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"os/signal"
 	"path"
@@ -25,6 +23,7 @@ import (
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/global/terminal"
+	"github.com/Mrs4s/go-cqhttp/global/update"
 	"github.com/Mrs4s/go-cqhttp/server"
 
 	"github.com/Mrs4s/MiraiGo/binary"
@@ -166,7 +165,7 @@ func main() {
 		log.Warning("将等待10s后启动")
 		time.Sleep(time.Second * 10)
 	}
-	if conf.Uin == 0 || (conf.Password == "" && conf.PasswordEncrypted == "") {
+	if (conf.Uin == 0 || (conf.Password == "" && conf.PasswordEncrypted == "")) && !global.PathExists("session.token") {
 		log.Warn("账号密码未配置, 将使用二维码登录.")
 		if !isFastStart {
 			log.Warn("将在 5秒 后继续.")
@@ -314,15 +313,33 @@ func main() {
 	// b := server.WebServer.Run(fmt.Sprintf("%s:%d", conf.WebUI.Host, conf.WebUI.WebUIPort), cli)
 	// c := server.Console
 	isQRCodeLogin := (conf.Uin == 0 || len(conf.Password) == 0) && len(conf.PasswordEncrypted) == 0
-	if !isQRCodeLogin {
-		if err := commonLogin(); err != nil {
-			log.Fatalf("登录时发生致命错误: %v", err)
-		}
-	} else {
-		if err := qrcodeLogin(); err != nil {
-			log.Fatalf("登录时发生致命错误: %v", err)
+	isTokenLogin := false
+	if global.PathExists("session.token") {
+		token, err := ioutil.ReadFile("session.token")
+		if err == nil {
+			if err = cli.TokenLogin(token); err != nil {
+				log.Warnf("恢复会话失败: %v , 尝试使用正常流程登录.", err)
+			} else {
+				isTokenLogin = true
+			}
 		}
 	}
+	if !isTokenLogin {
+		if !isQRCodeLogin {
+			if err := commonLogin(); err != nil {
+				log.Fatalf("登录时发生致命错误: %v", err)
+			}
+		} else {
+			if err := qrcodeLogin(); err != nil {
+				log.Fatalf("登录时发生致命错误: %v", err)
+			}
+		}
+	}
+	saveToken := func() {
+		global.AccountToken = cli.GenToken()
+		_ = ioutil.WriteFile("session.token", global.AccountToken, 0677)
+	}
+	saveToken()
 	var times uint = 1 // 重试次数
 	var reLoginLock sync.Mutex
 	cli.OnDisconnected(func(q *client.QQClient, e *client.ClientDisconnectedEvent) {
@@ -331,9 +348,6 @@ func main() {
 		log.Warnf("Bot已离线: %v", e.Message)
 		if !conf.ReLogin.Enabled {
 			os.Exit(1)
-		}
-		if isQRCodeLogin {
-			log.Fatalf("二维码登录暂不支持重连.")
 		}
 		if times > conf.ReLogin.MaxReloginTimes && conf.ReLogin.MaxReloginTimes != 0 {
 			log.Fatalf("Bot重连次数超过限制, 停止")
@@ -344,6 +358,13 @@ func main() {
 		log.Warnf("尝试重连...")
 		if cli.Online {
 			return
+		}
+		if err := cli.TokenLogin(global.AccountToken); err == nil {
+			saveToken()
+			return
+		}
+		if isQRCodeLogin {
+			log.Fatalf("快速重连失败")
 		}
 		if err := commonLogin(); err != nil {
 			log.Fatalf("登录时发生致命错误: %v", err)
@@ -488,45 +509,31 @@ func selfUpdate(imageURL string) {
 		log.Info("当前最新版本为 ", version)
 		log.Warn("是否更新(y/N): ")
 		r := strings.TrimSpace(readLine())
-
-		doUpdate := func() {
+		if r != "y" && r != "Y" {
+			log.Warn("已取消更新！")
+		} else {
 			log.Info("正在更新,请稍等...")
 			url := fmt.Sprintf(
-				"%v/Mrs4s/go-cqhttp/releases/download/%v/go-cqhttp-%v-%v-%v",
+				"%v/Mrs4s/go-cqhttp/releases/download/%v/go-cqhttp_%v_%v",
 				func() string {
 					if imageURL != "" {
 						return imageURL
 					}
 					return "https://github.com"
 				}(),
-				version,
-				version,
-				runtime.GOOS,
-				runtime.GOARCH,
+				version, runtime.GOOS, func() string {
+					if runtime.GOARCH == "arm" {
+						return "armv7"
+					}
+					return runtime.GOARCH
+				}(),
 			)
 			if runtime.GOOS == "windows" {
-				url += ".exe"
+				url += ".zip"
+			} else {
+				url += ".tar.gz"
 			}
-			resp, err := http.Get(url)
-			if err != nil {
-				log.Error("更新失败: ", err)
-				return
-			}
-			defer func() { _ = resp.Body.Close() }()
-			wc := global.WriteCounter{}
-			err, _ = global.UpdateFromStream(io.TeeReader(resp.Body, &wc))
-			fmt.Println()
-			if err != nil {
-				log.Error("更新失败!")
-				return
-			}
-			log.Info("更新完成！")
-		}
-
-		if r == "y" || r == "Y" {
-			doUpdate()
-		} else {
-			log.Warn("已取消更新！")
+			update.Update(url)
 		}
 	} else {
 		log.Info("当前版本已经是最新版本!")
