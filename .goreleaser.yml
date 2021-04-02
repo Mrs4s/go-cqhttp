@@ -4,13 +4,13 @@ before:
   hooks:
     - go mod tidy
 builds:
-  - env:
+  - id: nowin
+    env:
       - CGO_ENABLED=0
       - GO111MODULE=on
     goos:
       - linux
       - darwin
-      - windows
     goarch:
       - 386
       - amd64
@@ -23,22 +23,37 @@ builds:
         goarch: arm
       - goos: darwin
         goarch: 386
-      - goos: windows
-        goarch: arm64
-    mod_timestamp: '{{ .CommitTimestamp }}'
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w -X github.com/Mrs4s/go-cqhttp/coolq.Version=v{{.Version}}
+  - id: win
+    env:
+      - CGO_ENABLED=0
+      - GO111MODULE=on
+    goos:
+      - windows
+    goarch:
+      - 386
+      - amd64
+      - arm
+    goarm:
+      - 7
+    mod_timestamp: "{{ .CommitTimestamp }}"
     flags:
       - -trimpath
     ldflags:
       - -s -w -X github.com/Mrs4s/go-cqhttp/coolq.Version=v{{.Version}}
 
 checksum:
-  name_template: '{{ .ProjectName }}_checksums.txt'
+  name_template: "{{ .ProjectName }}_checksums.txt"
 changelog:
   sort: asc
   filters:
     exclude:
-      - '^docs:'
-      - '^test:'
+      - "^docs:"
+      - "^test:"
       - fix typo
       - Merge pull request
       - Merge branch
@@ -46,7 +61,18 @@ changelog:
       - go mod tidy
 
 archives:
-  - name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
+  - id: binary
+    builds:
+      - win
+    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    format_overrides:
+      - goos: windows
+        format: binary
+  - id: nowin
+    builds:
+      - nowin
+      - win
+    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
     format_overrides:
       - goos: windows
         format: zip
@@ -54,7 +80,7 @@ archives:
 nfpms:
   - license: AGPL 3.0
     homepage: https://go-cqhttp.org
-    file_name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+    file_name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     formats:
       - deb
       - rpm
