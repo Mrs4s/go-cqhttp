@@ -91,5 +91,3 @@ issues:
   # Fix found issues (if it's supported by the linter)
   fix: true
   exclude-use-default: false
-  exclude:
-    - "Error return value of .((os.)?std(out|err)..*|.*Close|.*Flush|os.Remove(All)?|.*print(f|ln)?|os.(Un)?Setenv). is not check"
