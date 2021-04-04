@@ -13,9 +13,11 @@ import (
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
-var currentPath = getCurrentPath()
-var DefaultConfFile = path.Join(currentPath, "config.hjson")
-var AccountToken []byte
+var (
+	currentPath     = getCurrentPath()
+	DefaultConfFile = path.Join(currentPath, "config.hjson")
+	AccountToken    []byte
+)
 
 // DefaultConfigWithComments 为go-cqhttp的默认配置文件
 var DefaultConfigWithComments = `
@@ -286,7 +288,7 @@ func LoadConfig(p string) *JSONConfig {
 		return nil
 	}
 	var dat map[string]interface{}
-	var c = JSONConfig{}
+	c := JSONConfig{}
 	err := hjson.Unmarshal([]byte(ReadAllText(p)), &dat)
 	if err == nil {
 		b, _ := json.Marshal(dat)

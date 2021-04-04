@@ -42,6 +42,7 @@ func getGroupMemberInfo(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 		p.Get("group_id").Int(), p.Get("user_id").Int(), p.Get("no_cache").Bool(),
 	)
 }
+
 func sendMSG(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 	autoEscape := global.EnsureBool(p.Get("auto_escape"), false)
 	if p.Get("message_type").Str == "private" {

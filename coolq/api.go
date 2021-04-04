@@ -1078,7 +1078,7 @@ func (bot *CQBot) CQGetGroupMessageHistory(groupID int64, seq int64) MSG {
 		log.Warnf("获取群历史消息失败: %v", err)
 		return Failed(100, "MESSAGES_API_ERROR", err.Error())
 	}
-	var ms = make([]MSG, 0, len(msg))
+	ms := make([]MSG, 0, len(msg))
 	for _, m := range msg {
 		id := m.Id
 		bot.checkMedia(m.Elements)
@@ -1104,7 +1104,7 @@ func (bot *CQBot) CQGetOnlineClients(noCache bool) MSG {
 			return Failed(100, "REFRESH_STATUS_ERROR", err.Error())
 		}
 	}
-	var d = make([]MSG, 0, len(bot.Client.OnlineClients))
+	d := make([]MSG, 0, len(bot.Client.OnlineClients))
 	for _, oc := range bot.Client.OnlineClients {
 		d = append(d, MSG{
 			"app_id":      oc.AppId,
@@ -1264,7 +1264,7 @@ func (bot *CQBot) CQGetEssenceMessageList(groupCode int64) MSG {
 	}
 	list := make([]MSG, 0, len(msgList))
 	for _, m := range msgList {
-		var msg = MSG{
+		msg := MSG{
 			"sender_nick":   m.SenderNick,
 			"sender_time":   m.SenderTime,
 			"operator_time": m.AddDigestTime,

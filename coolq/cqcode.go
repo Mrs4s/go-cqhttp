@@ -46,7 +46,7 @@ var SplitURL = false
 var magicCQ = uint32(0)
 
 func init() {
-	var CQHeader = "[CQ:"
+	CQHeader := "[CQ:"
 	magicCQ = *(*uint32)(unsafe.Pointer((*reflect.StringHeader)(unsafe.Pointer(&CQHeader)).Data))
 }
 
@@ -55,8 +55,11 @@ func add(ptr unsafe.Pointer, offset uintptr) unsafe.Pointer {
 	return unsafe.Pointer(uintptr(ptr) + offset)
 }
 
-const maxImageSize = 1024 * 1024 * 30  // 30MB
-const maxVideoSize = 1024 * 1024 * 100 // 100MB
+const (
+	maxImageSize = 1024 * 1024 * 30  // 30MB
+	maxVideoSize = 1024 * 1024 * 100 // 100MB
+)
+
 // PokeElement 拍一拍
 type PokeElement struct {
 	Target int64
@@ -352,7 +355,7 @@ func ToStringMessage(e []message.IMessageElement, id int64, isRaw ...bool) (r st
 // ConvertStringMessage 将消息字符串转为消息元素数组
 func (bot *CQBot) ConvertStringMessage(s string, isGroup bool) (r []message.IMessageElement) {
 	var t, key string
-	var d = map[string]string{}
+	d := map[string]string{}
 	ptr := unsafe.Pointer((*reflect.StringHeader)(unsafe.Pointer(&s)).Data)
 	l := len(s)
 	i, j, CQBegin := 0, 0, 0
@@ -760,14 +763,14 @@ func (bot *CQBot) ToElement(t string, d map[string]string, isGroup bool) (m inte
 		}
 		if d["type"] == "custom" {
 			if d["subtype"] != "" {
-				var subtype = map[string]int{
+				subtype := map[string]int{
 					"qq":    message.QQMusic,
 					"163":   message.CloudMusic,
 					"migu":  message.MiguMusic,
 					"kugou": message.KugouMusic,
 					"kuwo":  message.KuwoMusic,
 				}
-				var musicType = 0
+				musicType := 0
 				if tp, ok := subtype[d["subtype"]]; ok {
 					musicType = tp
 				}
@@ -858,7 +861,7 @@ func (bot *CQBot) ToElement(t string, d map[string]string, isGroup bool) (m inte
 		if err != nil {
 			return nil, err
 		}
-		var header = make([]byte, 4)
+		header := make([]byte, 4)
 		_, err = video.Read(header)
 		if err != nil {
 			return nil, err
@@ -970,7 +973,7 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video, group bool) (
 		}
 		hash := md5.Sum([]byte(f))
 		cacheFile := path.Join(global.CachePath, hex.EncodeToString(hash[:])+".cache")
-		var maxSize = func() int64 {
+		maxSize := func() int64 {
 			if video {
 				return maxVideoSize
 			}

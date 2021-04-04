@@ -38,12 +38,14 @@ import (
 	"golang.org/x/term"
 )
 
-var json = jsoniter.ConfigCompatibleWithStandardLibrary
-var conf *global.JSONConfig
-var isFastStart = false
-var c string
-var d bool
-var h bool
+var (
+	json        = jsoniter.ConfigCompatibleWithStandardLibrary
+	conf        *global.JSONConfig
+	isFastStart = false
+	c           string
+	d           bool
+	h           bool
+)
 
 func init() {
 	var debug bool

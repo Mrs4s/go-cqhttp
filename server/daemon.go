@@ -30,7 +30,6 @@ func Daemon() {
 
 	proc := exec.Command(os.Args[0], execArgs...)
 	err := proc.Start()
-
 	if err != nil {
 		panic(err)
 	}

@@ -6,8 +6,10 @@ import (
 	"golang.org/x/time/rate"
 )
 
-var limiter *rate.Limiter
-var limitEnable = false
+var (
+	limiter     *rate.Limiter
+	limitEnable = false
+)
 
 // RateLimit 执行API调用速率限制
 func RateLimit(ctx context.Context) {

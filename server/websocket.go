@@ -46,6 +46,7 @@ type webSocketConn struct {
 
 // WebSocketServer 初始化一个WebSocketServer实例
 var WebSocketServer = &webSocketServer{}
+
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
 		return true

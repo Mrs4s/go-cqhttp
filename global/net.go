@@ -217,7 +217,7 @@ func DownloadFileMultiThreading(url, path string, limit int64, threadCount int, 
 		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 			return errors.New("response status unsuccessful: " + strconv.FormatInt(int64(resp.StatusCode), 10))
 		}
-		var buffer = make([]byte, 1024)
+		buffer := make([]byte, 1024)
 		i, err := resp.Body.Read(buffer)
 		for {
 			if err != nil && err != io.EOF {
