@@ -396,7 +396,6 @@ func (s *webSocketServer) onBotPushEvent(m *bytes.Buffer) {
 
 	filter := findFilter(s.filter)
 	if filter != nil && !filter.Eval(gjson.Parse(utils.B2S(m.Bytes()))) {
-		fmt.Printf("1213")
 		log.Debugf("上报Event %v 到 WS客户端 时被过滤.", utils.B2S(m.Bytes()))
 		return
 	}
