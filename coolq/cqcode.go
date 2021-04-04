@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto/md5"
 	"encoding/base64"
-	goBinary "encoding/binary"
 	"encoding/hex"
 	xml2 "encoding/xml"
 	"errors"
@@ -47,15 +46,8 @@ var SplitURL = false
 var magicCQ = uint32(0)
 
 func init() {
-	const sizeInt = int(unsafe.Sizeof(0))
-	x := 0x1234
-	p := unsafe.Pointer(&x)
-	p2 := (*[sizeInt]byte)(p)
-	if p2[0] == 0 {
-		magicCQ = goBinary.BigEndian.Uint32([]byte("[CQ:"))
-	} else {
-		magicCQ = goBinary.LittleEndian.Uint32([]byte("[CQ:"))
-	}
+	var CQHeader = "[CQ:"
+	magicCQ = *(*uint32)(unsafe.Pointer((*reflect.StringHeader)(unsafe.Pointer(&CQHeader)).Data))
 }
 
 // add 指针运算
@@ -233,7 +225,7 @@ func ToArrayMessage(e []message.IMessageElement, id int64, isRaw ...bool) (r []M
 			} else {
 				m = MSG{
 					"type": "image",
-					"data": map[string]string{"file": hex.EncodeToString(o.Md5) + ".image", "url": CQCodeEscapeText(o.Url)},
+					"data": map[string]string{"file": hex.EncodeToString(o.Md5) + ".image", "url": o.Url},
 				}
 			}
 		case *message.FriendImageElement:
@@ -245,7 +237,7 @@ func ToArrayMessage(e []message.IMessageElement, id int64, isRaw ...bool) (r []M
 			} else {
 				m = MSG{
 					"type": "image",
-					"data": map[string]string{"file": hex.EncodeToString(o.Md5) + ".image", "url": CQCodeEscapeText(o.Url)},
+					"data": map[string]string{"file": hex.EncodeToString(o.Md5) + ".image", "url": o.Url},
 				}
 			}
 		case *message.GroupFlashImgElement:
@@ -331,13 +323,13 @@ func ToStringMessage(e []message.IMessageElement, id int64, isRaw ...bool) (r st
 			if ur {
 				r += fmt.Sprintf("[CQ:image,file=%s]", hex.EncodeToString(o.Md5)+".image")
 			} else {
-				r += fmt.Sprintf("[CQ:image,file=%s,url=%s]", hex.EncodeToString(o.Md5)+".image", CQCodeEscapeText(o.Url))
+				r += fmt.Sprintf("[CQ:image,file=%s,url=%s]", hex.EncodeToString(o.Md5)+".image", CQCodeUnescapeValue(o.Url))
 			}
 		case *message.FriendImageElement:
 			if ur {
 				r += fmt.Sprintf("[CQ:image,file=%s]", hex.EncodeToString(o.Md5)+".image")
 			} else {
-				r += fmt.Sprintf("[CQ:image,file=%s,url=%s]", hex.EncodeToString(o.Md5)+".image", CQCodeEscapeText(o.Url))
+				r += fmt.Sprintf("[CQ:image,file=%s,url=%s]", hex.EncodeToString(o.Md5)+".image", CQCodeUnescapeValue(o.Url))
 			}
 		case *message.GroupFlashImgElement:
 			return fmt.Sprintf("[CQ:image,type=flash,file=%s]", o.Filename)
@@ -398,10 +390,7 @@ func (bot *CQBot) ConvertStringMessage(s string, isGroup bool) (r []message.IMes
 				if err != nil {
 					msgTime = time.Now().Unix()
 				}
-				messageSeq, err := strconv.ParseInt(d["seq"], 10, 64)
-				if err != nil {
-					messageSeq = 0
-				}
+				messageSeq, _ := strconv.ParseInt(d["seq"], 10, 64)
 				r = append([]message.IMessageElement{
 					&message.ReplyElement{
 						ReplySeq: int32(messageSeq),
@@ -554,10 +543,7 @@ func (bot *CQBot) ConvertObjectMessage(m gjson.Result, isGroup bool) (r []messag
 				if err != nil {
 					msgTime = time.Now().Unix()
 				}
-				messageSeq, err := strconv.ParseInt(e.Get("data").Get("seq").String(), 10, 64)
-				if err != nil {
-					messageSeq = 0
-				}
+				messageSeq, _ := strconv.ParseInt(e.Get("data").Get("seq").String(), 10, 64)
 				r = append([]message.IMessageElement{
 					&message.ReplyElement{
 						ReplySeq: int32(messageSeq),
