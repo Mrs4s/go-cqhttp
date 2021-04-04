@@ -172,7 +172,11 @@ func main() {
 			time.Sleep(time.Second * 5)
 		}
 	}
-
+	log.Warn("警告:\n",
+		"go-cqhttp 是完全免费且开放源代码的软件，仅供学习和娱乐用途使用，\n",
+		"并采用 AGPL-3.0 协议开源。\n",
+		"我们并不鼓励和不支持一切商业使用\n",
+		"如果你正在进行此行为，请立即停止。")
 	log.Info("当前版本:", coolq.Version)
 	if conf.Debug {
 		log.SetLevel(log.DebugLevel)
