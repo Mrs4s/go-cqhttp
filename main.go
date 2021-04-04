@@ -35,11 +35,13 @@ import (
 	"golang.org/x/term"
 )
 
-var conf *config.Config
-var isFastStart = false
-var c string
-var d bool
-var h bool
+var (
+	conf        *config.Config
+	isFastStart = false
+	c           string
+	d           bool
+	h           bool
+)
 
 func init() {
 	var debug bool
@@ -364,7 +366,7 @@ func main() {
 	coolq.ForceFragmented = conf.Message.ForceFragment
 	for _, m := range conf.Servers {
 		if h, ok := m["http"]; ok {
-			var hc = new(config.HTTPServer)
+			hc := new(config.HTTPServer)
 			if err := h.Decode(hc); err != nil {
 				log.Warn("读取http配置失败 :", err)
 			} else {
@@ -372,7 +374,7 @@ func main() {
 			}
 		}
 		if s, ok := m["ws"]; ok {
-			var sc = new(config.WebsocketServer)
+			sc := new(config.WebsocketServer)
 			if err := s.Decode(sc); err != nil {
 				log.Warn("读取http配置失败 :", err)
 			} else {
@@ -380,7 +382,7 @@ func main() {
 			}
 		}
 		if c, ok := m["ws-reverse"]; ok {
-			var rc = new(config.WebsocketReverse)
+			rc := new(config.WebsocketReverse)
 			if err := c.Decode(rc); err != nil {
 				log.Warn("读取http配置失败 :", err)
 			} else {

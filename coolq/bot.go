@@ -49,10 +49,10 @@ func NewQQBot(cli *client.QQClient, conf *config.Config) *CQBot {
 	bot := &CQBot{
 		Client: cli,
 	}
-	var enableLevelDB = false
+	enableLevelDB := false
 	node, ok := conf.Database["leveldb"]
 	if ok {
-		var lconf = new(config.LevelDBConfig)
+		lconf := new(config.LevelDBConfig)
 		_ = node.Decode(lconf)
 		enableLevelDB = lconf.Enable
 	}
@@ -183,7 +183,7 @@ func (bot *CQBot) UploadLocalImageAsPrivate(userID int64, img *LocalImageElement
 
 // SendGroupMessage 发送群消息
 func (bot *CQBot) SendGroupMessage(groupID int64, m *message.SendingMessage) int32 {
-	var newElem = make([]message.IMessageElement, 0, len(m.Elements))
+	newElem := make([]message.IMessageElement, 0, len(m.Elements))
 	group := bot.Client.FindGroup(groupID)
 	for _, elem := range m.Elements {
 		if i, ok := elem.(*LocalImageElement); ok {
@@ -255,7 +255,7 @@ func (bot *CQBot) SendGroupMessage(groupID int64, m *message.SendingMessage) int
 
 // SendPrivateMessage 发送私聊消息
 func (bot *CQBot) SendPrivateMessage(target int64, groupID int64, m *message.SendingMessage) int32 {
-	var newElem = make([]message.IMessageElement, 0, len(m.Elements))
+	newElem := make([]message.IMessageElement, 0, len(m.Elements))
 	for _, elem := range m.Elements {
 		if i, ok := elem.(*LocalImageElement); ok {
 			fm, err := bot.UploadLocalImageAsPrivate(target, i)

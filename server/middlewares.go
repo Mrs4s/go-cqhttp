@@ -13,8 +13,10 @@ import (
 	"golang.org/x/time/rate"
 )
 
-var filters = make(map[string]global.Filter)
-var filterMutex sync.RWMutex
+var (
+	filters     = make(map[string]global.Filter)
+	filterMutex sync.RWMutex
+)
 
 func rateLimit(frequency float64, bucketSize int) handler {
 	limiter := rate.NewLimiter(rate.Limit(frequency), bucketSize)

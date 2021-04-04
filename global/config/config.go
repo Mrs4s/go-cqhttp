@@ -112,7 +112,7 @@ func Get() *Config {
 		log.Error("获取配置文件失败: ", err)
 		return nil
 	}
-	var config = &Config{}
+	config := &Config{}
 	if yaml.NewDecoder(file).Decode(config) != nil {
 		log.Fatal("配置文件不合法!", err)
 	}
