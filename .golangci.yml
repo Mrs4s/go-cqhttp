@@ -33,7 +33,7 @@ linters:
     #- goconst
     - gocritic
     #- gocyclo
-    - gofmt
+    - gofumpt
     - goimports
     - goprintffuncname
     #- gosec

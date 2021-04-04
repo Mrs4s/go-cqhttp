@@ -13,7 +13,7 @@ git config --local user.name 'Github Actions'
 git config --local user.email 'github-actions@users.noreply.github.com'
 git add --all
 git commit -m "update to $LATEST_VERSION"
-git tag -d "${GITHUB_REF#"refs/tags/"}"
-git tag "${GITHUB_REF#"refs/tags/"}"
+git tag -d "$LATEST_VERSION"
+git tag "$LATEST_VERSION"
 git push
 git push --tags
