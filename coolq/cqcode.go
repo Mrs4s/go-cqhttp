@@ -323,13 +323,13 @@ func ToStringMessage(e []message.IMessageElement, id int64, isRaw ...bool) (r st
 			if ur {
 				r += fmt.Sprintf("[CQ:image,file=%s]", hex.EncodeToString(o.Md5)+".image")
 			} else {
-				r += fmt.Sprintf("[CQ:image,file=%s,url=%s]", hex.EncodeToString(o.Md5)+".image", CQCodeUnescapeValue(o.Url))
+				r += fmt.Sprintf("[CQ:image,file=%s,url=%s]", hex.EncodeToString(o.Md5)+".image", CQCodeEscapeValue(o.Url))
 			}
 		case *message.FriendImageElement:
 			if ur {
 				r += fmt.Sprintf("[CQ:image,file=%s]", hex.EncodeToString(o.Md5)+".image")
 			} else {
-				r += fmt.Sprintf("[CQ:image,file=%s,url=%s]", hex.EncodeToString(o.Md5)+".image", CQCodeUnescapeValue(o.Url))
+				r += fmt.Sprintf("[CQ:image,file=%s,url=%s]", hex.EncodeToString(o.Md5)+".image", CQCodeEscapeValue(o.Url))
 			}
 		case *message.GroupFlashImgElement:
 			return fmt.Sprintf("[CQ:image,type=flash,file=%s]", o.Filename)
