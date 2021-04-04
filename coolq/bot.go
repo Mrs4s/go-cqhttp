@@ -49,10 +49,10 @@ func NewQQBot(cli *client.QQClient, conf *config.Config) *CQBot {
 	bot := &CQBot{
 		Client: cli,
 	}
-	enableLevelDB := false
+	var enableLevelDB = false
 	node, ok := conf.Database["leveldb"]
 	if ok {
-		lconf := new(config.LevelDBConfig)
+		var lconf = new(config.LevelDBConfig)
 		_ = node.Decode(lconf)
 		enableLevelDB = lconf.Enable
 	}
@@ -183,7 +183,7 @@ func (bot *CQBot) UploadLocalImageAsPrivate(userID int64, img *LocalImageElement
 
 // SendGroupMessage 发送群消息
 func (bot *CQBot) SendGroupMessage(groupID int64, m *message.SendingMessage) int32 {
-	newElem := make([]message.IMessageElement, 0, len(m.Elements))
+	var newElem = make([]message.IMessageElement, 0, len(m.Elements))
 	group := bot.Client.FindGroup(groupID)
 	for _, elem := range m.Elements {
 		if i, ok := elem.(*LocalImageElement); ok {
@@ -255,7 +255,7 @@ func (bot *CQBot) SendGroupMessage(groupID int64, m *message.SendingMessage) int
 
 // SendPrivateMessage 发送私聊消息
 func (bot *CQBot) SendPrivateMessage(target int64, groupID int64, m *message.SendingMessage) int32 {
-	newElem := make([]message.IMessageElement, 0, len(m.Elements))
+	var newElem = make([]message.IMessageElement, 0, len(m.Elements))
 	for _, elem := range m.Elements {
 		if i, ok := elem.(*LocalImageElement); ok {
 			fm, err := bot.UploadLocalImageAsPrivate(target, i)
@@ -308,7 +308,7 @@ func (bot *CQBot) SendPrivateMessage(target int64, groupID int64, m *message.Sen
 		}
 	} else if code, ok := bot.tempMsgCache.Load(target); ok || groupID != 0 { // 临时会话
 		switch {
-		case groupID != 0 && bot.Client.FindGroup(groupID) == nil:
+		case bot.Client.FindGroup(groupID) == nil:
 			log.Errorf("错误: 找不到群(%v)", groupID)
 			id = -1
 		case groupID != 0 && !bot.Client.FindGroup(groupID).AdministratorOrOwner():
@@ -318,7 +318,7 @@ func (bot *CQBot) SendPrivateMessage(target int64, groupID int64, m *message.Sen
 			log.Errorf("错误: 群员(%v) 不在 群(%v), 无法发起临时会话", target, groupID)
 			id = -1
 		default:
-			if code != nil && groupID == 0 {
+			if code != nil {
 				groupID = code.(int64)
 			}
 			msg := bot.Client.SendTempMessage(groupID, target, m)
