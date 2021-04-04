@@ -49,10 +49,10 @@ func NewQQBot(cli *client.QQClient, conf *config.Config) *CQBot {
 	bot := &CQBot{
 		Client: cli,
 	}
-	var enableLevelDB = false
+	enableLevelDB := false
 	node, ok := conf.Database["leveldb"]
 	if ok {
-		var lconf = new(config.LevelDBConfig)
+		lconf := new(config.LevelDBConfig)
 		_ = node.Decode(lconf)
 		enableLevelDB = lconf.Enable
 	}
