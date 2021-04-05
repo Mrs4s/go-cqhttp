@@ -192,6 +192,7 @@ func main() {
 			if len(byteKey) == 0 {
 				log.Infof("密码加密已启用, 请输入Key对密码进行解密以继续: (Enter 提交)")
 				cancel := make(chan struct{}, 1)
+				state, _ := term.GetState(int(os.Stdin.Fd()))
 				go func() {
 					select {
 					case <-cancel:
@@ -199,6 +200,7 @@ func main() {
 					case <-time.After(time.Second * 45):
 						log.Infof("解密key输入超时")
 						time.Sleep(3 * time.Second)
+						_ = term.Restore(int(os.Stdin.Fd()), state)
 						os.Exit(0)
 					}
 				}()
