@@ -5,7 +5,7 @@ account: # 账号相关
   password: '' # 密码为空时使用扫码登录
   encrypt: false  # 是否开启密码加密
   relogin:        # 重连设置
-    disable: false
+    disabled: false
     delay: 3      # 重连延迟, 单位秒
     interval: 0   # 重连间隔
     max-times: 0  # 最大重连次数, 0为无限制
@@ -43,6 +43,7 @@ output:
   # 是否启用 DEBUG
   debug: false # 开启调试模式
 
+# 默认中间件锚点
 default-middlewares: &default
   # 访问密钥, 强烈推荐在公网的服务器设置
   access-token: ''
@@ -71,11 +72,11 @@ servers:
       # 最小值为5，小于5将会忽略本项设置
       timeout: 5
       middlewares:
-        <<: *default
+        <<: *default # 引用默认中间件
       # 反向HTTP POST地址列表
       post:
-        - url: '' # 地址
-          secret: ''           # 密钥
+        #- url: '' # 地址
+        #  secret: ''           # 密钥
         #- url: 127.0.0.1:5701 # 地址
         #  secret: ''          # 密钥
 
@@ -88,7 +89,7 @@ servers:
       # 正向WS服务器监听端口
       port: 6700
       middlewares:
-        <<: *default
+        <<: *default # 引用默认中间件
 
   - ws-reverse:
       # 是否禁用当前反向WS服务
@@ -103,8 +104,12 @@ servers:
       # 重连间隔 单位毫秒
       reconnect-interval: 3000
       middlewares:
-        <<: *default
-  #- ws-reverse: # 可添加多个
+        <<: *default # 引用默认中间件
+
+  # 可添加更多
+  #- ws-reverse:
+  #- ws:
+  #- http:
 
 database: # 数据库相关设置
   leveldb:
