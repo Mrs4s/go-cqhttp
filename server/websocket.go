@@ -56,6 +56,9 @@ var upgrader = websocket.Upgrader{
 
 // RunWebSocketServer 运行一个正向WS server
 func RunWebSocketServer(b *coolq.CQBot, conf *config.WebsocketServer) {
+	if conf.Disabled {
+		return
+	}
 	s := new(webSocketServer)
 	s.conf = conf
 	s.bot = b

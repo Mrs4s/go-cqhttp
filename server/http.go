@@ -118,7 +118,9 @@ func RunHTTPServerAndClients(bot *coolq.CQBot, conf *config.HTTPServer) {
 	}()
 
 	for _, c := range conf.Post {
-		go newHTTPClient().Run(c.URL, c.Secret, conf.Filter, conf.Timeout, bot)
+		if c.URL != "" {
+			go newHTTPClient().Run(c.URL, c.Secret, conf.Filter, conf.Timeout, bot)
+		}
 	}
 }
 

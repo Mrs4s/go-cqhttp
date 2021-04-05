@@ -3,7 +3,7 @@
 account: # 账号相关
   uin: 1233456 # QQ账号
   password: '' # 密码为空时使用扫码登录
-  encrypt: true  # 是否开启密码加密
+  encrypt: false  # 是否开启密码加密
   relogin:        # 重连设置
     disable: false
     delay: 3      # 重连延迟, 单位秒
@@ -62,7 +62,7 @@ servers:
   # HTTP 通信设置
   - http:
       # 是否关闭正向HTTP服务器
-      disabled: true
+      disabled: false
       # 服务端监听地址
       host: 127.0.0.1
       # 服务端监听端口
@@ -74,15 +74,15 @@ servers:
         <<: *default
       # 反向HTTP POST地址列表
       post:
-        - url: 127.0.0.1:5701 # 地址
-          secret: ''          # 密钥
+        - url: '' # 地址
+          secret: ''           # 密钥
         #- url: 127.0.0.1:5701 # 地址
         #  secret: ''          # 密钥
 
   # 正向WS设置
   - ws:
-      # 是否禁用当前服务
-      disable: true
+      # 是否禁用正向WS服务器
+      disabled: true
       # 正向WS服务器监听地址
       host: 127.0.0.1
       # 正向WS服务器监听端口
@@ -91,7 +91,8 @@ servers:
         <<: *default
 
   - ws-reverse:
-      disable: true
+      # 是否禁用当前反向WS服务
+      disabled: true
       # 反向WS Universal 地址
       # 注意 设置了此项地址后下面两项将会被忽略
       universal: ws://your_websocket_universal.server
