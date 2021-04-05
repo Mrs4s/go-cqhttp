@@ -1,7 +1,7 @@
 vendor/
 .idea
+.vscode
 config.hjson
 device.json
-codec/
 data/
 logs/

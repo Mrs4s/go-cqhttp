@@ -43,6 +43,7 @@ type httpContext struct {
 	ctx *gin.Context
 }
 
+// RunHTTPServerAndClients 启动HTTP服务器与HTTP上报客户端
 func RunHTTPServerAndClients(bot *coolq.CQBot, conf *config.HTTPServer) {
 	if conf.Disabled {
 		return

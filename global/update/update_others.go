@@ -13,6 +13,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// Update go-cqhttp自我更新
 func Update(url string) {
 	resp, err := http.Get(url)
 	if err != nil {
@@ -38,7 +39,7 @@ func Update(url string) {
 			return
 		}
 		if header.Name == "go-cqhttp" {
-			err, _ := UpdateFromStream(tr)
+			err, _ := FromStream(tr)
 			fmt.Println()
 			if err != nil {
 				log.Error("更新失败!", err)

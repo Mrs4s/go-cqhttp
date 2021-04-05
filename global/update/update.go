@@ -1,3 +1,4 @@
+// Package update 包含go-cqhttp自我更新相关函数
 package update
 
 import (
@@ -34,8 +35,8 @@ func (wc *WriteCounter) PrintProgress() {
 	fmt.Printf("\rDownloading... %s complete", humanize.Bytes(wc.Total))
 }
 
-// UpdateFromStream copy form getlantern/go-update
-func UpdateFromStream(updateWith io.Reader) (err error, errRecover error) {
+// FromStream copy form getlantern/go-update
+func FromStream(updateWith io.Reader) (err error, errRecover error) {
 	updatePath, err := osext.Executable()
 	if err != nil {
 		return
