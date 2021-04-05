@@ -46,6 +46,8 @@ type Config struct {
 		FixURL              bool   `yaml:"fix-url"`
 		ProxyRewrite        string `yaml:"proxy-rewrite"`
 		ReportSelfMessage   bool   `yaml:"report-self-message"`
+		RemoveReplyAt       bool   `yaml:"remove-reply-at"`
+		ExtraReplyData      bool   `yaml:"extra-reply-data"`
 	} `yaml:"message"`
 
 	Output struct {

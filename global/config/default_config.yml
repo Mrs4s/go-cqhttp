@@ -36,6 +36,10 @@ message:
   proxy-rewrite: ''
   # 是否上报自身消息
   report-self-message: false
+  # 移除服务端的Reply附带的At
+  remove-reply-at: false
+  # 为Reply附加更多信息
+  extra-reply-data: false
 
 output:
   # 日志等级 trace,debug,info,warn,error日志等级 trace,debug,info,warn,error

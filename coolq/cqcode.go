@@ -28,6 +28,7 @@ import (
 	"github.com/tidwall/gjson"
 
 	"github.com/Mrs4s/go-cqhttp/global"
+	"github.com/Mrs4s/go-cqhttp/global/config"
 )
 
 /*
@@ -35,6 +36,8 @@ var matchReg = regexp.MustCompile(`\[CQ:\w+?.*?]`)
 var typeReg = regexp.MustCompile(`\[CQ:(\w+)`)
 var paramReg = regexp.MustCompile(`,([\w\-.]+?)=([^,\]]+)`)
 */
+
+var conf *config.Config
 
 // IgnoreInvalidCQCode 是否忽略无效CQ码
 var IgnoreInvalidCQCode = false
@@ -46,6 +49,7 @@ var SplitURL = false
 var magicCQ = uint32(0)
 
 func init() {
+	conf = config.Get()
 	CQHeader := "[CQ:"
 	magicCQ = *(*uint32)(unsafe.Pointer((*reflect.StringHeader)(unsafe.Pointer(&CQHeader)).Data))
 }
@@ -134,14 +138,35 @@ func ToArrayMessage(e []message.IMessageElement, id int64, isRaw ...bool) (r []M
 		return ok
 	})
 	if reply != nil {
-		r = append(r, MSG{
-			"type": "reply",
-			"data": map[string]string{"id": fmt.Sprint(toGlobalID(id, reply.(*message.ReplyElement).ReplySeq))},
-		})
+		replyElem := reply.(*message.ReplyElement)
+		if conf.Message.ExtraReplyData {
+			r = append(r, MSG{
+				"type": "reply",
+				"data": map[string]string{
+					"id":   fmt.Sprint(toGlobalID(id, reply.(*message.ReplyElement).ReplySeq)),
+					"seq":  string(replyElem.ReplySeq),
+					"qq":   strconv.FormatInt(replyElem.Sender, 10),
+					"time": string(replyElem.Time),
+					"text": CQCodeEscapeValue(CQCodeEscapeText(ToStringMessage(replyElem.Elements, id))),
+				},
+			})
+		} else {
+			r = append(r, MSG{
+				"type": "reply",
+				"data": map[string]string{"id": fmt.Sprint(toGlobalID(id, replyElem.ReplySeq))},
+			})
+		}
 	}
-	for _, elem := range e {
+	for i, elem := range e {
 		var m MSG
 		switch o := elem.(type) {
+		case *message.ReplyElement:
+			if conf.Message.RemoveReplyAt && len(e) > i+1 {
+				elem, ok := e[i+1].(*message.AtElement)
+				if ok && elem.Target == o.Sender {
+					e[i+1] = nil
+				}
+			}
 		case *message.TextElement:
 			m = MSG{
 				"type": "text",
@@ -286,10 +311,25 @@ func ToStringMessage(e []message.IMessageElement, id int64, isRaw ...bool) (r st
 		return ok
 	})
 	if reply != nil {
-		r += fmt.Sprintf("[CQ:reply,id=%d]", toGlobalID(id, reply.(*message.ReplyElement).ReplySeq))
+		replyElem := reply.(*message.ReplyElement)
+		if conf.Message.ExtraReplyData {
+			r += fmt.Sprintf("[CQ:reply,id=%d,seq=%d,qq=%d,time=%d,text=%s]",
+				toGlobalID(id, replyElem.ReplySeq),
+				replyElem.ReplySeq, replyElem.Sender, replyElem.Time,
+				CQCodeEscapeValue(CQCodeEscapeText(ToStringMessage(replyElem.Elements, id))))
+		} else {
+			r += fmt.Sprintf("[CQ:reply,id=%d]", toGlobalID(id, replyElem.ReplySeq))
+		}
 	}
-	for _, elem := range e {
+	for i, elem := range e {
 		switch o := elem.(type) {
+		case *message.ReplyElement:
+			if conf.Message.RemoveReplyAt && len(e) > i+1 {
+				elem, ok := e[i+1].(*message.AtElement)
+				if ok && elem.Target == o.Sender {
+					e[i+1] = nil
+				}
+			}
 		case *message.TextElement:
 			r += CQCodeEscapeText(o.Content)
 		case *message.AtElement:
@@ -370,7 +410,49 @@ func (bot *CQBot) ConvertStringMessage(s string, isGroup bool) (r []message.IMes
 			}
 			mid, err := strconv.Atoi(d["id"])
 			customText := d["text"]
-			if err == nil {
+			switch {
+			case customText != "":
+				var elem *message.ReplyElement
+				var org MSG
+				sender, senderErr := strconv.ParseInt(d["qq"], 10, 64)
+				if senderErr != nil && err != nil {
+					log.Warnf("警告: 自定义 Reply 元素中必须包含 Uin 或 id")
+					break
+				}
+				msgTime, timeErr := strconv.ParseInt(d["time"], 10, 64)
+				if timeErr != nil {
+					msgTime = time.Now().Unix()
+				}
+				messageSeq, seqErr := strconv.ParseInt(d["seq"], 10, 64)
+				if err == nil {
+					org = bot.GetMessage(int32(mid))
+				}
+				if org != nil {
+					elem = &message.ReplyElement{
+						ReplySeq: org["message-id"].(int32),
+						Sender:   org["sender"].(message.Sender).Uin,
+						Time:     org["time"].(int32),
+						Elements: bot.ConvertStringMessage(customText, isGroup),
+					}
+					if senderErr != nil {
+						elem.Sender = sender
+					}
+					if timeErr != nil {
+						elem.Time = int32(msgTime)
+					}
+					if seqErr != nil {
+						elem.ReplySeq = int32(messageSeq)
+					}
+				} else {
+					elem = &message.ReplyElement{
+						ReplySeq: int32(messageSeq),
+						Sender:   sender,
+						Time:     int32(msgTime),
+						Elements: bot.ConvertStringMessage(customText, isGroup),
+					}
+				}
+				r = append([]message.IMessageElement{elem}, r...)
+			case err == nil:
 				org := bot.GetMessage(int32(mid))
 				if org != nil {
 					r = append([]message.IMessageElement{
@@ -381,35 +463,19 @@ func (bot *CQBot) ConvertStringMessage(s string, isGroup bool) (r []message.IMes
 							Elements: bot.ConvertStringMessage(org["message"].(string), isGroup),
 						},
 					}, r...)
-					return
 				}
-			} else if customText != "" {
-				sender, err := strconv.ParseInt(d["qq"], 10, 64)
-				if err != nil {
-					log.Warnf("警告:自定义 Reply 元素中必须包含 Uin")
-					return
-				}
-				msgTime, err := strconv.ParseInt(d["time"], 10, 64)
-				if err != nil {
-					msgTime = time.Now().Unix()
-				}
-				messageSeq, _ := strconv.ParseInt(d["seq"], 10, 64)
-				r = append([]message.IMessageElement{
-					&message.ReplyElement{
-						ReplySeq: int32(messageSeq),
-						Sender:   sender,
-						Time:     int32(msgTime),
-						Elements: bot.ConvertStringMessage(customText, isGroup),
-					},
-				}, r...)
-				return
+			default:
+				log.Warnf("警告: Reply 元素中必须包含 text 或 id")
 			}
+			return
 		}
 		if t == "forward" { // 单独处理转发
 			if id, ok := d["id"]; ok {
 				r = []message.IMessageElement{bot.Client.DownloadForwardMessage(id)}
-				return
+			} else {
+				log.Warnf("警告: Forward 元素中必须包含 id")
 			}
+			return
 		}
 		elem, err := bot.ToElement(t, d, isGroup)
 		if err != nil {
@@ -521,9 +587,51 @@ func (bot *CQBot) ConvertObjectMessage(m gjson.Result, isGroup bool) (r []messag
 					return
 				}
 			}
-			mid, err := strconv.Atoi(e.Get("data").Get("id").String())
-			customText := e.Get("data").Get("text").String()
-			if err == nil {
+			mid, err := strconv.Atoi(e.Get("data.id").String())
+			customText := e.Get("data.text").String()
+			switch {
+			case customText != "":
+				var elem *message.ReplyElement
+				var org MSG
+				sender, senderErr := strconv.ParseInt(e.Get("data.qq").String(), 10, 64)
+				if senderErr != nil && err != nil {
+					log.Warnf("警告: 自定义 Reply 元素中必须包含 Uin 或 id")
+					break
+				}
+				msgTime, timeErr := strconv.ParseInt(e.Get("data.time").String(), 10, 64)
+				if timeErr != nil {
+					msgTime = time.Now().Unix()
+				}
+				messageSeq, seqErr := strconv.ParseInt(e.Get("data.seq").String(), 10, 64)
+				if err == nil {
+					org = bot.GetMessage(int32(mid))
+				}
+				if org != nil {
+					elem = &message.ReplyElement{
+						ReplySeq: org["message-id"].(int32),
+						Sender:   org["sender"].(message.Sender).Uin,
+						Time:     org["time"].(int32),
+						Elements: bot.ConvertStringMessage(customText, isGroup),
+					}
+					if senderErr != nil {
+						elem.Sender = sender
+					}
+					if timeErr != nil {
+						elem.Time = int32(msgTime)
+					}
+					if seqErr != nil {
+						elem.ReplySeq = int32(messageSeq)
+					}
+				} else {
+					elem = &message.ReplyElement{
+						ReplySeq: int32(messageSeq),
+						Sender:   sender,
+						Time:     int32(msgTime),
+						Elements: bot.ConvertStringMessage(customText, isGroup),
+					}
+				}
+				r = append([]message.IMessageElement{elem}, r...)
+			case err == nil:
 				org := bot.GetMessage(int32(mid))
 				if org != nil {
 					r = append([]message.IMessageElement{
@@ -534,32 +642,19 @@ func (bot *CQBot) ConvertObjectMessage(m gjson.Result, isGroup bool) (r []messag
 							Elements: bot.ConvertStringMessage(org["message"].(string), isGroup),
 						},
 					}, r...)
-					return
 				}
-			} else if customText != "" {
-				sender, err := strconv.ParseInt(e.Get("data").Get("qq").String(), 10, 64)
-				if err != nil {
-					log.Warnf("警告:自定义 Reply 元素中必须包含 Uin")
-					return
-				}
-				msgTime, err := strconv.ParseInt(e.Get("data").Get("time").String(), 10, 64)
-				if err != nil {
-					msgTime = time.Now().Unix()
-				}
-				messageSeq, _ := strconv.ParseInt(e.Get("data").Get("seq").String(), 10, 64)
-				r = append([]message.IMessageElement{
-					&message.ReplyElement{
-						ReplySeq: int32(messageSeq),
-						Sender:   sender,
-						Time:     int32(msgTime),
-						Elements: bot.ConvertStringMessage(customText, isGroup),
-					},
-				}, r...)
-				return
+			default:
+				log.Warnf("警告: Reply 元素中必须包含 text 或 id")
 			}
+			return
 		}
 		if t == "forward" {
-			r = []message.IMessageElement{bot.Client.DownloadForwardMessage(e.Get("data.id").String())}
+			id := e.Get("data.id").String()
+			if id == "" {
+				log.Warnf("警告: Forward 元素中必须包含 id")
+			} else {
+				r = []message.IMessageElement{bot.Client.DownloadForwardMessage(id)}
+			}
 			return
 		}
 		d := make(map[string]string)
@@ -700,7 +795,11 @@ func (bot *CQBot) ToElement(t string, d map[string]string, isGroup bool) (m inte
 			return message.AtAll(), nil
 		}
 		t, _ := strconv.ParseInt(qq, 10, 64)
-		return message.NewAt(t), nil
+		name := strings.TrimSpace(d["name"])
+		if len(name) > 0 {
+			name = "@" + name
+		}
+		return message.NewAt(t, name), nil
 	case "share":
 		return message.NewUrlShare(d["url"], d["title"], d["content"], d["image"]), nil
 	case "music":
