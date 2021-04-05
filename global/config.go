@@ -1,5 +1,6 @@
 package global
 
+// AccountToken 存储AccountToken供登录使用
 var AccountToken []byte
 
 // PasswordHash 存储QQ密码哈希供登录使用

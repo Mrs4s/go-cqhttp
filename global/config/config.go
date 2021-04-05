@@ -1,3 +1,4 @@
+// Package config 包含go-cqhttp操作配置文件的相关函数
 package config
 
 import (
@@ -56,6 +57,7 @@ type Config struct {
 	Database map[string]yaml.Node   `yaml:"database"`
 }
 
+// MiddleWares 通信中间件
 type MiddleWares struct {
 	AccessToken string `yaml:"access-token"`
 	Filter      string `yaml:"filter"`

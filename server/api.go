@@ -322,6 +322,7 @@ func handleQuickOperation(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 	return bot.CQHandleQuickOperation(p.Get("context"), p.Get("operation"))
 }
 
+// API 是go-cqhttp当前支持的所有api的映射表
 var API = map[string]func(*coolq.CQBot, resultGetter) coolq.MSG{
 	"get_login_info":             getLoginInfo,
 	"get_friend_list":            getFriendList,
