@@ -20,9 +20,10 @@ import (
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/Mrs4s/MiraiGo/utils"
-	"github.com/Mrs4s/go-cqhttp/global"
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
+
+	"github.com/Mrs4s/go-cqhttp/global"
 )
 
 // Version go-cqhttp的版本信息，在编译时使用ldflags进行覆盖
