@@ -16,12 +16,11 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/Mrs4s/go-cqhttp/global"
-
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/Mrs4s/MiraiGo/utils"
+	"github.com/Mrs4s/go-cqhttp/global"
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 )
