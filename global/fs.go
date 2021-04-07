@@ -64,8 +64,11 @@ func WriteAllText(path, text string) error {
 }
 
 // Check 检测err是否为nil
-func Check(err error) {
+func Check(err error, deleteSession bool) {
 	if err != nil {
+		if deleteSession && PathExists("session.token") {
+			_ = os.Remove("session.token")
+		}
 		log.Fatalf("遇到错误: %v", err)
 	}
 }

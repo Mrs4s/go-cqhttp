@@ -294,6 +294,7 @@ func main() {
 		token, err := ioutil.ReadFile("session.token")
 		if err == nil {
 			if err = cli.TokenLogin(token); err != nil {
+				_ = os.Remove("session.token")
 				log.Warnf("恢复会话失败: %v , 尝试使用正常流程登录.", err)
 			} else {
 				isTokenLogin = true
@@ -349,10 +350,10 @@ func main() {
 	cli.AllowSlider = true
 	log.Infof("登录成功 欢迎使用: %v", cli.Nickname)
 	log.Info("开始加载好友列表...")
-	global.Check(cli.ReloadFriendList())
+	global.Check(cli.ReloadFriendList(), true)
 	log.Infof("共加载 %v 个好友.", len(cli.FriendList))
 	log.Infof("开始加载群列表...")
-	global.Check(cli.ReloadGroupList())
+	global.Check(cli.ReloadGroupList(), true)
 	log.Infof("共加载 %v 个群.", len(cli.GroupList))
 	bot := coolq.NewQQBot(cli, conf)
 	_ = bot.Client
