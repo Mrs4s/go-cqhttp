@@ -108,7 +108,7 @@ func loginResponseProcessor(res *client.LoginResponse) error {
 			res, err = cli.SubmitTicket(text)
 			continue
 		case client.NeedCaptcha:
-			log.Warnf("登录需要滑条验证码.")
+			log.Warnf("登录需要验证码.")
 			_ = ioutil.WriteFile("captcha.jpg", res.CaptchaImage, 0644)
 			log.Warnf("请输入验证码 (captcha.jpg)： (Enter 提交)")
 			text = readLine()
