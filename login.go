@@ -48,6 +48,7 @@ func qrcodeLogin() error {
 		return err
 	}
 	_ = ioutil.WriteFile("qrcode.png", rsp.ImageData, 0644)
+	defer func() { _ = os.Remove("qrcode.png") }()
 	log.Infof("请使用手机QQ扫描二维码 (qrcode.png) : ")
 	time.Sleep(time.Second)
 	qrcodeTerminal.New().Get(fi.Content).Print()
