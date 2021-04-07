@@ -471,7 +471,11 @@ func (bot *CQBot) ConvertStringMessage(s string, isGroup bool) (r []message.IMes
 		}
 		if t == "forward" { // 单独处理转发
 			if id, ok := d["id"]; ok {
-				r = []message.IMessageElement{bot.Client.DownloadForwardMessage(id)}
+				if fwdMsg := bot.Client.DownloadForwardMessage(id); fwdMsg == nil {
+					log.Warnf("警告: Forward 信息不存在或已过期")
+				} else {
+					r = []message.IMessageElement{fwdMsg}
+				}
 			} else {
 				log.Warnf("警告: Forward 元素中必须包含 id")
 			}
@@ -653,7 +657,11 @@ func (bot *CQBot) ConvertObjectMessage(m gjson.Result, isGroup bool) (r []messag
 			if id == "" {
 				log.Warnf("警告: Forward 元素中必须包含 id")
 			} else {
-				r = []message.IMessageElement{bot.Client.DownloadForwardMessage(id)}
+				if fwdMsg := bot.Client.DownloadForwardMessage(id); fwdMsg == nil {
+					log.Warnf("警告: Forward 信息不存在或已过期")
+				} else {
+					r = []message.IMessageElement{fwdMsg}
+				}
 			}
 			return
 		}
