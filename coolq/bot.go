@@ -31,11 +31,11 @@ var json = jsoniter.ConfigCompatibleWithStandardLibrary
 type CQBot struct {
 	Client *client.QQClient
 
-	events         []func(*bytes.Buffer)
-	db             *leveldb.DB
-	friendReqCache sync.Map
-	tempMsgCache   sync.Map
-	oneWayMsgCache sync.Map
+	events           []func(*bytes.Buffer)
+	db               *leveldb.DB
+	friendReqCache   sync.Map
+	tempSessionCache sync.Map
+	oneWayMsgCache   sync.Map
 }
 
 // MSG 消息Map
@@ -306,22 +306,24 @@ func (bot *CQBot) SendPrivateMessage(target int64, groupID int64, m *message.Sen
 		if msg != nil {
 			id = bot.InsertPrivateMessage(msg)
 		}
-	} else if code, ok := bot.tempMsgCache.Load(target); ok || groupID != 0 { // 临时会话
+	} else if session, ok := bot.tempSessionCache.Load(target); ok || groupID != 0 { // 临时会话
 		switch {
 		case groupID != 0 && bot.Client.FindGroup(groupID) == nil:
 			log.Errorf("错误: 找不到群(%v)", groupID)
-			id = -1
 		case groupID != 0 && !bot.Client.FindGroup(groupID).AdministratorOrOwner():
 			log.Errorf("错误: 机器人在群(%v) 为非管理员或群主, 无法主动发起临时会话", groupID)
-			id = -1
 		case groupID != 0 && bot.Client.FindGroup(groupID).FindMember(target) == nil:
 			log.Errorf("错误: 群员(%v) 不在 群(%v), 无法发起临时会话", target, groupID)
-			id = -1
 		default:
-			if code != nil && groupID == 0 {
-				groupID = code.(int64)
+			if session == nil && groupID != 0 {
+				bot.Client.SendGroupTempMessage(groupID, target, m)
+				break
 			}
-			msg := bot.Client.SendTempMessage(groupID, target, m)
+			msg, err := session.(*client.TempSessionInfo).SendMessage(m)
+			if err != nil {
+				log.Errorf("发送临时会话消息失败: %v", err)
+				break
+			}
 			if msg != nil {
 				id = bot.InsertTempMessage(target, msg)
 			}

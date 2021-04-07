@@ -103,10 +103,11 @@ func (bot *CQBot) groupMessageEvent(c *client.QQClient, m *message.GroupMessage)
 	bot.dispatchEventMessage(gm)
 }
 
-func (bot *CQBot) tempMessageEvent(c *client.QQClient, m *message.TempMessage) {
+func (bot *CQBot) tempMessageEvent(c *client.QQClient, e *client.TempMessageEvent) {
+	m := e.Message
 	bot.checkMedia(m.Elements)
 	cqm := ToStringMessage(m.Elements, m.Sender.Uin, true)
-	bot.tempMsgCache.Store(m.Sender.Uin, m.GroupCode)
+	bot.tempSessionCache.Store(m.Sender.Uin, e.Session)
 	id := m.Id
 	if bot.db != nil {
 		id = bot.InsertTempMessage(m.Sender.Uin, m)
@@ -384,7 +385,7 @@ func (bot *CQBot) friendRequestEvent(c *client.QQClient, e *client.NewFriendRequ
 
 func (bot *CQBot) friendAddedEvent(c *client.QQClient, e *client.NewFriendEvent) {
 	log.Infof("添加了新好友: %v(%v)", e.Friend.Nickname, e.Friend.Uin)
-	bot.tempMsgCache.Delete(e.Friend.Uin)
+	bot.tempSessionCache.Delete(e.Friend.Uin)
 	bot.dispatchEventMessage(MSG{
 		"post_type":   "notice",
 		"notice_type": "friend_add",
