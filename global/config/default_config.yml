@@ -4,7 +4,8 @@ account: # 账号相关
   uin: 1233456 # QQ账号
   password: '' # 密码为空时使用扫码登录
   encrypt: false  # 是否开启密码加密
-  relogin:        # 重连设置
+  status: 0      # 在线状态 0->在线 2->离开 3->隐身 4->忙
+  relogin: # 重连设置
     disabled: false
     delay: 3      # 重连延迟, 单位秒
     interval: 0   # 重连间隔
@@ -79,10 +80,10 @@ servers:
         <<: *default # 引用默认中间件
       # 反向HTTP POST地址列表
       post:
-        #- url: '' # 地址
-        #  secret: ''           # 密钥
-        #- url: 127.0.0.1:5701 # 地址
-        #  secret: ''          # 密钥
+      #- url: '' # 地址
+      #  secret: ''           # 密钥
+      #- url: 127.0.0.1:5701 # 地址
+      #  secret: ''          # 密钥
 
   # 正向WS设置
   - ws:

@@ -41,6 +41,14 @@ var (
 	c           string
 	d           bool
 	h           bool
+
+	// 允许通过配置文件设置的状态列表
+	allowStatus = [23]client.UserOnlineStatus{client.StatusOnline, client.StatusAway, client.StatusInvisible, client.StatusBusy,
+		client.StatusBattery, client.StatusListening, client.StatusConstellation, client.StatusWeather, client.StatusMeetSpring,
+		client.StatusTimi, client.StatusEatChicken, client.StatusLoving, client.StatusWangWang, client.StatusCookedRice,
+		client.StatusStudy, client.StatusStayUp, client.StatusPlayBall, client.StatusSignal, client.StatusStudyOnline,
+		client.StatusGaming, client.StatusVacationing, client.StatusWatchingTV, client.StatusFitness,
+	}
 )
 
 func init() {
@@ -355,6 +363,10 @@ func main() {
 	log.Infof("开始加载群列表...")
 	global.Check(cli.ReloadGroupList(), true)
 	log.Infof("共加载 %v 个群.", len(cli.GroupList))
+	if conf.Account.Status >= int32(len(allowStatus)) || conf.Account.Status < 0 {
+		conf.Account.Status = 0
+	}
+	cli.SetOnlineStatus(allowStatus[int(conf.Account.Status)])
 	bot := coolq.NewQQBot(cli, conf)
 	_ = bot.Client
 	if conf.Message.PostFormat != "string" && conf.Message.PostFormat != "array" {

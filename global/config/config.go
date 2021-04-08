@@ -25,6 +25,7 @@ type Config struct {
 		Uin      int64  `yaml:"uin"`
 		Password string `yaml:"password"`
 		Encrypt  bool   `yaml:"encrypt"`
+		Status   int32  `yaml:"status"`
 		ReLogin  struct {
 			Disabled bool `yaml:"disabled"`
 			Delay    int  `yaml:"delay"`
