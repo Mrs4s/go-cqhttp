@@ -43,7 +43,7 @@ var (
 	h           bool
 
 	// 允许通过配置文件设置的状态列表
-	allowStatus = [22]client.UserOnlineStatus{
+	allowStatus = [...]client.UserOnlineStatus{
 		client.StatusOnline, client.StatusAway, client.StatusInvisible, client.StatusBusy,
 		client.StatusListening, client.StatusConstellation, client.StatusWeather, client.StatusMeetSpring,
 		client.StatusTimi, client.StatusEatChicken, client.StatusLoving, client.StatusWangWang, client.StatusCookedRice,
