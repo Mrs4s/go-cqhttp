@@ -5,6 +5,7 @@ import (
 	_ "embed" // embed the default config file
 	"os"
 	"path"
+	"sync"
 
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
@@ -110,17 +111,23 @@ type LevelDBConfig struct {
 	Enable bool `yaml:"enable"`
 }
 
+var (
+	config *Config
+	once   sync.Once
+)
+
 // Get 从默认配置文件路径中获取
 func Get() *Config {
-	file, err := os.Open(DefaultConfigFile)
-	if err != nil {
-		log.Error("获取配置文件失败: ", err)
-		return nil
-	}
-	config := &Config{}
-	if yaml.NewDecoder(file).Decode(config) != nil {
-		log.Fatal("配置文件不合法!", err)
-	}
+	once.Do(func() {
+		file, err := os.Open(DefaultConfigFile)
+		if err != nil {
+			log.Error("获取配置文件失败: ", err)
+		}
+		config = &Config{}
+		if yaml.NewDecoder(file).Decode(config) != nil {
+			log.Fatal("配置文件不合法!", err)
+		}
+	})
 	return config
 }
 
