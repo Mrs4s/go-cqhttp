@@ -49,7 +49,7 @@ message:
   report-self-message: false
 
 output:
-  # 日志等级 trace,debug,info,warn,error日志等级 trace,debug,info,warn,error
+  # 日志等级 trace,debug,info,warn,error
   log-level: warn
   # 是否启用 DEBUG
   debug: false # 开启调试模式
