@@ -293,7 +293,9 @@ func ToArrayMessage(e []message.IMessageElement, id int64, isRaw ...bool) (r []M
 		default:
 			continue
 		}
-		r = append(r, m)
+		if m != nil {
+			r = append(r, m)
+		}
 	}
 	return
 }
