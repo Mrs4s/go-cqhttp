@@ -28,7 +28,6 @@ import (
 	"github.com/tidwall/gjson"
 
 	"github.com/Mrs4s/go-cqhttp/global"
-	"github.com/Mrs4s/go-cqhttp/global/config"
 )
 
 /*
@@ -37,7 +36,11 @@ var typeReg = regexp.MustCompile(`\[CQ:(\w+)`)
 var paramReg = regexp.MustCompile(`,([\w\-.]+?)=([^,\]]+)`)
 */
 
-var conf *config.Config
+// RemoveReplyAt 是否删除reply后的at
+var RemoveReplyAt bool
+
+// ExtraReplyData 是否上报额外reply信息
+var ExtraReplyData bool
 
 // IgnoreInvalidCQCode 是否忽略无效CQ码
 var IgnoreInvalidCQCode = false
@@ -49,7 +52,6 @@ var SplitURL = false
 var magicCQ = uint32(0)
 
 func init() {
-	conf = config.Get()
 	CQHeader := "[CQ:"
 	magicCQ = *(*uint32)(unsafe.Pointer((*reflect.StringHeader)(unsafe.Pointer(&CQHeader)).Data))
 }
@@ -139,7 +141,7 @@ func ToArrayMessage(e []message.IMessageElement, id int64, isRaw ...bool) (r []M
 	})
 	if reply != nil {
 		replyElem := reply.(*message.ReplyElement)
-		if conf.Message.ExtraReplyData {
+		if ExtraReplyData {
 			r = append(r, MSG{
 				"type": "reply",
 				"data": map[string]string{
@@ -161,7 +163,7 @@ func ToArrayMessage(e []message.IMessageElement, id int64, isRaw ...bool) (r []M
 		var m MSG
 		switch o := elem.(type) {
 		case *message.ReplyElement:
-			if conf.Message.RemoveReplyAt && len(e) > i+1 {
+			if RemoveReplyAt && len(e) > i+1 {
 				elem, ok := e[i+1].(*message.AtElement)
 				if ok && elem.Target == o.Sender {
 					e[i+1] = nil
@@ -314,7 +316,7 @@ func ToStringMessage(e []message.IMessageElement, id int64, isRaw ...bool) (r st
 	})
 	if reply != nil {
 		replyElem := reply.(*message.ReplyElement)
-		if conf.Message.ExtraReplyData {
+		if ExtraReplyData {
 			r += fmt.Sprintf("[CQ:reply,id=%d,seq=%d,qq=%d,time=%d,text=%s]",
 				toGlobalID(id, replyElem.ReplySeq),
 				replyElem.ReplySeq, replyElem.Sender, replyElem.Time,
@@ -326,7 +328,7 @@ func ToStringMessage(e []message.IMessageElement, id int64, isRaw ...bool) (r st
 	for i, elem := range e {
 		switch o := elem.(type) {
 		case *message.ReplyElement:
-			if conf.Message.RemoveReplyAt && len(e) > i+1 {
+			if RemoveReplyAt && len(e) > i+1 {
 				elem, ok := e[i+1].(*message.AtElement)
 				if ok && elem.Target == o.Sender {
 					e[i+1] = nil

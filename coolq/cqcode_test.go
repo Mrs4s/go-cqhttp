@@ -3,12 +3,9 @@ package coolq
 import (
 	"fmt"
 	"testing"
-
-	"github.com/Mrs4s/MiraiGo/client"
-	"github.com/Mrs4s/go-cqhttp/global"
 )
 
-var bot = NewQQBot(client.NewClient(1, ""), global.DefaultConfig())
+var bot = CQBot{}
 
 func TestCQBot_ConvertStringMessage(t *testing.T) {
 	for _, v := range bot.ConvertStringMessage(`[CQ:face,id=115,text=111][CQ:face,id=217]] [CQ:text,text=123] [`, false) {

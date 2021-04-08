@@ -380,6 +380,8 @@ func main() {
 	coolq.IgnoreInvalidCQCode = conf.Message.IgnoreInvalidCQCode
 	coolq.SplitURL = conf.Message.FixURL
 	coolq.ForceFragmented = conf.Message.ForceFragment
+	coolq.RemoveReplyAt = conf.Message.RemoveReplyAt
+	coolq.ExtraReplyData = conf.Message.ExtraReplyData
 	for _, m := range conf.Servers {
 		if h, ok := m["http"]; ok {
 			hc := new(config.HTTPServer)
