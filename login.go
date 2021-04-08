@@ -25,6 +25,22 @@ var readLine = func() (str string) {
 	return
 }
 
+var readLineTimeout = func(t time.Duration, de string) (str string) {
+	r := make(chan string)
+	go func() {
+		select {
+		case r <- readLine():
+		case <-time.After(t):
+		}
+	}()
+	str = de
+	select {
+	case str = <-r:
+	case <-time.After(t):
+	}
+	return
+}
+
 var cli *client.QQClient
 
 // ErrSMSRequestError SMS请求出错
@@ -99,14 +115,21 @@ func loginResponseProcessor(res *client.LoginResponse) error {
 		switch res.Error {
 		case client.SliderNeededError:
 			log.Warnf("登录需要滑条验证码. ")
-			log.Warnf("请参考文档 -> https://github.com/Mrs4s/go-cqhttp/blob/master/docs/slider.md <- 抓包获取 Ticket")
-			println()
-			log.Warnf("请用浏览器打开 -> %v <- 并获取Ticket.", res.VerifyUrl)
-			println()
-			log.Warn("请输入Ticket： (Enter 提交)")
-			text = readLine()
-			res, err = cli.SubmitTicket(text)
-			continue
+			log.Warnf("请参考文档 -> https://github.com/Mrs4s/go-cqhttp/blob/master/docs/slider.md <- 进行处理")
+			log.Warnf("1. 自行抓包并获取 Ticket 输入.")
+			log.Warnf("2. 使用手机QQ扫描二维码登入. (推荐)")
+			log.Warn("请输入(1 - 2) (将在10秒后自动选择2)：")
+			text = readLineTimeout(time.Second*10, "2")
+			if strings.Contains(text, "1") {
+				println()
+				log.Warnf("请用浏览器打开 -> %v <- 并获取Ticket.", res.VerifyUrl)
+				println()
+				log.Warn("请输入Ticket： (Enter 提交)")
+				text = readLine()
+				res, err = cli.SubmitTicket(text)
+				continue
+			}
+			return qrcodeLogin()
 		case client.NeedCaptcha:
 			log.Warnf("登录需要验证码.")
 			_ = ioutil.WriteFile("captcha.jpg", res.CaptchaImage, 0644)
@@ -130,8 +153,8 @@ func loginResponseProcessor(res *client.LoginResponse) error {
 			log.Warnf("账号已开启设备锁，请选择验证方式:")
 			log.Warnf("1. 向手机 %v 发送短信验证码", res.SMSPhone)
 			log.Warnf("2. 使用手机QQ扫码验证.")
-			log.Warn("请输入(1 - 2)：")
-			text = readLine()
+			log.Warn("请输入(1 - 2) (将在10秒后自动选择2)：")
+			text = readLineTimeout(time.Second*10, "2")
 			if strings.Contains(text, "1") {
 				if !cli.RequestSMS() {
 					log.Warnf("发送验证码失败，可能是请求过于频繁.")
@@ -145,8 +168,8 @@ func loginResponseProcessor(res *client.LoginResponse) error {
 			fallthrough
 		case client.UnsafeDeviceError:
 			log.Warnf("账号已开启设备锁，请前往 -> %v <- 验证后重启Bot.", res.VerifyUrl)
-			log.Infof("按 Enter 继续....")
-			readLine()
+			log.Infof("按 Enter 或等待 5s 后继续....")
+			readLineTimeout(time.Second*5, "")
 			os.Exit(0)
 		case client.OtherLoginError, client.UnknownLoginError, client.TooManySMSRequestError:
 			msg := res.ErrorMessage
@@ -157,8 +180,8 @@ func loginResponseProcessor(res *client.LoginResponse) error {
 				log.Fatalf("账号被冻结")
 			}
 			log.Warnf("登录失败: %v", msg)
-			log.Infof("按 Enter 继续....")
-			readLine()
+			log.Infof("按 Enter 或等待 5s 后继续....")
+			readLineTimeout(time.Second*5, "")
 			os.Exit(0)
 		}
 	}
