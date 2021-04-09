@@ -8,7 +8,6 @@ import (
 	"encoding/hex"
 	"flag"
 	"fmt"
-	"github.com/Mrs4s/MiraiGo/binary"
 	"io/ioutil"
 	"os"
 	"os/signal"
@@ -18,6 +17,10 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/Mrs4s/MiraiGo/binary"
+
+	"github.com/Mrs4s/MiraiGo/binary"
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
