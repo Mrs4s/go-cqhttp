@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"flag"
 	"fmt"
+	"github.com/Mrs4s/MiraiGo/binary"
 	"io/ioutil"
 	"os"
 	"os/signal"
@@ -302,6 +303,20 @@ func main() {
 	if global.PathExists("session.token") {
 		token, err := ioutil.ReadFile("session.token")
 		if err == nil {
+			if conf.Account.Uin != 0 {
+				r := binary.NewReader(token)
+				if r.ReadInt64() != conf.Account.Uin {
+					log.Warnf("警告: 配置文件内的QQ号 (%v) 与缓存内的QQ号 (%v) 不相同")
+					log.Warnf("1. 使用会话缓存继续.")
+					log.Warnf("2. 删除会话缓存并重启.")
+					log.Warnf("请选择: (5秒后自动选1)")
+					text := readLineTimeout(time.Second*5, "1")
+					if text == "2" {
+						_ = os.Remove("session.token")
+						os.Exit(0)
+					}
+				}
+			}
 			if err = cli.TokenLogin(token); err != nil {
 				_ = os.Remove("session.token")
 				log.Warnf("恢复会话失败: %v , 尝试使用正常流程登录.", err)
