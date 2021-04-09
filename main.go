@@ -305,8 +305,9 @@ func main() {
 		if err == nil {
 			if conf.Account.Uin != 0 {
 				r := binary.NewReader(token)
-				if r.ReadInt64() != conf.Account.Uin {
-					log.Warnf("警告: 配置文件内的QQ号 (%v) 与缓存内的QQ号 (%v) 不相同")
+				cu := r.ReadInt64()
+				if cu != conf.Account.Uin {
+					log.Warnf("警告: 配置文件内的QQ号 (%v) 与缓存内的QQ号 (%v) 不相同", conf.Account.Uin, cu)
 					log.Warnf("1. 使用会话缓存继续.")
 					log.Warnf("2. 删除会话缓存并重启.")
 					log.Warnf("请选择: (5秒后自动选1)")
