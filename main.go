@@ -20,8 +20,6 @@ import (
 
 	"github.com/Mrs4s/MiraiGo/binary"
 
-	"github.com/Mrs4s/MiraiGo/binary"
-
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/global/config"
