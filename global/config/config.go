@@ -122,9 +122,11 @@ func Get() *Config {
 		file, err := os.Open(DefaultConfigFile)
 		if err != nil {
 			log.Error("获取配置文件失败: ", err)
+			return
 		}
+		defer file.Close()
 		config = &Config{}
-		if yaml.NewDecoder(file).Decode(config) != nil {
+		if err = yaml.NewDecoder(file).Decode(config); err != nil {
 			log.Fatal("配置文件不合法!", err)
 		}
 	})
