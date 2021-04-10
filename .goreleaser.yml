@@ -78,6 +78,7 @@ archives:
         format: zip
 
 nfpms:
+  - ID: gocq
   - license: AGPL 3.0
     homepage: https://go-cqhttp.org
     file_name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
@@ -85,3 +86,11 @@ nfpms:
       - deb
       - rpm
     maintainer: Mrs4s
+    rpm:
+      signature:
+        key_file: ${{SIGNING_KEY_FILE}}
+        key_id: 9E929C3D51294318F1BB4D66869616166FB28DA7
+    deb:
+      signature:
+        key_file: ${{SIGNING_KEY_FILE}}
+        key_id: 9E929C3D51294318F1BB4D66869616166FB28DA7
