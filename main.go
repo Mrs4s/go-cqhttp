@@ -439,15 +439,11 @@ func checkUpdate() {
 		return
 	}
 	var res string
-	if err := gout.GET("https://api.github.com/repos/Mrs4s/go-cqhttp/releases").BindBody(&res).Do(); err != nil {
+	if err := gout.GET("https://api.github.com/repos/Mrs4s/go-cqhttp/releases/latest").BindBody(&res).Do(); err != nil {
 		log.Warnf("检查更新失败: %v", err)
 		return
 	}
-	detail := gjson.Parse(res)
-	if len(detail.Array()) < 1 {
-		return
-	}
-	info := detail.Array()[0]
+	info := gjson.Parse(res)
 	if global.VersionNameCompare(coolq.Version, info.Get("tag_name").Str) {
 		log.Infof("当前有更新的 go-cqhttp 可供更新, 请前往 https://github.com/Mrs4s/go-cqhttp/releases 下载.")
 		log.Infof("当前版本: %v 最新版本: %v", coolq.Version, info.Get("tag_name").Str)
