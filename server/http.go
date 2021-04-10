@@ -86,16 +86,26 @@ func RunHTTPServerAndClients(bot *coolq.CQBot, conf *config.HTTPServer) {
 	if authToken != "" {
 		s.engine.Use(func(c *gin.Context) {
 			auth := c.Request.Header.Get("Authorization")
-			switch {
-			case auth != "":
-				if strings.SplitN(auth, " ", 2)[1] != authToken {
+			if auth == "" {
+				headAuth := c.Query("access_token")
+				switch {
+				case headAuth == "":
 					c.AbortWithStatus(401)
+					return
+				case headAuth != authToken:
+					c.AbortWithStatus(403)
+					return
 				}
-			case c.Query("access_token") != authToken:
-				c.AbortWithStatus(401)
-				return
-			default:
-				c.Next()
+			} else {
+				auth := strings.SplitN(auth, " ", 2)
+				switch {
+				case len(auth) != 2 || auth[1] == "":
+					c.AbortWithStatus(401)
+					return
+				case auth[1] != authToken:
+					c.AbortWithStatus(403)
+					return
+				}
 			}
 		})
 	}
