@@ -289,12 +289,17 @@ func main() {
 	// c := server.Console
 	isQRCodeLogin := (conf.Account.Uin == 0 || len(conf.Account.Password) == 0) && !conf.Account.Encrypt
 	isTokenLogin := false
+	saveToken := func() {
+		global.AccountToken = cli.GenToken()
+		_ = ioutil.WriteFile("session.token", global.AccountToken, 0677)
+	}
 	if global.PathExists("session.token") {
 		token, err := ioutil.ReadFile("session.token")
 		if err == nil {
 			if err = cli.TokenLogin(token); err != nil {
 				_ = os.Remove("session.token")
 				log.Warnf("恢复会话失败: %v , 尝试使用正常流程登录.", err)
+				time.Sleep(time.Second)
 			} else {
 				isTokenLogin = true
 			}
@@ -311,11 +316,6 @@ func main() {
 			}
 		}
 	}
-	saveToken := func() {
-		global.AccountToken = cli.GenToken()
-		_ = ioutil.WriteFile("session.token", global.AccountToken, 0677)
-	}
-	saveToken()
 	var times uint = 1 // 重试次数
 	var reLoginLock sync.Mutex
 	cli.OnDisconnected(func(q *client.QQClient, e *client.ClientDisconnectedEvent) {
@@ -330,6 +330,9 @@ func main() {
 		}
 		if conf.Account.ReLogin.Interval > 0 {
 			log.Warnf("将在 %v 秒后尝试重连. 重连次数：%v/%v", conf.Account.ReLogin.Interval, times, conf.Account.ReLogin.MaxTimes)
+			time.Sleep(time.Second * time.Duration(conf.Account.ReLogin.Interval))
+		} else {
+			time.Sleep(time.Second)
 		}
 		log.Warnf("尝试重连...")
 		if cli.Online {
@@ -346,6 +349,7 @@ func main() {
 			log.Fatalf("登录时发生致命错误: %v", err)
 		}
 	})
+	saveToken()
 	cli.AllowSlider = true
 	log.Infof("登录成功 欢迎使用: %v", cli.Nickname)
 	log.Info("开始加载好友列表...")
