@@ -3,11 +3,11 @@ name: release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 jobs:
   goreleaser:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     steps:
       - name: Checkout
         uses: actions/checkout@v2.3.4
@@ -17,7 +17,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: '1.16.2'
+          go-version: "1.16.3"
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v2
@@ -30,10 +30,26 @@ jobs:
       - name: Checkout Dist
         uses: actions/checkout@v2
         with:
-          repository: 'gocq/distRepo'
-          ref: main
-          ssh-key: ${{ SSH_KEY }}
+          repository: "gocq/distRepo"
+          ref: test/update-script
+          ssh-key: ${{ secrets.SSH_KEY }}
           path: upstream/distRepo
+
+      - name: Install packaging dependencies
+        run: sudo apt-get install reprepro createrepo rpm
+
+      - name: Set up GPG
+        run: |
+          gpg --import --no-tty --batch --yes < scripts/pubkey.asc
+          echo "${{secrets.SIGNING_KEY_FILE}}" | gpg --import --no-tty --batch --yes
+          echo "allow-preset-passphrase" > ~/.gnupg/gpg-agent.conf
+          gpg-connect-agent RELOADAGENT /bye
+          echo "${{secrets.NFPM_GOCQ_PASSPHRASE}}" | /usr/lib/gnupg2/gpg-preset-passphrase --preset 9E929C3D51294318F1BB4D66869616166FB28DA7
+
+      - name: Sign RPMS
+        run: /
+          cp script/rpmmacros ~/.rpmmacros
+          rpmsign --addsign dist/*.rpm
 
       - name: Update Dist
         run: |
