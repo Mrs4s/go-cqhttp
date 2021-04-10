@@ -19,6 +19,14 @@ jobs:
         with:
           go-version: "1.16.3"
 
+      - name: Set up GPG
+        run: |
+          gpg --import --no-tty --batch --yes < scripts/pubkey.asc
+          echo "${{secrets.SIGNING_KEY_FILE}}" | gpg --import --no-tty --batch --yes
+          echo "allow-preset-passphrase" > ~/.gnupg/gpg-agent.conf
+          gpg-connect-agent RELOADAGENT /bye
+          echo "${{secrets.KEY_PASSPHRASE}}" | /usr/lib/gnupg2/gpg-preset-passphrase --preset 9E929C3D51294318F1BB4D66869616166FB28DA7
+
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v2
         with:
@@ -37,14 +45,6 @@ jobs:
 
       - name: Install packaging dependencies
         run: sudo apt-get install reprepro createrepo rpm
-
-      - name: Set up GPG
-        run: |
-          gpg --import --no-tty --batch --yes < scripts/pubkey.asc
-          echo "${{secrets.SIGNING_KEY_FILE}}" | gpg --import --no-tty --batch --yes
-          echo "allow-preset-passphrase" > ~/.gnupg/gpg-agent.conf
-          gpg-connect-agent RELOADAGENT /bye
-          echo "${{secrets.NFPM_GOCQ_PASSPHRASE}}" | /usr/lib/gnupg2/gpg-preset-passphrase --preset 9E929C3D51294318F1BB4D66869616166FB28DA7
 
       - name: Sign RPMS
         run: /
