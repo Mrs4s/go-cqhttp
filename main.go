@@ -336,7 +336,7 @@ func main() {
 		if cli.Online {
 			return
 		}
-		if err := cli.TokenLogin(global.AccountToken); err == nil {
+		if err := cli.TokenLogin(global.AccountToken); err == nil || err == client.ErrAlreadyOnline {
 			saveToken()
 			return
 		}
