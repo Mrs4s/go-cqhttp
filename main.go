@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"crypto/aes"
 	"crypto/md5"
 	"crypto/sha1"
@@ -301,6 +300,10 @@ func main() {
 	// c := server.Console
 	isQRCodeLogin := (conf.Account.Uin == 0 || len(conf.Account.Password) == 0) && !conf.Account.Encrypt
 	isTokenLogin := false
+	saveToken := func() {
+		global.AccountToken = cli.GenToken()
+		_ = ioutil.WriteFile("session.token", global.AccountToken, 0677)
+	}
 	if global.PathExists("session.token") {
 		token, err := ioutil.ReadFile("session.token")
 		if err == nil {
@@ -322,6 +325,7 @@ func main() {
 			if err = cli.TokenLogin(token); err != nil {
 				_ = os.Remove("session.token")
 				log.Warnf("恢复会话失败: %v , 尝试使用正常流程登录.", err)
+				time.Sleep(time.Second)
 			} else {
 				isTokenLogin = true
 			}
@@ -338,11 +342,6 @@ func main() {
 			}
 		}
 	}
-	saveToken := func() {
-		global.AccountToken = cli.GenToken()
-		_ = ioutil.WriteFile("session.token", global.AccountToken, 0677)
-	}
-	saveToken()
 	var times uint = 1 // 重试次数
 	var reLoginLock sync.Mutex
 	cli.OnDisconnected(func(q *client.QQClient, e *client.ClientDisconnectedEvent) {
@@ -357,6 +356,9 @@ func main() {
 		}
 		if conf.Account.ReLogin.Interval > 0 {
 			log.Warnf("将在 %v 秒后尝试重连. 重连次数：%v/%v", conf.Account.ReLogin.Interval, times, conf.Account.ReLogin.MaxTimes)
+			time.Sleep(time.Second * time.Duration(conf.Account.ReLogin.Interval))
+		} else {
+			time.Sleep(time.Second)
 		}
 		log.Warnf("尝试重连...")
 		if cli.Online {
@@ -373,6 +375,7 @@ func main() {
 			log.Fatalf("登录时发生致命错误: %v", err)
 		}
 	})
+	saveToken()
 	cli.AllowSlider = true
 	log.Infof("登录成功 欢迎使用: %v", cli.Nickname)
 	log.Info("开始加载好友列表...")
@@ -471,15 +474,11 @@ func checkUpdate() {
 		return
 	}
 	var res string
-	if err := gout.GET("https://api.github.com/repos/Mrs4s/go-cqhttp/releases").BindBody(&res).Do(); err != nil {
+	if err := gout.GET("https://api.github.com/repos/Mrs4s/go-cqhttp/releases/latest").BindBody(&res).Do(); err != nil {
 		log.Warnf("检查更新失败: %v", err)
 		return
 	}
-	detail := gjson.Parse(res)
-	if len(detail.Array()) < 1 {
-		return
-	}
-	info := detail.Array()[0]
+	info := gjson.Parse(res)
 	if global.VersionNameCompare(coolq.Version, info.Get("tag_name").Str) {
 		log.Infof("当前有更新的 go-cqhttp 可供更新, 请前往 https://github.com/Mrs4s/go-cqhttp/releases 下载.")
 		log.Infof("当前版本: %v 最新版本: %v", coolq.Version, info.Get("tag_name").Str)
@@ -489,22 +488,13 @@ func checkUpdate() {
 }
 
 func selfUpdate(imageURL string) {
-	console := bufio.NewReader(os.Stdin)
-	readLine := func() (str string) {
-		str, _ = console.ReadString('\n')
-		return
-	}
 	log.Infof("正在检查更新.")
 	var res string
-	if err := gout.GET("https://api.github.com/repos/Mrs4s/go-cqhttp/releases").BindBody(&res).Do(); err != nil {
+	if err := gout.GET("https://api.github.com/repos/Mrs4s/go-cqhttp/releases/latest").BindBody(&res).Do(); err != nil {
 		log.Warnf("检查更新失败: %v", err)
 		return
 	}
-	detail := gjson.Parse(res)
-	if len(detail.Array()) < 1 {
-		return
-	}
-	info := detail.Array()[0]
+	info := gjson.Parse(res)
 	version := info.Get("tag_name").Str
 	if coolq.Version != version {
 		log.Info("当前最新版本为 ", version)
