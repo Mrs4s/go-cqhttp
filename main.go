@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"crypto/aes"
 	"crypto/md5"
 	"crypto/sha1"
@@ -453,22 +452,13 @@ func checkUpdate() {
 }
 
 func selfUpdate(imageURL string) {
-	console := bufio.NewReader(os.Stdin)
-	readLine := func() (str string) {
-		str, _ = console.ReadString('\n')
-		return
-	}
 	log.Infof("正在检查更新.")
 	var res string
-	if err := gout.GET("https://api.github.com/repos/Mrs4s/go-cqhttp/releases").BindBody(&res).Do(); err != nil {
+	if err := gout.GET("https://api.github.com/repos/Mrs4s/go-cqhttp/releases/latest").BindBody(&res).Do(); err != nil {
 		log.Warnf("检查更新失败: %v", err)
 		return
 	}
-	detail := gjson.Parse(res)
-	if len(detail.Array()) < 1 {
-		return
-	}
-	info := detail.Array()[0]
+	info := gjson.Parse(res)
 	version := info.Get("tag_name").Str
 	if coolq.Version != version {
 		log.Info("当前最新版本为 ", version)
