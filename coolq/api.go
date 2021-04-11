@@ -285,7 +285,7 @@ func (bot *CQBot) CQSendGroupMessage(groupID int64, i interface{}, autoEscape bo
 	}
 	fixAt := func(elem []message.IMessageElement) {
 		for _, e := range elem {
-			if at, ok := e.(*message.AtElement); ok && at.Target != 0 {
+			if at, ok := e.(*message.AtElement); ok && at.Target != 0 && at.Display == "" {
 				at.Display = "@" + func() string {
 					mem := group.FindMember(at.Target)
 					if mem != nil {
