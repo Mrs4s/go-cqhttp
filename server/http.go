@@ -1,17 +1,21 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/hex"
+	"fmt"
 	"net/http"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
-	"github.com/Mrs4s/go-cqhttp/global"
+	"github.com/Mrs4s/go-cqhttp/global/config"
+
+	"github.com/Mrs4s/MiraiGo/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/guonaihong/gout"
 	"github.com/guonaihong/gout/dataflow"
@@ -23,13 +27,15 @@ type httpServer struct {
 	engine *gin.Engine
 	bot    *coolq.CQBot
 	HTTP   *http.Server
-	api    apiCaller
+	api    *apiCaller
 }
 
-type httpClient struct {
+// HTTPClient 反向HTTP上报客户端
+type HTTPClient struct {
 	bot     *coolq.CQBot
 	secret  string
 	addr    string
+	filter  string
 	timeout int32
 }
 
@@ -37,16 +43,23 @@ type httpContext struct {
 	ctx *gin.Context
 }
 
-var cqHTTPServer = &httpServer{}
-
-// Debug 是否启用Debug模式
-var Debug = false
-
-func (s *httpServer) Run(addr, authToken string, bot *coolq.CQBot) {
+// RunHTTPServerAndClients 启动HTTP服务器与HTTP上报客户端
+func RunHTTPServerAndClients(bot *coolq.CQBot, conf *config.HTTPServer) {
+	if conf.Disabled {
+		return
+	}
+	var (
+		s         = new(httpServer)
+		authToken = conf.AccessToken
+		addr      = fmt.Sprintf("%s:%d", conf.Host, conf.Port)
+	)
 	gin.SetMode(gin.ReleaseMode)
 	s.engine = gin.New()
 	s.bot = bot
-	s.api = apiCaller{s.bot}
+	s.api = newAPICaller(s.bot)
+	if conf.RateLimit.Enabled {
+		s.api.use(rateLimit(conf.RateLimit.Frequency, conf.RateLimit.Bucket))
+	}
 	s.engine.Use(func(c *gin.Context) {
 		if c.Request.Method != "GET" && c.Request.Method != "POST" {
 			log.Warnf("已拒绝客户端 %v 的请求: 方法错误", c.Request.RemoteAddr)
@@ -72,15 +85,16 @@ func (s *httpServer) Run(addr, authToken string, bot *coolq.CQBot) {
 
 	if authToken != "" {
 		s.engine.Use(func(c *gin.Context) {
-			if auth := c.Request.Header.Get("Authorization"); auth != "" {
+			auth := c.Request.Header.Get("Authorization")
+			switch {
+			case auth != "":
 				if strings.SplitN(auth, " ", 2)[1] != authToken {
 					c.AbortWithStatus(401)
-					return
 				}
-			} else if c.Query("access_token") != authToken {
+			case c.Query("access_token") != authToken:
 				c.AbortWithStatus(401)
 				return
-			} else {
+			default:
 				c.Next()
 			}
 		})
@@ -102,17 +116,27 @@ func (s *httpServer) Run(addr, authToken string, bot *coolq.CQBot) {
 			os.Exit(1)
 		}
 	}()
+
+	for _, c := range conf.Post {
+		if c.URL != "" {
+			go newHTTPClient().Run(c.URL, c.Secret, conf.Filter, conf.Timeout, bot)
+		}
+	}
 }
 
-func newHTTPClient() *httpClient {
-	return &httpClient{}
+// newHTTPClient 返回反向HTTP客户端
+func newHTTPClient() *HTTPClient {
+	return &HTTPClient{}
 }
 
-func (c *httpClient) Run(addr, secret string, timeout int32, bot *coolq.CQBot) {
+// Run 运行反向HTTP服务
+func (c *HTTPClient) Run(addr, secret, filter string, timeout int32, bot *coolq.CQBot) {
 	c.bot = bot
 	c.secret = secret
 	c.addr = addr
 	c.timeout = timeout
+	c.filter = filter
+	addFilter(filter)
 	if c.timeout < 5 {
 		c.timeout = 5
 	}
@@ -120,16 +144,24 @@ func (c *httpClient) Run(addr, secret string, timeout int32, bot *coolq.CQBot) {
 	log.Infof("HTTP POST上报器已启动: %v", addr)
 }
 
-func (c *httpClient) onBotPushEvent(m coolq.MSG) {
+func (c *HTTPClient) onBotPushEvent(m *bytes.Buffer) {
 	var res string
-	err := gout.POST(c.addr).SetJSON(m).BindBody(&res).SetHeader(func() gout.H {
+	if c.filter != "" {
+		filter := findFilter(c.filter)
+		if filter != nil && !filter.Eval(gjson.Parse(utils.B2S(m.Bytes()))) {
+			log.Debugf("上报Event %v 到 HTTP 服务器 %v 时被过滤.", c.addr, utils.B2S(m.Bytes()))
+			return
+		}
+	}
+
+	err := gout.POST(c.addr).SetJSON(m.Bytes()).BindBody(&res).SetHeader(func() gout.H {
 		h := gout.H{
 			"X-Self-ID":  c.bot.Client.Uin,
 			"User-Agent": "CQHttp/4.15.0",
 		}
 		if c.secret != "" {
 			mac := hmac.New(sha1.New, []byte(c.secret))
-			_, err := mac.Write([]byte(m.ToJSON()))
+			_, err := mac.Write(m.Bytes())
 			if err != nil {
 				log.Error(err)
 				return nil
@@ -147,17 +179,16 @@ func (c *httpClient) onBotPushEvent(m coolq.MSG) {
 			return nil
 		}).Do()
 	if err != nil {
-		log.Warnf("上报Event数据 %v 到 %v 失败: %v", m.ToJSON(), c.addr, err)
+		log.Warnf("上报Event数据 %v 到 %v 失败: %v", utils.B2S(m.Bytes()), c.addr, err)
 		return
 	}
-	log.Debugf("上报Event数据 %v 到 %v", m.ToJSON(), c.addr)
+	log.Debugf("上报Event数据 %v 到 %v", utils.B2S(m.Bytes()), c.addr)
 	if gjson.Valid(res) {
-		c.bot.CQHandleQuickOperation(gjson.Parse(m.ToJSON()), gjson.Parse(res))
+		c.bot.CQHandleQuickOperation(gjson.Parse(utils.B2S(m.Bytes())), gjson.Parse(res))
 	}
 }
 
 func (s *httpServer) HandleActions(c *gin.Context) {
-	global.RateLimit(context.Background())
 	action := strings.ReplaceAll(c.Param("action"), "_async", "")
 	log.Debugf("HTTPServer接收到API调用: %v", action)
 	c.JSON(200, s.api.callAPI(action, httpContext{ctx: c}))

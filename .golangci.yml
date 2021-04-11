@@ -1,0 +1,95 @@
+linters-settings:
+  errcheck:
+    ignore: fmt:.*,io/ioutil:^Read.*
+    ignoretests: true
+
+  goimports:
+    local-prefixes: github.com/Mrs4s/go-cqhttp
+
+  gocritic:
+    disabled-checks:
+      - exitAfterDefer
+
+  forbidigo:
+    # Forbid the following identifiers
+    forbid:
+      - ^fmt\.Errorf$ # consider errors.Errorf in github.com/pkg/errors
+
+linters:
+  # please, do not use `enable-all`: it's deprecated and will be removed soon.
+  # inverted configuration with `enable-all` and `disable` is not scalable during updates of golangci-lint
+  disable-all: true
+  fast: false
+  enable:
+    - bodyclose
+    - deadcode
+    - depguard
+    - dogsled
+    - dupl
+    - errcheck
+    - exportloopref
+    - exhaustive
+    #- funlen
+    #- goconst
+    - gocritic
+    #- gocyclo
+    - gofumpt
+    - goimports
+    - goprintffuncname
+    #- gosec
+    - gosimple
+    - govet
+    - ineffassign
+    - misspell
+    - nolintlint
+    - rowserrcheck
+    - staticcheck
+    - structcheck
+    - stylecheck
+    - typecheck
+    - unconvert
+    - unparam
+    - unused
+    - varcheck
+    - whitespace
+    - prealloc
+    - predeclared
+    - asciicheck
+    - golint
+    - forbidigo
+    - makezero
+    #- interfacer
+
+  # don't enable:
+  # - scopelint
+  # - gochecknoglobals
+  # - gocognit
+  # - godot
+  # - godox
+  # - goerr113
+  # - interfacer
+  # - maligned
+  # - nestif
+  # - testpackage
+  # - wsl
+
+run:
+  # default concurrency is a available CPU number.
+  # concurrency: 4 # explicitly omit this value to fully utilize available resources.
+  deadline: 5m
+  issues-exit-code: 1
+  tests: false
+
+# output configuration options
+output:
+  format: "colored-line-number"
+  print-issued-lines: true
+  print-linter-name: true
+  uniq-by-line: true
+
+issues:
+  # Fix found issues (if it's supported by the linter)
+  fix: true
+  exclude-use-default: false
+  exclude:
+    - "Error return value of .((os.)?std(out|err)..*|.*Close|.*Flush|os.Remove(All)?|.*print(f|ln)?|os.(Un)?Setenv). is not check"

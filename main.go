@@ -1,49 +1,57 @@
 package main
 
 import (
-	"bufio"
 	"crypto/aes"
 	"crypto/md5"
 	"crypto/sha1"
-	"encoding/base64"
 	"encoding/hex"
+	"flag"
 	"fmt"
-	"github.com/Mrs4s/go-cqhttp/global/terminal"
-	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
-	easy "github.com/t-tomalak/logrus-easy-formatter"
-	"io"
 	"io/ioutil"
-	"net/http"
 	"os"
-	"os/exec"
 	"os/signal"
 	"path"
-	"path/filepath"
 	"runtime"
-	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
+	"github.com/Mrs4s/go-cqhttp/coolq"
+	"github.com/Mrs4s/go-cqhttp/global"
+	"github.com/Mrs4s/go-cqhttp/global/config"
+	"github.com/Mrs4s/go-cqhttp/global/terminal"
+	"github.com/Mrs4s/go-cqhttp/global/update"
 	"github.com/Mrs4s/go-cqhttp/server"
+
+	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/guonaihong/gout"
+	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
+	log "github.com/sirupsen/logrus"
+	easy "github.com/t-tomalak/logrus-easy-formatter"
 	"github.com/tidwall/gjson"
 	"golang.org/x/crypto/pbkdf2"
 	"golang.org/x/term"
-
-	"github.com/Mrs4s/MiraiGo/binary"
-	"github.com/Mrs4s/MiraiGo/client"
-	"github.com/Mrs4s/go-cqhttp/coolq"
-	"github.com/Mrs4s/go-cqhttp/global"
-	jsoniter "github.com/json-iterator/go"
-	log "github.com/sirupsen/logrus"
 )
 
-var json = jsoniter.ConfigCompatibleWithStandardLibrary
-var conf *global.JSONConfig
-var isFastStart = false
+var (
+	conf        *config.Config
+	isFastStart = false
+	c           string
+	d           bool
+	h           bool
+)
 
 func init() {
+	var debug bool
+	flag.StringVar(&c, "c", config.DefaultConfigFile, "configuration filename default is config.hjson")
+	flag.BoolVar(&d, "d", false, "running as a daemon")
+	flag.BoolVar(&debug, "D", false, "debug mode")
+	flag.BoolVar(&h, "h", false, "this help")
+	flag.Parse()
+
+	// 通过-c 参数替换 配置文件路径
+	config.DefaultConfigFile = c
 	logFormatter := &easy.Formatter{
 		TimestampFormat: "2006-01-02 15:04:05",
 		LogFormat:       "[%time%] [%lvl%]: %msg% \n",
@@ -54,47 +62,23 @@ func init() {
 		panic(err)
 	}
 
-	conf = getConfig()
+	conf = config.Get()
 	if conf == nil {
-		os.Exit(1)
+		_ = os.WriteFile("config.yml", []byte(config.DefaultConfig), 0644)
+		log.Error("未找到配置文件，默认配置文件已生成!")
+		readLine()
+		os.Exit(0)
 	}
 
+	if debug {
+		conf.Output.Debug = true
+	}
 	// 在debug模式下,将在标准输出中打印当前执行行数
-	if conf.Debug {
+	if conf.Output.Debug {
 		log.SetReportCaller(true)
 	}
 
-	log.AddHook(global.NewLocalHook(w, logFormatter, global.GetLogLevel(conf.LogLevel)...))
-
-	if global.PathExists("cqhttp.json") {
-		log.Info("发现 cqhttp.json 将在五秒后尝试导入配置，按 Ctrl+C 取消.")
-		log.Warn("警告: 该操作会删除 cqhttp.json 并覆盖 config.hjson 文件.")
-		time.Sleep(time.Second * 5)
-		conf := global.CQHTTPAPIConfig{}
-		if err := json.Unmarshal([]byte(global.ReadAllText("cqhttp.json")), &conf); err != nil {
-			log.Fatalf("读取文件 cqhttp.json 失败: %v", err)
-		}
-		goConf := global.DefaultConfig()
-		goConf.AccessToken = conf.AccessToken
-		goConf.HTTPConfig.Host = conf.Host
-		goConf.HTTPConfig.Port = conf.Port
-		goConf.WSConfig.Host = conf.WSHost
-		goConf.WSConfig.Port = conf.WSPort
-		if conf.PostURL != "" {
-			goConf.HTTPConfig.PostUrls[conf.PostURL] = conf.Secret
-		}
-		if conf.UseWsReverse {
-			goConf.ReverseServers[0].Enabled = true
-			goConf.ReverseServers[0].ReverseURL = conf.WSReverseURL
-			goConf.ReverseServers[0].ReverseAPIURL = conf.WSReverseAPIURL
-			goConf.ReverseServers[0].ReverseEventURL = conf.WSReverseEventURL
-			goConf.ReverseServers[0].ReverseReconnectInterval = conf.WSReverseReconnectInterval
-		}
-		if err := goConf.Save("config.hjson"); err != nil {
-			log.Fatalf("保存 config.hjson 时出现错误: %v", err)
-		}
-		_ = os.Remove("cqhttp.json")
-	}
+	log.AddHook(global.NewLocalHook(w, logFormatter, global.GetLogLevel(conf.Output.LogLevel)...))
 
 	if !global.PathExists(global.ImagePath) {
 		if err := os.MkdirAll(global.ImagePath, 0755); err != nil {
@@ -119,6 +103,12 @@ func init() {
 }
 
 func main() {
+	if h {
+		help()
+	}
+	if d {
+		server.Daemon()
+	}
 	var byteKey []byte
 	arg := os.Args
 	if len(arg) > 1 {
@@ -132,8 +122,7 @@ func main() {
 				}
 			case "key":
 				if len(arg) > i+1 {
-					b := []byte(arg[i+1])
-					byteKey = b
+					byteKey = []byte(arg[i+1])
 				}
 			case "faststart":
 				isFastStart = true
@@ -145,23 +134,25 @@ func main() {
 		log.Warning("将等待10s后启动")
 		time.Sleep(time.Second * 10)
 	}
-	if conf.Uin == 0 || (conf.Password == "" && conf.PasswordEncrypted == "") {
-		log.Warnf("请修改 config.hjson 以添加账号密码.")
+
+	if (conf.Account.Uin == 0 || (conf.Account.Password == "" && !conf.Account.Encrypt)) && !global.PathExists("session.token") {
+		log.Warn("账号密码未配置, 将使用二维码登录.")
 		if !isFastStart {
+			log.Warn("将在 5秒 后继续.")
 			time.Sleep(time.Second * 5)
 		}
-		return
 	}
 
 	log.Info("当前版本:", coolq.Version)
-	if conf.Debug {
+	if conf.Output.Debug {
 		log.SetLevel(log.DebugLevel)
 		log.Warnf("已开启Debug模式.")
 		log.Debugf("开发交流群: 192548878")
-		server.Debug = true
-		if conf.WebUI == nil || !conf.WebUI.Enabled {
-			log.Warnf("警告: 在Debug模式下未启用WebUi服务, 将无法进行性能分析.")
-		}
+		/*
+			if conf.WebUI == nil || !conf.WebUI.Enabled {
+				log.Warnf("警告: 在Debug模式下未启用WebUi服务, 将无法进行性能分析.")
+			}
+		*/
 	}
 	log.Info("用户交流群: 721829413")
 	if !global.PathExists("device.json") {
@@ -175,52 +166,58 @@ func main() {
 			log.Fatalf("加载设备信息失败: %v", err)
 		}
 	}
-	if conf.EncryptPassword && conf.PasswordEncrypted == "" {
-		log.Infof("密码加密已启用, 请输入Key对密码进行加密: (Enter 提交)")
-		byteKey, _ = term.ReadPassword(int(os.Stdin.Fd()))
-		global.PasswordHash = md5.Sum([]byte(conf.Password))
-		conf.Password = ""
-		conf.PasswordEncrypted = "AES:" + PasswordHashEncrypt(global.PasswordHash[:], byteKey)
-		_ = conf.Save("config.hjson")
-	}
-	if conf.PasswordEncrypted != "" {
-		if len(byteKey) == 0 {
-			log.Infof("密码加密已启用, 请输入Key对密码进行解密以继续: (Enter 提交)")
-			cancel := make(chan struct{}, 1)
-			go func() {
-				select {
-				case <-cancel:
-					return
-				case <-time.After(time.Second * 45):
-					log.Infof("解密key输入超时")
-					time.Sleep(3 * time.Second)
-					os.Exit(0)
-				}
-			}()
+
+	if conf.Account.Encrypt {
+		if !global.PathExists("password.encrypt") {
+			if conf.Account.Password == "" {
+				log.Error("无法进行加密，请在配置文件中的添加密码后重新启动.")
+				readLine()
+				os.Exit(0)
+			}
+			log.Infof("密码加密已启用, 请输入Key对密码进行加密: (Enter 提交)")
 			byteKey, _ = term.ReadPassword(int(os.Stdin.Fd()))
-			cancel <- struct{}{}
+			global.PasswordHash = md5.Sum([]byte(conf.Account.Password))
+			_ = os.WriteFile("password.encrypt", []byte(PasswordHashEncrypt(global.PasswordHash[:], byteKey)), 0644)
+			log.Info("密码已加密，为了您的账号安全，请删除配置文件中的密码后重新启动.")
+			readLine()
+			os.Exit(0)
 		} else {
-			log.Infof("密码加密已启用, 使用运行时传递的参数进行解密，按 Ctrl+C 取消.")
-		}
+			if conf.Account.Password != "" {
+				log.Error("密码已加密，为了您的账号安全，请删除配置文件中的密码后重新启动.")
+				readLine()
+				os.Exit(0)
+			}
 
-		// 升级客户端密码加密方案，MD5+TEA 加密密码 -> PBKDF2+AES 加密 MD5
-		// 升级后的 PasswordEncrypted 字符串以"AES:"开始，其后为 Hex 编码的16字节加密 MD5
-		if !strings.HasPrefix(conf.PasswordEncrypted, "AES:") {
-			password := OldPasswordDecrypt(conf.PasswordEncrypted, byteKey)
-			passwordHash := md5.Sum([]byte(password))
-			newPasswordHash := PasswordHashEncrypt(passwordHash[:], byteKey)
-			conf.PasswordEncrypted = "AES:" + newPasswordHash
-			_ = conf.Save("config.hjson")
-			log.Debug("密码加密方案升级完成")
-		}
+			if len(byteKey) == 0 {
+				log.Infof("密码加密已启用, 请输入Key对密码进行解密以继续: (Enter 提交)")
+				cancel := make(chan struct{}, 1)
+				state, _ := term.GetState(int(os.Stdin.Fd()))
+				go func() {
+					select {
+					case <-cancel:
+						return
+					case <-time.After(time.Second * 45):
+						log.Infof("解密key输入超时")
+						time.Sleep(3 * time.Second)
+						_ = term.Restore(int(os.Stdin.Fd()), state)
+						os.Exit(0)
+					}
+				}()
+				byteKey, _ = term.ReadPassword(int(os.Stdin.Fd()))
+				cancel <- struct{}{}
+			} else {
+				log.Infof("密码加密已启用, 使用运行时传递的参数进行解密，按 Ctrl+C 取消.")
+			}
 
-		ph, err := PasswordHashDecrypt(conf.PasswordEncrypted[4:], byteKey)
-		if err != nil {
-			log.Fatalf("加密存储的密码损坏，请尝试重新配置密码")
+			encrypt, _ := os.ReadFile("password.encrypt")
+			ph, err := PasswordHashDecrypt(string(encrypt), byteKey)
+			if err != nil {
+				log.Fatalf("加密存储的密码损坏，请尝试重新配置密码")
+			}
+			copy(global.PasswordHash[:], ph)
 		}
-		copy(global.PasswordHash[:], ph)
 	} else {
-		global.PasswordHash = md5.Sum([]byte(conf.Password))
+		global.PasswordHash = md5.Sum([]byte(conf.Account.Password))
 	}
 	if !isFastStart {
 		log.Info("Bot将在5秒后登录并开始信息处理, 按 Ctrl+C 取消.")
@@ -240,7 +237,11 @@ func main() {
 		}
 		return "未知"
 	}())
-	cli := client.NewClientMd5(conf.Uin, global.PasswordHash)
+	cli = client.NewClientEmpty()
+	if conf.Account.Uin != 0 && global.PasswordHash != [16]byte{} {
+		cli.Uin = conf.Account.Uin
+		cli.PasswordMd5 = global.PasswordHash
+	}
 	cli.OnLog(func(c *client.QQClient, e *client.LogEvent) {
 		switch e.Type {
 		case "INFO":
@@ -260,41 +261,147 @@ func main() {
 		log.Infof("读取到 %v 个自定义地址.", len(addr))
 	}
 	cli.OnServerUpdated(func(bot *client.QQClient, e *client.ServerUpdatedEvent) bool {
-		if !conf.UseSSOAddress {
+		if !conf.Account.UseSSOAddress {
 			log.Infof("收到服务器地址更新通知, 根据配置文件已忽略.")
 			return false
 		}
 		log.Infof("收到服务器地址更新通知, 将在下一次重连时应用. ")
 		return true
 	})
-	if conf.WebUI == nil {
-		conf.WebUI = &global.GoCQWebUI{
-			Enabled:   true,
-			WebInput:  false,
-			Host:      "0.0.0.0",
-			WebUIPort: 9999,
+	/*
+		if conf.WebUI == nil {
+			conf.WebUI = &global.GoCQWebUI{
+				Enabled:   true,
+				WebInput:  false,
+				Host:      "0.0.0.0",
+				WebUIPort: 9999,
+			}
+		}
+		if conf.WebUI.WebUIPort <= 0 {
+			conf.WebUI.WebUIPort = 9999
+		}
+		if conf.WebUI.Host == "" {
+			conf.WebUI.Host = "127.0.0.1"
+		}
+	*/
+	global.Proxy = conf.Message.ProxyRewrite
+	// b := server.WebServer.Run(fmt.Sprintf("%s:%d", conf.WebUI.Host, conf.WebUI.WebUIPort), cli)
+	// c := server.Console
+	isQRCodeLogin := (conf.Account.Uin == 0 || len(conf.Account.Password) == 0) && !conf.Account.Encrypt
+	isTokenLogin := false
+	saveToken := func() {
+		global.AccountToken = cli.GenToken()
+		_ = ioutil.WriteFile("session.token", global.AccountToken, 0677)
+	}
+	if global.PathExists("session.token") {
+		token, err := ioutil.ReadFile("session.token")
+		if err == nil {
+			if err = cli.TokenLogin(token); err != nil {
+				_ = os.Remove("session.token")
+				log.Warnf("恢复会话失败: %v , 尝试使用正常流程登录.", err)
+				time.Sleep(time.Second)
+			} else {
+				isTokenLogin = true
+			}
 		}
 	}
-	if conf.WebUI.WebUIPort <= 0 {
-		conf.WebUI.WebUIPort = 9999
+	if !isTokenLogin {
+		if !isQRCodeLogin {
+			if err := commonLogin(); err != nil {
+				log.Fatalf("登录时发生致命错误: %v", err)
+			}
+		} else {
+			if err := qrcodeLogin(); err != nil {
+				log.Fatalf("登录时发生致命错误: %v", err)
+			}
+		}
 	}
-	if conf.WebUI.Host == "" {
-		conf.WebUI.Host = "127.0.0.1"
+	var times uint = 1 // 重试次数
+	var reLoginLock sync.Mutex
+	cli.OnDisconnected(func(q *client.QQClient, e *client.ClientDisconnectedEvent) {
+		reLoginLock.Lock()
+		defer reLoginLock.Unlock()
+		log.Warnf("Bot已离线: %v", e.Message)
+		if conf.Account.ReLogin.Disabled {
+			os.Exit(1)
+		}
+		if times > conf.Account.ReLogin.MaxTimes && conf.Account.ReLogin.MaxTimes != 0 {
+			log.Fatalf("Bot重连次数超过限制, 停止")
+		}
+		if conf.Account.ReLogin.Interval > 0 {
+			log.Warnf("将在 %v 秒后尝试重连. 重连次数：%v/%v", conf.Account.ReLogin.Interval, times, conf.Account.ReLogin.MaxTimes)
+			time.Sleep(time.Second * time.Duration(conf.Account.ReLogin.Interval))
+		} else {
+			time.Sleep(time.Second)
+		}
+		log.Warnf("尝试重连...")
+		if cli.Online {
+			return
+		}
+		if err := cli.TokenLogin(global.AccountToken); err == nil {
+			saveToken()
+			return
+		}
+		if isQRCodeLogin {
+			log.Fatalf("快速重连失败")
+		}
+		if err := commonLogin(); err != nil {
+			log.Fatalf("登录时发生致命错误: %v", err)
+		}
+	})
+	saveToken()
+	cli.AllowSlider = true
+	log.Infof("登录成功 欢迎使用: %v", cli.Nickname)
+	log.Info("开始加载好友列表...")
+	global.Check(cli.ReloadFriendList(), true)
+	log.Infof("共加载 %v 个好友.", len(cli.FriendList))
+	log.Infof("开始加载群列表...")
+	global.Check(cli.ReloadGroupList(), true)
+	log.Infof("共加载 %v 个群.", len(cli.GroupList))
+	bot := coolq.NewQQBot(cli, conf)
+	_ = bot.Client
+	if conf.Message.PostFormat != "string" && conf.Message.PostFormat != "array" {
+		log.Warnf("post-format 配置错误, 将自动使用 string")
+		coolq.SetMessageFormat("string")
+	} else {
+		coolq.SetMessageFormat(conf.Message.PostFormat)
 	}
-	global.Proxy = conf.ProxyRewrite
-	b := server.WebServer.Run(fmt.Sprintf("%s:%d", conf.WebUI.Host, conf.WebUI.WebUIPort), cli)
-	c := server.Console
-	r := server.Restart
+	log.Info("正在加载事件过滤器.")
+	coolq.IgnoreInvalidCQCode = conf.Message.IgnoreInvalidCQCode
+	coolq.SplitURL = conf.Message.FixURL
+	coolq.ForceFragmented = conf.Message.ForceFragment
+	for _, m := range conf.Servers {
+		if h, ok := m["http"]; ok {
+			hc := new(config.HTTPServer)
+			if err := h.Decode(hc); err != nil {
+				log.Warn("读取http配置失败 :", err)
+			} else {
+				go server.RunHTTPServerAndClients(bot, hc)
+			}
+		}
+		if s, ok := m["ws"]; ok {
+			sc := new(config.WebsocketServer)
+			if err := s.Decode(sc); err != nil {
+				log.Warn("读取http配置失败 :", err)
+			} else {
+				go server.RunWebSocketServer(bot, sc)
+			}
+		}
+		if c, ok := m["ws-reverse"]; ok {
+			rc := new(config.WebsocketReverse)
+			if err := c.Decode(rc); err != nil {
+				log.Warn("读取http配置失败 :", err)
+			} else {
+				go server.RunWebSocketClient(bot, rc)
+			}
+		}
+	}
+	log.Info("资源初始化完成, 开始处理信息.")
+	log.Info("アトリは、高性能ですから!")
+	c := make(chan os.Signal, 1)
 	go checkUpdate()
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	select {
-	case <-c:
-		b.Release()
-	case <-r:
-		log.Info("正在重启中...")
-		defer b.Release()
-		restart(arg)
-	}
+	<-c
 }
 
 // PasswordHashEncrypt 使用key加密给定passwordHash
@@ -328,41 +435,18 @@ func PasswordHashDecrypt(encryptedPasswordHash string, key []byte) ([]byte, erro
 	return result, nil
 }
 
-// OldPasswordDecrypt 使用key解密老password，仅供兼容使用
-func OldPasswordDecrypt(encryptedPassword string, key []byte) string {
-	defer func() {
-		if pan := recover(); pan != nil {
-			log.Fatalf("密码解密失败: %v", pan)
-		}
-	}()
-	encKey := md5.Sum(key)
-	encrypted, err := base64.StdEncoding.DecodeString(encryptedPassword)
-	if err != nil {
-		panic(err)
-	}
-	tea := binary.NewTeaCipher(encKey[:])
-	if tea == nil {
-		panic("密钥错误")
-	}
-	return string(tea.Decrypt(encrypted))
-}
-
 func checkUpdate() {
 	log.Infof("正在检查更新.")
-	if coolq.Version == "unknown" {
+	if coolq.Version == "(devel)" {
 		log.Warnf("检查更新失败: 使用的 Actions 测试版或自编译版本.")
 		return
 	}
 	var res string
-	if err := gout.GET("https://api.github.com/repos/Mrs4s/go-cqhttp/releases").BindBody(&res).Do(); err != nil {
+	if err := gout.GET("https://api.github.com/repos/Mrs4s/go-cqhttp/releases/latest").BindBody(&res).Do(); err != nil {
 		log.Warnf("检查更新失败: %v", err)
 		return
 	}
-	detail := gjson.Parse(res)
-	if len(detail.Array()) < 1 {
-		return
-	}
-	info := detail.Array()[0]
+	info := gjson.Parse(res)
 	if global.VersionNameCompare(coolq.Version, info.Get("tag_name").Str) {
 		log.Infof("当前有更新的 go-cqhttp 可供更新, 请前往 https://github.com/Mrs4s/go-cqhttp/releases 下载.")
 		log.Infof("当前版本: %v 最新版本: %v", coolq.Version, info.Get("tag_name").Str)
@@ -372,66 +456,43 @@ func checkUpdate() {
 }
 
 func selfUpdate(imageURL string) {
-	console := bufio.NewReader(os.Stdin)
-	readLine := func() (str string) {
-		str, _ = console.ReadString('\n')
-		return
-	}
 	log.Infof("正在检查更新.")
 	var res string
-	if err := gout.GET("https://api.github.com/repos/Mrs4s/go-cqhttp/releases").BindBody(&res).Do(); err != nil {
+	if err := gout.GET("https://api.github.com/repos/Mrs4s/go-cqhttp/releases/latest").BindBody(&res).Do(); err != nil {
 		log.Warnf("检查更新失败: %v", err)
 		return
 	}
-	detail := gjson.Parse(res)
-	if len(detail.Array()) < 1 {
-		return
-	}
-	info := detail.Array()[0]
+	info := gjson.Parse(res)
 	version := info.Get("tag_name").Str
 	if coolq.Version != version {
 		log.Info("当前最新版本为 ", version)
 		log.Warn("是否更新(y/N): ")
 		r := strings.TrimSpace(readLine())
-
-		doUpdate := func() {
+		if r != "y" && r != "Y" {
+			log.Warn("已取消更新！")
+		} else {
 			log.Info("正在更新,请稍等...")
 			url := fmt.Sprintf(
-				"%v/Mrs4s/go-cqhttp/releases/download/%v/go-cqhttp-%v-%v-%v",
+				"%v/Mrs4s/go-cqhttp/releases/download/%v/go-cqhttp_%v_%v",
 				func() string {
 					if imageURL != "" {
 						return imageURL
 					}
 					return "https://github.com"
 				}(),
-				version,
-				version,
-				runtime.GOOS,
-				runtime.GOARCH,
+				version, runtime.GOOS, func() string {
+					if runtime.GOARCH == "arm" {
+						return "armv7"
+					}
+					return runtime.GOARCH
+				}(),
 			)
 			if runtime.GOOS == "windows" {
-				url = url + ".exe"
+				url += ".zip"
+			} else {
+				url += ".tar.gz"
 			}
-			resp, err := http.Get(url)
-			if err != nil {
-				fmt.Println(err)
-				log.Error("更新失败!")
-				return
-			}
-			wc := global.WriteCounter{}
-			err, _ = global.UpdateFromStream(io.TeeReader(resp.Body, &wc))
-			fmt.Println()
-			if err != nil {
-				log.Error("更新失败!")
-				return
-			}
-			log.Info("更新完成！")
-		}
-
-		if r == "y" || r == "Y" {
-			doUpdate()
-		} else {
-			log.Warn("已取消更新！")
+			update.Update(url)
 		}
 	} else {
 		log.Info("当前版本已经是最新版本!")
@@ -441,10 +502,11 @@ func selfUpdate(imageURL string) {
 	os.Exit(0)
 }
 
-func restart(Args []string) {
+/*
+func restart(args []string) {
 	var cmd *exec.Cmd
 	if runtime.GOOS == "windows" {
-		file, err := exec.LookPath(Args[0])
+		file, err := exec.LookPath(args[0])
 		if err != nil {
 			log.Errorf("重启失败:%s", err.Error())
 			return
@@ -453,70 +515,38 @@ func restart(Args []string) {
 		if err != nil {
 			log.Errorf("重启失败:%s", err.Error())
 		}
-		Args = append([]string{"/c", "start ", path, "faststart"}, Args[1:]...)
+		args = append([]string{"/c", "start ", path, "faststart"}, args[1:]...)
 		cmd = &exec.Cmd{
 			Path:   "cmd.exe",
-			Args:   Args,
+			Args:   args,
 			Stderr: os.Stderr,
 			Stdout: os.Stdout,
 		}
 	} else {
-		Args = append(Args, "faststart")
+		args = append(args, "faststart")
 		cmd = &exec.Cmd{
-			Path:   Args[0],
-			Args:   Args,
+			Path:   args[0],
+			Args:   args,
 			Stderr: os.Stderr,
 			Stdout: os.Stdout,
 		}
 	}
 	_ = cmd.Start()
 }
+*/
 
-func getConfig() *global.JSONConfig {
-	var conf *global.JSONConfig
-	if global.PathExists("config.json") {
-		conf = global.LoadConfig("config.json")
-		_ = conf.Save("config.hjson")
-		_ = os.Remove("config.json")
-	} else if os.Getenv("UIN") != "" {
-		log.Infof("将从环境变量加载配置.")
-		uin, _ := strconv.ParseInt(os.Getenv("UIN"), 10, 64)
-		pwd := os.Getenv("PASS")
-		post := os.Getenv("HTTP_POST")
-		conf = &global.JSONConfig{
-			Uin:      uin,
-			Password: pwd,
-			HTTPConfig: &global.GoCQHTTPConfig{
-				Enabled:  true,
-				Host:     "0.0.0.0",
-				Port:     5700,
-				PostUrls: map[string]string{},
-			},
-			WSConfig: &global.GoCQWebSocketConfig{
-				Enabled: true,
-				Host:    "0.0.0.0",
-				Port:    6700,
-			},
-			PostMessageFormat: "string",
-			Debug:             os.Getenv("DEBUG") == "true",
-		}
-		if post != "" {
-			conf.HTTPConfig.PostUrls[post] = os.Getenv("HTTP_SECRET")
-		}
-	} else {
-		conf = global.LoadConfig("config.hjson")
-	}
-	if conf == nil {
-		err := global.WriteAllText("config.hjson", global.DefaultConfigWithComments)
-		if err != nil {
-			log.Fatalf("创建默认配置文件时出现错误: %v", err)
-			return nil
-		}
-		log.Infof("默认配置文件已生成, 请编辑 config.hjson 后重启程序.")
-		if !isFastStart {
-			time.Sleep(time.Second * 5)
-		}
-		return nil
-	}
-	return conf
+// help cli命令行-h的帮助提示
+func help() {
+	fmt.Printf(`go-cqhttp service
+version: %s
+
+Usage:
+
+server [OPTIONS]
+
+Options:
+`, coolq.Version)
+
+	flag.PrintDefaults()
+	os.Exit(0)
 }

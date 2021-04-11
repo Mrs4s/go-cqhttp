@@ -2,10 +2,10 @@ package server
 
 import (
 	"strings"
-	"time"
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
+
 	"github.com/tidwall/gjson"
 )
 
@@ -13,8 +13,11 @@ type resultGetter interface {
 	Get(string) gjson.Result
 }
 
+type handler func(action string, p resultGetter) coolq.MSG
+
 type apiCaller struct {
-	bot *coolq.CQBot
+	bot      *coolq.CQBot
+	handlers []handler
 }
 
 func getLoginInfo(bot *coolq.CQBot, _ resultGetter) coolq.MSG {
@@ -39,9 +42,10 @@ func getGroupMemberList(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 
 func getGroupMemberInfo(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 	return bot.CQGetGroupMemberInfo(
-		p.Get("group_id").Int(), p.Get("user_id").Int(),
+		p.Get("group_id").Int(), p.Get("user_id").Int(), p.Get("no_cache").Bool(),
 	)
 }
+
 func sendMSG(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 	autoEscape := global.EnsureBool(p.Get("auto_escape"), false)
 	if p.Get("message_type").Str == "private" {
@@ -191,18 +195,19 @@ func getGroupHonorInfo(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 	return bot.CQGetGroupHonorInfo(p.Get("group_id").Int(), p.Get("type").Str)
 }
 
-func setRestart(_ *coolq.CQBot, p resultGetter) coolq.MSG {
-	var delay int64
-	delay = p.Get("delay").Int()
-	if delay < 0 {
-		delay = 0
-	}
-	defer func(delay int64) {
-		time.Sleep(time.Duration(delay) * time.Millisecond)
-		Restart <- struct{}{}
-	}(delay)
-	return coolq.MSG{"data": nil, "retcode": 0, "status": "async"}
-
+func setRestart(_ *coolq.CQBot, _ resultGetter) coolq.MSG {
+	/*
+		var delay int64
+		delay = p.Get("delay").Int()
+		if delay < 0 {
+			delay = 0
+		}
+		defer func(delay int64) {
+			time.Sleep(time.Duration(delay) * time.Millisecond)
+			Restart <- struct{}{}
+		}(delay)
+	*/
+	return coolq.MSG{"data": nil, "retcode": 99, "msg": "restart un-supported now", "wording": "restart函数暂不兼容", "status": "failed"}
 }
 
 func canSendImage(bot *coolq.CQBot, _ resultGetter) coolq.MSG {
@@ -257,8 +262,9 @@ func getVipInfo(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 	return bot.CQGetVipInfo(p.Get("user_id").Int())
 }
 
-func reloadEventFilter(bot *coolq.CQBot, _ resultGetter) coolq.MSG {
-	return bot.CQReloadEventFilter()
+func reloadEventFilter(_ *coolq.CQBot, p resultGetter) coolq.MSG {
+	addFilter(p.Get("file").String())
+	return coolq.OK(nil)
 }
 
 func getGroupAtAllRemain(bot *coolq.CQBot, p resultGetter) coolq.MSG {
@@ -293,7 +299,7 @@ func getEssenceMsgList(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 	return bot.CQGetEssenceMessageList(p.Get("group_id").Int())
 }
 
-func checkUrlSafely(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func checkURLSafely(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 	return bot.CQCheckURLSafely(p.Get("url").String())
 }
 
@@ -316,10 +322,12 @@ func handleQuickOperation(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 	return bot.CQHandleQuickOperation(p.Get("context"), p.Get("operation"))
 }
 
+
 func setCacheClean(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 	return bot.CQCleanCache()
 }
 
+// API 是go-cqhttp当前支持的所有api的映射表
 var API = map[string]func(*coolq.CQBot, resultGetter) coolq.MSG{
 	"get_login_info":             getLoginInfo,
 	"get_friend_list":            getFriendList,
@@ -372,16 +380,31 @@ var API = map[string]func(*coolq.CQBot, resultGetter) coolq.MSG{
 	"set_essence_msg":            setEssenceMSG,
 	"delete_essence_msg":         deleteEssenceMSG,
 	"get_essence_msg_list":       getEssenceMsgList,
-	"check_url_safely":           checkUrlSafely,
+	"check_url_safely":           checkURLSafely,
 	"set_group_anonymous_ban":    setGroupAnonymousBan,
 	".handle_quick_operation":    handleQuickOperation,
 	"clean_cache":                setCacheClean,
 }
 
 func (api *apiCaller) callAPI(action string, p resultGetter) coolq.MSG {
+	for _, fn := range api.handlers {
+		if ret := fn(action, p); ret != nil {
+			return ret
+		}
+	}
 	if f, ok := API[action]; ok {
 		return f(api.bot, p)
-	} else {
-		return coolq.Failed(404, "API_NOT_FOUND", "API不存在")
+	}
+	return coolq.Failed(404, "API_NOT_FOUND", "API不存在")
+}
+
+func (api *apiCaller) use(middlewares ...handler) {
+	api.handlers = append(api.handlers, middlewares...)
+}
+
+func newAPICaller(bot *coolq.CQBot) *apiCaller {
+	return &apiCaller{
+		bot:      bot,
+		handlers: []handler{},
 	}
 }

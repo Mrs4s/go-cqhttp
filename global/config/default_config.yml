@@ -1,14 +1,3 @@
-# 配置
-
-go-cqhttp 包含 `config.yml` 和 `device.json` 两个配置文件, 其中 `config.yml` 为运行配置 `device.json` 为虚拟设备信息.
-
-## 配置信息
-
-go-cqhttp 的配置文件采用 YAML , 在使用之前希望你能了解 YAML 的语法([教程](https://www.runoob.com/w3cnote/yaml-intro.html))
-
-默认生成的配置文件如下所示:
-
-````yaml
 # go-cqhttp 默认配置文件
 
 account: # 账号相关
@@ -47,6 +36,10 @@ message:
   proxy-rewrite: ''
   # 是否上报自身消息
   report-self-message: false
+  # 移除服务端的Reply附带的At
+  remove-reply-at: false
+  # 为Reply附加更多信息
+  extra-reply-data: false
 
 output:
   # 日志等级 trace,debug,info,warn,error日志等级 trace,debug,info,warn,error
@@ -86,10 +79,10 @@ servers:
         <<: *default # 引用默认中间件
       # 反向HTTP POST地址列表
       post:
-      #- url: '' # 地址
-      #  secret: ''           # 密钥
-      #- url: 127.0.0.1:5701 # 地址
-      #  secret: ''          # 密钥
+        #- url: '' # 地址
+        #  secret: ''           # 密钥
+        #- url: 127.0.0.1:5701 # 地址
+        #  secret: ''          # 密钥
 
   # 正向WS设置
   - ws:
@@ -128,51 +121,3 @@ database: # 数据库相关设置
     # 启用将会增加10-20MB的内存占用和一定的磁盘空间
     # 关闭将无法使用 撤回 回复 get_msg 等上下文相关功能
     enable: true
-````
-
-> 注: 开启密码加密后程序将在每次启动时要求输入解密密钥, 密钥错误会导致登录时提示密码错误.
-> 解密后密码的哈希将储存在内存中，用于自动重连等功能. 所以此加密并不能防止内存读取.
-> 解密密钥在使用完成后并不会留存在内存中, 所以可用相对简单的字符串作为密钥
-
-> 注2: 分片发送为原酷Q发送长消息的老方案, 发送速度更优/兼容性更好，但在有发言频率限制的群里，可能无法发送。关闭后将优先使用新方案, 能发送更长的消息, 但发送速度更慢，在部分老客户端将无法解析.
-
-> 注3：关闭心跳服务可能引起断线，请谨慎关闭
-
-## 设备信息
-
-默认生成的设备信息如下所示:
-
-``` json
-{
-	"protocol": 0,
-	"display": "xxx",
-	"finger_print": "xxx",
-	"boot_id": "xxx",
-	"proc_version": "xxx",
-	"imei": "xxx"
-}
-```
-
-在大部分情况下 我们只需要关心 `protocol` 字段:
-
-| 值  | 类型          | 限制                                                             |
-| --- | ------------- | ---------------------------------------------------------------- |
-| 0   | iPad          | 无                                                               |
-| 1   | Android Phone | 无                                                               |
-| 2   | Android Watch | 无法接收 `notify` 事件、无法接收口令红包、无法接收撤回消息            |
-| 3   | MacOS         | 无                                                               |
-
-> 注意, 根据协议的不同, 各类消息有所限制
-
-## 自定义服务器IP
-
-> 某些海外服务器使用默认地址可能会存在链路问题，此功能可以指定 go-cqhttp 连接哪些地址以达到最优化.
-
-将文件 `address.txt` 创建到 `go-cqhttp` 工作目录, 并键入 `IP:PORT` 以换行符为分割即可.
-
-示例:
-
-````
-1.1.1.1:53
-1.1.2.2:8899
-````

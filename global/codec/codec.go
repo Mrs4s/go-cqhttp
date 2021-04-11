@@ -1,4 +1,4 @@
-// +build linux windows,!arm darwin,!arm64
+// +build linux windows,!arm darwin
 // +build 386 amd64 arm arm64
 
 // Package codec Slik编码核心模块
@@ -18,7 +18,7 @@ const (
 	silkCachePath = "data/cache"
 )
 
-//EncodeToSilk 将音频编码为Silk
+// EncodeToSilk 将音频编码为Silk
 func EncodeToSilk(record []byte, tempName string, useCache bool) (silkWav []byte, err error) {
 	// 1. 写入缓存文件
 	rawPath := path.Join(silkCachePath, tempName+".wav")

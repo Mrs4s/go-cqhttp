@@ -1,36 +1,41 @@
+name: release
+
 on:
-  release:
-    types: [created]
+  push:
+    tags:
+      - 'v*'
 
 jobs:
-  releases-matrix:
-    name: Release Go Binary
+  goreleaser:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        # build and publish in parallel: linux/386, linux/amd64, windows/386, windows/amd64, darwin/386, darwin/amd64, darwin/arm64
-        goos: [linux, windows, darwin]
-        goarch: ["386", amd64, arm, arm64]
-        exclude: 
-          - goos: darwin
-            goarch: arm
-          - goos: darwin
-            goarch: "386"
-          - goos: windows
-            goarch: arm64
-            
     steps:
-      - uses: actions/checkout@v2
-      - name: Set RELEASE_VERSION env
-        run: echo "RELEASE_VERSION=${GITHUB_REF:10}" >> $GITHUB_ENV
-      - uses: pcrbot/go-release-action@master
-        env:
-          CGO_ENABLED: 0
+      - name: Checkout
+        uses: actions/checkout@v2.3.4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          goos: ${{ matrix.goos }}
-          goarch: ${{ matrix.goarch }}
-          goversion: "https://golang.org/dl/go1.16.linux-amd64.tar.gz"
-          build_flags: -trimpath
-          ldflags: -w -s -X "github.com/Mrs4s/go-cqhttp/coolq.Version=${{ env.RELEASE_VERSION }}"
-          
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '1.16.2'
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v2
+        with:
+          version: latest
+          args: release --rm-dist
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      #- name: Checkout Dist
+      #  uses: actions/checkout@v2
+      #  with:
+      #    repository: 'gocq/dist'
+      #    ref: master
+      #    ssh-key: ${{ secrets.SSH_KEY }}
+      #    path: upstream/dist
+
+      #- name: Update Dist
+      #  run: |
+      #    chmod +x scripts/upload_dist.sh
+      #    ./scripts/upload_dist.sh

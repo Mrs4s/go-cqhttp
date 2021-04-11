@@ -54,7 +54,6 @@ func (hook *LocalHook) pathWrite(entry *logrus.Entry) error {
 	defer fd.Close()
 
 	log, err := hook.formatter.Format(entry)
-
 	if err != nil {
 		return err
 	}
@@ -142,24 +141,36 @@ func NewLocalHook(args interface{}, formatter logrus.Formatter, levels ...logrus
 func GetLogLevel(level string) []logrus.Level {
 	switch level {
 	case "trace":
-		return []logrus.Level{logrus.TraceLevel, logrus.DebugLevel,
+		return []logrus.Level{
+			logrus.TraceLevel, logrus.DebugLevel,
 			logrus.InfoLevel, logrus.WarnLevel, logrus.ErrorLevel,
-			logrus.FatalLevel, logrus.PanicLevel}
+			logrus.FatalLevel, logrus.PanicLevel,
+		}
 	case "debug":
-		return []logrus.Level{logrus.DebugLevel, logrus.InfoLevel,
+		return []logrus.Level{
+			logrus.DebugLevel, logrus.InfoLevel,
 			logrus.WarnLevel, logrus.ErrorLevel,
-			logrus.FatalLevel, logrus.PanicLevel}
+			logrus.FatalLevel, logrus.PanicLevel,
+		}
 	case "info":
-		return []logrus.Level{logrus.InfoLevel, logrus.WarnLevel,
-			logrus.ErrorLevel, logrus.FatalLevel, logrus.PanicLevel}
+		return []logrus.Level{
+			logrus.InfoLevel, logrus.WarnLevel,
+			logrus.ErrorLevel, logrus.FatalLevel, logrus.PanicLevel,
+		}
 	case "warn":
-		return []logrus.Level{logrus.WarnLevel, logrus.ErrorLevel,
-			logrus.FatalLevel, logrus.PanicLevel}
+		return []logrus.Level{
+			logrus.WarnLevel, logrus.ErrorLevel,
+			logrus.FatalLevel, logrus.PanicLevel,
+		}
 	case "error":
-		return []logrus.Level{logrus.ErrorLevel, logrus.FatalLevel,
-			logrus.PanicLevel}
+		return []logrus.Level{
+			logrus.ErrorLevel, logrus.FatalLevel,
+			logrus.PanicLevel,
+		}
 	default:
-		return []logrus.Level{logrus.InfoLevel, logrus.WarnLevel,
-			logrus.ErrorLevel, logrus.FatalLevel, logrus.PanicLevel}
+		return []logrus.Level{
+			logrus.InfoLevel, logrus.WarnLevel,
+			logrus.ErrorLevel, logrus.FatalLevel, logrus.PanicLevel,
+		}
 	}
 }
