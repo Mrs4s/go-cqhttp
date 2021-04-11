@@ -324,34 +324,43 @@ func main() {
 	cli.OnDisconnected(func(q *client.QQClient, e *client.ClientDisconnectedEvent) {
 		reLoginLock.Lock()
 		defer reLoginLock.Unlock()
+		times = 1
 		if cli.Online {
 			return
 		}
 		log.Warnf("Bot已离线: %v", e.Message)
-		if conf.Account.ReLogin.Disabled {
-			os.Exit(1)
-		}
-		if times > conf.Account.ReLogin.MaxTimes && conf.Account.ReLogin.MaxTimes != 0 {
-			log.Fatalf("Bot重连次数超过限制, 停止")
-		}
-		if conf.Account.ReLogin.Interval > 0 {
-			log.Warnf("将在 %v 秒后尝试重连. 重连次数：%v/%v", conf.Account.ReLogin.Interval, times, conf.Account.ReLogin.MaxTimes)
-			time.Sleep(time.Second * time.Duration(conf.Account.ReLogin.Interval))
-		} else {
+		for {
+			if conf.Account.ReLogin.Disabled {
+				os.Exit(1)
+			}
+			if times > conf.Account.ReLogin.MaxTimes && conf.Account.ReLogin.MaxTimes != 0 {
+				log.Fatalf("Bot重连次数超过限制, 停止")
+			}
+			times++
+			if conf.Account.ReLogin.Interval > 0 {
+				log.Warnf("将在 %v 秒后尝试重连. 重连次数：%v/%v", conf.Account.ReLogin.Interval, times, conf.Account.ReLogin.MaxTimes)
+				time.Sleep(time.Second * time.Duration(conf.Account.ReLogin.Interval))
+			} else {
+				time.Sleep(time.Second)
+			}
+			log.Warnf("尝试重连...")
+			if err := cli.TokenLogin(global.AccountToken); err == nil {
+				saveToken()
+				return
+			} else {
+				log.Warnf("快速重连失败: %v", err)
+			}
+			if isQRCodeLogin {
+				log.Fatalf("快速重连失败")
+			}
+			log.Warnf("快速重连失败, 尝试普通登录. 这可能是因为其他端强行T下线导致的.")
 			time.Sleep(time.Second)
-		}
-		log.Warnf("尝试重连...")
-		if err := cli.TokenLogin(global.AccountToken); err == nil {
-			saveToken()
-			return
-		}
-		if isQRCodeLogin {
-			log.Fatalf("快速重连失败")
-		}
-		log.Warnf("快速重连失败, 尝试普通登录. 这可能是因为其他端强行T下线导致的.")
-		time.Sleep(time.Second)
-		if err := commonLogin(); err != nil {
-			log.Fatalf("登录时发生致命错误: %v", err)
+			if err := commonLogin(); err != nil {
+				log.Errorf("登录时发生致命错误: %v", err)
+			} else {
+				saveToken()
+				break
+			}
 		}
 	})
 	saveToken()
