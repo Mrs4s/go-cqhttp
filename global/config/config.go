@@ -86,6 +86,7 @@ type HTTPServer struct {
 	MiddleWares `yaml:"middlewares"`
 }
 
+// PprofServer pprof性能分析服务器相关配置
 type PprofServer struct {
 	Disabled bool   `yaml:"disabled"`
 	Host     string `yaml:"host"`
