@@ -329,6 +329,7 @@ func main() {
 			return
 		}
 		log.Warnf("Bot已离线: %v", e.Message)
+		time.Sleep(time.Second * time.Duration(conf.Account.ReLogin.Delay))
 		for {
 			if conf.Account.ReLogin.Disabled {
 				os.Exit(1)
