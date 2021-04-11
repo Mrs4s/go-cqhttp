@@ -347,6 +347,9 @@ func main() {
 	cli.OnDisconnected(func(q *client.QQClient, e *client.ClientDisconnectedEvent) {
 		reLoginLock.Lock()
 		defer reLoginLock.Unlock()
+		if cli.Online {
+			return
+		}
 		log.Warnf("Bot已离线: %v", e.Message)
 		if conf.Account.ReLogin.Disabled {
 			os.Exit(1)
@@ -361,9 +364,6 @@ func main() {
 			time.Sleep(time.Second)
 		}
 		log.Warnf("尝试重连...")
-		if cli.Online {
-			return
-		}
 		if err := cli.TokenLogin(global.AccountToken); err == nil {
 			saveToken()
 			return
@@ -371,6 +371,8 @@ func main() {
 		if isQRCodeLogin {
 			log.Fatalf("快速重连失败")
 		}
+		log.Warnf("快速重连失败, 尝试普通登录. 这可能是因为其他端强行T下线导致的.")
+		time.Sleep(time.Second)
 		if err := commonLogin(); err != nil {
 			log.Fatalf("登录时发生致命错误: %v", err)
 		}
