@@ -316,7 +316,10 @@ func (bot *CQBot) SendPrivateMessage(target int64, groupID int64, m *message.Sen
 			log.Errorf("错误: 群员(%v) 不在 群(%v), 无法发起临时会话", target, groupID)
 		default:
 			if session == nil && groupID != 0 {
-				bot.Client.SendGroupTempMessage(groupID, target, m)
+				msg := bot.Client.SendGroupTempMessage(groupID, target, m)
+				if msg != nil {
+					id = bot.InsertTempMessage(target, msg)
+				}
 				break
 			}
 			msg, err := session.(*client.TempSessionInfo).SendMessage(m)
