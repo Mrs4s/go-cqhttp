@@ -345,14 +345,14 @@ func main() {
 				time.Sleep(time.Second)
 			}
 			log.Warnf("尝试重连...")
-			if err := cli.TokenLogin(global.AccountToken); err == nil {
+			err := cli.TokenLogin(global.AccountToken)
+			if err == nil {
 				saveToken()
 				return
-			} else {
-				log.Warnf("快速重连失败: %v", err)
 			}
+			log.Warnf("快速重连失败: %v", err)
 			if isQRCodeLogin {
-				log.Fatalf("快速重连失败")
+				log.Fatalf("快速重连失败, 扫码登录无法恢复会话.")
 			}
 			log.Warnf("快速重连失败, 尝试普通登录. 这可能是因为其他端强行T下线导致的.")
 			time.Sleep(time.Second)
