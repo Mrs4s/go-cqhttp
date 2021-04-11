@@ -322,8 +322,7 @@ func handleQuickOperation(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 	return bot.CQHandleQuickOperation(p.Get("context"), p.Get("operation"))
 }
 
-
-func setCacheClean(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func setCacheClean(bot *coolq.CQBot, _ resultGetter) coolq.MSG {
 	return bot.CQCleanCache()
 }
 

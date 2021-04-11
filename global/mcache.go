@@ -1,7 +1,7 @@
 package global
 
 import (
-	"fmt"
+	"errors"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"path"
@@ -10,6 +10,7 @@ import (
 
 // mcache.go 用于缓存文件的简单记录与操作
 
+// 清理缓存API执行状态
 const (
 	MCacheStatDefault = iota
 	MCacheStatRunning
@@ -29,6 +30,7 @@ type CacheFileStat struct {
 	Size  uint64 //缓存大小 KB
 }
 
+// NewCacheFileMap 新的缓存文件清理对象
 func NewCacheFileMap() *FileMapCache {
 	return &FileMapCache{
 		CacheMap: sync.Map{},
@@ -80,7 +82,7 @@ func (c *FileMapCache) Clean() error {
 
 	// 避免不必要协程开销
 	if c.Stat == MCacheStatRunning {
-		return fmt.Errorf("please do not try again, proces:clean_cache is running")
+		return errors.New("please do not try again, proces:clean_cache is running")
 	}
 
 	c.Stat = MCacheStatRunning
@@ -117,6 +119,7 @@ func (c *FileMapCache) Clean() error {
 	return nil
 }
 
+// Store 文件路径入map
 func (c *FileMapCache) Store(key string) {
 	c.Lock.Lock()
 	defer c.Lock.Unlock()
@@ -124,6 +127,7 @@ func (c *FileMapCache) Store(key string) {
 	c.CacheMap.Store(key, true)
 }
 
+// Delete 文件路径删除
 func (c *FileMapCache) Delete(key string) {
 	c.Lock.Lock()
 	defer c.Lock.Unlock()
