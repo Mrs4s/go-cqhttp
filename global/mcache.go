@@ -19,15 +19,15 @@ const (
 //
 // 防止删除正在上传的文件而导致操作失败
 type FileMapCache struct {
-	CacheMap sync.Map      //防止并发影响"写"数据
-	Lock     *sync.RWMutex //防止时序影响"读"数据
-	Stat     uint8         //接口状态 防止多次重入
+	CacheMap sync.Map      // 防止并发影响"写"数据
+	Lock     *sync.RWMutex // 防止时序影响"读"数据
+	Stat     uint8         // 接口状态 防止多次重入
 }
 
 // CacheFileStat 缓存统计
 type CacheFileStat struct {
-	Count uint32 //缓存文件数量
-	Size  uint64 //缓存大小 KB
+	Count uint32 // 缓存文件数量
+	Size  uint64 // 缓存大小 KB
 }
 
 // NewCacheFileMap 新的缓存文件清理对象
