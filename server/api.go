@@ -322,6 +322,10 @@ func handleQuickOperation(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 	return bot.CQHandleQuickOperation(p.Get("context"), p.Get("operation"))
 }
 
+func setCacheClean(bot *coolq.CQBot, _ resultGetter) coolq.MSG {
+	return bot.CQCleanCache()
+}
+
 // API 是go-cqhttp当前支持的所有api的映射表
 var API = map[string]func(*coolq.CQBot, resultGetter) coolq.MSG{
 	"get_login_info":             getLoginInfo,
@@ -378,6 +382,7 @@ var API = map[string]func(*coolq.CQBot, resultGetter) coolq.MSG{
 	"check_url_safely":           checkURLSafely,
 	"set_group_anonymous_ban":    setGroupAnonymousBan,
 	".handle_quick_operation":    handleQuickOperation,
+	"clean_cache":                setCacheClean,
 }
 
 func (api *apiCaller) callAPI(action string, p resultGetter) coolq.MSG {

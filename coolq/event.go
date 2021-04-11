@@ -530,11 +530,14 @@ func (bot *CQBot) groupDecrease(groupCode, userUin int64, operator *client.Group
 
 func (bot *CQBot) checkMedia(e []message.IMessageElement) {
 	for _, elem := range e {
+		var fullFileName string
 		switch i := elem.(type) {
 		case *message.ImageElement:
 			filename := hex.EncodeToString(i.Md5) + ".image"
 			if !global.PathExists(path.Join(global.ImagePath, filename)) {
-				_ = ioutil.WriteFile(path.Join(global.ImagePath, filename), binary.NewWriterF(func(w *binary.Writer) {
+				fullFileName = path.Join(global.ImagePath, filename)
+				fileMapCache.Store(fullFileName)
+				_ = ioutil.WriteFile(fullFileName, binary.NewWriterF(func(w *binary.Writer) {
 					w.Write(i.Md5)
 					w.WriteUInt32(uint32(i.Size))
 					w.WriteString(i.Filename)
@@ -545,7 +548,9 @@ func (bot *CQBot) checkMedia(e []message.IMessageElement) {
 		case *message.GroupImageElement:
 			filename := hex.EncodeToString(i.Md5) + ".image"
 			if !global.PathExists(path.Join(global.ImagePath, filename)) {
-				_ = ioutil.WriteFile(path.Join(global.ImagePath, filename), binary.NewWriterF(func(w *binary.Writer) {
+				fullFileName = path.Join(global.ImagePath, filename)
+				fileMapCache.Store(fullFileName)
+				_ = ioutil.WriteFile(fullFileName, binary.NewWriterF(func(w *binary.Writer) {
 					w.Write(i.Md5)
 					w.WriteUInt32(uint32(i.Size))
 					w.WriteString(filename)
@@ -555,7 +560,9 @@ func (bot *CQBot) checkMedia(e []message.IMessageElement) {
 		case *message.FriendImageElement:
 			filename := hex.EncodeToString(i.Md5) + ".image"
 			if !global.PathExists(path.Join(global.ImagePath, filename)) {
-				_ = ioutil.WriteFile(path.Join(global.ImagePath, filename), binary.NewWriterF(func(w *binary.Writer) {
+				fullFileName = path.Join(global.ImagePath, filename)
+				fileMapCache.Store(fullFileName)
+				_ = ioutil.WriteFile(fullFileName, binary.NewWriterF(func(w *binary.Writer) {
 					w.Write(i.Md5)
 					w.WriteUInt32(uint32(0)) // 发送时会调用url, 大概没事
 					w.WriteString(filename)
@@ -565,7 +572,9 @@ func (bot *CQBot) checkMedia(e []message.IMessageElement) {
 		case *message.GroupFlashImgElement:
 			filename := hex.EncodeToString(i.Md5) + ".image"
 			if !global.PathExists(path.Join(global.ImagePath, filename)) {
-				_ = ioutil.WriteFile(path.Join(global.ImagePath, filename), binary.NewWriterF(func(w *binary.Writer) {
+				fullFileName = path.Join(global.ImagePath, filename)
+				fileMapCache.Store(fullFileName)
+				_ = ioutil.WriteFile(fullFileName, binary.NewWriterF(func(w *binary.Writer) {
 					w.Write(i.Md5)
 					w.WriteUInt32(uint32(i.Size))
 					w.WriteString(i.Filename)
@@ -576,7 +585,9 @@ func (bot *CQBot) checkMedia(e []message.IMessageElement) {
 		case *message.FriendFlashImgElement:
 			filename := hex.EncodeToString(i.Md5) + ".image"
 			if !global.PathExists(path.Join(global.ImagePath, filename)) {
-				_ = ioutil.WriteFile(path.Join(global.ImagePath, filename), binary.NewWriterF(func(w *binary.Writer) {
+				fullFileName = path.Join(global.ImagePath, filename)
+				fileMapCache.Store(fullFileName)
+				_ = ioutil.WriteFile(fullFileName, binary.NewWriterF(func(w *binary.Writer) {
 					w.Write(i.Md5)
 					w.WriteUInt32(uint32(i.Size))
 					w.WriteString(i.Filename)
@@ -593,12 +604,16 @@ func (bot *CQBot) checkMedia(e []message.IMessageElement) {
 					log.Warnf("语音文件 %v 下载失败: %v", i.Name, err)
 					continue
 				}
-				_ = ioutil.WriteFile(path.Join(global.VoicePath, i.Name), b, 0644)
+				fullFileName = path.Join(global.VoicePath, i.Name)
+				fileMapCache.Store(fullFileName)
+				_ = ioutil.WriteFile(fullFileName, b, 0644)
 			}
 		case *message.ShortVideoElement:
 			filename := hex.EncodeToString(i.Md5) + ".video"
 			if !global.PathExists(path.Join(global.VideoPath, filename)) {
-				_ = ioutil.WriteFile(path.Join(global.VideoPath, filename), binary.NewWriterF(func(w *binary.Writer) {
+				fullFileName = path.Join(global.VideoPath, filename)
+				fileMapCache.Store(fullFileName)
+				_ = ioutil.WriteFile(fullFileName, binary.NewWriterF(func(w *binary.Writer) {
 					w.Write(i.Md5)
 					w.Write(i.ThumbMd5)
 					w.WriteUInt32(uint32(i.Size))
@@ -609,6 +624,10 @@ func (bot *CQBot) checkMedia(e []message.IMessageElement) {
 			}
 			i.Name = filename
 			i.Url = bot.Client.GetShortVideoUrl(i.Uuid, i.Md5)
+		}
+
+		if fullFileName != "" {
+			fileMapCache.Delete(fullFileName)
 		}
 	}
 }

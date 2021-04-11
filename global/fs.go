@@ -126,14 +126,12 @@ func FindFile(file, cache, p string) (data []byte, err error) {
 
 // DelFile 删除一个给定path，并返回删除结果
 func DelFile(path string) bool {
-	err := os.Remove(path)
-	if err != nil {
-		// 删除失败
-		log.Error(err)
+	if err := os.Remove(path); err != nil {
+		log.Errorf("remove file err: %v, path: %v", err, path)
 		return false
 	}
-	// 删除成功
-	log.Info(path + "删除成功")
+
+	log.Infof("%s removed!", path)
 	return true
 }
 

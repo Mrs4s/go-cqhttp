@@ -28,6 +28,7 @@ func (hook *LocalHook) Levels() []logrus.Level {
 	return hook.levels
 }
 
+// ioWrite 日志写入io定向
 func (hook *LocalHook) ioWrite(entry *logrus.Entry) error {
 	log, err := hook.formatter.Format(entry)
 	if err != nil {
@@ -41,6 +42,7 @@ func (hook *LocalHook) ioWrite(entry *logrus.Entry) error {
 	return nil
 }
 
+// pathWrite 日志写入path定向
 func (hook *LocalHook) pathWrite(entry *logrus.Entry) error {
 	dir := filepath.Dir(hook.path)
 	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
@@ -137,7 +139,7 @@ func NewLocalHook(args interface{}, formatter logrus.Formatter, levels ...logrus
 //
 // 可能的值有
 //
-// "trace","debug","info","warn","warn","error"
+// "trace","debug","info","warn","error"
 func GetLogLevel(level string) []logrus.Level {
 	switch level {
 	case "trace":

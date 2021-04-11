@@ -29,6 +29,10 @@ import (
 // Version go-cqhttp的版本信息，在编译时使用ldflags进行覆盖
 var Version = "unknown"
 
+// fileMapCache 正在写的缓存文件 将其path入内存 防止同时
+// 执行缓存操作和清除缓存操作接口时文件被删除
+var fileMapCache = global.NewCacheFileMap()
+
 func init() {
 	if Version != "unknown" {
 		return
@@ -1153,6 +1157,9 @@ func (bot *CQBot) CQOcrImage(imageID string) MSG {
 // https://docs.go-cqhttp.org/api/#%E8%AE%BE%E7%BD%AE%E7%BE%A4%E5%A4%B4%E5%83%8F
 func (bot *CQBot) CQSetGroupPortrait(groupID int64, file, cache string) MSG {
 	if g := bot.Client.FindGroup(groupID); g != nil {
+		// 防止清除缓存接口和该接口同时运行时 将该缓存清除
+		fileMapCache.Store(file)
+		defer fileMapCache.Delete(file)
 		img, err := global.FindFile(file, cache, global.ImagePath)
 		if err != nil {
 			log.Warnf("set group portrait error: %v", err)
@@ -1191,7 +1198,7 @@ func (bot *CQBot) CQSetGroupAnonymousBan(groupID int64, flag string, duration in
 //
 // https://git.io/JtzMe
 func (bot *CQBot) CQGetStatus() MSG {
-	return OK(MSG{
+	rsp := MSG{
 		"app_initialized": true,
 		"app_enabled":     true,
 		"plugins_good":    nil,
@@ -1199,7 +1206,16 @@ func (bot *CQBot) CQGetStatus() MSG {
 		"online":          bot.Client.Online,
 		"good":            bot.Client.Online,
 		"stat":            bot.Client.GetStatistics(),
-	})
+	}
+
+	// 当需要实时获取data目录的信息
+	// stat, _ := fileMapCache.CacheStat()
+	// if stat != nil {
+	//	 rsp["cache_size"] = stat.Size
+	//	 rsp["cache_count"] = stat.Count
+	// }
+
+	return OK(rsp)
 }
 
 // CQSetEssenceMessage 扩展API-设置精华消息
@@ -1313,6 +1329,18 @@ func (bot *CQBot) CQGetVersionInfo() MSG {
 			}
 		}(),
 	})
+}
+
+// CQCleanCache 清理缓存
+//
+// https://github.com/howmanybots/onebot/blob/master/v11/specs/api/public.md#clean_cache-%E6%B8%85%E7%90%86%E7%BC%93%E5%AD%98
+func (bot *CQBot) CQCleanCache() MSG {
+	err := fileMapCache.Clean()
+	if err != nil {
+		return Failed(100, err.Error())
+	}
+
+	return OK(nil)
 }
 
 // OK 生成成功返回值
