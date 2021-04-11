@@ -86,6 +86,12 @@ type HTTPServer struct {
 	MiddleWares `yaml:"middlewares"`
 }
 
+type PprofServer struct {
+	Disabled bool   `yaml:"disabled"`
+	Host     string `yaml:"host"`
+	Port     int    `yaml:"port"`
+}
+
 // WebsocketServer 正向WS相关配置
 type WebsocketServer struct {
 	Disabled bool   `yaml:"disabled"`

@@ -416,6 +416,14 @@ func main() {
 				go server.RunWebSocketClient(bot, rc)
 			}
 		}
+		if p, ok := m["pprof"]; ok {
+			pc := new(config.PprofServer)
+			if err := p.Decode(pc); err != nil {
+				log.Warn("读取http配置失败 :", err)
+			} else {
+				go server.RunPprofServer(pc)
+			}
+		}
 	}
 	log.Info("资源初始化完成, 开始处理信息.")
 	log.Info("アトリは、高性能ですから!")
