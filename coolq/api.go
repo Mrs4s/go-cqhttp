@@ -1209,11 +1209,11 @@ func (bot *CQBot) CQGetStatus() MSG {
 	}
 
 	// 当需要实时获取data目录的信息
-	//stat, _ := fileMapCache.CacheStat()
-	//if stat != nil {
-	//	rsp["cache_size"] = stat.Size
-	//	rsp["cache_count"] = stat.Count
-	//}
+	// stat, _ := fileMapCache.CacheStat()
+	// if stat != nil {
+	//	 rsp["cache_size"] = stat.Size
+	//	 rsp["cache_count"] = stat.Count
+	// }
 
 	return OK(rsp)
 }
