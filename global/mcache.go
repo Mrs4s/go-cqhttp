@@ -1,4 +1,3 @@
-// mcache.go 用于缓存文件的简单记录与操作
 package global
 
 import (
@@ -9,9 +8,10 @@ import (
 	"sync"
 )
 
-// 清理缓存API执行状态
 const (
+	// MCacheStatDefault API默认状态(未执行)
 	MCacheStatDefault = iota
+	// MCacheStatRunning API正在执行中
 	MCacheStatRunning
 )
 
