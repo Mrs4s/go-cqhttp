@@ -6,6 +6,10 @@ import (
 	"os"
 	"time"
 
+	"github.com/Mrs4s/go-cqhttp/global/config"
+	"github.com/gin-contrib/pprof"
+	"github.com/gin-gonic/gin"
+	log "github.com/sirupsen/logrus"
 )
 
 // RunPprofServer 启动 pprof 性能分析服务器
