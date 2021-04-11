@@ -264,15 +264,29 @@ func (c *WebSocketClient) onBotPushEvent(m *bytes.Buffer) {
 	}
 }
 
-func (s *webSocketServer) event(w http.ResponseWriter, r *http.Request) {
-	if s.conf.AccessToken != "" {
-		if auth := r.URL.Query().Get("access_token"); auth != s.token {
-			if auth := strings.SplitN(r.Header.Get("Authorization"), " ", 2); len(auth) != 2 || auth[1] != s.token {
-				log.Warnf("已拒绝 %v 的 WebSocket 请求: Token鉴权失败", r.RemoteAddr)
-				w.WriteHeader(401)
-				return
+func (s *webSocketServer) auth(r *http.Request) (bool, int) {
+	if s.token != "" { // s.token == s.conf.AccessToken
+		var auth string
+		if auth = r.URL.Query().Get("access_token"); auth == "" {
+			headAuth := strings.SplitN(r.Header.Get("Authorization"), " ", 2)
+			if len(headAuth) != 2 || headAuth[1] == "" {
+				return false, 401
 			}
+			auth = headAuth[1]
 		}
+		if auth != s.token {
+			log.Warnf("已拒绝 %v 的 WebSocket 请求: Token鉴权失败", r.RemoteAddr)
+			return false, 403
+		}
+	}
+	return true, 0
+}
+
+func (s *webSocketServer) event(w http.ResponseWriter, r *http.Request) {
+	isAuth, errReason := s.auth(r)
+	if !isAuth {
+		w.WriteHeader(errReason)
+		return
 	}
 	c, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -296,14 +310,10 @@ func (s *webSocketServer) event(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *webSocketServer) api(w http.ResponseWriter, r *http.Request) {
-	if s.token != "" {
-		if auth := r.URL.Query().Get("access_token"); auth != s.token {
-			if auth := strings.SplitN(r.Header.Get("Authorization"), " ", 2); len(auth) != 2 || auth[1] != s.token {
-				log.Warnf("已拒绝 %v 的 WebSocket 请求: Token鉴权失败", r.RemoteAddr)
-				w.WriteHeader(401)
-				return
-			}
-		}
+	isAuth, errReason := s.auth(r)
+	if !isAuth {
+		w.WriteHeader(errReason)
+		return
 	}
 	c, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -319,14 +329,10 @@ func (s *webSocketServer) api(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *webSocketServer) any(w http.ResponseWriter, r *http.Request) {
-	if s.token != "" {
-		if auth := r.URL.Query().Get("access_token"); auth != s.token {
-			if auth := strings.SplitN(r.Header.Get("Authorization"), " ", 2); len(auth) != 2 || auth[1] != s.token {
-				log.Warnf("已拒绝 %v 的 WebSocket 请求: Token鉴权失败", r.RemoteAddr)
-				w.WriteHeader(401)
-				return
-			}
-		}
+	isAuth, errReason := s.auth(r)
+	if !isAuth {
+		w.WriteHeader(errReason)
+		return
 	}
 	c, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
