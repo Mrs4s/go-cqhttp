@@ -159,11 +159,6 @@ func main() {
 		log.SetLevel(log.DebugLevel)
 		log.Warnf("已开启Debug模式.")
 		log.Debugf("开发交流群: 192548878")
-		/*
-			if conf.WebUI == nil || !conf.WebUI.Enabled {
-				log.Warnf("警告: 在Debug模式下未启用WebUi服务, 将无法进行性能分析.")
-			}
-		*/
 	}
 	log.Info("用户交流群: 721829413")
 	if !global.PathExists("device.json") {
@@ -279,25 +274,7 @@ func main() {
 		log.Infof("收到服务器地址更新通知, 将在下一次重连时应用. ")
 		return true
 	})
-	/*
-		if conf.WebUI == nil {
-			conf.WebUI = &global.GoCQWebUI{
-				Enabled:   true,
-				WebInput:  false,
-				Host:      "0.0.0.0",
-				WebUIPort: 9999,
-			}
-		}
-		if conf.WebUI.WebUIPort <= 0 {
-			conf.WebUI.WebUIPort = 9999
-		}
-		if conf.WebUI.Host == "" {
-			conf.WebUI.Host = "127.0.0.1"
-		}
-	*/
 	global.Proxy = conf.Message.ProxyRewrite
-	// b := server.WebServer.Run(fmt.Sprintf("%s:%d", conf.WebUI.Host, conf.WebUI.WebUIPort), cli)
-	// c := server.Console
 	isQRCodeLogin := (conf.Account.Uin == 0 || len(conf.Account.Password) == 0) && !conf.Account.Encrypt
 	isTokenLogin := false
 	saveToken := func() {
