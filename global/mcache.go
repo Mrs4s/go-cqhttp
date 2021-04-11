@@ -1,3 +1,4 @@
+// mcache.go 用于缓存文件的简单记录与操作
 package global
 
 import (
@@ -8,8 +9,6 @@ import (
 	"sync"
 )
 
-// mcache.go 用于缓存文件的简单记录与操作
-
 // 清理缓存API执行状态
 const (
 	MCacheStatDefault = iota
@@ -17,6 +16,7 @@ const (
 )
 
 // FileMapCache 记录当前正在写入的文件名称 让其存在于磁盘中而不执行删除
+//
 // 防止删除正在上传的文件而导致操作失败
 type FileMapCache struct {
 	CacheMap sync.Map      //防止并发影响"写"数据
