@@ -319,15 +319,15 @@ func main() {
 			}
 		}
 	}
-	var times uint = 1 // 重试次数
+	var times uint // 重试次数
 	var reLoginLock sync.Mutex
 	cli.OnDisconnected(func(q *client.QQClient, e *client.ClientDisconnectedEvent) {
 		reLoginLock.Lock()
 		defer reLoginLock.Unlock()
-		times = 1
 		if cli.Online {
 			return
 		}
+		times = 0
 		log.Warnf("Bot已离线: %v", e.Message)
 		time.Sleep(time.Second * time.Duration(conf.Account.ReLogin.Delay))
 		for {
