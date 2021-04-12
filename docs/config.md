@@ -17,7 +17,7 @@ account: # 账号相关
   encrypt: false  # 是否开启密码加密
   status: 0      # 在线状态,详情请查看下方的在线状态表
   relogin: # 重连设置
-    disabled: false
+    # disabled: false
     delay: 3      # 重连延迟, 单位秒
     interval: 0   # 重连间隔
     max-times: 0  # 最大重连次数, 0为无限制
@@ -27,7 +27,7 @@ account: # 账号相关
   use-sso-address: true
 
 heartbeat:
-  disabled: false # 是否开启心跳事件上报
+  # disabled: false # 是否开启心跳事件上报
   # 心跳频率, 单位秒
   # -1 为关闭心跳
   interval: 5
@@ -74,8 +74,6 @@ default-middlewares: &default
 servers:
   # HTTP 通信设置
   - http:
-      # 是否关闭正向HTTP服务器
-      disabled: false
       # 服务端监听地址
       host: 127.0.0.1
       # 服务端监听端口
@@ -94,8 +92,6 @@ servers:
 
   # 正向WS设置
   - ws:
-      # 是否禁用正向WS服务器
-      disabled: true
       # 正向WS服务器监听地址
       host: 127.0.0.1
       # 正向WS服务器监听端口
@@ -104,8 +100,6 @@ servers:
         <<: *default # 引用默认中间件
 
   - ws-reverse:
-      # 是否禁用当前反向WS服务
-      disabled: true
       # 反向WS Universal 地址
       # 注意 设置了此项地址后下面两项将会被忽略
       universal: ws://your_websocket_universal.server
@@ -117,6 +111,14 @@ servers:
       reconnect-interval: 3000
       middlewares:
         <<: *default # 引用默认中间件
+  # pprof 性能分析服务器, 一般情况下不需要启用.
+  # 如果遇到性能问题请上传报告给开发者处理
+  # 注意: pprof服务不支持中间件、不支持鉴权. 请不要开放到公网
+  - pprof:
+      # pprof服务器监听地址
+      host: 127.0.0.1
+      # pprof服务器监听端口
+      port: 7700
 
   # 可添加更多
   #- ws-reverse:
@@ -131,13 +133,15 @@ database: # 数据库相关设置
     enable: true
 ````
 
-> 注: 开启密码加密后程序将在每次启动时要求输入解密密钥, 密钥错误会导致登录时提示密码错误.
+> 注1: 开启密码加密后程序将在每次启动时要求输入解密密钥, 密钥错误会导致登录时提示密码错误.
 > 解密后密码的哈希将储存在内存中，用于自动重连等功能. 所以此加密并不能防止内存读取.
 > 解密密钥在使用完成后并不会留存在内存中, 所以可用相对简单的字符串作为密钥
 
-> 注2: 分片发送为原酷Q发送长消息的老方案, 发送速度更优/兼容性更好，但在有发言频率限制的群里，可能无法发送。关闭后将优先使用新方案, 能发送更长的消息, 但发送速度更慢，在部分老客户端将无法解析.
+> 注2: 对于不需要的通信方式，你可以使用注释将其停用(推荐)，或者添加配置 `disabled: true` 将其关闭
 
-> 注3：关闭心跳服务可能引起断线，请谨慎关闭
+> 注3: 分片发送为原酷Q发送长消息的老方案, 发送速度更优/兼容性更好，但在有发言频率限制的群里，可能无法发送。关闭后将优先使用新方案, 能发送更长的消息, 但发送速度更慢，在部分老客户端将无法解析.
+
+> 注4：关闭心跳服务可能引起断线，请谨慎关闭
 
 ## 在线状态
 

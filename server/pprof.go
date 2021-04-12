@@ -19,6 +19,7 @@ func RunPprofServer(conf *config.PprofServer) {
 		return
 	}
 	engine := gin.New()
+	gin.SetMode(gin.ReleaseMode)
 	addr := fmt.Sprintf("%s:%d", conf.Host, conf.Port)
 	pprof.Register(engine)
 	go func() {

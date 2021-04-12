@@ -215,7 +215,8 @@ const wsDefault = `  # 正向WS设置
         <<: *default # 引用默认中间件
 `
 
-const wsReverseDefault = `  - ws-reverse:
+const wsReverseDefault = `  # 反向WS设置
+  - ws-reverse:
       # 反向WS Universal 地址
       # 注意 设置了此项地址后下面两项将会被忽略
       universal: ws://your_websocket_universal.server
@@ -233,8 +234,6 @@ const pprofDefault = `  # pprof 性能分析服务器, 一般情况下不需要�
   # 如果遇到性能问题请上传报告给开发者处理
   # 注意: pprof服务不支持中间件、不支持鉴权. 请不要开放到公网
   - pprof:
-      # 是否禁用pprof性能分析服务器
-      disabled: true
       # pprof服务器监听地址
       host: 127.0.0.1
       # pprof服务器监听端口
