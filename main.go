@@ -324,7 +324,7 @@ func main() {
 	cli.OnDisconnected(func(q *client.QQClient, e *client.ClientDisconnectedEvent) {
 		reLoginLock.Lock()
 		defer reLoginLock.Unlock()
-		times = 1
+		times = 0
 		if cli.Online {
 			return
 		}
