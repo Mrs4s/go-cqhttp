@@ -2,18 +2,21 @@
 package config
 
 import (
+	"bufio"
 	_ "embed" // embed the default config file
+	"fmt"
 	"os"
 	"path"
+	"strings"
 	"sync"
 
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 )
 
-// DefaultConfig 默认配置文件
+// defaultConfig 默认配置文件
 //go:embed default_config.yml
-var DefaultConfig string
+var defaultConfig string
 
 var currentPath = getCurrentPath()
 
@@ -29,7 +32,7 @@ type Config struct {
 		Status   int32  `yaml:"status"`
 		ReLogin  struct {
 			Disabled bool `yaml:"disabled"`
-			Delay    int  `yaml:"delay"`
+			Delay    uint `yaml:"delay"`
 			MaxTimes uint `yaml:"max-times"`
 			Interval int  `yaml:"interval"`
 		}
@@ -128,8 +131,8 @@ func Get() *Config {
 	once.Do(func() {
 		file, err := os.Open(DefaultConfigFile)
 		if err != nil {
-			log.Error("获取配置文件失败: ", err)
-			return
+			generateConfig()
+			os.Exit(0)
 		}
 		defer file.Close()
 		config = &Config{}
@@ -148,3 +151,92 @@ func getCurrentPath() string {
 	}
 	return cwd
 }
+
+// generateConfig 生成配置文件
+func generateConfig() {
+	fmt.Println("未找到配置文件，正在为您生成配置文件中！")
+	sb := strings.Builder{}
+	sb.WriteString(defaultConfig)
+	fmt.Print(`请选择你需要的通信方式:
+> 1: HTTP通信
+> 2: 正向 Websocket 通信
+> 3: 反向 Websocket 通信
+> 4: pprof 性能分析服务器
+请输入你需要的编号，可输入多个，同一编号也可输入多个(如: 233)
+您的选择是:`)
+	input := bufio.NewReader(os.Stdin)
+	readString, err := input.ReadString('\n')
+	if err != nil {
+		log.Fatal("输入不合法: ", err)
+	}
+	for _, r := range readString {
+		switch r {
+		case '1':
+			sb.WriteString(httpDefault)
+		case '2':
+			sb.WriteString(wsDefault)
+		case '3':
+			sb.WriteString(wsReverseDefault)
+		case '4':
+			sb.WriteString(pprofDefault)
+		}
+	}
+	_ = os.WriteFile("config.yml", []byte(sb.String()), 0644)
+	fmt.Println("默认配置文件已生成，请修改 config.yml 后重新启动!")
+	_, _ = input.ReadString('\n')
+}
+
+const httpDefault = `  # HTTP 通信设置
+  - http:
+      # 服务端监听地址
+      host: 127.0.0.1
+      # 服务端监听端口
+      port: 5700
+      # 反向HTTP超时时间, 单位秒
+      # 最小值为5，小于5将会忽略本项设置
+      timeout: 5
+      middlewares:
+        <<: *default # 引用默认中间件
+      # 反向HTTP POST地址列表
+      post:
+      #- url: '' # 地址
+      #  secret: ''           # 密钥
+      #- url: 127.0.0.1:5701 # 地址
+      #  secret: ''          # 密钥
+`
+
+const wsDefault = `  # 正向WS设置
+  - ws:
+      # 正向WS服务器监听地址
+      host: 127.0.0.1
+      # 正向WS服务器监听端口
+      port: 6700
+      middlewares:
+        <<: *default # 引用默认中间件
+`
+
+const wsReverseDefault = `  - ws-reverse:
+      # 反向WS Universal 地址
+      # 注意 设置了此项地址后下面两项将会被忽略
+      universal: ws://your_websocket_universal.server
+      # 反向WS API 地址
+      api: ws://your_websocket_api.server
+      # 反向WS Event 地址
+      event: ws://your_websocket_event.server
+      # 重连间隔 单位毫秒
+      reconnect-interval: 3000
+      middlewares:
+        <<: *default # 引用默认中间件
+`
+
+const pprofDefault = `  # pprof 性能分析服务器, 一般情况下不需要启用.
+  # 如果遇到性能问题请上传报告给开发者处理
+  # 注意: pprof服务不支持中间件、不支持鉴权. 请不要开放到公网
+  - pprof:
+      # 是否禁用pprof性能分析服务器
+      disabled: true
+      # pprof服务器监听地址
+      host: 127.0.0.1
+      # pprof服务器监听端口
+      port: 7700
+`

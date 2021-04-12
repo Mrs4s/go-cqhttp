@@ -33,14 +33,14 @@ linters:
     #- goconst
     - gocritic
     #- gocyclo
-    - gofumpt
+    - gofmt
     - goimports
     - goprintffuncname
     #- gosec
     - gosimple
     - govet
     - ineffassign
-    - misspell
+    #- misspell
     - nolintlint
     - rowserrcheck
     - staticcheck

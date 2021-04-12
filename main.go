@@ -17,8 +17,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Mrs4s/MiraiGo/binary"
-
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/global/config"
@@ -26,6 +24,7 @@ import (
 	"github.com/Mrs4s/go-cqhttp/global/update"
 	"github.com/Mrs4s/go-cqhttp/server"
 
+	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/guonaihong/gout"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
@@ -67,6 +66,7 @@ func init() {
 		TimestampFormat: "2006-01-02 15:04:05",
 		LogFormat:       "[%time%] [%lvl%]: %msg% \n",
 	}
+
 	w, err := rotatelogs.New(path.Join("logs", "%Y-%m-%d.log"), rotatelogs.WithRotationTime(time.Hour*24))
 	if err != nil {
 		log.Errorf("rotatelogs init err: %v", err)
@@ -74,13 +74,6 @@ func init() {
 	}
 
 	conf = config.Get()
-	if conf == nil {
-		_ = os.WriteFile("config.yml", []byte(config.DefaultConfig), 0644)
-		log.Error("未找到配置文件，默认配置文件已生成!")
-		readLine()
-		os.Exit(0)
-	}
-
 	if debug {
 		conf.Output.Debug = true
 	}
@@ -88,7 +81,6 @@ func init() {
 	if conf.Output.Debug {
 		log.SetReportCaller(true)
 	}
-
 	log.AddHook(global.NewLocalHook(w, logFormatter, global.GetLogLevel(conf.Output.LogLevel)...))
 
 	if !global.PathExists(global.ImagePath) {
@@ -411,7 +403,7 @@ func main() {
 		if c, ok := m["ws-reverse"]; ok {
 			rc := new(config.WebsocketReverse)
 			if err := c.Decode(rc); err != nil {
-				log.Warn("读取http配置失败 :", err)
+				log.Warn("读取正向Websocket配置失败 :", err)
 			} else {
 				go server.RunWebSocketClient(bot, rc)
 			}
@@ -419,7 +411,7 @@ func main() {
 		if p, ok := m["pprof"]; ok {
 			pc := new(config.PprofServer)
 			if err := p.Decode(pc); err != nil {
-				log.Warn("读取http配置失败 :", err)
+				log.Warn("读取反向Websocket配置失败 :", err)
 			} else {
 				go server.RunPprofServer(pc)
 			}
