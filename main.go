@@ -42,6 +42,12 @@ var (
 	d           bool
 	h           bool
 
+	// PasswordHash 存储QQ密码哈希供登录使用
+	PasswordHash [16]byte
+
+	// AccountToken 存储AccountToken供登录使用
+	AccountToken []byte
+
 	// 允许通过配置文件设置的状态列表
 	allowStatus = [...]client.UserOnlineStatus{
 		client.StatusOnline, client.StatusAway, client.StatusInvisible, client.StatusBusy,
@@ -174,8 +180,8 @@ func main() {
 			}
 			log.Infof("密码加密已启用, 请输入Key对密码进行加密: (Enter 提交)")
 			byteKey, _ = term.ReadPassword(int(os.Stdin.Fd()))
-			global.PasswordHash = md5.Sum([]byte(conf.Account.Password))
-			_ = os.WriteFile("password.encrypt", []byte(PasswordHashEncrypt(global.PasswordHash[:], byteKey)), 0644)
+			PasswordHash = md5.Sum([]byte(conf.Account.Password))
+			_ = os.WriteFile("password.encrypt", []byte(PasswordHashEncrypt(PasswordHash[:], byteKey)), 0644)
 			log.Info("密码已加密，为了您的账号安全，请删除配置文件中的密码后重新启动.")
 			readLine()
 			os.Exit(0)
@@ -212,10 +218,10 @@ func main() {
 			if err != nil {
 				log.Fatalf("加密存储的密码损坏，请尝试重新配置密码")
 			}
-			copy(global.PasswordHash[:], ph)
+			copy(PasswordHash[:], ph)
 		}
 	} else {
-		global.PasswordHash = md5.Sum([]byte(conf.Account.Password))
+		PasswordHash = md5.Sum([]byte(conf.Account.Password))
 	}
 	if !isFastStart {
 		log.Info("Bot将在5秒后登录并开始信息处理, 按 Ctrl+C 取消.")
@@ -236,9 +242,9 @@ func main() {
 		return "未知"
 	}())
 	cli = client.NewClientEmpty()
-	if conf.Account.Uin != 0 && global.PasswordHash != [16]byte{} {
+	if conf.Account.Uin != 0 && PasswordHash != [16]byte{} {
 		cli.Uin = conf.Account.Uin
-		cli.PasswordMd5 = global.PasswordHash
+		cli.PasswordMd5 = PasswordHash
 	}
 	cli.OnLog(func(c *client.QQClient, e *client.LogEvent) {
 		switch e.Type {
@@ -270,8 +276,8 @@ func main() {
 	isQRCodeLogin := (conf.Account.Uin == 0 || len(conf.Account.Password) == 0) && !conf.Account.Encrypt
 	isTokenLogin := false
 	saveToken := func() {
-		global.AccountToken = cli.GenToken()
-		_ = ioutil.WriteFile("session.token", global.AccountToken, 0677)
+		AccountToken = cli.GenToken()
+		_ = ioutil.WriteFile("session.token", AccountToken, 0677)
 	}
 	if global.PathExists("session.token") {
 		token, err := ioutil.ReadFile("session.token")
@@ -337,7 +343,7 @@ func main() {
 				time.Sleep(time.Second)
 			}
 			log.Warnf("尝试重连...")
-			err := cli.TokenLogin(global.AccountToken)
+			err := cli.TokenLogin(AccountToken)
 			if err == nil {
 				saveToken()
 				return

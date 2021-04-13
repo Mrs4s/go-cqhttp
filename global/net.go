@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
@@ -49,22 +48,14 @@ var (
 
 // GetBytes 对给定URL发送Get请求，返回响应主体
 func GetBytes(url string) ([]byte, error) {
-	req, err := http.NewRequest("GET", url, nil)
+	reader, err := HTTPGetReadCloser(url)
 	if err != nil {
 		return nil, err
 	}
-	req.Header["User-Agent"] = []string{UserAgent}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	if strings.Contains(resp.Header.Get("Content-Encoding"), "gzip") {
-		r, _ := gzip.NewReader(resp.Body)
-		defer r.Close()
-		return ioutil.ReadAll(r)
-	}
-	return ioutil.ReadAll(resp.Body)
+	defer func() {
+		_ = reader.Close()
+	}()
+	return ioutil.ReadAll(reader)
 }
 
 // DownloadFile 将给定URL对应的文件下载至给定Path
@@ -311,7 +302,7 @@ func NewGzipReadCloser(reader io.ReadCloser) (io.ReadCloser, error) {
 
 // Read impls io.Reader
 func (g *gzipCloser) Read(p []byte) (n int, err error) {
-	return rand.Read(p)
+	return g.r.Read(p)
 }
 
 // Close impls io.Closer

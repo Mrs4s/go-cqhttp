@@ -1091,10 +1091,11 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video, group bool) (
 			return maxImageSize
 		}()
 		thread, _ := strconv.Atoi(c)
-		if global.PathExists(cacheFile) && cache == "1" {
+		exist := global.PathExists(cacheFile)
+		if exist && cache == "1" {
 			goto hasCacheFile
 		}
-		if global.PathExists(cacheFile) {
+		if exist {
 			_ = os.Remove(cacheFile)
 		}
 		if err := global.DownloadFileMultiThreading(f, cacheFile, maxSize, thread, nil); err != nil {
@@ -1153,22 +1154,25 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video, group bool) (
 		return &LocalVideoElement{File: rawPath}, nil
 	}
 	if strings.HasPrefix(f, "base64") {
-		b, err := base64.StdEncoding.DecodeString(strings.ReplaceAll(f, "base64://", ""))
+		b, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(f, "base64://"))
 		if err != nil {
 			return nil, err
 		}
 		return &LocalImageElement{Stream: bytes.NewReader(b)}, nil
 	}
-	if !global.PathExists(rawPath) && global.PathExists(path.Join(global.ImagePathOld, f)) {
+	exist := global.PathExists(rawPath)
+	if !exist && global.PathExists(path.Join(global.ImagePathOld, f)) {
+		exist = true
 		rawPath = path.Join(global.ImagePathOld, f)
 	}
-	if !global.PathExists(rawPath) && global.PathExists(rawPath+".cqimg") {
+	if !exist && global.PathExists(rawPath+".cqimg") {
+		exist = true
 		rawPath += ".cqimg"
 	}
-	if !global.PathExists(rawPath) && d["url"] != "" {
+	if !exist && d["url"] != "" {
 		return bot.makeImageOrVideoElem(map[string]string{"file": d["url"]}, false, group)
 	}
-	if global.PathExists(rawPath) {
+	if exist {
 		file, err := os.Open(rawPath)
 		if err != nil {
 			return nil, err
