@@ -34,6 +34,21 @@ const (
 )
 
 var (
+	// ImageFs go-cqhttp使用的图片缓存目录
+	ImageFs = os.DirFS("data/images")
+	// ImageOldFs 兼容旧版go-cqhttp使用的图片缓存目录
+	ImageOldFs = os.DirFS("data/image")
+	// VoiceFs go-cqhttp使用的语音缓存目录
+	VoiceFs = os.DirFS("data/voices")
+	// VoiceFsOld 兼容旧版go-cqhttp使用的语音缓存目录
+	VoiceFsOld = os.DirFS("data/record")
+	// VideoFs go-cqhttp使用的视频缓存目录
+	VideoFs = os.DirFS("data/videos")
+	// CacheFs go-cqhttp使用的缓存目录
+	CacheFs = os.DirFS("data/cache")
+)
+
+var (
 	// ErrSyntax Path语法错误时返回的错误
 	ErrSyntax = errors.New("syntax error")
 	// HeaderAmr AMR文件头

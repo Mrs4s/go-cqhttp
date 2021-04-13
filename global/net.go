@@ -2,11 +2,11 @@ package global
 
 import (
 	"bufio"
-	"bytes"
 	"compress/gzip"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
@@ -59,18 +59,12 @@ func GetBytes(url string) ([]byte, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
 	if strings.Contains(resp.Header.Get("Content-Encoding"), "gzip") {
-		buffer := bytes.NewBuffer(body)
-		r, _ := gzip.NewReader(buffer)
+		r, _ := gzip.NewReader(resp.Body)
 		defer r.Close()
-		unCom, err := ioutil.ReadAll(r)
-		return unCom, err
+		return ioutil.ReadAll(r)
 	}
-	return body, nil
+	return ioutil.ReadAll(resp.Body)
 }
 
 // DownloadFile 将给定URL对应的文件下载至给定Path
@@ -296,4 +290,49 @@ func NeteaseMusicSongInfo(id string) (gjson.Result, error) {
 		return gjson.Result{}, err
 	}
 	return gjson.ParseBytes(d).Get("songs.0"), nil
+}
+
+type gzipCloser struct {
+	f io.Closer
+	r *gzip.Reader
+}
+
+// NewGzipReadCloser 从 io.ReadCloser 创建 gunzip io.ReadCloser
+func NewGzipReadCloser(reader io.ReadCloser) (io.ReadCloser, error) {
+	gzipReader, err := gzip.NewReader(reader)
+	if err != nil {
+		return nil, err
+	}
+	return &gzipCloser{
+		f: reader,
+		r: gzipReader,
+	}, nil
+}
+
+// Read impls io.Reader
+func (g *gzipCloser) Read(p []byte) (n int, err error) {
+	return rand.Read(p)
+}
+
+// Close impls io.Closer
+func (g *gzipCloser) Close() error {
+	_ = g.f.Close()
+	return g.r.Close()
+}
+
+// HTTPGetReadCloser 从 Http url 获取 io.ReadCloser
+func HTTPGetReadCloser(url string) (io.ReadCloser, error) {
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header["User-Agent"] = []string{UserAgent}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if strings.Contains(resp.Header.Get("Content-Encoding"), "gzip") {
+		return NewGzipReadCloser(resp.Body)
+	}
+	return resp.Body, err
 }

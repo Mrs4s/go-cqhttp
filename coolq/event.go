@@ -355,12 +355,12 @@ func (bot *CQBot) memberCardUpdatedEvent(c *client.QQClient, e *client.MemberCar
 	})
 }
 
-func (bot *CQBot) memberJoinEvent(c *client.QQClient, e *client.MemberJoinGroupEvent) {
+func (bot *CQBot) memberJoinEvent(_ *client.QQClient, e *client.MemberJoinGroupEvent) {
 	log.Infof("新成员 %v 进入了群 %v.", formatMemberName(e.Member), formatGroupName(e.Group))
 	bot.dispatchEventMessage(bot.groupIncrease(e.Group.Code, 0, e.Member.Uin))
 }
 
-func (bot *CQBot) memberLeaveEvent(c *client.QQClient, e *client.MemberLeaveGroupEvent) {
+func (bot *CQBot) memberLeaveEvent(_ *client.QQClient, e *client.MemberLeaveGroupEvent) {
 	if e.Operator != nil {
 		log.Infof("成员 %v 被 %v T出了群 %v.", formatMemberName(e.Member), formatMemberName(e.Operator), formatGroupName(e.Group))
 	} else {
