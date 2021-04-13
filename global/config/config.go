@@ -134,7 +134,7 @@ func Get() *Config {
 			generateConfig()
 			os.Exit(0)
 		}
-		defer file.Close()
+		defer func() { _ = file.Close() }()
 		config = &Config{}
 		if err = yaml.NewDecoder(file).Decode(config); err != nil {
 			log.Fatal("配置文件不合法!", err)
