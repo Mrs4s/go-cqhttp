@@ -337,7 +337,7 @@ func ToStringMessage(e []message.IMessageElement, id int64, isRaw ...bool) (r st
 				}
 			}
 		case *message.TextElement:
-			r += CQCodeEscapeText(o.Content)
+			sb.WriteString(CQCodeEscapeText(o.Content))
 		case *message.AtElement:
 			if o.Target == 0 {
 				sb.WriteString("[CQ:at,qq=all]")
