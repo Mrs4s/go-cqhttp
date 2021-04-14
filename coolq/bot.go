@@ -23,6 +23,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	log "github.com/sirupsen/logrus"
 	"github.com/syndtr/goleveldb/leveldb"
+	"github.com/syndtr/goleveldb/leveldb/opt"
 )
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
@@ -58,7 +59,9 @@ func NewQQBot(cli *client.QQClient, conf *config.Config) *CQBot {
 	}
 	if enableLevelDB {
 		p := path.Join("data", "leveldb")
-		db, err := leveldb.OpenFile(p, nil)
+		db, err := leveldb.OpenFile(p, &opt.Options{
+			WriteBuffer: 128 * opt.KiB,
+		})
 		if err != nil {
 			log.Fatalf("打开数据库失败, 如果频繁遇到此问题请清理 data/leveldb 文件夹或关闭数据库功能。")
 		}
