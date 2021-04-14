@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"crypto/aes"
 	"crypto/md5"
 	"crypto/sha1"
@@ -401,7 +402,7 @@ func main() {
 		if s, ok := m["ws"]; ok {
 			sc := new(config.WebsocketServer)
 			if err := s.Decode(sc); err != nil {
-				log.Warn("读取http配置失败 :", err)
+				log.Warn("读取正向Websocket配置失败 :", err)
 			} else {
 				go server.RunWebSocketServer(bot, sc)
 			}
@@ -409,7 +410,7 @@ func main() {
 		if c, ok := m["ws-reverse"]; ok {
 			rc := new(config.WebsocketReverse)
 			if err := c.Decode(rc); err != nil {
-				log.Warn("读取正向Websocket配置失败 :", err)
+				log.Warn("读取反向Websocket配置失败 :", err)
 			} else {
 				go server.RunWebSocketClient(bot, rc)
 			}
@@ -417,7 +418,7 @@ func main() {
 		if p, ok := m["pprof"]; ok {
 			pc := new(config.PprofServer)
 			if err := p.Decode(pc); err != nil {
-				log.Warn("读取反向Websocket配置失败 :", err)
+				log.Warn("读取pprof配置失败 :", err)
 			} else {
 				go server.RunPprofServer(pc)
 			}
@@ -484,46 +485,77 @@ func checkUpdate() {
 
 func selfUpdate(imageURL string) {
 	log.Infof("正在检查更新.")
-	var res string
+	var res, r string
 	if err := gout.GET("https://api.github.com/repos/Mrs4s/go-cqhttp/releases/latest").BindBody(&res).Do(); err != nil {
 		log.Warnf("检查更新失败: %v", err)
 		return
 	}
 	info := gjson.Parse(res)
 	version := info.Get("tag_name").Str
-	if coolq.Version != version {
-		log.Info("当前最新版本为 ", version)
-		log.Warn("是否更新(y/N): ")
-		r := strings.TrimSpace(readLine())
-		if r != "y" && r != "Y" {
-			log.Warn("已取消更新！")
-		} else {
-			log.Info("正在更新,请稍等...")
-			url := fmt.Sprintf(
-				"%v/Mrs4s/go-cqhttp/releases/download/%v/go-cqhttp_%v_%v",
-				func() string {
-					if imageURL != "" {
-						return imageURL
-					}
-					return "https://github.com"
-				}(),
-				version, runtime.GOOS, func() string {
-					if runtime.GOARCH == "arm" {
-						return "armv7"
-					}
-					return runtime.GOARCH
-				}(),
-			)
-			if runtime.GOOS == "windows" {
-				url += ".zip"
-			} else {
-				url += ".tar.gz"
-			}
-			update.Update(url)
-		}
-	} else {
+	if coolq.Version == version {
 		log.Info("当前版本已经是最新版本!")
+		goto wait
 	}
+	log.Info("当前最新版本为 ", version)
+	log.Warn("是否更新(y/N): ")
+	r = strings.TrimSpace(readLine())
+	if r != "y" && r != "Y" {
+		log.Warn("已取消更新！")
+	} else {
+		log.Info("正在更新,请稍等...")
+		sumURL := fmt.Sprintf("%v/Mrs4s/go-cqhttp/releases/download/%v/go-cqhttp_checksums.txt",
+			func() string {
+				if imageURL != "" {
+					return imageURL
+				}
+				return "https://github.com"
+			}(), version)
+		closer, err := global.HTTPGetReadCloser(sumURL)
+		if err != nil {
+			log.Error("更新失败: ", err)
+			goto wait
+		}
+		rd := bufio.NewReader(closer)
+		binaryName := fmt.Sprintf("go-cqhttp_%v_%v.%v", runtime.GOOS, func() string {
+			if runtime.GOARCH == "arm" {
+				return "armv7"
+			}
+			return runtime.GOARCH
+		}(), func() string {
+			if runtime.GOOS == "windows" {
+				return "zip"
+			} else {
+				return "tar.gz"
+			}
+		}())
+		var sum []byte
+		for {
+			str, err := rd.ReadString('\n')
+			if err != nil {
+				break
+			}
+			str = strings.TrimSpace(str)
+			if strings.HasSuffix(str, binaryName) {
+				sum, _ = hex.DecodeString(strings.TrimSuffix(str, "  "+binaryName))
+				break
+			}
+		}
+		url := fmt.Sprintf("%v/Mrs4s/go-cqhttp/releases/download/%v/%v",
+			func() string {
+				if imageURL != "" {
+					return imageURL
+				}
+				return "https://github.com"
+			}(), version, binaryName)
+
+		err = update.Update(url, sum)
+		if err != nil {
+			log.Error("更新失败: ", err)
+		} else {
+			log.Info("更新成功!")
+		}
+	}
+wait:
 	log.Info("按 Enter 继续....")
 	readLine()
 	os.Exit(0)

@@ -6,46 +6,47 @@ import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
+	"crypto/sha256"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
-
-	log "github.com/sirupsen/logrus"
 )
 
 // Update go-cqhttp自我更新
-func Update(url string) {
+func Update(url string, sum []byte) error {
 	resp, err := http.Get(url)
 	if err != nil {
-		log.Error("更新失败: ", err)
-		return
+		return err
 	}
 	defer resp.Body.Close()
-	wc := WriteCounter{}
-	data, err := io.ReadAll(io.TeeReader(resp.Body, &wc))
-	if err != nil {
-		log.Error("更新失败: ", err)
-		return
+	wc := WriteSumCounter{
+		Hash: sha256.New(),
 	}
-	gr, err := gzip.NewReader(bytes.NewReader(data))
+	rsp, err := io.ReadAll(io.TeeReader(resp.Body, &wc))
 	if err != nil {
-		log.Error("更新失败: ", err)
-		return
+		return err
+	}
+	if !bytes.Equal(wc.Hash.Sum(nil), sum) {
+		return errors.New("文件已损坏")
+	}
+	gr, err := gzip.NewReader(bytes.NewReader(rsp))
+	if err != nil {
+		return err
 	}
 	tr := tar.NewReader(gr)
 	for {
 		header, err := tr.Next()
-		if err == io.EOF {
-			return
+		if err != nil {
+			return err
 		}
 		if header.Name == "go-cqhttp" {
 			err, _ := FromStream(tr)
 			fmt.Println()
 			if err != nil {
-				log.Error("更新失败!", err)
-				return
+				return err
 			}
-			log.Info("更新完成！")
+			return nil
 		}
 	}
 }

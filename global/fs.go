@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/Mrs4s/MiraiGo/utils"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -31,21 +32,6 @@ const (
 	VideoPath = "data/videos"
 	// CachePath go-cqhttp使用的缓存目录
 	CachePath = "data/cache"
-)
-
-var (
-	// ImageFs go-cqhttp使用的图片缓存目录
-	ImageFs = os.DirFS("data/images")
-	// ImageOldFs 兼容旧版go-cqhttp使用的图片缓存目录
-	ImageOldFs = os.DirFS("data/image")
-	// VoiceFs go-cqhttp使用的语音缓存目录
-	VoiceFs = os.DirFS("data/voices")
-	// VoiceFsOld 兼容旧版go-cqhttp使用的语音缓存目录
-	VoiceFsOld = os.DirFS("data/record")
-	// VideoFs go-cqhttp使用的视频缓存目录
-	VideoFs = os.DirFS("data/videos")
-	// CacheFs go-cqhttp使用的缓存目录
-	CacheFs = os.DirFS("data/cache")
 )
 
 var (
@@ -75,7 +61,7 @@ func ReadAllText(path string) string {
 
 // WriteAllText 将给定text写入给定path
 func WriteAllText(path, text string) error {
-	return ioutil.WriteFile(path, []byte(text), 0644)
+	return ioutil.WriteFile(path, utils.S2B(text), 0644)
 }
 
 // Check 检测err是否为nil
@@ -98,7 +84,7 @@ func IsAMRorSILK(b []byte) bool {
 func FindFile(file, cache, p string) (data []byte, err error) {
 	data, err = nil, ErrSyntax
 	switch {
-	case strings.HasPrefix(file, "http") || strings.HasPrefix(file, "https"):
+	case strings.HasPrefix(file, "http"): // https also has prefix http
 		if cache == "" {
 			cache = "1"
 		}
@@ -113,7 +99,7 @@ func FindFile(file, cache, p string) (data []byte, err error) {
 			return nil, err
 		}
 	case strings.HasPrefix(file, "base64"):
-		data, err = base64.StdEncoding.DecodeString(strings.ReplaceAll(file, "base64://", ""))
+		data, err = base64.StdEncoding.DecodeString(strings.TrimPrefix(file, "base64://"))
 		if err != nil {
 			return nil, err
 		}

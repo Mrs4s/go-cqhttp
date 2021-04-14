@@ -274,7 +274,7 @@ func (bot *CQBot) SendPrivateMessage(target int64, groupID int64, m *message.Sen
 			return 0
 		}
 		if i, ok := elem.(*message.VoiceElement); ok {
-			fv, err := bot.Client.UploadPrivatePtt(target, i.Data)
+			fv, err := bot.Client.UploadPrivatePtt(target, bytes.NewReader(i.Data)) // todo: io.ReadSeeker
 			if err != nil {
 				log.Warnf("警告: 私聊 %v 消息语音上传失败: %v", target, err)
 				continue
