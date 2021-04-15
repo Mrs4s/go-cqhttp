@@ -387,7 +387,7 @@ func (c *webSocketConn) handleRequest(_ *coolq.CQBot, payload []byte) {
 			_ = c.Close()
 		}
 	}()
-	j := gjson.ParseBytes(payload)
+	j := gjson.Parse(utils.B2S(payload))
 	t := strings.ReplaceAll(j.Get("action").Str, "_async", "")
 	log.Debugf("WS接收到API调用: %v 参数: %v", t, j.Get("params").Raw)
 	ret := c.apiCaller.callAPI(t, j.Get("params"))

@@ -60,7 +60,7 @@ func GetBytes(url string) ([]byte, error) {
 
 // DownloadFile 将给定URL对应的文件下载至给定Path
 func DownloadFile(url, path string, limit int64, headers map[string]string) error {
-	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, 0666)
+	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, 0o666)
 	if err != nil {
 		return err
 	}
@@ -108,7 +108,7 @@ func DownloadFileMultiThreading(url, path string, limit int64, threadCount int, 
 	// 初始化分块或直接下载
 	initOrDownload := func() error {
 		copyStream := func(s io.ReadCloser) error {
-			file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, 0666)
+			file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, 0o666)
 			if err != nil {
 				return err
 			}
@@ -177,7 +177,7 @@ func DownloadFileMultiThreading(url, path string, limit int64, threadCount int, 
 	// 下载分块
 	downloadBlock := func(block *BlockMetaData) error {
 		req, _ := http.NewRequest("GET", url, nil)
-		file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, 0666)
+		file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, 0o666)
 		if err != nil {
 			return err
 		}

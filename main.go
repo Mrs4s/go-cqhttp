@@ -91,22 +91,22 @@ func init() {
 	log.AddHook(global.NewLocalHook(w, logFormatter, global.GetLogLevel(conf.Output.LogLevel)...))
 
 	if !global.PathExists(global.ImagePath) {
-		if err := os.MkdirAll(global.ImagePath, 0755); err != nil {
+		if err := os.MkdirAll(global.ImagePath, 0o755); err != nil {
 			log.Fatalf("创建图片缓存文件夹失败: %v", err)
 		}
 	}
 	if !global.PathExists(global.VoicePath) {
-		if err := os.MkdirAll(global.VoicePath, 0755); err != nil {
+		if err := os.MkdirAll(global.VoicePath, 0o755); err != nil {
 			log.Fatalf("创建语音缓存文件夹失败: %v", err)
 		}
 	}
 	if !global.PathExists(global.VideoPath) {
-		if err := os.MkdirAll(global.VideoPath, 0755); err != nil {
+		if err := os.MkdirAll(global.VideoPath, 0o755); err != nil {
 			log.Fatalf("创建视频缓存文件夹失败: %v", err)
 		}
 	}
 	if !global.PathExists(global.CachePath) {
-		if err := os.MkdirAll(global.CachePath, 0755); err != nil {
+		if err := os.MkdirAll(global.CachePath, 0o755); err != nil {
 			log.Fatalf("创建发送图片缓存文件夹失败: %v", err)
 		}
 	}
@@ -163,7 +163,7 @@ func main() {
 	if !global.PathExists("device.json") {
 		log.Warn("虚拟设备信息不存在, 将自动生成随机设备.")
 		client.GenRandomDevice()
-		_ = ioutil.WriteFile("device.json", client.SystemDeviceInfo.ToJson(), 0644)
+		_ = ioutil.WriteFile("device.json", client.SystemDeviceInfo.ToJson(), 0o644)
 		log.Info("已生成设备信息并保存到 device.json 文件.")
 	} else {
 		log.Info("将使用 device.json 内的设备信息运行Bot.")
@@ -182,7 +182,7 @@ func main() {
 			log.Infof("密码加密已启用, 请输入Key对密码进行加密: (Enter 提交)")
 			byteKey, _ = term.ReadPassword(int(os.Stdin.Fd()))
 			PasswordHash = md5.Sum([]byte(conf.Account.Password))
-			_ = os.WriteFile("password.encrypt", []byte(PasswordHashEncrypt(PasswordHash[:], byteKey)), 0644)
+			_ = os.WriteFile("password.encrypt", []byte(PasswordHashEncrypt(PasswordHash[:], byteKey)), 0o644)
 			log.Info("密码已加密，为了您的账号安全，请删除配置文件中的密码后重新启动.")
 			readLine()
 			os.Exit(0)
@@ -278,7 +278,7 @@ func main() {
 	isTokenLogin := false
 	saveToken := func() {
 		AccountToken = cli.GenToken()
-		_ = ioutil.WriteFile("session.token", AccountToken, 0677)
+		_ = ioutil.WriteFile("session.token", AccountToken, 0o677)
 	}
 	if global.PathExists("session.token") {
 		token, err := ioutil.ReadFile("session.token")
@@ -524,9 +524,8 @@ func selfUpdate(imageURL string) {
 		}(), func() string {
 			if runtime.GOOS == "windows" {
 				return "zip"
-			} else {
-				return "tar.gz"
 			}
+			return "tar.gz"
 		}())
 		var sum []byte
 		for {

@@ -51,7 +51,7 @@ func FromStream(updateWith io.Reader) (err error, errRecover error) {
 	filename := filepath.Base(updatePath)
 	// Copy the contents of of newbinary to a the new executable file
 	newPath := filepath.Join(updateDir, fmt.Sprintf(".%s.new", filename))
-	fp, err := os.OpenFile(newPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
+	fp, err := os.OpenFile(newPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o755)
 	if err != nil {
 		return
 	}

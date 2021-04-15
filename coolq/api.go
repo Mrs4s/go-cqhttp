@@ -953,7 +953,7 @@ func (bot *CQBot) CQGetImage(file string) MSG {
 		local := path.Join(global.CachePath, file+"."+path.Ext(msg["filename"].(string)))
 		if !global.PathExists(local) {
 			if data, err := global.GetBytes(msg["url"].(string)); err == nil {
-				_ = ioutil.WriteFile(local, data, 0644)
+				_ = ioutil.WriteFile(local, data, 0o644)
 			}
 		}
 		msg["file"] = local

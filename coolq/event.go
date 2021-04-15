@@ -539,7 +539,7 @@ func (bot *CQBot) checkMedia(e []message.IMessageElement) {
 					w.WriteUInt32(uint32(i.Size))
 					w.WriteString(i.Filename)
 					w.WriteString(i.Url)
-				}), 0644)
+				}), 0o644)
 			}
 			i.Filename = filename
 		case *message.GroupImageElement:
@@ -550,7 +550,7 @@ func (bot *CQBot) checkMedia(e []message.IMessageElement) {
 					w.WriteUInt32(uint32(i.Size))
 					w.WriteString(filename)
 					w.WriteString(i.Url)
-				}), 0644)
+				}), 0o644)
 			}
 		case *message.FriendImageElement:
 			filename := hex.EncodeToString(i.Md5) + ".image"
@@ -560,7 +560,7 @@ func (bot *CQBot) checkMedia(e []message.IMessageElement) {
 					w.WriteUInt32(uint32(0)) // 发送时会调用url, 大概没事
 					w.WriteString(filename)
 					w.WriteString(i.Url)
-				}), 0644)
+				}), 0o644)
 			}
 		case *message.GroupFlashImgElement:
 			filename := hex.EncodeToString(i.Md5) + ".image"
@@ -570,7 +570,7 @@ func (bot *CQBot) checkMedia(e []message.IMessageElement) {
 					w.WriteUInt32(uint32(i.Size))
 					w.WriteString(i.Filename)
 					w.WriteString("")
-				}), 0644)
+				}), 0o644)
 			}
 			i.Filename = filename
 		case *message.FriendFlashImgElement:
@@ -581,7 +581,7 @@ func (bot *CQBot) checkMedia(e []message.IMessageElement) {
 					w.WriteUInt32(uint32(i.Size))
 					w.WriteString(i.Filename)
 					w.WriteString("")
-				}), 0644)
+				}), 0o644)
 			}
 			i.Filename = filename
 		case *message.VoiceElement:
@@ -593,7 +593,7 @@ func (bot *CQBot) checkMedia(e []message.IMessageElement) {
 					log.Warnf("语音文件 %v 下载失败: %v", i.Name, err)
 					continue
 				}
-				_ = ioutil.WriteFile(path.Join(global.VoicePath, i.Name), b, 0644)
+				_ = ioutil.WriteFile(path.Join(global.VoicePath, i.Name), b, 0o644)
 			}
 		case *message.ShortVideoElement:
 			filename := hex.EncodeToString(i.Md5) + ".video"
@@ -605,7 +605,7 @@ func (bot *CQBot) checkMedia(e []message.IMessageElement) {
 					w.WriteUInt32(uint32(i.ThumbSize))
 					w.WriteString(i.Name)
 					w.Write(i.Uuid)
-				}), 0644)
+				}), 0o644)
 			}
 			i.Name = filename
 			i.Url = bot.Client.GetShortVideoUrl(i.Uuid, i.Md5)

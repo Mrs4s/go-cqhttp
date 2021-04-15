@@ -47,7 +47,7 @@ func EncodeToSilk(record []byte, tempName string, useCache bool) (silkWav []byte
 	}
 	if useCache {
 		silkPath := path.Join(silkCachePath, tempName+".silk")
-		err = ioutil.WriteFile(silkPath, silkWav, 0666)
+		err = ioutil.WriteFile(silkPath, silkWav, 0o666)
 	}
 	return
 }

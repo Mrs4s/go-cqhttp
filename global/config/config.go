@@ -181,7 +181,7 @@ func generateConfig() {
 			sb.WriteString(pprofDefault)
 		}
 	}
-	_ = os.WriteFile("config.yml", []byte(sb.String()), 0644)
+	_ = os.WriteFile("config.yml", []byte(sb.String()), 0o644)
 	fmt.Println("默认配置文件已生成，请修改 config.yml 后重新启动!")
 	_, _ = input.ReadString('\n')
 }

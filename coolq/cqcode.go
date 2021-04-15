@@ -1136,6 +1136,13 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video, group bool) (
 		}
 		return &LocalImageElement{File: fu.Path}, nil
 	}
+	if strings.HasPrefix(f, "base64") && !video {
+		b, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(f, "base64://"))
+		if err != nil {
+			return nil, err
+		}
+		return &LocalImageElement{Stream: bytes.NewReader(b)}, nil
+	}
 	rawPath := path.Join(global.ImagePath, f)
 	if video {
 		rawPath = path.Join(global.VideoPath, f)
@@ -1155,13 +1162,6 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video, group bool) (
 			}}, nil
 		}
 		return &LocalVideoElement{File: rawPath}, nil
-	}
-	if strings.HasPrefix(f, "base64") {
-		b, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(f, "base64://"))
-		if err != nil {
-			return nil, err
-		}
-		return &LocalImageElement{Stream: bytes.NewReader(b)}, nil
 	}
 	exist := global.PathExists(rawPath)
 	if !exist && global.PathExists(path.Join(global.ImagePathOld, f)) {
