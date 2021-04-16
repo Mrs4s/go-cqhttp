@@ -303,6 +303,14 @@ func checkURLSafely(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 	return bot.CQCheckURLSafely(p.Get("url").String())
 }
 
+func startGroupVideo(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+	return bot.CQStartGroupVideo(p.Get("group_code").Int())
+}
+
+func stopGroupVideo(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+	return bot.CQStartGroupVideo(p.Get("group_code").Int())
+}
+
 func setGroupAnonymousBan(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 	obj := p.Get("anonymous")
 	flag := p.Get("anonymous_flag")
@@ -376,6 +384,8 @@ var API = map[string]func(*coolq.CQBot, resultGetter) coolq.MSG{
 	"delete_essence_msg":         deleteEssenceMSG,
 	"get_essence_msg_list":       getEssenceMsgList,
 	"check_url_safely":           checkURLSafely,
+	"start_group_video":          startGroupVideo,
+	"stop_group_video":           stopGroupVideo,
 	"set_group_anonymous_ban":    setGroupAnonymousBan,
 	".handle_quick_operation":    handleQuickOperation,
 }

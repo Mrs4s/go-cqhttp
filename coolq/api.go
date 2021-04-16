@@ -1279,6 +1279,20 @@ func (bot *CQBot) CQCheckURLSafely(url string) MSG {
 	})
 }
 
+// CQStartGroupVideo 扩展API-开始群视频通话
+//
+//
+func (bot *CQBot) CQStartGroupVideo(groupCode int64) MSG {
+	return OK(MSG{})
+}
+
+// CQStopGroupVideo 扩展API-关闭群视频通话
+//
+//
+func (bot *CQBot) CQStopGroupVideo(groupCode int64) MSG {
+	return OK(MSG{})
+}
+
 // CQGetVersionInfo 获取版本信息
 //
 // https://git.io/JtwUs
