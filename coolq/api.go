@@ -953,8 +953,9 @@ func (bot *CQBot) CQGetImage(file string) MSG {
 		local := path.Join(global.CachePath, file+"."+path.Ext(msg["filename"].(string)))
 		if !global.PathExists(local) {
 			f, _ := os.OpenFile(local, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o0644)
-			if body, err := global.HTTPGetReadCloser(msg["url"].(string)); err != nil {
+			if body, err := global.HTTPGetReadCloser(msg["url"].(string)); err == nil {
 				_, _ = f.ReadFrom(body)
+				_ = body.Close()
 			}
 			f.Close()
 		}
