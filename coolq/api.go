@@ -952,9 +952,11 @@ func (bot *CQBot) CQGetImage(file string) MSG {
 		}
 		local := path.Join(global.CachePath, file+"."+path.Ext(msg["filename"].(string)))
 		if !global.PathExists(local) {
-			if data, err := global.GetBytes(msg["url"].(string)); err == nil {
-				_ = ioutil.WriteFile(local, data, 0o644)
+			f, _ := os.OpenFile(local, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o0644)
+			if body, err := global.HTTPGetReadCloser(msg["url"].(string)); err != nil {
+				_, _ = f.ReadFrom(body)
 			}
+			f.Close()
 		}
 		msg["file"] = local
 		return OK(msg)
