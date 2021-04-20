@@ -589,6 +589,7 @@ End:
 
 // ConvertObjectMessage 将消息JSON对象转为消息元素数组
 func (bot *CQBot) ConvertObjectMessage(m gjson.Result, isGroup bool) (r []message.IMessageElement) {
+	d := make(map[string]string)
 	convertElem := func(e gjson.Result) {
 		t := e.Get("type").Str
 		if t == "reply" && isGroup {
@@ -672,7 +673,9 @@ func (bot *CQBot) ConvertObjectMessage(m gjson.Result, isGroup bool) (r []messag
 			}
 			return
 		}
-		d := make(map[string]string)
+		for i := range d {
+			delete(d, i)
+		}
 		e.Get("data").ForEach(func(key, value gjson.Result) bool {
 			d[key.Str] = value.String()
 			return true
@@ -693,9 +696,10 @@ func (bot *CQBot) ConvertObjectMessage(m gjson.Result, isGroup bool) (r []messag
 		return bot.ConvertStringMessage(m.Str, isGroup)
 	}
 	if m.IsArray() {
-		for _, e := range m.Array() {
+		m.ForEach(func(_, e gjson.Result) bool {
 			convertElem(e)
-		}
+			return true
+		})
 	}
 	if m.IsObject() {
 		convertElem(m)
