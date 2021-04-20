@@ -51,8 +51,12 @@ func RunHTTPServerAndClients(bot *coolq.CQBot, conf *config.HTTPServer) {
 	var (
 		s         = new(httpServer)
 		authToken = conf.AccessToken
-		addr      = fmt.Sprintf("%s:%d", conf.Host, conf.Port)
+		addr      string
 	)
+	if conf.Host == "" || conf.Port == 0 {
+		goto client
+	}
+	addr = fmt.Sprintf("%s:%d", conf.Host, conf.Port)
 	gin.SetMode(gin.ReleaseMode)
 	s.engine = gin.New()
 	s.bot = bot
@@ -126,7 +130,7 @@ func RunHTTPServerAndClients(bot *coolq.CQBot, conf *config.HTTPServer) {
 			os.Exit(1)
 		}
 	}()
-
+client:
 	for _, c := range conf.Post {
 		if c.URL != "" {
 			go newHTTPClient().Run(c.URL, c.Secret, conf.Filter, conf.Timeout, bot)
