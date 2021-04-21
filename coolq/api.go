@@ -302,7 +302,7 @@ func (bot *CQBot) CQSendGroupMessage(groupID int64, i interface{}, autoEscape bo
 			fixAt(elem)
 			mid := bot.SendGroupMessage(groupID, &message.SendingMessage{Elements: elem})
 			if mid == -1 {
-				return Failed(100, "SEND_MSG_API_ERROR", "请参考输出")
+				return Failed(100, "SEND_MSG_API_ERROR", "请参考go-cqhttp端输出")
 			}
 			log.Infof("发送群 %v(%v) 的消息: %v (%v)", group.Name, groupID, limitedString(ToStringMessage(elem, int64(mid))), mid)
 			return OK(MSG{"message_id": mid})
@@ -329,7 +329,7 @@ func (bot *CQBot) CQSendGroupMessage(groupID int64, i interface{}, autoEscape bo
 	fixAt(elem)
 	mid := bot.SendGroupMessage(groupID, &message.SendingMessage{Elements: elem})
 	if mid == -1 {
-		return Failed(100, "SEND_MSG_API_ERROR", "请参考输出")
+		return Failed(100, "SEND_MSG_API_ERROR", "请参考go-cqhttp端输出")
 	}
 	log.Infof("发送群 %v(%v) 的消息: %v (%v)", group.Name, groupID, limitedString(str), mid)
 	return OK(MSG{"message_id": mid})
@@ -456,7 +456,7 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) MSG {
 		ret := bot.Client.SendGroupForwardMessage(groupID, &message.ForwardMessage{Nodes: sendNodes})
 		if ret == nil || ret.Id == -1 {
 			log.Warnf("合并转发(群)消息发送失败: 账号可能被风控.")
-			return Failed(100, "SEND_MSG_API_ERROR", "请参考输出")
+			return Failed(100, "SEND_MSG_API_ERROR", "请参考go-cqhttp端输出")
 		}
 		return OK(MSG{
 			"message_id": bot.InsertGroupMessage(ret),
@@ -475,7 +475,7 @@ func (bot *CQBot) CQSendPrivateMessage(userID int64, groupID int64, i interface{
 			elem := bot.ConvertObjectMessage(m, false)
 			mid := bot.SendPrivateMessage(userID, groupID, &message.SendingMessage{Elements: elem})
 			if mid == -1 {
-				return Failed(100, "SEND_MSG_API_ERROR", "请参考输出")
+				return Failed(100, "SEND_MSG_API_ERROR", "请参考go-cqhttp端输出")
 			}
 			log.Infof("发送好友 %v(%v)  的消息: %v (%v)", userID, userID, limitedString(m.String()), mid)
 			return OK(MSG{"message_id": mid})
@@ -500,7 +500,7 @@ func (bot *CQBot) CQSendPrivateMessage(userID int64, groupID int64, i interface{
 	}
 	mid := bot.SendPrivateMessage(userID, groupID, &message.SendingMessage{Elements: elem})
 	if mid == -1 {
-		return Failed(100, "SEND_MSG_API_ERROR", "请参考输出")
+		return Failed(100, "SEND_MSG_API_ERROR", "请参考go-cqhttp端输出")
 	}
 	log.Infof("发送好友 %v(%v)  的消息: %v (%v)", userID, userID, limitedString(str), mid)
 	return OK(MSG{"message_id": mid})
