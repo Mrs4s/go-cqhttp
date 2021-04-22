@@ -260,6 +260,54 @@ func (bot *CQBot) CQUploadGroupFile(groupID int64, file, name, folder string) MS
 	return OK(nil)
 }
 
+// CQGroupFileCreateFolder 拓展API-创建群文件文件夹
+//
+//
+func (bot *CQBot) CQGroupFileCreateFolder(groupID int64, parentID, name string) MSG {
+	fs, err := bot.Client.GetGroupFileSystem(groupID)
+	if err != nil {
+		log.Errorf("获取群 %v 文件系统信息失败: %v", groupID, err)
+		return Failed(100, "FILE_SYSTEM_API_ERROR", err.Error())
+	}
+	if err = fs.CreateFolder(parentID, name); err != nil {
+		log.Errorf("创建群 %v 文件夹失败: %v", groupID, err)
+		return Failed(100, "FILE_SYSTEM_API_ERROR", err.Error())
+	}
+	return OK(nil)
+}
+
+// CQGroupFileDeleteFolder 拓展API-删除群文件文件夹
+//
+//
+func (bot *CQBot) CQGroupFileDeleteFolder(groupID int64, id string) MSG {
+	fs, err := bot.Client.GetGroupFileSystem(groupID)
+	if err != nil {
+		log.Errorf("获取群 %v 文件系统信息失败: %v", groupID, err)
+		return Failed(100, "FILE_SYSTEM_API_ERROR", err.Error())
+	}
+	if err = fs.DeleteFolder(id); err != nil {
+		log.Errorf("删除群 %v 文件夹 %v 时出现文件: %v", groupID, id, err)
+		return Failed(200, "FILE_SYSTEM_API_ERROR", err.Error())
+	}
+	return OK(nil)
+}
+
+// CQGroupFileDeleteFile 拓展API-删除群文件
+//
+//
+func (bot *CQBot) CQGroupFileDeleteFile(groupID int64, parentID, id string, busID int32) MSG {
+	fs, err := bot.Client.GetGroupFileSystem(groupID)
+	if err != nil {
+		log.Errorf("获取群 %v 文件系统信息失败: %v", groupID, err)
+		return Failed(100, "FILE_SYSTEM_API_ERROR", err.Error())
+	}
+	if res := fs.DeleteFile(parentID, id, busID); res != "" {
+		log.Errorf("删除群 %v 文件 %v 时出现文件: %v", groupID, id, res)
+		return Failed(200, "FILE_SYSTEM_API_ERROR", res)
+	}
+	return OK(nil)
+}
+
 // CQGetWordSlices 隐藏API-获取中文分词
 //
 // https://docs.go-cqhttp.org/api/#%E8%8E%B7%E5%8F%96%E4%B8%AD%E6%96%87%E5%88%86%E8%AF%8D-%E9%9A%90%E8%97%8F-api

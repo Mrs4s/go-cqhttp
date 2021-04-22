@@ -254,6 +254,18 @@ func uploadGroupFile(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 	return bot.CQUploadGroupFile(p.Get("group_id").Int(), p.Get("file").Str, p.Get("name").Str, p.Get("folder").Str)
 }
 
+func groupFileCreateFolder(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+	return bot.CQGroupFileCreateFolder(p.Get("group_id").Int(), p.Get("folder_id").Str, p.Get("name").Str)
+}
+
+func deleteGroupFolder(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+	return bot.CQGroupFileDeleteFolder(p.Get("group_id").Int(), p.Get("folder_id").Str)
+}
+
+func deleteGroupFile(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+	return bot.CQGroupFileDeleteFile(p.Get("group_id").Int(), p.Get("folder_id").Str, p.Get("file_id").Str, int32(p.Get("bus_id").Int()))
+}
+
 func getGroupMsgHistory(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 	return bot.CQGetGroupMessageHistory(p.Get("group_id").Int(), p.Get("message_seq").Int())
 }
@@ -362,6 +374,9 @@ var API = map[string]func(*coolq.CQBot, resultGetter) coolq.MSG{
 	"get_group_root_files":       getGroupRootFiles,
 	"get_group_files_by_folder":  getGroupFilesByFolder,
 	"get_group_file_url":         getGroupFileURL,
+	"create_group_file_folder":   groupFileCreateFolder,
+	"delete_group_folder":        deleteGroupFolder,
+	"delete_group_file":          deleteGroupFile,
 	"upload_group_file":          uploadGroupFile,
 	"get_group_msg_history":      getGroupMsgHistory,
 	"_get_vip_info":              getVipInfo,
