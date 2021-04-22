@@ -24,9 +24,11 @@ import (
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/Mrs4s/MiraiGo/utils"
-	"github.com/Mrs4s/go-cqhttp/global"
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
+
+	"github.com/Mrs4s/go-cqhttp/global"
+	"github.com/Mrs4s/go-cqhttp/global/codec"
 )
 
 /*
@@ -667,7 +669,7 @@ func (bot *CQBot) ToElement(t string, d map[string]string, isGroup bool) (m inte
 		if err != nil {
 			return nil, err
 		}
-		return &message.VoiceElement{Data: data}, nil
+		return &message.VoiceElement{Data: codec.RecodeTo24K(data)}, nil
 	case "record":
 		f := d["file"]
 		data, err := global.FindFile(f, d["cache"], global.VoicePath)
