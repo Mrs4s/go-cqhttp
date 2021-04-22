@@ -6,3 +6,8 @@ import "errors"
 func EncodeToSilk(record []byte, tempName string, useCache bool) ([]byte, error) {
 	return nil, errors.New("not supported now")
 }
+
+// RecodeTo24K 将silk重新编码为 24000 bit rate
+func RecodeTo24K(data []byte) []byte {
+	return data
+}
