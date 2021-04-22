@@ -26,6 +26,7 @@ import (
 	"github.com/Mrs4s/MiraiGo/utils"
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
+	"github.com/wdvxdr1123/go-silk"
 
 	"github.com/Mrs4s/go-cqhttp/global"
 )
@@ -782,6 +783,14 @@ func (bot *CQBot) ToElement(t string, d map[string]string, isGroup bool) (m inte
 			}
 		}()
 		data, err := bot.Client.GetTts(d["text"])
+		if err != nil {
+			return nil, err
+		}
+		pcm, err := silk.DecodeSilkBuffToPcm(data, 24000)
+		if err != nil {
+			return nil, err
+		}
+		data, err = silk.EncodePcmBuffToSilk(pcm, 24000, 24000, true)
 		if err != nil {
 			return nil, err
 		}
