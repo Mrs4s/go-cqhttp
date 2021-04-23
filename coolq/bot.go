@@ -422,7 +422,7 @@ func (bot *CQBot) InsertTempMessage(target int64, m *message.TempMessage) int32 
 		"group-name": m.GroupName,
 		"target":     target,
 		"sender":     m.Sender,
-		"time":       time.Now().Unix(),
+		"time":       int32(time.Now().Unix()),
 		"message":    ToStringMessage(m.Elements, m.Sender.Uin, true),
 	}
 	id := toGlobalID(m.Sender.Uin, m.Id)
