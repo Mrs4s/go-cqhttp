@@ -281,6 +281,6 @@ go-cqhttp兼容[OneBot-v11](https://github.com/howmanybots/onebot/tree/master/v1
 > 请注意, 开发者并没有义务回复您的问题. 您应该具备基本的提问技巧。  
 > 有关如何提问，请阅读[《提问的智慧》](https://github.com/ryanhanwu/How-To-Ask-Questions-The-Smart-Way/blob/main/README-zh_CN.md)
 
-## 性能
+## 性能 (v1.0.0-beta3)
 
 在关闭数据库的情况下, 加载 25 个好友 128 个群运行 24 小时后内存使用为 15MB 左右. 开启数据库后内存使用将根据消息量增加 10-20MB, 如果系统内存小于 128M 建议关闭数据库使用.
