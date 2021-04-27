@@ -1,6 +1,7 @@
 package coolq
 
 import (
+	"bytes"
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
@@ -388,7 +389,7 @@ func (bot *CQBot) CQSendGroupMessage(groupID int64, i interface{}, autoEscape bo
 // https://docs.go-cqhttp.org/api/#%E5%8F%91%E9%80%81%E5%90%88%E5%B9%B6%E8%BD%AC%E5%8F%91-%E7%BE%A4
 func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) MSG {
 	if m.Type != gjson.JSON {
-		return Failed(100)
+		return Failed(100, "信息必须以JSON格式发送")
 	}
 	var sendNodes []*message.ForwardNode
 	ts := time.Now().Add(-time.Minute * 5)
@@ -1328,6 +1329,83 @@ func (bot *CQBot) CQCheckURLSafely(url string) MSG {
 	return OK(MSG{
 		"level": bot.Client.CheckUrlSafely(url),
 	})
+}
+
+// CQUploadImage 图片文件上传
+//
+//
+func (bot *CQBot) CQUploadImage(file string) MSG {
+	imageElem := LocalImageElement{
+		File: file,
+	}
+	img, err := bot.UploadLocalImageAsGroup(0, &imageElem)
+	if err != nil {
+		log.Warnf("警告: 图片上传失败: %v", err)
+		return Failed(100, "IMAGE_UPLOAD_FAILED", err.Error())
+	}
+	return OK(MSG{
+		"size":     img.Size,
+		"filename": img.ImageId,
+		"url":      img.Url,
+	})
+}
+
+// CQUploadVoice 语音上传
+//
+//
+func (bot *CQBot) CQUploadVoice(file string) MSG {
+	data, err := global.FindFile(file, "", global.VoicePath)
+	if err == global.ErrSyntax {
+		data, err = global.FindFile(file, "", global.VoicePathOld)
+	}
+	if err != nil {
+		return Failed(100, "VOICE_UPLOAD_FAILED", err.Error())
+	}
+	if !global.IsAMRorSILK(data) {
+		data, err = global.EncoderSilk(data)
+		if err != nil {
+			log.Warnf("警告: 语音转码失败: %v", err)
+			return Failed(100, "VOICE_UPLOAD_FAILED", err.Error())
+		}
+	}
+	gv, err := bot.Client.UploadGroupPtt(0, bytes.NewReader(data))
+	if err != nil {
+		log.Warnf("警告: 语音上传失败: %v", err)
+		return Failed(100, "VOICE_UPLOAD_FAILED", err.Error())
+	}
+	return OK(MSG{
+		"filename": gv.Ptt.FileName,
+		"size":     gv.Ptt.FileSize,
+	})
+}
+
+// CQUploadShortVideo 短视频上传
+//
+//
+func (bot *CQBot) CQUploadShortVideo(file string) MSG {
+	_ = global.ExtractCover(file, file+".jpg")
+	data, _ := ioutil.ReadFile(file + ".jpg")
+	shortVideoElem := LocalVideoElement{
+		File:  file,
+		thumb: bytes.NewReader(data),
+	}
+	gv, err := bot.UploadLocalVideo(0, &shortVideoElem)
+	if err != nil {
+		log.Warnf("警告: 短视频上传失败: %v", err)
+		return Failed(100, "SHORT_VIDEO_UPLOAD_FAILED", err.Error())
+	}
+	filename := hex.EncodeToString(gv.Md5) + ".video"
+	if !global.PathExists(path.Join(global.VideoPath, filename)) {
+		_ = ioutil.WriteFile(path.Join(global.VideoPath, filename), binary.NewWriterF(func(w *binary.Writer) {
+			w.Write(gv.Md5)
+			w.Write(gv.ThumbMd5)
+			w.WriteUInt32(uint32(gv.Size))
+			w.WriteUInt32(uint32(gv.ThumbSize))
+			w.WriteString(gv.Name)
+			w.Write(gv.Uuid)
+		}), 0644)
+	}
+	return OK(MSG{"size": gv.Size, "filename": filename, "url": gv.Url})
 }
 
 // CQGetVersionInfo 获取版本信息

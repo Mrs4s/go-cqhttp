@@ -334,6 +334,18 @@ func handleQuickOperation(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 	return bot.CQHandleQuickOperation(p.Get("context"), p.Get("operation"))
 }
 
+func uploadImage(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+	return bot.CQUploadImage(p.Get("file").Str)
+}
+
+func uploadVoice(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+	return bot.CQUploadVoice(p.Get("file").Str)
+}
+
+func uploadShortVideo(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+	return bot.CQUploadShortVideo(p.Get("file").Str)
+}
+
 // API 是go-cqhttp当前支持的所有api的映射表
 var API = map[string]func(*coolq.CQBot, resultGetter) coolq.MSG{
 	// 获取状态信息
@@ -354,9 +366,11 @@ var API = map[string]func(*coolq.CQBot, resultGetter) coolq.MSG{
 	"_send_group_notice":     sendGroupNotice,
 	"delete_msg":             deleteMSG,
 	// 多媒体内容上传与下载
-	// ...
-	"get_image":     getImage,
-	"download_file": downloadFile,
+	"upload_image":       uploadImage,
+	"upload_voice":       uploadVoice,
+	"upload_short_video": uploadShortVideo,
+	"get_image":          getImage,
+	"download_file":      downloadFile,
 	// 群文件
 	"get_group_system_msg":       getGroupSystemMSG,
 	"get_group_file_system_info": getGroupFileSystemInfo,
