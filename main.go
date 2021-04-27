@@ -616,9 +616,18 @@ Options:
 }
 
 func resetWorkDir() {
-	proc := exec.Command(os.Args[0], flag.Args()...)
+	args := make([]string, 0, len(os.Args))
+	for i := 1; i < len(os.Args); i++ {
+		if os.Args[i] == "-w" {
+			i++ // skip value field
+		} else if !strings.HasPrefix(os.Args[i], "-w") {
+			args = append(args, os.Args[i])
+		}
+	}
+	proc := exec.Command(os.Args[0], args...)
 	proc.Stdin = os.Stdin
 	proc.Stdout = os.Stdout
+	proc.Stderr = os.Stderr
 	proc.Dir = wd
 	err := proc.Run()
 	if err != nil {
