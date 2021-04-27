@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"os/signal"
 	"path"
 	"runtime"
@@ -42,6 +43,7 @@ var (
 	c           string
 	d           bool
 	h           bool
+	wd          string // reset work dir
 
 	// PasswordHash 存储QQ密码哈希供登录使用
 	PasswordHash [16]byte
@@ -65,6 +67,7 @@ func init() {
 	flag.BoolVar(&d, "d", false, "running as a daemon")
 	flag.BoolVar(&debug, "D", false, "debug mode")
 	flag.BoolVar(&h, "h", false, "this help")
+	flag.StringVar(&wd, "w", "", "cover the working directory")
 	flag.Parse()
 
 	// 通过-c 参数替换 配置文件路径
@@ -118,6 +121,9 @@ func main() {
 	}
 	if d {
 		server.Daemon()
+	}
+	if wd != "" {
+		resetWorkDir()
 	}
 	var byteKey []byte
 	arg := os.Args
@@ -606,5 +612,17 @@ Options:
 `, coolq.Version)
 
 	flag.PrintDefaults()
+	os.Exit(0)
+}
+
+func resetWorkDir() {
+	proc := exec.Command(os.Args[0], flag.Args()...)
+	proc.Stdin = os.Stdin
+	proc.Stdout = os.Stdout
+	proc.Dir = wd
+	err := proc.Run()
+	if err != nil {
+		panic(err)
+	}
 	os.Exit(0)
 }
