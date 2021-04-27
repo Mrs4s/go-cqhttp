@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/tidwall/gjson"
 )
@@ -85,9 +86,18 @@ func VersionNameCompare(current, remote string) bool {
 	return len(cur) < len(re)
 }
 
+var (
+	// once lazy compile the reg
+	once sync.Once
+	// reg is splitURL regex pattern.
+	reg *regexp.Regexp
+)
+
 // SplitURL 将给定URL字符串分割为两部分，用于URL预处理防止风控
 func SplitURL(s string) []string {
-	reg := regexp.MustCompile(`(?i)[a-z\d][-a-z\d]{0,62}(\.[a-z\d][-a-z\d]{0,62})+\.?`)
+	once.Do(func() { // lazy init.
+		reg = regexp.MustCompile(`(?i)[a-z\d][-a-z\d]{0,62}(\.[a-z\d][-a-z\d]{0,62})+\.?`)
+	})
 	idx := reg.FindAllStringIndex(s, -1)
 	if len(idx) == 0 {
 		return []string{s}

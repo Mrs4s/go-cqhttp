@@ -1084,7 +1084,7 @@ func CQCodeUnescapeValue(content string) string {
 // makeImageOrVideoElem 图片 elem 生成器，单独拎出来，用于公用
 func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video, group bool) (message.IMessageElement, error) {
 	f := d["file"]
-	if strings.HasPrefix(f, "http") || strings.HasPrefix(f, "https") {
+	if strings.HasPrefix(f, "http") {
 		cache := d["cache"]
 		c := d["c"]
 		if cache == "" {
@@ -1120,7 +1120,7 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video, group bool) (
 		if err != nil {
 			return nil, err
 		}
-		if strings.HasPrefix(fu.Path, "/") && runtime.GOOS == `windows` {
+		if runtime.GOOS == `windows` && strings.HasPrefix(fu.Path, "/") {
 			fu.Path = fu.Path[1:]
 		}
 		info, err := os.Stat(fu.Path)

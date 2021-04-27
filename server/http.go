@@ -203,7 +203,7 @@ func (c *HTTPClient) onBotPushEvent(m *bytes.Buffer) {
 }
 
 func (s *httpServer) HandleActions(c *gin.Context) {
-	action := strings.ReplaceAll(c.Param("action"), "_async", "")
+	action := strings.TrimSuffix(c.Param("action"), "_async")
 	log.Debugf("HTTPServer接收到API调用: %v", action)
 	c.JSON(200, s.api.callAPI(action, httpContext{ctx: c}))
 }
