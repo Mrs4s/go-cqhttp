@@ -147,9 +147,9 @@ func ToArrayMessage(e []message.IMessageElement, id int64, isRaw ...bool) (r []M
 				"type": "reply",
 				"data": map[string]string{
 					"id":   fmt.Sprint(toGlobalID(id, reply.(*message.ReplyElement).ReplySeq)),
-					"seq":  string(replyElem.ReplySeq),
+					"seq":  strconv.FormatInt(int64(replyElem.ReplySeq), 10),
 					"qq":   strconv.FormatInt(replyElem.Sender, 10),
-					"time": string(replyElem.Time),
+					"time": strconv.FormatInt(int64(replyElem.Time), 10),
 					"text": CQCodeEscapeValue(CQCodeEscapeText(ToStringMessage(replyElem.Elements, id))),
 				},
 			})
@@ -1196,9 +1196,9 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video, group bool) (
 			return nil, errors.New("invalid local file")
 		}
 		var (
-			size int32
-			hash []byte
-			url  string
+			size     int32
+			hash     []byte
+			imageURL string
 		)
 		if path.Ext(rawPath) == ".cqimg" {
 			for _, line := range strings.Split(global.ReadAllText(rawPath), "\n") {
@@ -1216,11 +1216,11 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video, group bool) (
 			hash = r.ReadBytes(16)
 			size = r.ReadInt32()
 			r.ReadString()
-			url = r.ReadString()
+			imageURL = r.ReadString()
 		}
 		if size == 0 {
-			if url != "" {
-				return bot.makeImageOrVideoElem(map[string]string{"file": url}, false, group)
+			if imageURL != "" {
+				return bot.makeImageOrVideoElem(map[string]string{"file": imageURL}, false, group)
 			}
 			return nil, errors.New("img size is 0")
 		}
@@ -1235,8 +1235,8 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video, group bool) (
 		rsp, err = bot.Client.QueryFriendImage(int64(rand.Uint32()), hash, size)
 	ok:
 		if err != nil {
-			if url != "" {
-				return bot.makeImageOrVideoElem(map[string]string{"file": url}, false, group)
+			if imageURL != "" {
+				return bot.makeImageOrVideoElem(map[string]string{"file": imageURL}, false, group)
 			}
 			return nil, err
 		}
