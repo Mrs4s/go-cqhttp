@@ -132,10 +132,7 @@ func (bot *CQBot) GetMessage(mid int32) MSG {
 		m := MSG{}
 		data, err := bot.db.Get(binary.ToBytes(mid), nil)
 		if err == nil {
-			buff := global.NewBuffer()
-			defer global.PutBuffer(buff)
-			buff.Write(binary.GZipUncompress(data))
-			err = gob.NewDecoder(buff).Decode(&m)
+			err = gob.NewDecoder(bytes.NewReader(data)).Decode(&m)
 			if err == nil {
 				return m
 			}
@@ -371,11 +368,7 @@ func (bot *CQBot) InsertGroupMessage(m *message.GroupMessage) int32 {
 			log.Warnf("记录聊天数据时出现错误: %v", err)
 			return -1
 		}
-		gw := binary.AcquireGzipWriter()
-		defer binary.ReleaseGzipWriter(gw)
-		_, _ = gw.Write(buf.Bytes())
-		_ = gw.Close()
-		if err := bot.db.Put(binary.ToBytes(id), gw.Bytes(), nil); err != nil {
+		if err := bot.db.Put(binary.ToBytes(id), buf.Bytes(), nil); err != nil {
 			log.Warnf("记录聊天数据时出现错误: %v", err)
 			return -1
 		}
@@ -401,11 +394,7 @@ func (bot *CQBot) InsertPrivateMessage(m *message.PrivateMessage) int32 {
 			log.Warnf("记录聊天数据时出现错误: %v", err)
 			return -1
 		}
-		gw := binary.AcquireGzipWriter()
-		defer binary.ReleaseGzipWriter(gw)
-		_, _ = gw.Write(buf.Bytes())
-		_ = gw.Close()
-		if err := bot.db.Put(binary.ToBytes(id), gw.Bytes(), nil); err != nil {
+		if err := bot.db.Put(binary.ToBytes(id), buf.Bytes(), nil); err != nil {
 			log.Warnf("记录聊天数据时出现错误: %v", err)
 			return -1
 		}
@@ -433,11 +422,7 @@ func (bot *CQBot) InsertTempMessage(target int64, m *message.TempMessage) int32 
 			log.Warnf("记录聊天数据时出现错误: %v", err)
 			return -1
 		}
-		gw := binary.AcquireGzipWriter()
-		defer binary.ReleaseGzipWriter(gw)
-		_, _ = gw.Write(buf.Bytes())
-		_ = gw.Close()
-		if err := bot.db.Put(binary.ToBytes(id), gw.Bytes(), nil); err != nil {
+		if err := bot.db.Put(binary.ToBytes(id), buf.Bytes(), nil); err != nil {
 			log.Warnf("记录聊天数据时出现错误: %v", err)
 			return -1
 		}
