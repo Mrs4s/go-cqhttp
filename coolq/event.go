@@ -11,8 +11,9 @@ import (
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/MiraiGo/message"
-	"github.com/Mrs4s/go-cqhttp/global"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/Mrs4s/go-cqhttp/global"
 )
 
 var format = "string"
@@ -101,7 +102,8 @@ func (bot *CQBot) groupMessageEvent(c *client.QQClient, m *message.GroupMessage)
 	bot.dispatchEventMessage(gm)
 }
 
-func (bot *CQBot) tempMessageEvent(c *client.QQClient, m *message.TempMessage) {
+func (bot *CQBot) tempMessageEvent(c *client.QQClient, m1 *client.TempMessageEvent) {
+	m := m1.Message
 	bot.checkMedia(m.Elements)
 	cqm := ToStringMessage(m.Elements, m.Sender.Uin, true)
 	bot.tempMsgCache.Store(m.Sender.Uin, m.GroupCode)

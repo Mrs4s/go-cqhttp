@@ -17,10 +17,11 @@ import (
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/Mrs4s/MiraiGo/utils"
-	"github.com/Mrs4s/go-cqhttp/global"
 	jsoniter "github.com/json-iterator/go"
 	log "github.com/sirupsen/logrus"
 	"github.com/syndtr/goleveldb/leveldb"
+
+	"github.com/Mrs4s/go-cqhttp/global"
 )
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
@@ -242,7 +243,7 @@ func (bot *CQBot) SendGroupMessage(groupID int64, m *message.SendingMessage) int
 }
 
 // SendPrivateMessage 发送私聊消息
-func (bot *CQBot) SendPrivateMessage(target int64, groupId int64, m *message.SendingMessage) int32 {
+func (bot *CQBot) SendPrivateMessage(target int64, groupID int64, m *message.SendingMessage) int32 {
 	var newElem []message.IMessageElement
 	for _, elem := range m.Elements {
 		if i, ok := elem.(*LocalImageElement); ok {
@@ -259,7 +260,7 @@ func (bot *CQBot) SendPrivateMessage(target int64, groupId int64, m *message.Sen
 			return 0
 		}
 		if i, ok := elem.(*message.VoiceElement); ok {
-			fv, err := bot.Client.UploadPrivatePtt(target, i.Data)
+			fv, err := bot.Client.UploadPrivatePtt(target, bytes.NewReader(i.Data))
 			if err != nil {
 				log.Warnf("警告: 私聊 %v 消息语音上传失败: %v", target, err)
 				continue
@@ -309,7 +310,7 @@ func (bot *CQBot) SendPrivateMessage(target int64, groupId int64, m *message.Sen
 			if code != nil && groupID == 0 {
 				groupID = code.(int64)
 			}
-			msg := bot.Client.SendTempMessage(groupId, target, m)
+			msg := bot.Client.SendGroupTempMessage(groupID, target, m)
 			if msg != nil {
 				id = bot.InsertTempMessage(target, msg)
 			}
