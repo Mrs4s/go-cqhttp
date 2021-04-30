@@ -8,9 +8,6 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
-	"github.com/Mrs4s/go-cqhttp/global/terminal"
-	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
-	easy "github.com/t-tomalak/logrus-easy-formatter"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -25,18 +22,21 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Mrs4s/go-cqhttp/server"
+	"github.com/Mrs4s/MiraiGo/binary"
+	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/guonaihong/gout"
+	jsoniter "github.com/json-iterator/go"
+	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
+	log "github.com/sirupsen/logrus"
+	easy "github.com/t-tomalak/logrus-easy-formatter"
 	"github.com/tidwall/gjson"
 	"golang.org/x/crypto/pbkdf2"
 	"golang.org/x/term"
 
-	"github.com/Mrs4s/MiraiGo/binary"
-	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
-	jsoniter "github.com/json-iterator/go"
-	log "github.com/sirupsen/logrus"
+	"github.com/Mrs4s/go-cqhttp/global/terminal"
+	"github.com/Mrs4s/go-cqhttp/server"
 )
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
@@ -187,6 +187,7 @@ func main() {
 		if len(byteKey) == 0 {
 			log.Infof("密码加密已启用, 请输入Key对密码进行解密以继续: (Enter 提交)")
 			cancel := make(chan struct{}, 1)
+			state, _ := term.GetState(int(os.Stdin.Fd()))
 			go func() {
 				select {
 				case <-cancel:
@@ -194,6 +195,7 @@ func main() {
 				case <-time.After(time.Second * 45):
 					log.Infof("解密key输入超时")
 					time.Sleep(3 * time.Second)
+					_ = term.Restore(int(os.Stdin.Fd()), state)
 					os.Exit(0)
 				}
 			}()
