@@ -176,10 +176,6 @@ func ToArrayMessage(e []message.IMessageElement, id int64, isRaw ...bool) (r []M
 				"data": map[string]string{"text": o.Content},
 			}
 		case *message.LightAppElement:
-			// m = MSG{
-			// 	"type": "text",
-			// 	"data": map[string]string{"text": o.Content},
-			// }
 			m = MSG{
 				"type": "json",
 				"data": map[string]string{"data": o.Content},
@@ -759,7 +755,7 @@ func (bot *CQBot) ToElement(t string, d map[string]string, isGroup bool) (m inte
 			if i, ok := img.(*message.GroupImageElement); ok {
 				return &message.GroupShowPicElement{GroupImageElement: *i, EffectId: int32(id)}, nil
 			}
-			return img, nil // 私聊还没做
+			return img, nil
 		}
 
 	case "poke":
@@ -932,22 +928,17 @@ func (bot *CQBot) ToElement(t string, d map[string]string, isGroup bool) (m inte
 		source := d["source"]
 		icon := d["icon"]
 		brief := d["brief"]
-		minWidth, _ := strconv.ParseInt(d["minwidth"], 10, 64)
-		if minWidth == 0 {
-			minWidth = 200
+		parseIntWithDefault := func(name string, origin int64) int64 {
+			v, _ := strconv.ParseInt(d[name], 10, 64)
+			if v <= 0 {
+				return origin
+			}
+			return v
 		}
-		minHeight, _ := strconv.ParseInt(d["minheight"], 10, 64)
-		if minHeight == 0 {
-			minHeight = 200
-		}
-		maxWidth, _ := strconv.ParseInt(d["maxwidth"], 10, 64)
-		if maxWidth == 0 {
-			maxWidth = 500
-		}
-		maxHeight, _ := strconv.ParseInt(d["maxheight"], 10, 64)
-		if maxHeight == 0 {
-			maxHeight = 1000
-		}
+		minWidth := parseIntWithDefault("minwidth", 200)
+		maxWidth := parseIntWithDefault("maxwidth", 500)
+		minHeight := parseIntWithDefault("minheight", 200)
+		maxHeight := parseIntWithDefault("maxheight", 1000)
 		img, err := bot.makeImageOrVideoElem(d, false, isGroup)
 		if err != nil {
 			return nil, errors.New("send cardimage faild")
