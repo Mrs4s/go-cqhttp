@@ -1172,14 +1172,10 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video, group bool) (
 		return bot.makeImageOrVideoElem(map[string]string{"file": d["url"]}, false, group)
 	}
 	if exist {
-		file, err := os.Open(rawPath)
-		if err != nil {
-			return nil, err
-		}
 		if path.Ext(rawPath) != ".image" && path.Ext(rawPath) != ".cqimg" {
-			return &LocalImageElement{Stream: file}, nil
+			return &LocalImageElement{File: rawPath}, nil
 		}
-		b, err := ioutil.ReadAll(file)
+		b, err := os.ReadFile(rawPath)
 		if err != nil {
 			return nil, err
 		}
