@@ -22,6 +22,7 @@ func BenchmarkCQBot_ConvertStringMessage(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		bot.ConvertStringMessage(bench, false)
 	}
+	b.SetBytes(int64(len(bench)))
 }
 
 func BenchmarkCQBot_ConvertObjectMessage(b *testing.B) {

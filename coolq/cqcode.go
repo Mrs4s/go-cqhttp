@@ -14,12 +14,10 @@ import (
 	"net/url"
 	"os"
 	"path"
-	"reflect"
 	"runtime"
 	"strconv"
 	"strings"
 	"time"
-	"unsafe"
 
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/message"
@@ -48,19 +46,6 @@ var IgnoreInvalidCQCode = false
 
 // SplitURL 是否分割URL
 var SplitURL = false
-
-// magicCQ 代表 uint32([]byte("[CQ:"))
-var magicCQ = uint32(0)
-
-func init() {
-	CQHeader := "[CQ:"
-	magicCQ = *(*uint32)(unsafe.Pointer((*reflect.StringHeader)(unsafe.Pointer(&CQHeader)).Data))
-}
-
-// add 指针运算
-func add(ptr unsafe.Pointer, offset uintptr) unsafe.Pointer {
-	return unsafe.Pointer(uintptr(ptr) + offset)
-}
 
 const (
 	maxImageSize = 1024 * 1024 * 30  // 30MB
@@ -397,12 +382,9 @@ func ToStringMessage(e []message.IMessageElement, id int64, isRaw ...bool) (r st
 }
 
 // ConvertStringMessage 将消息字符串转为消息元素数组
-func (bot *CQBot) ConvertStringMessage(s string, isGroup bool) (r []message.IMessageElement) {
+func (bot *CQBot) ConvertStringMessage(raw string, isGroup bool) (r []message.IMessageElement) {
 	var t, key string
 	d := map[string]string{}
-	ptr := unsafe.Pointer((*reflect.StringHeader)(unsafe.Pointer(&s)).Data)
-	l := len(s)
-	i, j, CQBegin := 0, 0, 0
 
 	saveCQCode := func() {
 		if t == "reply" { // reply 特殊处理
@@ -487,7 +469,11 @@ func (bot *CQBot) ConvertStringMessage(s string, isGroup bool) (r []message.IMes
 		}
 		elem, err := bot.ToElement(t, d, isGroup)
 		if err != nil {
-			org := s[CQBegin:i]
+			org := "[CQ:" + t
+			for k, v := range d {
+				org += "," + k + "=" + v
+			}
+			org += "]"
 			if !IgnoreInvalidCQCode {
 				log.Warnf("转换CQ码 %v 时出现错误: %v 将原样发送.", org, err)
 				r = append(r, message.NewText(org))
@@ -504,81 +490,65 @@ func (bot *CQBot) ConvertStringMessage(s string, isGroup bool) (r []message.IMes
 		}
 	}
 
-S1: // Plain Text
-	for ; i < l; i++ {
-		if *(*byte)(add(ptr, uintptr(i))) == '[' && i+4 < l &&
-			*(*uint32)(add(ptr, uintptr(i))) == magicCQ { // Magic :uint32([]byte("[CQ:"))
-			if i > j {
-				if SplitURL {
-					for _, str := range global.SplitURL(CQCodeUnescapeText(s[j:i])) {
-						r = append(r, message.NewText(str))
-					}
-				} else {
-					r = append(r, message.NewText(CQCodeUnescapeText(s[j:i])))
+	for raw != "" {
+		i := 0
+		for i < len(raw) && !(raw[i] == '[' && i+4 < len(raw) && raw[i:i+4] == "[CQ:") {
+			i++
+		}
+		if i > 0 {
+			if SplitURL {
+				for _, txt := range global.SplitURL(CQCodeUnescapeText(raw[:i])) {
+					r = append(r, message.NewText(txt))
 				}
+			} else {
+				r = append(r, message.NewText(CQCodeUnescapeText(raw[:i])))
 			}
-			CQBegin = i
-			i += 4
-			j = i
-			goto S2
 		}
-	}
-	goto End
-S2: // CQCode Type
-	for k := range d { // 内存复用，减小GC压力
-		delete(d, k)
-	}
-	for ; i < l; i++ {
-		switch *(*byte)(add(ptr, uintptr(i))) {
-		case ',': // CQ Code with params
-			t = s[j:i]
-			i++
-			j = i
-			goto S3
-		case ']': // CQ Code without params
-			t = s[j:i]
-			i++
-			j = i
-			saveCQCode()
-			goto S1
+
+		if i+4 > len(raw) {
+			return
 		}
-	}
-	goto End
-S3: // CQCode param key
-	for ; i < l; i++ {
-		if *(*byte)(add(ptr, uintptr(i))) == '=' {
-			key = s[j:i]
+		raw = raw[i+4:] // skip "[CQ:"
+		i = 0
+		for i < len(raw) && raw[i] != ',' && raw[i] != ']' {
 			i++
-			j = i
-			goto S4
 		}
-	}
-	goto End
-S4: // CQCode param value
-	for ; i < l; i++ {
-		switch *(*byte)(add(ptr, uintptr(i))) {
-		case ',': // more param
-			d[key] = CQCodeUnescapeValue(s[j:i])
-			i++
-			j = i
-			goto S3
-		case ']':
-			d[key] = CQCodeUnescapeValue(s[j:i])
-			i++
-			j = i
-			saveCQCode()
-			goto S1
+		if i+1 > len(raw) {
+			return
 		}
-	}
-	goto End
-End:
-	if i > j {
-		if SplitURL {
-			for _, str := range global.SplitURL(CQCodeUnescapeText(s[j:i])) {
-				r = append(r, message.NewText(str))
+		t = raw[:i]
+		for k := range d { // clear the map, reuse it
+			delete(d, k)
+		}
+		raw = raw[i:]
+		i = 0
+		for {
+			if raw[0] == ']' {
+				saveCQCode()
+				raw = raw[1:]
+				break
 			}
-		} else {
-			r = append(r, message.NewText(CQCodeUnescapeText(s[j:i])))
+			raw = raw[1:]
+
+			for i < len(raw) && raw[i] != '=' {
+				i++
+			}
+			if i+1 > len(raw) {
+				return
+			}
+			key = raw[:i]
+			raw = raw[i+1:] // skip "="
+			i = 0
+			for i < len(raw) && raw[i] != ',' && raw[i] != ']' {
+				i++
+			}
+
+			if i+1 > len(raw) {
+				return
+			}
+			d[key] = CQCodeUnescapeValue(raw[:i])
+			raw = raw[i:]
+			i = 0
 		}
 	}
 	return
