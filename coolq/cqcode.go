@@ -827,7 +827,6 @@ func (bot *CQBot) ToElement(t string, d map[string]string, isGroup bool) (m inte
 			if !info.Get("track_info").Exists() {
 				return nil, errors.New("song not found")
 			}
-			aid := strconv.FormatInt(info.Get("track_info.album.id").Int(), 10)
 			name := info.Get("track_info.name").Str
 			mid := info.Get("track_info.mid").Str
 			albumMid := info.Get("track_info.album.mid").Str
@@ -835,9 +834,6 @@ func (bot *CQBot) ToElement(t string, d map[string]string, isGroup bool) (m inte
 			jumpURL := "https://i.y.qq.com/v8/playsong.html?platform=11&appshare=android_qq&appversion=10030010&hosteuin=oKnlNenz7i-s7c**&songmid=" + mid + "&type=0&appsongtype=1&_wv=1&source=qq&ADTAG=qfshare"
 			purl := gjson.ParseBytes(pinfo).Get("url_mid.data.midurlinfo.0.purl").Str
 			preview := "http://y.gtimg.cn/music/photo_new/T002R180x180M000" + albumMid + ".jpg"
-			if len(aid) < 2 {
-				return nil, errors.New("song error")
-			}
 			content := info.Get("track_info.singer.0.name").Str
 			if d["content"] != "" {
 				content = d["content"]
@@ -878,19 +874,21 @@ func (bot *CQBot) ToElement(t string, d map[string]string, isGroup bool) (m inte
 		}
 		if d["type"] == "custom" {
 			if d["subtype"] != "" {
-				subtype := map[string]int{
-					"qq":    message.QQMusic,
-					"163":   message.CloudMusic,
-					"migu":  message.MiguMusic,
-					"kugou": message.KugouMusic,
-					"kuwo":  message.KuwoMusic,
-				}
-				musicType := 0
-				if tp, ok := subtype[d["subtype"]]; ok {
-					musicType = tp
+				var subType int
+				switch d["subtype"] {
+				default:
+					subType = message.QQMusic
+				case "163":
+					subType = message.CloudMusic
+				case "migu":
+					subType = message.MiguMusic
+				case "kugou":
+					subType = message.KugouMusic
+				case "kuwo":
+					subType = message.KuwoMusic
 				}
 				return &message.MusicShareElement{
-					MusicType:  musicType,
+					MusicType:  subType,
 					Title:      d["title"],
 					Summary:    d["content"],
 					Url:        d["url"],
