@@ -1155,8 +1155,8 @@ JSON数组:
 | `notice_type` | string | `group_card` | 消息类型 |
 | `group_id`    | int64  |              | 群号     |
 | `user_id`     | int64  |              | 成员id   |
-| `card_new`    | int64  |              | 新名片   |
-| `card_old`    | int64  |              | 旧名片   |
+| `card_new`    | string |              | 新名片   |
+| `card_old`    | string |              | 旧名片   |
 
 > PS: 当名片为空时 `card_xx` 字段为空字符串, 并不是昵称
 
