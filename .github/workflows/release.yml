@@ -6,6 +6,33 @@ on:
       - "v*"
 
 jobs:
+  
+  push_downstream:
+    runs-on: ubuntu-18.04
+    if: ${{ github.repository == 'Mrs4s/go-cqhttp' }}
+    steps:
+      - name: Checkout Dist
+        uses: actions/checkout@v2
+        with:
+          repository: "Mrs4s/go-cqhttp"
+          ref: master
+          ssh-key: ${{ secrets.SSH_KEY }}
+          path: downstream/go-cqhttp
+
+      - name: Push downstream
+        run: |
+          cd downstream/go-cqhttp
+          rm -rf .git
+          git clone git@github.com:Mrs4s/go-cqhttp.git --bare .git
+          git config --unset core.bare
+          git reset --hard
+          git remote rename origin nini
+          git remote add origin git@github.com:gocq/go-cqhttp.git
+          git config --local user.name 'github-actions[bot]'
+          git config --local user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git push -u origin --all -f
+          git push -u origin --tags -f
+
   goreleaser:
     runs-on: ubuntu-18.04
     steps:
