@@ -1380,6 +1380,37 @@ func (bot *CQBot) CQGetVersionInfo() MSG {
 	})
 }
 
+// CQGetModelShow 获取在线机型
+//
+// https://club.vip.qq.com/onlinestatus/set
+func (bot *CQBot) CQGetModelShow(modelName string) MSG {
+	variants, err := bot.Client.GetModelShow(modelName)
+	if err != nil {
+		return Failed(100, "GET_MODEL_SHOW_API_ERROR", "无法获取在线机型")
+	}
+	a := make([]MSG, 0, len(variants))
+	for _, v := range variants {
+		a = append(a, MSG{
+			"model_show": v.ModelShow,
+			"need_pay":   v.NeedPay,
+		})
+	}
+	return OK(MSG{
+		"variants": a,
+	})
+}
+
+// CQSetModelShow 设置在线机型
+//
+// https://club.vip.qq.com/onlinestatus/set
+func (bot *CQBot) CQSetModelShow(modelName string, modelShow string) MSG {
+	err := bot.Client.SetModelShow(modelName, modelShow)
+	if err != nil {
+		return Failed(100, "SET_MODEL_SHOW_API_ERROR", "无法设置在线机型")
+	}
+	return OK(nil)
+}
+
 // OK 生成成功返回值
 func OK(data interface{}) MSG {
 	return MSG{"data": data, "retcode": 0, "status": "ok"}
