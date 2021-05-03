@@ -24,6 +24,10 @@ func getLoginInfo(bot *coolq.CQBot, _ resultGetter) coolq.MSG {
 	return bot.CQGetLoginInfo()
 }
 
+func getQiDianAccountInfo(bot *coolq.CQBot, _ resultGetter) coolq.MSG {
+	return bot.CQGetQiDianAccountInfo()
+}
+
 func getFriendList(bot *coolq.CQBot, _ resultGetter) coolq.MSG {
 	return bot.CQGetFriendList()
 }
@@ -393,6 +397,7 @@ var API = map[string]func(*coolq.CQBot, resultGetter) coolq.MSG{
 	"check_url_safely":           checkURLSafely,
 	"set_group_anonymous_ban":    setGroupAnonymousBan,
 	".handle_quick_operation":    handleQuickOperation,
+	"qidian_get_account_info":    getQiDianAccountInfo,
 }
 
 func (api *apiCaller) callAPI(action string, p resultGetter) coolq.MSG {

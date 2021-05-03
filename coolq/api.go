@@ -46,6 +46,18 @@ func (bot *CQBot) CQGetLoginInfo() MSG {
 	return OK(MSG{"user_id": bot.Client.Uin, "nickname": bot.Client.Nickname})
 }
 
+// CQGetQiDianAccountInfo 获取企点账号信息
+func (bot *CQBot) CQGetQiDianAccountInfo() MSG {
+	if bot.Client.QiDian == nil {
+		return Failed(100, "QIDIAN_PROTOCOL_REQUEST", "请使用企点协议")
+	}
+	return OK(MSG{
+		"master_id":   bot.Client.QiDian.MasterUin,
+		"ext_name":    bot.Client.QiDian.ExtName,
+		"create_time": bot.Client.QiDian.CreateTime,
+	})
+}
+
 // CQGetFriendList 获取好友列表
 //
 // https://git.io/Jtz1L
