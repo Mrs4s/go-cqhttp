@@ -1359,6 +1359,8 @@ func (bot *CQBot) CQGetVersionInfo() MSG {
 				return 2
 			case client.MacOS:
 				return 3
+			case client.QiDian:
+				return 4
 			default:
 				return -1
 			}

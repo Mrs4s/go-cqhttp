@@ -245,6 +245,8 @@ func main() {
 			return "Android Watch"
 		case client.MacOS:
 			return "MacOS"
+		case client.QiDian:
+			return "企点"
 		}
 		return "未知"
 	}())
