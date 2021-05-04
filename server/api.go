@@ -338,6 +338,14 @@ func handleQuickOperation(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 	return bot.CQHandleQuickOperation(p.Get("context"), p.Get("operation"))
 }
 
+func getModelShow(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+	return bot.CQGetModelShow(p.Get("model").String())
+}
+
+func setModelShow(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+	return bot.CQSetModelShow(p.Get("model").String(), p.Get("model_show").String())
+}
+
 // API 是go-cqhttp当前支持的所有api的映射表
 var API = map[string]func(*coolq.CQBot, resultGetter) coolq.MSG{
 	"get_login_info":             getLoginInfo,
@@ -398,6 +406,8 @@ var API = map[string]func(*coolq.CQBot, resultGetter) coolq.MSG{
 	"set_group_anonymous_ban":    setGroupAnonymousBan,
 	".handle_quick_operation":    handleQuickOperation,
 	"qidian_get_account_info":    getQiDianAccountInfo,
+	"_get_model_show":            getModelShow,
+	"_set_model_show":            setModelShow,
 }
 
 func (api *apiCaller) callAPI(action string, p resultGetter) coolq.MSG {
