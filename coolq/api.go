@@ -606,12 +606,26 @@ func (bot *CQBot) CQSetGroupName(groupID int64, name string) MSG {
 // CQSetGroupMemo 扩展API-发送群公告
 //
 // https://docs.go-cqhttp.org/api/#%E5%8F%91%E9%80%81%E7%BE%A4%E5%85%AC%E5%91%8A
-func (bot *CQBot) CQSetGroupMemo(groupID int64, msg string) MSG {
+func (bot *CQBot) CQSetGroupMemo(groupID int64, msg string, img string) MSG {
 	if g := bot.Client.FindGroup(groupID); g != nil {
 		if g.SelfPermission() == client.Member {
 			return Failed(100, "PERMISSION_DENIED", "权限不足")
 		}
-		_ = bot.Client.AddGroupNoticeSimple(groupID, msg)
+		if img != "" {
+			data, err := global.FindFile(img, "", global.ImagePath)
+			if err != nil {
+				return Failed(100, "IMAGE_NOT_FOUND", "图片未找到")
+			}
+			err = bot.Client.AddGroupNoticeWithPic(groupID, msg, data)
+			if err != nil {
+				return Failed(100, "SEND_NOTICE_ERROR", err.Error())
+			}
+		} else {
+			err := bot.Client.AddGroupNoticeSimple(groupID, msg)
+			if err != nil {
+				return Failed(100, "SEND_NOTICE_ERROR", err.Error())
+			}
+		}
 		return OK(nil)
 	}
 	return Failed(100, "GROUP_NOT_FOUND", "群聊不存在")

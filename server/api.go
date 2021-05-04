@@ -149,7 +149,7 @@ func setGroupAdmin(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 }
 
 func sendGroupNotice(bot *coolq.CQBot, p resultGetter) coolq.MSG {
-	return bot.CQSetGroupMemo(p.Get("group_id").Int(), p.Get("content").Str)
+	return bot.CQSetGroupMemo(p.Get("group_id").Int(), p.Get("content").Str, p.Get("image").String())
 }
 
 func setGroupLeave(bot *coolq.CQBot, p resultGetter) coolq.MSG {
