@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 )
 
@@ -72,18 +73,30 @@ func EnsureBool(p interface{}, defaultVal bool) bool {
 // v0.9.29-fix2 > v0.9.29-fix1 -> false
 //
 // v0.9.29-fix2 < v0.9.30 -> true
+//
+// v1.0.0-alpha2 < v1.0.0-beta1 -> true
+//
+// v1.0.0 > v1.0.0-beta1 -> false
 func VersionNameCompare(current, remote string) bool {
-	sp := regexp.MustCompile(`[0-9]\d*`)
-	cur := sp.FindAllStringSubmatch(current, -1)
-	re := sp.FindAllStringSubmatch(remote, -1)
-	for i := 0; i < int(math.Min(float64(len(cur)), float64(len(re)))); i++ {
-		curSub, _ := strconv.Atoi(cur[i][0])
-		reSub, _ := strconv.Atoi(re[i][0])
+	defer func() { // 应该不会panic， 为了保险还是加个
+		if err := recover(); err != nil {
+			log.Warn("检查更新失败！")
+		}
+	}()
+	sp := regexp.MustCompile(`v(\d+)\.(\d+)\.(\d+)-?(.+)?`)
+	cur := sp.FindStringSubmatch(current)
+	re := sp.FindStringSubmatch(remote)
+	for i := 1; i <= 3; i++ {
+		curSub, _ := strconv.Atoi(cur[i])
+		reSub, _ := strconv.Atoi(re[i])
 		if curSub != reSub {
 			return curSub < reSub
 		}
 	}
-	return len(cur) < len(re)
+	if cur[4] == "" || re[4] == "" {
+		return re[4] == "" && cur[4] != re[4]
+	}
+	return cur[4] < re[4]
 }
 
 var (
