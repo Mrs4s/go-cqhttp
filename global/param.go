@@ -79,8 +79,8 @@ func VersionNameCompare(current, remote string) bool {
 	for i := 0; i < int(math.Min(float64(len(cur)), float64(len(re)))); i++ {
 		curSub, _ := strconv.Atoi(cur[i][0])
 		reSub, _ := strconv.Atoi(re[i][0])
-		if curSub < reSub {
-			return true
+		if curSub != reSub {
+			return curSub < reSub
 		}
 	}
 	return len(cur) < len(re)
