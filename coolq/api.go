@@ -364,7 +364,7 @@ func (bot *CQBot) CQSendGroupMessage(groupID int64, i interface{}, autoEscape bo
 			if mid == -1 {
 				return Failed(100, "SEND_MSG_API_ERROR", "请参考输出")
 			}
-			log.Infof("发送群 %v(%v) 的消息: %v (%v)", group.Name, groupID, limitedString(ToStringMessage(elem, int64(mid))), mid)
+			log.Infof("发送群 %v(%v) 的消息: %v (%v)", group.Name, groupID, limitedString(ToStringMessage(elem, groupID)), mid)
 			return OK(MSG{"message_id": mid})
 		}
 		str = func() string {
@@ -1119,7 +1119,7 @@ func (bot *CQBot) CQGetMessage(messageID int32) MSG {
 			if isGroup {
 				return gid.(int64)
 			}
-			return sender.Uin
+			return 0
 		}(), false),
 	})
 }

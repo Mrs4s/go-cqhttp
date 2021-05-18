@@ -114,12 +114,8 @@ func (e *PokeElement) Type() message.ElementType {
 }
 
 // ToArrayMessage 将消息元素数组转为MSG数组以用于消息上报
-func ToArrayMessage(e []message.IMessageElement, id int64, isRaw ...bool) (r []MSG) {
+func ToArrayMessage(e []message.IMessageElement, groupID int64) (r []MSG) {
 	r = make([]MSG, 0, len(e))
-	ur := false
-	if len(isRaw) != 0 {
-		ur = isRaw[0]
-	}
 	m := &message.SendingMessage{Elements: e}
 	reply := m.FirstOrNil(func(e message.IMessageElement) bool {
 		_, ok := e.(*message.ReplyElement)
@@ -127,21 +123,25 @@ func ToArrayMessage(e []message.IMessageElement, id int64, isRaw ...bool) (r []M
 	})
 	if reply != nil {
 		replyElem := reply.(*message.ReplyElement)
+		rid := groupID
+		if rid == 0 {
+			rid = replyElem.Sender
+		}
 		if ExtraReplyData {
 			r = append(r, MSG{
 				"type": "reply",
 				"data": map[string]string{
-					"id":   fmt.Sprint(toGlobalID(id, reply.(*message.ReplyElement).ReplySeq)),
+					"id":   fmt.Sprint(toGlobalID(rid, replyElem.ReplySeq)),
 					"seq":  strconv.FormatInt(int64(replyElem.ReplySeq), 10),
 					"qq":   strconv.FormatInt(replyElem.Sender, 10),
 					"time": strconv.FormatInt(int64(replyElem.Time), 10),
-					"text": ToStringMessage(replyElem.Elements, id),
+					"text": ToStringMessage(replyElem.Elements, groupID),
 				},
 			})
 		} else {
 			r = append(r, MSG{
 				"type": "reply",
-				"data": map[string]string{"id": fmt.Sprint(toGlobalID(id, replyElem.ReplySeq))},
+				"data": map[string]string{"id": fmt.Sprint(toGlobalID(rid, replyElem.ReplySeq))},
 			})
 		}
 	}
@@ -193,64 +193,29 @@ func ToArrayMessage(e []message.IMessageElement, id int64, isRaw ...bool) (r []M
 				"data": map[string]string{"id": fmt.Sprint(o.Index)},
 			}
 		case *message.VoiceElement:
-			if ur {
-				m = MSG{
-					"type": "record",
-					"data": map[string]string{"file": o.Name},
-				}
-			} else {
-				m = MSG{
-					"type": "record",
-					"data": map[string]string{"file": o.Name, "url": o.Url},
-				}
+			m = MSG{
+				"type": "record",
+				"data": map[string]string{"file": o.Name, "url": o.Url},
 			}
 		case *message.ShortVideoElement:
-			if ur {
-				m = MSG{
-					"type": "video",
-					"data": map[string]string{"file": o.Name},
-				}
-			} else {
-				m = MSG{
-					"type": "video",
-					"data": map[string]string{"file": o.Name, "url": o.Url},
-				}
+			m = MSG{
+				"type": "video",
+				"data": map[string]string{"file": o.Name, "url": o.Url},
 			}
 		case *message.ImageElement:
-			if ur {
-				m = MSG{
-					"type": "image",
-					"data": map[string]string{"file": o.Filename},
-				}
-			} else {
-				m = MSG{
-					"type": "image",
-					"data": map[string]string{"file": o.Filename, "url": o.Url},
-				}
+			m = MSG{
+				"type": "image",
+				"data": map[string]string{"file": o.Filename, "url": o.Url},
 			}
 		case *message.GroupImageElement:
-			if ur {
-				m = MSG{
-					"type": "image",
-					"data": map[string]string{"file": hex.EncodeToString(o.Md5) + ".image"},
-				}
-			} else {
-				m = MSG{
-					"type": "image",
-					"data": map[string]string{"file": hex.EncodeToString(o.Md5) + ".image", "url": o.Url},
-				}
+			m = MSG{
+				"type": "image",
+				"data": map[string]string{"file": hex.EncodeToString(o.Md5) + ".image", "url": o.Url},
 			}
 		case *message.FriendImageElement:
-			if ur {
-				m = MSG{
-					"type": "image",
-					"data": map[string]string{"file": hex.EncodeToString(o.Md5) + ".image"},
-				}
-			} else {
-				m = MSG{
-					"type": "image",
-					"data": map[string]string{"file": hex.EncodeToString(o.Md5) + ".image", "url": o.Url},
-				}
+			m = MSG{
+				"type": "image",
+				"data": map[string]string{"file": hex.EncodeToString(o.Md5) + ".image", "url": o.Url},
 			}
 		case *message.GroupFlashImgElement:
 			return []MSG{{
@@ -285,7 +250,7 @@ func ToArrayMessage(e []message.IMessageElement, id int64, isRaw ...bool) (r []M
 }
 
 // ToStringMessage 将消息元素数组转为字符串以用于消息上报
-func ToStringMessage(e []message.IMessageElement, id int64, isRaw ...bool) (r string) {
+func ToStringMessage(e []message.IMessageElement, groupID int64, isRaw ...bool) (r string) {
 	sb := global.NewBuffer()
 	sb.Reset()
 	write := func(format string, a ...interface{}) {
@@ -303,13 +268,17 @@ func ToStringMessage(e []message.IMessageElement, id int64, isRaw ...bool) (r st
 	})
 	if reply != nil {
 		replyElem := reply.(*message.ReplyElement)
+		rid := groupID
+		if rid == 0 {
+			rid = replyElem.Sender
+		}
 		if ExtraReplyData {
 			write("[CQ:reply,id=%d,seq=%d,qq=%d,time=%d,text=%s]",
-				toGlobalID(id, replyElem.ReplySeq),
+				toGlobalID(rid, replyElem.ReplySeq),
 				replyElem.ReplySeq, replyElem.Sender, replyElem.Time,
-				CQCodeEscapeValue(ToStringMessage(replyElem.Elements, id)))
+				CQCodeEscapeValue(ToStringMessage(replyElem.Elements, groupID)))
 		} else {
-			write("[CQ:reply,id=%d]", toGlobalID(id, replyElem.ReplySeq))
+			write("[CQ:reply,id=%d]", toGlobalID(rid, replyElem.ReplySeq))
 		}
 	}
 	for i, elem := range e {

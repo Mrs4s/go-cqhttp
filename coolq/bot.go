@@ -384,7 +384,7 @@ func (bot *CQBot) InsertPrivateMessage(m *message.PrivateMessage) int32 {
 		"target":      m.Target,
 		"sender":      m.Sender,
 		"time":        m.Time,
-		"message":     ToStringMessage(m.Elements, m.Sender.Uin, true),
+		"message":     ToStringMessage(m.Elements, 0, true),
 	}
 	id := toGlobalID(m.Sender.Uin, m.Id)
 	if bot.db != nil {
@@ -412,7 +412,7 @@ func (bot *CQBot) InsertTempMessage(target int64, m *message.TempMessage) int32 
 		"target":     target,
 		"sender":     m.Sender,
 		"time":       int32(time.Now().Unix()),
-		"message":    ToStringMessage(m.Elements, m.Sender.Uin, true),
+		"message":    ToStringMessage(m.Elements, 0, true),
 	}
 	id := toGlobalID(m.Sender.Uin, m.Id)
 	if bot.db != nil {
