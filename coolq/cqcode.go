@@ -135,7 +135,7 @@ func ToArrayMessage(e []message.IMessageElement, id int64, isRaw ...bool) (r []M
 					"seq":  strconv.FormatInt(int64(replyElem.ReplySeq), 10),
 					"qq":   strconv.FormatInt(replyElem.Sender, 10),
 					"time": strconv.FormatInt(int64(replyElem.Time), 10),
-					"text": CQCodeEscapeValue(CQCodeEscapeText(ToStringMessage(replyElem.Elements, id))),
+					"text": ToStringMessage(replyElem.Elements, id),
 				},
 			})
 		} else {
@@ -288,6 +288,9 @@ func ToArrayMessage(e []message.IMessageElement, id int64, isRaw ...bool) (r []M
 func ToStringMessage(e []message.IMessageElement, id int64, isRaw ...bool) (r string) {
 	sb := global.NewBuffer()
 	sb.Reset()
+	write := func(format string, a ...interface{}) {
+		_, _ = fmt.Fprintf(sb, format, a...)
+	}
 	ur := false
 	if len(isRaw) != 0 {
 		ur = isRaw[0]
@@ -301,12 +304,12 @@ func ToStringMessage(e []message.IMessageElement, id int64, isRaw ...bool) (r st
 	if reply != nil {
 		replyElem := reply.(*message.ReplyElement)
 		if ExtraReplyData {
-			sb.WriteString(fmt.Sprintf("[CQ:reply,id=%d,seq=%d,qq=%d,time=%d,text=%s]",
+			write("[CQ:reply,id=%d,seq=%d,qq=%d,time=%d,text=%s]",
 				toGlobalID(id, replyElem.ReplySeq),
 				replyElem.ReplySeq, replyElem.Sender, replyElem.Time,
-				CQCodeEscapeValue(ToStringMessage(replyElem.Elements, id))))
+				CQCodeEscapeValue(ToStringMessage(replyElem.Elements, id)))
 		} else {
-			sb.WriteString(fmt.Sprintf("[CQ:reply,id=%d]", toGlobalID(id, replyElem.ReplySeq)))
+			write("[CQ:reply,id=%d]", toGlobalID(id, replyElem.ReplySeq))
 		}
 	}
 	for i, elem := range e {
@@ -322,45 +325,45 @@ func ToStringMessage(e []message.IMessageElement, id int64, isRaw ...bool) (r st
 			sb.WriteString(CQCodeEscapeText(o.Content))
 		case *message.AtElement:
 			if o.Target == 0 {
-				sb.WriteString("[CQ:at,qq=all]")
+				write("[CQ:at,qq=all]")
 				continue
 			}
-			sb.WriteString(fmt.Sprintf("[CQ:at,qq=%d]", o.Target))
+			write("[CQ:at,qq=%d]", o.Target)
 		case *message.RedBagElement:
-			sb.WriteString(fmt.Sprintf("[CQ:redbag,title=%s]", o.Title))
+			write("[CQ:redbag,title=%s]", o.Title)
 		case *message.ForwardElement:
-			sb.WriteString(fmt.Sprintf("[CQ:forward,id=%s]", o.ResId))
+			write("[CQ:forward,id=%s]", o.ResId)
 		case *message.FaceElement:
-			sb.WriteString(fmt.Sprintf(`[CQ:face,id=%d]`, o.Index))
+			write(`[CQ:face,id=%d]`, o.Index)
 		case *message.VoiceElement:
 			if ur {
-				sb.WriteString(fmt.Sprintf(`[CQ:record,file=%s]`, o.Name))
+				write(`[CQ:record,file=%s]`, o.Name)
 			} else {
-				sb.WriteString(fmt.Sprintf(`[CQ:record,file=%s,url=%s]`, o.Name, CQCodeEscapeValue(o.Url)))
+				write(`[CQ:record,file=%s,url=%s]`, o.Name, CQCodeEscapeValue(o.Url))
 			}
 		case *message.ShortVideoElement:
 			if ur {
-				sb.WriteString(fmt.Sprintf(`[CQ:video,file=%s]`, o.Name))
+				write(`[CQ:video,file=%s]`, o.Name)
 			} else {
-				sb.WriteString(fmt.Sprintf(`[CQ:video,file=%s,url=%s]`, o.Name, CQCodeEscapeValue(o.Url)))
+				write(`[CQ:video,file=%s,url=%s]`, o.Name, CQCodeEscapeValue(o.Url))
 			}
 		case *message.ImageElement:
 			if ur {
-				sb.WriteString(fmt.Sprintf(`[CQ:image,file=%s]`, o.Filename))
+				write(`[CQ:image,file=%s]`, o.Filename)
 			} else {
-				sb.WriteString(fmt.Sprintf(`[CQ:image,file=%s,url=%s]`, o.Filename, CQCodeEscapeValue(o.Url)))
+				write(`[CQ:image,file=%s,url=%s]`, o.Filename, CQCodeEscapeValue(o.Url))
 			}
 		case *message.GroupImageElement:
 			if ur {
-				sb.WriteString(fmt.Sprintf("[CQ:image,file=%s]", hex.EncodeToString(o.Md5)+".image"))
+				write("[CQ:image,file=%s]", hex.EncodeToString(o.Md5)+".image")
 			} else {
-				sb.WriteString(fmt.Sprintf("[CQ:image,file=%s,url=%s]", hex.EncodeToString(o.Md5)+".image", CQCodeEscapeValue(o.Url)))
+				write("[CQ:image,file=%s,url=%s]", hex.EncodeToString(o.Md5)+".image", CQCodeEscapeValue(o.Url))
 			}
 		case *message.FriendImageElement:
 			if ur {
-				sb.WriteString(fmt.Sprintf("[CQ:image,file=%s]", hex.EncodeToString(o.Md5)+".image"))
+				write("[CQ:image,file=%s]", hex.EncodeToString(o.Md5)+".image")
 			} else {
-				sb.WriteString(fmt.Sprintf("[CQ:image,file=%s,url=%s]", hex.EncodeToString(o.Md5)+".image", CQCodeEscapeValue(o.Url)))
+				write("[CQ:image,file=%s,url=%s]", hex.EncodeToString(o.Md5)+".image", CQCodeEscapeValue(o.Url))
 			}
 		case *message.GroupFlashImgElement:
 			return fmt.Sprintf("[CQ:image,type=flash,file=%s]", o.Filename)
@@ -368,12 +371,12 @@ func ToStringMessage(e []message.IMessageElement, id int64, isRaw ...bool) (r st
 			return fmt.Sprintf("[CQ:image,type=flash,file=%s]", o.Filename)
 		case *message.ServiceElement:
 			if isOk := strings.Contains(o.Content, "<?xml"); isOk {
-				sb.WriteString(fmt.Sprintf(`[CQ:xml,data=%s,resid=%d]`, CQCodeEscapeValue(o.Content), o.Id))
+				write(`[CQ:xml,data=%s,resid=%d]`, CQCodeEscapeValue(o.Content), o.Id)
 			} else {
-				sb.WriteString(fmt.Sprintf(`[CQ:json,data=%s,resid=%d]`, CQCodeEscapeValue(o.Content), o.Id))
+				write(`[CQ:json,data=%s,resid=%d]`, CQCodeEscapeValue(o.Content), o.Id)
 			}
 		case *message.LightAppElement:
-			sb.WriteString(fmt.Sprintf(`[CQ:json,data=%s]`, CQCodeEscapeValue(o.Content)))
+			write(`[CQ:json,data=%s]`, CQCodeEscapeValue(o.Content))
 		}
 	}
 	r = sb.String() // 内部已拷贝
