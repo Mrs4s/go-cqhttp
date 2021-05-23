@@ -343,9 +343,6 @@ func (bot *CQBot) SendPrivateMessage(target int64, groupID int64, m *message.Sen
 		}
 		log.Errorf("错误: 请先添加 %v(%v) 为好友", nickname, target)
 	}
-	if id == -1 {
-		return -1
-	}
 	return id
 }
 

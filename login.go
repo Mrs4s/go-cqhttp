@@ -83,16 +83,14 @@ func qrcodeLogin() error {
 			continue
 		}
 		prevState = s.State
-		if s.State == client.QRCodeCanceled {
+		switch s.State {
+		case client.QRCodeCanceled:
 			log.Fatalf("扫码被用户取消.")
-		}
-		if s.State == client.QRCodeTimeout {
+		case client.QRCodeTimeout:
 			log.Fatalf("二维码过期")
-		}
-		if s.State == client.QRCodeWaitingForConfirm {
+		case client.QRCodeWaitingForConfirm:
 			log.Infof("扫码成功, 请在手机端确认登录.")
-		}
-		if s.State == client.QRCodeConfirmed {
+		case client.QRCodeConfirmed:
 			res, err := cli.QRCodeLogin(s.LoginInfo)
 			if err != nil {
 				return err
