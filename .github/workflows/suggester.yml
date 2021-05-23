@@ -16,7 +16,7 @@ jobs:
 
       - name: Tests
         run: |
-          run: go test $(go list ./...)
+          go test $(go list ./...)
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v2
