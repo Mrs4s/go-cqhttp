@@ -96,6 +96,8 @@ func qrcodeLogin() error {
 				return err
 			}
 			return loginResponseProcessor(res)
+		case client.QRCodeImageFetch, client.QRCodeWaitingForScan:
+			// ignore
 		}
 	}
 }
