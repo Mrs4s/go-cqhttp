@@ -32,6 +32,10 @@ func getFriendList(bot *coolq.CQBot, _ resultGetter) coolq.MSG {
 	return bot.CQGetFriendList()
 }
 
+func deleteFriend(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+	return bot.CQDeleteFriend(p.Get("id").Int())
+}
+
 func getGroupList(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 	return bot.CQGetGroupList(p.Get("no_cache").Bool())
 }
@@ -350,6 +354,7 @@ func setModelShow(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 var API = map[string]func(*coolq.CQBot, resultGetter) coolq.MSG{
 	"get_login_info":             getLoginInfo,
 	"get_friend_list":            getFriendList,
+	"delete_friend":              deleteFriend,
 	"get_group_list":             getGroupList,
 	"get_group_info":             getGroupInfo,
 	"get_group_member_list":      getGroupMemberList,

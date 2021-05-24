@@ -73,6 +73,20 @@ func (bot *CQBot) CQGetFriendList() MSG {
 	return OK(fs)
 }
 
+// CQDeleteFriend 删除好友
+//
+//
+func (bot *CQBot) CQDeleteFriend(uin int64) MSG {
+	if bot.Client.FindFriend(uin) == nil {
+		return Failed(100, "FRIEND_NOT_FOUND", "好友不存在")
+	}
+	if err := bot.Client.DeleteFriend(uin); err != nil {
+		log.Errorf("删除好友时出现错误: %v", err)
+		return Failed(100, "DELETE_API_ERROR", err.Error())
+	}
+	return OK(nil)
+}
+
 // CQGetGroupList 获取群列表
 //
 // https://git.io/Jtz1t
