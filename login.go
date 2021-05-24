@@ -129,6 +129,7 @@ func loginResponseProcessor(res *client.LoginResponse) error {
 				res, err = cli.SubmitTicket(text)
 				continue
 			}
+			cli.Disconnect()
 			return qrcodeLogin()
 		case client.NeedCaptcha:
 			log.Warnf("登录需要验证码.")
