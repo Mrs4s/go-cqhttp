@@ -1062,6 +1062,20 @@ JSON数组:
 
 `该 API 没有响应数据`
 
+### 获取企点账号信息
+
+> 该API只有企点协议可用
+
+终结点: `/qidian_get_account_info`
+
+**响应数据**
+
+| 字段               | 类型    | 说明         |
+| ------------------ | ------- | ------------ |
+| `master_id`        | int64   | 父账号ID      |
+| `ext_name`         | string  | 用户昵称     |
+| `create_time`      | int64   | 账号创建时间  |
+
 ### 重载事件过滤器
 
 终结点：`/reload_event_filter`
