@@ -115,7 +115,7 @@ func loginResponseProcessor(res *client.LoginResponse) error {
 		switch res.Error {
 		case client.SliderNeededError:
 			log.Warnf("登录需要滑条验证码. ")
-			log.Warnf("请参考文档 -> https://github.com/Mrs4s/go-cqhttp/blob/master/docs/slider.md <- 进行处理")
+			log.Warnf("请参考文档 -> https://docs.go-cqhttp.org/faq/slider.html <- 进行处理")
 			log.Warnf("1. 自行抓包并获取 Ticket 输入.")
 			log.Warnf("2. 使用手机QQ扫描二维码登入. (推荐)")
 			log.Warn("请输入(1 - 2) (将在10秒后自动选择2)：")
