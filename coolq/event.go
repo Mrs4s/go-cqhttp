@@ -64,6 +64,9 @@ func (bot *CQBot) privateMessageEvent(c *client.QQClient, m *message.PrivateMess
 		},
 	}
 	bot.dispatchEventMessage(fm)
+	if m.Sender.Uin != c.Uin {
+		c.MarkPrivateMessageReaded(m.Sender.Uin, int64(m.Time))
+	}
 }
 
 func (bot *CQBot) groupMessageEvent(c *client.QQClient, m *message.GroupMessage) {
@@ -101,6 +104,9 @@ func (bot *CQBot) groupMessageEvent(c *client.QQClient, m *message.GroupMessage)
 	}
 	gm["message_id"] = id
 	bot.dispatchEventMessage(gm)
+	if m.Sender.Uin != c.Uin {
+		c.MarkGroupMessageReaded(m.GroupCode, int64(m.Id))
+	}
 }
 
 func (bot *CQBot) tempMessageEvent(c *client.QQClient, e *client.TempMessageEvent) {
