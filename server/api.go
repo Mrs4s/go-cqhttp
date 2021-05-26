@@ -24,8 +24,16 @@ func getLoginInfo(bot *coolq.CQBot, _ resultGetter) coolq.MSG {
 	return bot.CQGetLoginInfo()
 }
 
+func getQiDianAccountInfo(bot *coolq.CQBot, _ resultGetter) coolq.MSG {
+	return bot.CQGetQiDianAccountInfo()
+}
+
 func getFriendList(bot *coolq.CQBot, _ resultGetter) coolq.MSG {
 	return bot.CQGetFriendList()
+}
+
+func deleteFriend(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+	return bot.CQDeleteFriend(p.Get("id").Int())
 }
 
 func getGroupList(bot *coolq.CQBot, p resultGetter) coolq.MSG {
@@ -145,7 +153,7 @@ func setGroupAdmin(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 }
 
 func sendGroupNotice(bot *coolq.CQBot, p resultGetter) coolq.MSG {
-	return bot.CQSetGroupMemo(p.Get("group_id").Int(), p.Get("content").Str)
+	return bot.CQSetGroupMemo(p.Get("group_id").Int(), p.Get("content").Str, p.Get("image").String())
 }
 
 func setGroupLeave(bot *coolq.CQBot, p resultGetter) coolq.MSG {
@@ -334,10 +342,19 @@ func handleQuickOperation(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 	return bot.CQHandleQuickOperation(p.Get("context"), p.Get("operation"))
 }
 
+func getModelShow(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+	return bot.CQGetModelShow(p.Get("model").String())
+}
+
+func setModelShow(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+	return bot.CQSetModelShow(p.Get("model").String(), p.Get("model_show").String())
+}
+
 // API 是go-cqhttp当前支持的所有api的映射表
 var API = map[string]func(*coolq.CQBot, resultGetter) coolq.MSG{
 	"get_login_info":             getLoginInfo,
 	"get_friend_list":            getFriendList,
+	"delete_friend":              deleteFriend,
 	"get_group_list":             getGroupList,
 	"get_group_info":             getGroupInfo,
 	"get_group_member_list":      getGroupMemberList,
@@ -393,6 +410,9 @@ var API = map[string]func(*coolq.CQBot, resultGetter) coolq.MSG{
 	"check_url_safely":           checkURLSafely,
 	"set_group_anonymous_ban":    setGroupAnonymousBan,
 	".handle_quick_operation":    handleQuickOperation,
+	"qidian_get_account_info":    getQiDianAccountInfo,
+	"_get_model_show":            getModelShow,
+	"_set_model_show":            setModelShow,
 }
 
 func (api *apiCaller) callAPI(action string, p resultGetter) coolq.MSG {

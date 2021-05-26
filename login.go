@@ -83,21 +83,21 @@ func qrcodeLogin() error {
 			continue
 		}
 		prevState = s.State
-		if s.State == client.QRCodeCanceled {
+		switch s.State {
+		case client.QRCodeCanceled:
 			log.Fatalf("扫码被用户取消.")
-		}
-		if s.State == client.QRCodeTimeout {
+		case client.QRCodeTimeout:
 			log.Fatalf("二维码过期")
-		}
-		if s.State == client.QRCodeWaitingForConfirm {
+		case client.QRCodeWaitingForConfirm:
 			log.Infof("扫码成功, 请在手机端确认登录.")
-		}
-		if s.State == client.QRCodeConfirmed {
+		case client.QRCodeConfirmed:
 			res, err := cli.QRCodeLogin(s.LoginInfo)
 			if err != nil {
 				return err
 			}
 			return loginResponseProcessor(res)
+		case client.QRCodeImageFetch, client.QRCodeWaitingForScan:
+			// ignore
 		}
 	}
 }
@@ -129,6 +129,7 @@ func loginResponseProcessor(res *client.LoginResponse) error {
 				res, err = cli.SubmitTicket(text)
 				continue
 			}
+			cli.Disconnect()
 			return qrcodeLogin()
 		case client.NeedCaptcha:
 			log.Warnf("登录需要验证码.")

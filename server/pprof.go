@@ -18,8 +18,8 @@ func RunPprofServer(conf *config.PprofServer) {
 	if conf.Disabled {
 		return
 	}
-	engine := gin.New()
 	gin.SetMode(gin.ReleaseMode)
+	engine := gin.New()
 	addr := fmt.Sprintf("%s:%d", conf.Host, conf.Port)
 	pprof.Register(engine)
 	go func() {
