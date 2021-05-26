@@ -3,11 +3,39 @@ name: release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 jobs:
+  
+  push_downstream:
+    runs-on: ubuntu-18.04
+    if: ${{ github.repository == 'Mrs4s/go-cqhttp' }}
+    steps:
+      - name: Checkout Dist
+        uses: actions/checkout@v2
+        with:
+          repository: "Mrs4s/go-cqhttp"
+          ref: master
+          ssh-key: ${{ secrets.SSH_KEY }}
+          path: downstream/go-cqhttp
+
+      - name: Push downstream
+        run: |
+          cd downstream/go-cqhttp
+          rm -rf .git
+          git clone git@github.com:Mrs4s/go-cqhttp.git --bare .git
+          git config --unset core.bare
+          git reset --hard
+          git remote rename origin nini
+          git remote add origin git@github.com:gocq/go-cqhttp.git
+          git config --local user.name 'github-actions[bot]'
+          git config --local user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git push -u origin --all -f
+          git push -u origin --tags -f
+
   goreleaser:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
+    if: ${{ github.repository != 'gocq/go-cqhttp' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2.3.4
@@ -17,7 +45,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: '1.16.2'
+          go-version: "1.16.3"
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v2
@@ -27,15 +55,52 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      #- name: Checkout Dist
-      #  uses: actions/checkout@v2
-      #  with:
-      #    repository: 'gocq/dist'
-      #    ref: master
-      #    ssh-key: ${{ secrets.SSH_KEY }}
-      #    path: upstream/dist
+  goreleaser_uploadDist:
+    runs-on: ubuntu-18.04
+    if: ${{ github.repository == 'gocq/go-cqhttp' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2.3.4
+        with:
+          fetch-depth: 0
 
-      #- name: Update Dist
-      #  run: |
-      #    chmod +x scripts/upload_dist.sh
-      #    ./scripts/upload_dist.sh
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: "1.16.3"
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v2
+        with:
+          version: latest
+          args: release --rm-dist
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout Dist
+        uses: actions/checkout@v2
+        with:
+          repository: "gocq/distRepo"
+          ref: main
+          ssh-key: ${{ secrets.SSH_KEY }}
+          path: upstream/distRepo
+          submodules: recursive
+
+      - name: Install packaging dependencies
+        run: sudo apt-get install reprepro createrepo rpm
+
+      - name: Set up GPG
+        uses: crazy-max/ghaction-import-gpg@v3
+        with:
+          gpg-private-key: ${{secrets.SIGNING_KEY_FILE}}
+          passphrase: ${{secrets.KEY_PASSPHRASE}}
+
+      - name: Sign RPMS
+        run: |
+          cp scripts/rpmmacros ~/.rpmmacros
+          rpmsign --addsign dist/*.rpm
+
+      - name: Update Dist
+        run: |
+          chmod +x scripts/update_repo.sh
+          ./scripts/update_repo.sh
