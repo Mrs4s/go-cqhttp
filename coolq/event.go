@@ -45,7 +45,7 @@ func (bot *CQBot) privateMessageEvent(c *client.QQClient, m *message.PrivateMess
 	}
 	log.Infof("收到好友 %v(%v) 的消息: %v (%v)", m.Sender.DisplayName(), m.Sender.Uin, cqm, id)
 	fm := MSG{
-		"post_type":    func() string {
+		"post_type": func() string {
 			if m.Sender.Uin == bot.Client.Uin {
 				return "message_sent"
 			}
