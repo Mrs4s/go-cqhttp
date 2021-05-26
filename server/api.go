@@ -342,19 +342,6 @@ func handleQuickOperation(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 	return bot.CQHandleQuickOperation(p.Get("context"), p.Get("operation"))
 }
 
-
-func uploadImage(bot *coolq.CQBot, p resultGetter) coolq.MSG {
-	return bot.CQUploadImage(p.Get("file").Str)
-}
-
-func uploadVoice(bot *coolq.CQBot, p resultGetter) coolq.MSG {
-	return bot.CQUploadVoice(p.Get("file").Str)
-}
-
-func uploadShortVideo(bot *coolq.CQBot, p resultGetter) coolq.MSG {
-	return bot.CQUploadShortVideo(p.Get("file").Str)
-}
-
 func getModelShow(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 	return bot.CQGetModelShow(p.Get("model").String())
 }
