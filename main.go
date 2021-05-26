@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"os/signal"
 	"path"
 	"runtime"
@@ -42,6 +43,7 @@ var (
 	c           string
 	d           bool
 	h           bool
+	wd          string // reset work dir
 
 	// PasswordHash 存储QQ密码哈希供登录使用
 	PasswordHash [16]byte
@@ -65,6 +67,7 @@ func init() {
 	flag.BoolVar(&d, "d", false, "running as a daemon")
 	flag.BoolVar(&debug, "D", false, "debug mode")
 	flag.BoolVar(&h, "h", false, "this help")
+	flag.StringVar(&wd, "w", "", "cover the working directory")
 	flag.Parse()
 
 	// 通过-c 参数替换 配置文件路径
@@ -118,6 +121,9 @@ func main() {
 	}
 	if d {
 		server.Daemon()
+	}
+	if wd != "" {
+		resetWorkDir()
 	}
 	var byteKey []byte
 	arg := os.Args
@@ -239,6 +245,8 @@ func main() {
 			return "Android Watch"
 		case client.MacOS:
 			return "MacOS"
+		case client.QiDian:
+			return "企点"
 		}
 		return "未知"
 	}())
@@ -606,5 +614,26 @@ Options:
 `, coolq.Version)
 
 	flag.PrintDefaults()
+	os.Exit(0)
+}
+
+func resetWorkDir() {
+	args := make([]string, 0, len(os.Args))
+	for i := 1; i < len(os.Args); i++ {
+		if os.Args[i] == "-w" {
+			i++ // skip value field
+		} else if !strings.HasPrefix(os.Args[i], "-w") {
+			args = append(args, os.Args[i])
+		}
+	}
+	proc := exec.Command(os.Args[0], args...)
+	proc.Stdin = os.Stdin
+	proc.Stdout = os.Stdout
+	proc.Stderr = os.Stderr
+	proc.Dir = wd
+	err := proc.Run()
+	if err != nil {
+		panic(err)
+	}
 	os.Exit(0)
 }

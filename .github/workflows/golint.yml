@@ -9,10 +9,19 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Setup Go environment
+        uses: actions/setup-go@v2.1.3
+        with:
+          go-version: 1.16
+
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v2
         with:
           version: latest
+
+      - name: Tests
+        run: |
+          go test $(go list ./...)
 
       - name: Commit back
         if: github.repository_owner == 'Mrs4s'
