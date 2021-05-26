@@ -132,10 +132,7 @@ func (bot *CQBot) GetMessage(mid int32) MSG {
 		m := MSG{}
 		data, err := bot.db.Get(binary.ToBytes(mid), nil)
 		if err == nil {
-			buff := global.NewBuffer()
-			defer global.PutBuffer(buff)
-			buff.Write(binary.GZipUncompress(data))
-			err = gob.NewDecoder(buff).Decode(&m)
+			err = gob.NewDecoder(bytes.NewReader(data)).Decode(&m)
 			if err == nil {
 				return m
 			}
@@ -346,9 +343,6 @@ func (bot *CQBot) SendPrivateMessage(target int64, groupID int64, m *message.Sen
 		}
 		log.Errorf("错误: 请先添加 %v(%v) 为好友", nickname, target)
 	}
-	if id == -1 {
-		return -1
-	}
 	return id
 }
 
@@ -371,11 +365,7 @@ func (bot *CQBot) InsertGroupMessage(m *message.GroupMessage) int32 {
 			log.Warnf("记录聊天数据时出现错误: %v", err)
 			return -1
 		}
-		gw := binary.AcquireGzipWriter()
-		defer binary.ReleaseGzipWriter(gw)
-		_, _ = gw.Write(buf.Bytes())
-		_ = gw.Close()
-		if err := bot.db.Put(binary.ToBytes(id), gw.Bytes(), nil); err != nil {
+		if err := bot.db.Put(binary.ToBytes(id), buf.Bytes(), nil); err != nil {
 			log.Warnf("记录聊天数据时出现错误: %v", err)
 			return -1
 		}
@@ -391,7 +381,7 @@ func (bot *CQBot) InsertPrivateMessage(m *message.PrivateMessage) int32 {
 		"target":      m.Target,
 		"sender":      m.Sender,
 		"time":        m.Time,
-		"message":     ToStringMessage(m.Elements, m.Sender.Uin, true),
+		"message":     ToStringMessage(m.Elements, 0, true),
 	}
 	id := toGlobalID(m.Sender.Uin, m.Id)
 	if bot.db != nil {
@@ -401,11 +391,7 @@ func (bot *CQBot) InsertPrivateMessage(m *message.PrivateMessage) int32 {
 			log.Warnf("记录聊天数据时出现错误: %v", err)
 			return -1
 		}
-		gw := binary.AcquireGzipWriter()
-		defer binary.ReleaseGzipWriter(gw)
-		_, _ = gw.Write(buf.Bytes())
-		_ = gw.Close()
-		if err := bot.db.Put(binary.ToBytes(id), gw.Bytes(), nil); err != nil {
+		if err := bot.db.Put(binary.ToBytes(id), buf.Bytes(), nil); err != nil {
 			log.Warnf("记录聊天数据时出现错误: %v", err)
 			return -1
 		}
@@ -423,7 +409,7 @@ func (bot *CQBot) InsertTempMessage(target int64, m *message.TempMessage) int32 
 		"target":     target,
 		"sender":     m.Sender,
 		"time":       int32(time.Now().Unix()),
-		"message":    ToStringMessage(m.Elements, m.Sender.Uin, true),
+		"message":    ToStringMessage(m.Elements, 0, true),
 	}
 	id := toGlobalID(m.Sender.Uin, m.Id)
 	if bot.db != nil {
@@ -433,11 +419,7 @@ func (bot *CQBot) InsertTempMessage(target int64, m *message.TempMessage) int32 
 			log.Warnf("记录聊天数据时出现错误: %v", err)
 			return -1
 		}
-		gw := binary.AcquireGzipWriter()
-		defer binary.ReleaseGzipWriter(gw)
-		_, _ = gw.Write(buf.Bytes())
-		_ = gw.Close()
-		if err := bot.db.Put(binary.ToBytes(id), gw.Bytes(), nil); err != nil {
+		if err := bot.db.Put(binary.ToBytes(id), buf.Bytes(), nil); err != nil {
 			log.Warnf("记录聊天数据时出现错误: %v", err)
 			return -1
 		}

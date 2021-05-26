@@ -231,7 +231,6 @@ func (c *WebSocketClient) onBotPushEvent(m *bytes.Buffer) {
 		log.Debugf("上报Event %v 到 WS客户端 时被过滤.", utils.B2S(m.Bytes()))
 		return
 	}
-
 	if c.eventConn != nil {
 		log.Debugf("向WS服务器 %v 推送Event: %v", c.eventConn.RemoteAddr().String(), utils.B2S(m.Bytes()))
 		conn := c.eventConn
@@ -388,7 +387,7 @@ func (c *webSocketConn) handleRequest(_ *coolq.CQBot, payload []byte) {
 		}
 	}()
 	j := gjson.Parse(utils.B2S(payload))
-	t := strings.ReplaceAll(j.Get("action").Str, "_async", "")
+	t := strings.TrimSuffix(j.Get("action").Str, "_async")
 	log.Debugf("WS接收到API调用: %v 参数: %v", t, j.Get("params").Raw)
 	ret := c.apiCaller.callAPI(t, j.Get("params"))
 	if j.Get("echo").Exists() {

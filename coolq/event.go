@@ -24,18 +24,18 @@ func SetMessageFormat(f string) {
 }
 
 // ToFormattedMessage 将给定[]message.IMessageElement转换为通过coolq.SetMessageFormat所定义的消息上报格式
-func ToFormattedMessage(e []message.IMessageElement, id int64, isRaw ...bool) (r interface{}) {
+func ToFormattedMessage(e []message.IMessageElement, groupID int64, isRaw ...bool) (r interface{}) {
 	if format == "string" {
-		r = ToStringMessage(e, id, isRaw...)
+		r = ToStringMessage(e, groupID, isRaw...)
 	} else if format == "array" {
-		r = ToArrayMessage(e, id, isRaw...)
+		r = ToArrayMessage(e, groupID)
 	}
 	return
 }
 
 func (bot *CQBot) privateMessageEvent(c *client.QQClient, m *message.PrivateMessage) {
 	bot.checkMedia(m.Elements)
-	cqm := ToStringMessage(m.Elements, m.Sender.Uin, true)
+	cqm := ToStringMessage(m.Elements, 0, true)
 	if !m.Sender.IsFriend {
 		bot.oneWayMsgCache.Store(m.Sender.Uin, "")
 	}
@@ -51,7 +51,7 @@ func (bot *CQBot) privateMessageEvent(c *client.QQClient, m *message.PrivateMess
 		"message_id":   id,
 		"user_id":      m.Sender.Uin,
 		"target_id":    m.Target,
-		"message":      ToFormattedMessage(m.Elements, m.Sender.Uin, false),
+		"message":      ToFormattedMessage(m.Elements, 0, false),
 		"raw_message":  cqm,
 		"font":         0,
 		"self_id":      c.Uin,
@@ -64,6 +64,9 @@ func (bot *CQBot) privateMessageEvent(c *client.QQClient, m *message.PrivateMess
 		},
 	}
 	bot.dispatchEventMessage(fm)
+	if m.Sender.Uin != c.Uin {
+		c.MarkPrivateMessageReaded(m.Sender.Uin, int64(m.Time))
+	}
 }
 
 func (bot *CQBot) groupMessageEvent(c *client.QQClient, m *message.GroupMessage) {
@@ -101,12 +104,15 @@ func (bot *CQBot) groupMessageEvent(c *client.QQClient, m *message.GroupMessage)
 	}
 	gm["message_id"] = id
 	bot.dispatchEventMessage(gm)
+	if m.Sender.Uin != c.Uin {
+		c.MarkGroupMessageReaded(m.GroupCode, int64(m.Id))
+	}
 }
 
 func (bot *CQBot) tempMessageEvent(c *client.QQClient, e *client.TempMessageEvent) {
 	m := e.Message
 	bot.checkMedia(m.Elements)
-	cqm := ToStringMessage(m.Elements, m.Sender.Uin, true)
+	cqm := ToStringMessage(m.Elements, 0, true)
 	bot.tempSessionCache.Store(m.Sender.Uin, e.Session)
 	id := m.Id
 	if bot.db != nil {
@@ -120,7 +126,7 @@ func (bot *CQBot) tempMessageEvent(c *client.QQClient, e *client.TempMessageEven
 		"temp_source":  e.Session.Source,
 		"message_id":   id,
 		"user_id":      m.Sender.Uin,
-		"message":      ToFormattedMessage(m.Elements, m.Sender.Uin, false),
+		"message":      ToFormattedMessage(m.Elements, 0, false),
 		"raw_message":  cqm,
 		"font":         0,
 		"self_id":      c.Uin,

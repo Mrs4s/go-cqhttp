@@ -24,8 +24,16 @@ func getLoginInfo(bot *coolq.CQBot, _ resultGetter) coolq.MSG {
 	return bot.CQGetLoginInfo()
 }
 
+func getQiDianAccountInfo(bot *coolq.CQBot, _ resultGetter) coolq.MSG {
+	return bot.CQGetQiDianAccountInfo()
+}
+
 func getFriendList(bot *coolq.CQBot, _ resultGetter) coolq.MSG {
 	return bot.CQGetFriendList()
+}
+
+func deleteFriend(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+	return bot.CQDeleteFriend(p.Get("id").Int())
 }
 
 func getGroupList(bot *coolq.CQBot, p resultGetter) coolq.MSG {
@@ -145,7 +153,7 @@ func setGroupAdmin(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 }
 
 func sendGroupNotice(bot *coolq.CQBot, p resultGetter) coolq.MSG {
-	return bot.CQSetGroupMemo(p.Get("group_id").Int(), p.Get("content").Str)
+	return bot.CQSetGroupMemo(p.Get("group_id").Int(), p.Get("content").Str, p.Get("image").String())
 }
 
 func setGroupLeave(bot *coolq.CQBot, p resultGetter) coolq.MSG {
@@ -334,6 +342,7 @@ func handleQuickOperation(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 	return bot.CQHandleQuickOperation(p.Get("context"), p.Get("operation"))
 }
 
+
 func uploadImage(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 	return bot.CQUploadImage(p.Get("file").Str)
 }
@@ -346,32 +355,50 @@ func uploadShortVideo(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 	return bot.CQUploadShortVideo(p.Get("file").Str)
 }
 
+func getModelShow(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+	return bot.CQGetModelShow(p.Get("model").String())
+}
+
+func setModelShow(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+	return bot.CQSetModelShow(p.Get("model").String(), p.Get("model_show").String())
+}
+
 // API 是go-cqhttp当前支持的所有api的映射表
 var API = map[string]func(*coolq.CQBot, resultGetter) coolq.MSG{
-	// 获取状态信息
-	"get_status":         getStatus,
-	"get_version_info":   getVersionInfo,
-	"get_online_clients": getOnlineClients,
-	"get_login_info":     getLoginInfo,
-	"can_send_image":     canSendImage,
-	"can_send_record":    canSendRecord,
-	// 消息发送, 获取与撤回
-	"get_forward_msg":        getForwardMSG,
-	"get_msg":                getMSG,
-	"send_msg":               sendMSG,
-	"send_private_msg":       sendPrivateMSG,
-	"send_group_msg":         sendGroupMSG,
-	"send_group_forward_msg": sendGroupForwardMSG,
-	"get_group_msg_history":  getGroupMsgHistory,
-	"_send_group_notice":     sendGroupNotice,
-	"delete_msg":             deleteMSG,
-	// 多媒体内容上传与下载
-	"upload_image":       uploadImage,
-	"upload_voice":       uploadVoice,
-	"upload_short_video": uploadShortVideo,
-	"get_image":          getImage,
-	"download_file":      downloadFile,
-	// 群文件
+	"get_login_info":             getLoginInfo,
+	"get_friend_list":            getFriendList,
+	"delete_friend":              deleteFriend,
+	"get_group_list":             getGroupList,
+	"get_group_info":             getGroupInfo,
+	"get_group_member_list":      getGroupMemberList,
+	"get_group_member_info":      getGroupMemberInfo,
+	"send_msg":                   sendMSG,
+	"send_group_msg":             sendGroupMSG,
+	"send_group_forward_msg":     sendGroupForwardMSG,
+	"send_private_msg":           sendPrivateMSG,
+	"delete_msg":                 deleteMSG,
+	"set_friend_add_request":     setFriendAddRequest,
+	"set_group_add_request":      setGroupAddRequest,
+	"set_group_card":             setGroupCard,
+	"set_group_special_title":    setGroupSpecialTitle,
+	"set_group_kick":             setGroupKick,
+	"set_group_ban":              setGroupBan,
+	"set_group_whole_ban":        setGroupWholeBan,
+	"set_group_name":             setGroupName,
+	"set_group_admin":            setGroupAdmin,
+	"_send_group_notice":         sendGroupNotice,
+	"set_group_leave":            setGroupLeave,
+	"get_image":                  getImage,
+	"get_forward_msg":            getForwardMSG,
+	"get_msg":                    getMSG,
+	"download_file":              downloadFile,
+	"get_group_honor_info":       getGroupHonorInfo,
+	"set_restart":                setRestart,
+	"can_send_image":             canSendImage,
+	"can_send_record":            canSendRecord,
+	"get_stranger_info":          getStrangerInfo,
+	"get_status":                 getStatus,
+	"get_version_info":           getVersionInfo,
 	"get_group_system_msg":       getGroupSystemMSG,
 	"get_group_file_system_info": getGroupFileSystemInfo,
 	"get_group_root_files":       getGroupRootFiles,
@@ -381,44 +408,24 @@ var API = map[string]func(*coolq.CQBot, resultGetter) coolq.MSG{
 	"delete_group_folder":        deleteGroupFolder,
 	"delete_group_file":          deleteGroupFile,
 	"upload_group_file":          uploadGroupFile,
-	// 获取与刷新人和群
-	"get_stranger_info":     getStrangerInfo,
-	"get_friend_list":       getFriendList,
-	"get_group_list":        getGroupList,
-	"get_group_info":        getGroupInfo,
-	"get_group_member_list": getGroupMemberList,
-	"get_group_member_info": getGroupMemberInfo,
-	// 处理请求
-	"set_friend_add_request": setFriendAddRequest,
-	"set_group_add_request":  setGroupAddRequest,
-	// 群操作
-	"set_group_card":          setGroupCard,
-	"set_group_special_title": setGroupSpecialTitle,
-	"set_group_kick":          setGroupKick,
-	"set_group_ban":           setGroupBan,
-	"set_group_whole_ban":     setGroupWholeBan,
-	"set_group_name":          setGroupName,
-	"set_group_admin":         setGroupAdmin,
-	"set_group_leave":         setGroupLeave,
-	"set_group_anonymous_ban": setGroupAnonymousBan,
-	"get_group_honor_info":    getGroupHonorInfo,
-	"set_group_portrait":      setGroupPortrait,
-	"get_group_at_all_remain": getGroupAtAllRemain,
-	// 群精华信息
-	"set_essence_msg":      setEssenceMSG,
-	"delete_essence_msg":   deleteEssenceMSG,
-	"get_essence_msg_list": getEssenceMsgList,
-	// 额外实现的 API
-	"_get_vip_info":    getVipInfo,
-	".ocr_image":       ocrImage,
-	"ocr_image":        ocrImage,
-	".get_word_slices": getWordSlices,
-	"check_url_safely": checkURLSafely,
-	// 核心操作 (非机器人部分)
-	"set_restart":         setRestart,
-	"reload_event_filter": reloadEventFilter,
-	// 隐藏 API
-	".handle_quick_operation": handleQuickOperation,
+	"get_group_msg_history":      getGroupMsgHistory,
+	"_get_vip_info":              getVipInfo,
+	"reload_event_filter":        reloadEventFilter,
+	".ocr_image":                 ocrImage,
+	"ocr_image":                  ocrImage,
+	"get_group_at_all_remain":    getGroupAtAllRemain,
+	"get_online_clients":         getOnlineClients,
+	".get_word_slices":           getWordSlices,
+	"set_group_portrait":         setGroupPortrait,
+	"set_essence_msg":            setEssenceMSG,
+	"delete_essence_msg":         deleteEssenceMSG,
+	"get_essence_msg_list":       getEssenceMsgList,
+	"check_url_safely":           checkURLSafely,
+	"set_group_anonymous_ban":    setGroupAnonymousBan,
+	".handle_quick_operation":    handleQuickOperation,
+	"qidian_get_account_info":    getQiDianAccountInfo,
+	"_get_model_show":            getModelShow,
+	"_set_model_show":            setModelShow,
 }
 
 func (api *apiCaller) callAPI(action string, p resultGetter) coolq.MSG {
