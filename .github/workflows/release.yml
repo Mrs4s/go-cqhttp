@@ -35,6 +35,7 @@ jobs:
 
   goreleaser:
     runs-on: ubuntu-18.04
+    if: ${{ github.repository != 'gocq/go-cqhttp' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2.3.4
