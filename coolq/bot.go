@@ -36,6 +36,7 @@ type CQBot struct {
 	lock   sync.RWMutex
 	events []func(*Event)
 
+	markAsRead       bool
 	db               *leveldb.DB
 	friendReqCache   sync.Map
 	tempSessionCache sync.Map
@@ -79,7 +80,8 @@ var ForceFragmented = false
 // NewQQBot 初始化一个QQBot实例
 func NewQQBot(cli *client.QQClient, conf *config.Config) *CQBot {
 	bot := &CQBot{
-		Client: cli,
+		Client:     cli,
+		markAsRead: conf.Message.MarkAsRead,
 	}
 	enableLevelDB := false
 	node, ok := conf.Database["leveldb"]
