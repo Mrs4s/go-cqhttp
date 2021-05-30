@@ -11,18 +11,6 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-var trueSet = map[string]struct{}{
-	"true": {},
-	"yes":  {},
-	"1":    {},
-}
-
-var falseSet = map[string]struct{}{
-	"false": {},
-	"no":    {},
-	"0":     {},
-}
-
 // EnsureBool 判断给定的p是否可表示为合法Bool类型,否则返回defaultVal
 //
 // 支持的合法类型有
@@ -55,13 +43,14 @@ func EnsureBool(p interface{}, defaultVal bool) bool {
 		str = s
 	}
 	str = strings.ToLower(str)
-	if _, ok := trueSet[str]; ok {
+	switch str {
+	case "true", "yes", "1":
 		return true
-	}
-	if _, ok := falseSet[str]; ok {
+	case "false", "no", "0":
 		return false
+	default:
+		return defaultVal
 	}
-	return defaultVal
 }
 
 // VersionNameCompare 检查版本名是否需要更新, 仅适用于 go-cqhttp 的版本命名规则

@@ -6,8 +6,7 @@ require (
 	github.com/Baozisoftware/qrcode-terminal-go v0.0.0-20170407111555-c0650d8dff0f
 	github.com/Mrs4s/MiraiGo v0.0.0-20210525010101-8f0cd9494d64
 	github.com/dustin/go-humanize v1.0.0
-	github.com/gin-contrib/pprof v1.3.0
-	github.com/gin-gonic/gin v1.7.1
+	github.com/gin-gonic/gin v1.7.1 // indirect
 	github.com/gorilla/websocket v1.4.2
 	github.com/guonaihong/gout v0.1.9
 	github.com/jonboulle/clockwork v0.2.2 // indirect
