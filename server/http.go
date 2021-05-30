@@ -122,22 +122,21 @@ func checkAuth(ctx httpCtx, token string) int {
 	auth := ctx.headerAuth
 	if auth == "" {
 		auth = ctx.query.Get("access_token")
-		switch {
-		case auth == "":
-			return http.StatusUnauthorized
-		case auth != token:
-			return http.StatusForbidden
-		}
 	} else {
-		auth := strings.SplitN(auth, " ", 2)
-		switch {
-		case len(auth) != 2 || auth[1] == "":
-			return http.StatusUnauthorized
-		case auth[1] != token:
-			return http.StatusForbidden
+		authN := strings.SplitN(auth, " ", 2)
+		if len(authN) == 2 {
+			auth = authN[1]
 		}
 	}
-	return http.StatusOK
+
+	switch {
+	case auth == "":
+		return http.StatusUnauthorized
+	case auth != token:
+		return http.StatusForbidden
+	default:
+		return http.StatusOK
+	}
 }
 
 // RunHTTPServerAndClients 启动HTTP服务器与HTTP上报客户端

@@ -2,7 +2,6 @@ package coolq
 
 import (
 	"encoding/hex"
-	"fmt"
 	"io/ioutil"
 	"path"
 	"strconv"
@@ -41,7 +40,6 @@ func (bot *CQBot) privateMessageEvent(c *client.QQClient, m *message.PrivateMess
 		bot.oneWayMsgCache.Store(m.Sender.Uin, "")
 	}
 	id := m.Id
-	fmt.Println(m)
 	if bot.db != nil {
 		id = bot.InsertPrivateMessage(m)
 	}
