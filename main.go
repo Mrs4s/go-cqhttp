@@ -148,14 +148,14 @@ func main() {
 	if terminal.RunningByDoubleClick() && !isFastStart {
 		log.Warning("警告: 强烈不推荐通过双击直接运行本程序, 这将导致一些非预料的后果.")
 		log.Warning("将等待10s后启动")
-		time.Sleep(time.Second * 10)
+		//time.Sleep(time.Second * 10)
 	}
 
 	if (conf.Account.Uin == 0 || (conf.Account.Password == "" && !conf.Account.Encrypt)) && !global.PathExists("session.token") {
 		log.Warn("账号密码未配置, 将使用二维码登录.")
 		if !isFastStart {
 			log.Warn("将在 5秒 后继续.")
-			time.Sleep(time.Second * 5)
+			//time.Sleep(time.Second * 5)
 		}
 	}
 
@@ -232,7 +232,7 @@ func main() {
 	}
 	if !isFastStart {
 		log.Info("Bot将在5秒后登录并开始信息处理, 按 Ctrl+C 取消.")
-		time.Sleep(time.Second * 5)
+		//time.Sleep(time.Second * 5)
 	}
 	log.Info("开始尝试登录并同步消息...")
 	log.Infof("使用协议: %v", func() string {
