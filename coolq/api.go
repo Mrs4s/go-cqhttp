@@ -321,13 +321,13 @@ func (bot *CQBot) CQGroupFileDeleteFolder(groupID int64, id string) MSG {
 // CQGroupFileDeleteFile 拓展API-删除群文件
 //
 //
-func (bot *CQBot) CQGroupFileDeleteFile(groupID int64, parentID, id string, busID int32) MSG {
+func (bot *CQBot) CQGroupFileDeleteFile(groupID int64, id string, busID int32) MSG {
 	fs, err := bot.Client.GetGroupFileSystem(groupID)
 	if err != nil {
 		log.Errorf("获取群 %v 文件系统信息失败: %v", groupID, err)
 		return Failed(100, "FILE_SYSTEM_API_ERROR", err.Error())
 	}
-	if res := fs.DeleteFile(parentID, id, busID); res != "" {
+	if res := fs.DeleteFile("", id, busID); res != "" {
 		log.Errorf("删除群 %v 文件 %v 时出现文件: %v", groupID, id, res)
 		return Failed(200, "FILE_SYSTEM_API_ERROR", res)
 	}

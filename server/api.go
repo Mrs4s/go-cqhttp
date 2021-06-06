@@ -271,7 +271,7 @@ func deleteGroupFolder(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 }
 
 func deleteGroupFile(bot *coolq.CQBot, p resultGetter) coolq.MSG {
-	return bot.CQGroupFileDeleteFile(p.Get("group_id").Int(), p.Get("folder_id").Str, p.Get("file_id").Str, int32(p.Get("bus_id").Int()))
+	return bot.CQGroupFileDeleteFile(p.Get("group_id").Int(), p.Get("file_id").Str, int32(p.Get("bus_id").Int()))
 }
 
 func getGroupMsgHistory(bot *coolq.CQBot, p resultGetter) coolq.MSG {
