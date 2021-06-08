@@ -672,10 +672,11 @@ func (bot *CQBot) ToElement(t string, d map[string]string, isGroup bool) (m inte
 			return img, nil
 		}
 		if i, ok := img.(*LocalImageElement); ok { // 秀图，闪照什么的就直接传了吧
+			r := rand.Uint32()
 			if isGroup {
-				img, err = bot.UploadLocalImageAsGroup(1, i)
+				img, err = bot.UploadLocalImageAsGroup(int64(r), i)
 			} else {
-				img, err = bot.UploadLocalImageAsPrivate(1, i)
+				img, err = bot.UploadLocalImageAsPrivate(int64(r), i)
 			}
 			if err != nil {
 				return nil, err
@@ -1180,8 +1181,9 @@ func (bot *CQBot) makeShowPic(elem message.IMessageElement, source string, brief
 		brief = "&#91;分享&#93;我看到一张很赞的图片，分享给你，快来看！"
 	}
 	if i, ok := elem.(*LocalImageElement); ok {
+		r := rand.Uint32()
 		if !group {
-			gm, err := bot.UploadLocalImageAsPrivate(1, i)
+			gm, err := bot.UploadLocalImageAsPrivate(int64(r), i)
 			if err != nil {
 				log.Warnf("警告: 好友消息 %v 消息图片上传失败: %v", 1, err)
 				return nil, err
@@ -1189,7 +1191,7 @@ func (bot *CQBot) makeShowPic(elem message.IMessageElement, source string, brief
 			suf = gm
 			xml = fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="5" templateID="12345" action="" brief="%s" sourceMsgId="0" url="%s" flag="0" adverSign="0" multiMsgFlag="0"><item layout="0" advertiser_id="0" aid="0"><image uuid="%x" md5="%x" GroupFiledid="0" filesize="%d" local_path="%s" minWidth="%d" minHeight="%d" maxWidth="%d" maxHeight="%d" /></item><source name="%s" icon="%s" action="" appid="-1" /></msg>`, brief, "", gm.Md5, gm.Md5, len(i.Data), "", minWidth, minHeight, maxWidth, maxHeight, source, icon)
 		} else {
-			gm, err := bot.UploadLocalImageAsGroup(1, i)
+			gm, err := bot.UploadLocalImageAsGroup(int64(r), i)
 			if err != nil {
 				log.Warnf("警告: 群 %v 消息图片上传失败: %v", 1, err)
 				return nil, err
