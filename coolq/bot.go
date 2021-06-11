@@ -260,7 +260,7 @@ func (bot *CQBot) SendPrivateMessage(target int64, groupID int64, m *message.Sen
 		if i, ok := elem.(*LocalImageElement); ok {
 			fm, err := bot.UploadLocalImageAsPrivate(target, i)
 			if err != nil {
-				log.Warnf("警告: 私聊 %v 消息图片上传失败.", target)
+				log.Warnf("警告: 私聊 %v 消息图片上传失败: %v", target, err)
 				continue
 			}
 			newElem = append(newElem, fm)
