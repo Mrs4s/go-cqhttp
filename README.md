@@ -44,7 +44,7 @@ _✨ 基于 [Mirai](https://github.com/mamoe/mirai) 以及 [MiraiGo](https://git
 
 
 ## 兼容性
-go-cqhttp兼容[OneBot-v11](https://github.com/howmanybots/onebot/tree/master/v11/specs)绝大多数内容，并在其基础上做了一些扩展，详情请看go-cqhttp的文档
+go-cqhttp 兼容 [OneBot-v11](https://github.com/howmanybots/onebot/tree/master/v11/specs) 绝大多数内容，并在其基础上做了一些扩展，详情请看 go-cqhttp 的文档。
 
 ### 接口
 
@@ -68,7 +68,7 @@ go-cqhttp兼容[OneBot-v11](https://github.com/howmanybots/onebot/tree/master/v1
 ### 实现
 
 <details>
-<summary>已实现CQ码</summary>
+<summary>已实现 CQ 码</summary>
 
 #### 符合 OneBot 标准的 CQ 码
 
@@ -122,7 +122,7 @@ go-cqhttp兼容[OneBot-v11](https://github.com/howmanybots/onebot/tree/master/v1
 </details>
 
 <details>
-<summary>已实现API</summary>
+<summary>已实现 API</summary>
 
 #### 符合 OneBot 标准的 API
 
@@ -219,7 +219,7 @@ go-cqhttp兼容[OneBot-v11](https://github.com/howmanybots/onebot/tree/master/v1
 </details>
 
 <details>
-<summary>已实现Event</summary>
+<summary>已实现 Event</summary>
 
 #### 符合 OneBot 标准的 Event（部分 Event 比 OneBot 标准多上报几个字段，不影响使用）
 
