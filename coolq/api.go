@@ -420,7 +420,7 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) MSG {
 	ts := time.Now().Add(-time.Minute * 5)
 	hasCustom := func() bool {
 		for _, item := range m.Array() {
-			if item.Get("data.uin").Exists() {
+			if item.Get("data.uin").Exists() || item.Get("data.user_id").Exists() {
 				return true
 			}
 		}
@@ -455,6 +455,9 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) MSG {
 			return
 		}
 		uin, _ := strconv.ParseInt(e.Get("data.uin").Str, 10, 64)
+		if uin == 0 {
+			uin, _ = strconv.ParseInt(e.Get("data.user_id").Str, 10, 64)
+		}
 		msgTime, err := strconv.ParseInt(e.Get("data.time").Str, 10, 64)
 		if err != nil {
 			msgTime = ts.Unix()
