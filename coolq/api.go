@@ -433,7 +433,7 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) MSG {
 		}
 		ts.Add(time.Second)
 		if e.Get("data.id").Exists() {
-			i, _ := strconv.Atoi(e.Get("data.id").String())
+			i := e.Get("data.id").Int()
 			m := bot.GetMessage(int32(i))
 			if m != nil {
 				sender := m["sender"].(message.Sender)
@@ -454,10 +454,7 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) MSG {
 			log.Warnf("警告: 引用消息 %v 错误或数据库未开启.", e.Get("data.id").Str)
 			return
 		}
-		uin, _ := strconv.ParseInt(e.Get("data.uin").Str, 10, 64)
-		if uin == 0 {
-			uin, _ = strconv.ParseInt(e.Get("data.user_id").Str, 10, 64)
-		}
+		uin := e.Get("data.[user_id,uin].0").Int()
 		msgTime, err := strconv.ParseInt(e.Get("data.time").Str, 10, 64)
 		if err != nil {
 			msgTime = ts.Unix()
