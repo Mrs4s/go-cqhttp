@@ -17,35 +17,33 @@ type operationNode struct {
 	filter Filter
 }
 
-// NotOperator 定义了过滤器中Not操作符
-type NotOperator struct {
+// notOperator 定义了过滤器中Not操作符
+type notOperator struct {
 	operand Filter
 }
 
-func notOperatorConstruct(argument gjson.Result) *NotOperator {
+func newNotOp(argument gjson.Result) Filter {
 	if !argument.IsObject() {
 		panic("the argument of 'not' operator must be an object")
 	}
-	op := new(NotOperator)
-	op.operand = Generate("and", argument)
-	return op
+	return &notOperator{operand: Generate("and", argument)}
 }
 
 // Eval 对payload执行Not过滤
-func (op *NotOperator) Eval(payload gjson.Result) bool {
+func (op *notOperator) Eval(payload gjson.Result) bool {
 	return !op.operand.Eval(payload)
 }
 
-// AndOperator 定义了过滤器中And操作符
-type AndOperator struct {
+// andOperator 定义了过滤器中And操作符
+type andOperator struct {
 	operands []operationNode
 }
 
-func andOperatorConstruct(argument gjson.Result) *AndOperator {
+func newAndOp(argument gjson.Result) Filter {
 	if !argument.IsObject() {
 		panic("the argument of 'and' operator must be an object")
 	}
-	op := new(AndOperator)
+	op := new(andOperator)
 	argument.ForEach(func(key, value gjson.Result) bool {
 		switch {
 		case key.Str[0] == '.':
@@ -74,7 +72,7 @@ func andOperatorConstruct(argument gjson.Result) *AndOperator {
 }
 
 // Eval 对payload执行And过滤
-func (op *AndOperator) Eval(payload gjson.Result) bool {
+func (op *andOperator) Eval(payload gjson.Result) bool {
 	res := true
 	for _, operand := range op.operands {
 		if len(operand.key) == 0 {
@@ -93,16 +91,16 @@ func (op *AndOperator) Eval(payload gjson.Result) bool {
 	return res
 }
 
-// OrOperator 定义了过滤器中Or操作符
-type OrOperator struct {
+// orOperator 定义了过滤器中Or操作符
+type orOperator struct {
 	operands []Filter
 }
 
-func orOperatorConstruct(argument gjson.Result) *OrOperator {
+func newOrOp(argument gjson.Result) Filter {
 	if !argument.IsArray() {
 		panic("the argument of 'or' operator must be an array")
 	}
-	op := new(OrOperator)
+	op := new(orOperator)
 	argument.ForEach(func(_, value gjson.Result) bool {
 		op.operands = append(op.operands, Generate("and", value))
 		return true
@@ -111,7 +109,7 @@ func orOperatorConstruct(argument gjson.Result) *OrOperator {
 }
 
 // Eval 对payload执行Or过滤
-func (op *OrOperator) Eval(payload gjson.Result) bool {
+func (op *orOperator) Eval(payload gjson.Result) bool {
 	res := false
 	for _, operand := range op.operands {
 		res = res || operand.Eval(payload)
@@ -122,49 +120,45 @@ func (op *OrOperator) Eval(payload gjson.Result) bool {
 	return res
 }
 
-// EqualOperator 定义了过滤器中Equal操作符
-type EqualOperator struct {
+// eqOperator 定义了过滤器中Equal操作符
+type eqOperator struct {
 	operand string
 }
 
-func equalOperatorConstruct(argument gjson.Result) *EqualOperator {
-	op := new(EqualOperator)
-	op.operand = argument.String()
-	return op
+func newEqOp(argument gjson.Result) Filter {
+	return &eqOperator{operand: argument.String()}
 }
 
 // Eval 对payload执行Equal过滤
-func (op *EqualOperator) Eval(payload gjson.Result) bool {
+func (op *eqOperator) Eval(payload gjson.Result) bool {
 	return payload.String() == op.operand
 }
 
-// NotEqualOperator 定义了过滤器中NotEqual操作符
-type NotEqualOperator struct {
+// neqOperator 定义了过滤器中NotEqual操作符
+type neqOperator struct {
 	operand string
 }
 
-func notEqualOperatorConstruct(argument gjson.Result) *NotEqualOperator {
-	op := new(NotEqualOperator)
-	op.operand = argument.String()
-	return op
+func newNeqOp(argument gjson.Result) Filter {
+	return &neqOperator{operand: argument.String()}
 }
 
 // Eval 对payload执行NotEqual过滤
-func (op *NotEqualOperator) Eval(payload gjson.Result) bool {
+func (op *neqOperator) Eval(payload gjson.Result) bool {
 	return !(payload.String() == op.operand)
 }
 
-// InOperator 定义了过滤器中In操作符
-type InOperator struct {
+// inOperator 定义了过滤器中In操作符
+type inOperator struct {
 	operandString string
 	operandArray  []string
 }
 
-func inOperatorConstruct(argument gjson.Result) *InOperator {
+func newInOp(argument gjson.Result) Filter {
 	if argument.IsObject() {
 		panic("the argument of 'in' operator must be an array or a string")
 	}
-	op := new(InOperator)
+	op := new(inOperator)
 	if argument.IsArray() {
 		op.operandArray = []string{}
 		argument.ForEach(func(_, value gjson.Result) bool {
@@ -178,7 +172,7 @@ func inOperatorConstruct(argument gjson.Result) *InOperator {
 }
 
 // Eval 对payload执行In过滤
-func (op *InOperator) Eval(payload gjson.Result) bool {
+func (op *inOperator) Eval(payload gjson.Result) bool {
 	payloadStr := payload.String()
 	if op.operandArray != nil {
 		for _, value := range op.operandArray {
@@ -191,64 +185,68 @@ func (op *InOperator) Eval(payload gjson.Result) bool {
 	return strings.Contains(op.operandString, payloadStr)
 }
 
-// ContainsOperator 定义了过滤器中Contains操作符
-type ContainsOperator struct {
+// containsOperator 定义了过滤器中Contains操作符
+type containsOperator struct {
 	operand string
 }
 
-func containsOperatorConstruct(argument gjson.Result) *ContainsOperator {
+func newContainOp(argument gjson.Result) Filter {
 	if argument.IsArray() || argument.IsObject() {
 		panic("the argument of 'contains' operator must be a string")
 	}
-	op := new(ContainsOperator)
-	op.operand = argument.String()
-	return op
+	return &containsOperator{operand: argument.String()}
 }
 
 // Eval 对payload执行Contains过滤
-func (op *ContainsOperator) Eval(payload gjson.Result) bool {
+func (op *containsOperator) Eval(payload gjson.Result) bool {
 	return strings.Contains(payload.String(), op.operand)
 }
 
-// RegexOperator 定义了过滤器中Regex操作符
-type RegexOperator struct {
+// regexOperator 定义了过滤器中Regex操作符
+type regexOperator struct {
 	regex *regexp.Regexp
 }
 
-func regexOperatorConstruct(argument gjson.Result) *RegexOperator {
+func newRegexOp(argument gjson.Result) Filter {
 	if argument.IsArray() || argument.IsObject() {
 		panic("the argument of 'regex' operator must be a string")
 	}
-	op := new(RegexOperator)
-	op.regex = regexp.MustCompile(argument.String())
-	return op
+	return &regexOperator{regex: regexp.MustCompile(argument.String())}
 }
 
 // Eval 对payload执行RegexO过滤
-func (op *RegexOperator) Eval(payload gjson.Result) bool {
-	matched := op.regex.MatchString(payload.String())
-	return matched
+func (op *regexOperator) Eval(payload gjson.Result) bool {
+	return op.regex.MatchString(payload.String())
+}
+
+var opFunc = map[string]func(gjson.Result) Filter{
+	"not":      newNotOp,
+	"and":      newAndOp,
+	"or":       newOrOp,
+	"eq":       newEqOp,
+	"neq":      newNeqOp,
+	"in":       newInOp,
+	"contains": newContainOp,
+	"regex":    newRegexOp,
 }
 
 // Generate 根据给定操作符名opName及操作符参数argument创建一个过滤器实例
 func Generate(opName string, argument gjson.Result) Filter {
 	switch opName {
 	case "not":
-		return notOperatorConstruct(argument)
+		return newNotOp(argument)
 	case "and":
-		return andOperatorConstruct(argument)
+		return newAndOp(argument)
 	case "or":
-		return orOperatorConstruct(argument)
+		return newOrOp(argument)
 	case "neq":
-		return notEqualOperatorConstruct(argument)
-	case "eq":
-		return equalOperatorConstruct(argument)
+		return newNeqOp(argument)
 	case "in":
-		return inOperatorConstruct(argument)
+		return newInOp(argument)
 	case "contains":
-		return containsOperatorConstruct(argument)
+		return newContainOp(argument)
 	case "regex":
-		return regexOperatorConstruct(argument)
+		return newRegexOp(argument)
 	default:
 		panic("the operator " + opName + " is not supported")
 	}
