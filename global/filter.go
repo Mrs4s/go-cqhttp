@@ -219,17 +219,6 @@ func (op *regexOperator) Eval(payload gjson.Result) bool {
 	return op.regex.MatchString(payload.String())
 }
 
-var opFunc = map[string]func(gjson.Result) Filter{
-	"not":      newNotOp,
-	"and":      newAndOp,
-	"or":       newOrOp,
-	"eq":       newEqOp,
-	"neq":      newNeqOp,
-	"in":       newInOp,
-	"contains": newContainOp,
-	"regex":    newRegexOp,
-}
-
 // Generate 根据给定操作符名opName及操作符参数argument创建一个过滤器实例
 func Generate(opName string, argument gjson.Result) Filter {
 	switch opName {
