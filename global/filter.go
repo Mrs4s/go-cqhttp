@@ -228,6 +228,8 @@ func Generate(opName string, argument gjson.Result) Filter {
 		return newAndOp(argument)
 	case "or":
 		return newOrOp(argument)
+	case "eq":
+		return newEqOp(argument)
 	case "neq":
 		return newNeqOp(argument)
 	case "in":
