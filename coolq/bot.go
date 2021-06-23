@@ -32,6 +32,7 @@ var json = jsoniter.ConfigCompatibleWithStandardLibrary
 type CQBot struct {
 	Client *client.QQClient
 
+	markAsRead       bool
 	events           []func(*bytes.Buffer)
 	db               *leveldb.DB
 	friendReqCache   sync.Map
@@ -48,7 +49,8 @@ var ForceFragmented = false
 // NewQQBot 初始化一个QQBot实例
 func NewQQBot(cli *client.QQClient, conf *config.Config) *CQBot {
 	bot := &CQBot{
-		Client: cli,
+		Client:     cli,
+		markAsRead: conf.Message.MarkAsRead,
 	}
 	enableLevelDB := false
 	node, ok := conf.Database["leveldb"]
