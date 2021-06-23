@@ -11,7 +11,7 @@ var bufferPool = sync.Pool{
 	},
 }
 
-// NewBuffer 从池钟获取新 bytes.Buffer
+// NewBuffer 从池中获取新 bytes.Buffer
 func NewBuffer() *bytes.Buffer {
 	return bufferPool.Get().(*bytes.Buffer)
 }
