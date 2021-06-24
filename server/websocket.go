@@ -31,8 +31,8 @@ type webSocketServer struct {
 	filter         string
 }
 
-// WebSocketClient WebSocket客户端实例
-type WebSocketClient struct {
+// websocketClient WebSocket客户端实例
+type websocketClient struct {
 	bot  *coolq.CQBot
 	conf *config.WebsocketReverse
 
@@ -59,11 +59,12 @@ func RunWebSocketServer(b *coolq.CQBot, conf *config.WebsocketServer) {
 	if conf.Disabled {
 		return
 	}
-	s := new(webSocketServer)
-	s.conf = conf
-	s.bot = b
-	s.token = conf.AccessToken
-	s.filter = conf.Filter
+	s := &webSocketServer{
+		bot:    b,
+		conf:   conf,
+		token:  conf.AccessToken,
+		filter: conf.Filter,
+	}
 	addFilter(s.filter)
 	addr := fmt.Sprintf("%s:%d", conf.Host, conf.Port)
 	s.handshake = fmt.Sprintf(`{"_post_method":2,"meta_event_type":"lifecycle","post_type":"meta_event","self_id":%d,"sub_type":"connect","time":%d}`,
@@ -83,11 +84,12 @@ func RunWebSocketClient(b *coolq.CQBot, conf *config.WebsocketReverse) {
 	if conf.Disabled {
 		return
 	}
-	c := new(WebSocketClient)
-	c.bot = b
-	c.conf = conf
-	c.token = conf.AccessToken
-	c.filter = conf.Filter
+	c := &websocketClient{
+		bot:    b,
+		conf:   conf,
+		token:  conf.AccessToken,
+		filter: conf.Filter,
+	}
 	addFilter(c.filter)
 	if c.conf.Universal != "" {
 		c.connectUniversal()
@@ -102,7 +104,7 @@ func RunWebSocketClient(b *coolq.CQBot, conf *config.WebsocketReverse) {
 	c.bot.OnEventPush(c.onBotPushEvent)
 }
 
-func (c *WebSocketClient) connectAPI() {
+func (c *websocketClient) connectAPI() {
 	log.Infof("开始尝试连接到反向WebSocket API服务器: %v", c.conf.API)
 	header := http.Header{
 		"X-Client-Role": []string{"API"},
@@ -129,7 +131,7 @@ func (c *WebSocketClient) connectAPI() {
 	go c.listenAPI(wrappedConn, false)
 }
 
-func (c *WebSocketClient) connectEvent() {
+func (c *websocketClient) connectEvent() {
 	log.Infof("开始尝试连接到反向WebSocket Event服务器: %v", c.conf.Event)
 	header := http.Header{
 		"X-Client-Role": []string{"Event"},
@@ -160,7 +162,7 @@ func (c *WebSocketClient) connectEvent() {
 	c.eventConn = &webSocketConn{Conn: conn, apiCaller: newAPICaller(c.bot)}
 }
 
-func (c *WebSocketClient) connectUniversal() {
+func (c *websocketClient) connectUniversal() {
 	log.Infof("开始尝试连接到反向WebSocket Universal服务器: %v", c.conf.Universal)
 	header := http.Header{
 		"X-Client-Role": []string{"Universal"},
@@ -194,7 +196,7 @@ func (c *WebSocketClient) connectUniversal() {
 	c.universalConn = wrappedConn
 }
 
-func (c *WebSocketClient) listenAPI(conn *webSocketConn, u bool) {
+func (c *websocketClient) listenAPI(conn *webSocketConn, u bool) {
 	defer func() { _ = conn.Close() }()
 	for {
 		buffer := global.NewBuffer()
@@ -225,7 +227,7 @@ func (c *WebSocketClient) listenAPI(conn *webSocketConn, u bool) {
 	}
 }
 
-func (c *WebSocketClient) onBotPushEvent(m *bytes.Buffer) {
+func (c *websocketClient) onBotPushEvent(m *bytes.Buffer) {
 	filter := findFilter(c.filter)
 	if filter != nil && !filter.Eval(gjson.Parse(utils.B2S(m.Bytes()))) {
 		log.Debugf("上报Event %v 到 WS客户端 时被过滤.", utils.B2S(m.Bytes()))
@@ -263,28 +265,11 @@ func (c *WebSocketClient) onBotPushEvent(m *bytes.Buffer) {
 	}
 }
 
-func (s *webSocketServer) auth(r *http.Request) (bool, int) {
-	if s.token != "" { // s.token == s.conf.AccessToken
-		var auth string
-		if auth = r.URL.Query().Get("access_token"); auth == "" {
-			headAuth := strings.SplitN(r.Header.Get("Authorization"), " ", 2)
-			if len(headAuth) != 2 || headAuth[1] == "" {
-				return false, 401
-			}
-			auth = headAuth[1]
-		}
-		if auth != s.token {
-			log.Warnf("已拒绝 %v 的 WebSocket 请求: Token鉴权失败", r.RemoteAddr)
-			return false, 403
-		}
-	}
-	return true, 0
-}
-
 func (s *webSocketServer) event(w http.ResponseWriter, r *http.Request) {
-	isAuth, errReason := s.auth(r)
-	if !isAuth {
-		w.WriteHeader(errReason)
+	status := checkAuth(r, s.token)
+	if status != http.StatusOK {
+		log.Warnf("已拒绝 %v 的 WebSocket 请求: Token鉴权失败(code:%d)", r.RemoteAddr, status)
+		w.WriteHeader(status)
 		return
 	}
 	c, err := upgrader.Upgrade(w, r, nil)
@@ -309,9 +294,10 @@ func (s *webSocketServer) event(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *webSocketServer) api(w http.ResponseWriter, r *http.Request) {
-	isAuth, errReason := s.auth(r)
-	if !isAuth {
-		w.WriteHeader(errReason)
+	status := checkAuth(r, s.token)
+	if status != http.StatusOK {
+		log.Warnf("已拒绝 %v 的 WebSocket 请求: Token鉴权失败(code:%d)", r.RemoteAddr, status)
+		w.WriteHeader(status)
 		return
 	}
 	c, err := upgrader.Upgrade(w, r, nil)
@@ -328,9 +314,10 @@ func (s *webSocketServer) api(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *webSocketServer) any(w http.ResponseWriter, r *http.Request) {
-	isAuth, errReason := s.auth(r)
-	if !isAuth {
-		w.WriteHeader(errReason)
+	status := checkAuth(r, s.token)
+	if status != http.StatusOK {
+		log.Warnf("已拒绝 %v 的 WebSocket 请求: Token鉴权失败(code:%d)", r.RemoteAddr, status)
+		w.WriteHeader(status)
 		return
 	}
 	c, err := upgrader.Upgrade(w, r, nil)

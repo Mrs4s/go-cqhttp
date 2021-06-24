@@ -32,7 +32,9 @@ var json = jsoniter.ConfigCompatibleWithStandardLibrary
 type CQBot struct {
 	Client *client.QQClient
 
-	events           []func(*bytes.Buffer)
+	events []func(*bytes.Buffer)
+	mu     sync.Mutex
+
 	db               *leveldb.DB
 	friendReqCache   sync.Map
 	tempSessionCache sync.Map
@@ -123,6 +125,8 @@ func NewQQBot(cli *client.QQClient, conf *config.Config) *CQBot {
 
 // OnEventPush 注册事件上报函数
 func (bot *CQBot) OnEventPush(f func(buf *bytes.Buffer)) {
+	bot.mu.Lock()
+	defer bot.mu.Unlock()
 	bot.events = append(bot.events, f)
 }
 

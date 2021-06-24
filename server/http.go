@@ -46,8 +46,6 @@ type httpCtx struct {
 	json     gjson.Result
 	query    url.Values
 	postForm url.Values
-
-	headerAuth string
 }
 
 func (h *httpCtx) Get(s string) gjson.Result {
@@ -71,7 +69,6 @@ func (h *httpCtx) Get(s string) gjson.Result {
 func (s *httpServer) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	var ctx httpCtx
 	contentType := request.Header.Get("Content-Type")
-	ctx.headerAuth = request.Header.Get("Authorization")
 	switch request.Method {
 	case http.MethodPost:
 		if strings.Contains(contentType, "application/json") {
@@ -102,7 +99,7 @@ func (s *httpServer) ServeHTTP(writer http.ResponseWriter, request *http.Request
 	}
 
 	if s.accessToken != "" {
-		if status := checkAuth(ctx, s.accessToken); status != http.StatusOK {
+		if status := checkAuth(request, s.accessToken); status != http.StatusOK {
 			writer.WriteHeader(status)
 			return
 		}
@@ -118,10 +115,10 @@ func (s *httpServer) ServeHTTP(writer http.ResponseWriter, request *http.Request
 	_ = json.NewEncoder(writer).Encode(ret)
 }
 
-func checkAuth(ctx httpCtx, token string) int {
-	auth := ctx.headerAuth
+func checkAuth(req *http.Request, token string) int {
+	auth := req.Header.Get("Authorization")
 	if auth == "" {
-		auth = ctx.query.Get("access_token")
+		auth = req.URL.Query().Get("access_token")
 	} else {
 		authN := strings.SplitN(auth, " ", 2)
 		if len(authN) == 2 {
@@ -175,29 +172,25 @@ func RunHTTPServerAndClients(bot *coolq.CQBot, conf *config.HTTPServer) {
 client:
 	for _, c := range conf.Post {
 		if c.URL != "" {
-			go newHTTPClient().Run(c.URL, c.Secret, conf.Filter, conf.Timeout, bot)
+			go HTTPClient{
+				bot:     bot,
+				secret:  c.Secret,
+				addr:    c.URL,
+				filter:  conf.Filter,
+				timeout: conf.Timeout,
+			}.Run()
 		}
 	}
 }
 
-// newHTTPClient 返回反向HTTP客户端
-func newHTTPClient() *HTTPClient {
-	return &HTTPClient{}
-}
-
 // Run 运行反向HTTP服务
-func (c *HTTPClient) Run(addr, secret, filter string, timeout int32, bot *coolq.CQBot) {
-	c.bot = bot
-	c.secret = secret
-	c.addr = addr
-	c.timeout = timeout
-	c.filter = filter
-	addFilter(filter)
+func (c HTTPClient) Run() {
+	addFilter(c.filter)
 	if c.timeout < 5 {
 		c.timeout = 5
 	}
-	bot.OnEventPush(c.onBotPushEvent)
-	log.Infof("HTTP POST上报器已启动: %v", addr)
+	c.bot.OnEventPush(c.onBotPushEvent)
+	log.Infof("HTTP POST上报器已启动: %v", c.addr)
 }
 
 func (c *HTTPClient) onBotPushEvent(m *bytes.Buffer) {
