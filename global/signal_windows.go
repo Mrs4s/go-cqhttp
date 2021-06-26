@@ -18,8 +18,8 @@ import (
 )
 
 var (
-	validTasks = []string{
-		"dumpstack",
+	validTasks = map[string]func(){
+		"dumpstack": dumpStack,
 	}
 )
 
@@ -30,11 +30,11 @@ func SetupMainSignalHandler() <-chan struct{} {
 		pipeName := fmt.Sprintf(`\\.\pipe\go-cqhttp-%d`, os.Getpid())
 		pipe, err := winio.ListenPipe(pipeName, &winio.PipeConfig{})
 		if err != nil {
-			log.Error("创建 named pipe 失败. 将无法使用 dumpstack 功能")
+			log.Errorf("创建 named pipe 失败. 将无法使用 dumpstack 功能: %v", err)
 		} else {
 			maxTaskLen := 0
-			for i := range validTasks {
-				if l := len(validTasks[i]); l > maxTaskLen {
+			for t := range validTasks {
+				if l := len(t); l > maxTaskLen {
 					maxTaskLen = l
 				}
 			}
@@ -58,27 +58,26 @@ func SetupMainSignalHandler() <-chan struct{} {
 							return
 						}
 						cmd := string(buf[:n])
-						switch cmd {
-						case "dumpstack":
-							dumpStack()
-						default:
-							log.Warnf("named pipe 读取到未知指令: %q", cmd)
+						if task, ok := validTasks[cmd]; ok {
+							task()
+							return
 						}
+						log.Warnf("named pipe 读取到未知指令: %q", cmd)
 					}()
 				}
 			}()
 		}
-
+		// setup the main stop channel
+		mainStopCh = make(chan struct{})
 		mc := make(chan os.Signal, 2)
 		closeOnce := sync.Once{}
 		signal.Notify(mc, os.Interrupt, syscall.SIGTERM)
 		go func() {
 			for {
-				s := <-mc
-				switch s {
+				switch <-mc {
 				case os.Interrupt, syscall.SIGTERM:
 					closeOnce.Do(func() {
-						close(mc)
+						close(mainStopCh)
 						if pipe != nil {
 							_ = pipe.Close()
 						}
@@ -86,8 +85,6 @@ func SetupMainSignalHandler() <-chan struct{} {
 				}
 			}
 		}()
-
-		mainStopCh = make(chan struct{})
 	})
 	return mainStopCh
 }
