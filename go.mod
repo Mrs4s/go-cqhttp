@@ -4,6 +4,7 @@ go 1.16
 
 require (
 	github.com/Baozisoftware/qrcode-terminal-go v0.0.0-20170407111555-c0650d8dff0f
+	github.com/Microsoft/go-winio v0.5.0 // indirect
 	github.com/Mrs4s/MiraiGo v0.0.0-20210611054116-d61d3d491ec7
 	github.com/dustin/go-humanize v1.0.0
 	github.com/gin-gonic/gin v1.7.1 // indirect

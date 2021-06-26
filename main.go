@@ -11,12 +11,10 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"os/signal"
 	"path"
 	"runtime"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
@@ -434,10 +432,10 @@ func main() {
 	}
 	log.Info("资源初始化完成, 开始处理信息.")
 	log.Info("アトリは、高性能ですから!")
-	c := make(chan os.Signal, 1)
+
 	go checkUpdate()
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	<-c
+
+	<-global.SetupMainSignalHandler()
 }
 
 // PasswordHashEncrypt 使用key加密给定passwordHash
