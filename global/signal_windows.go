@@ -3,9 +3,12 @@
 package global
 
 import (
+	"errors"
 	"fmt"
+	"net"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -20,6 +23,7 @@ var (
 	}
 )
 
+// SetupMainSignalHandler is for main to use at last
 func SetupMainSignalHandler() <-chan struct{} {
 	mainOnce.Do(func() {
 		// for stack trace collecting on windows
@@ -38,6 +42,9 @@ func SetupMainSignalHandler() <-chan struct{} {
 				for {
 					c, err := pipe.Accept()
 					if err != nil {
+						if errors.Is(err, net.ErrClosed) || strings.Contains(err.Error(), "closed") {
+							return
+						}
 						log.Errorf("accept named pipe 失败: %v", err)
 						continue
 					}

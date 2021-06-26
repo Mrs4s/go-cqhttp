@@ -9,6 +9,7 @@ import (
 	"syscall"
 )
 
+// SetupMainSignalHandler is for main to use at last
 func SetupMainSignalHandler() <-chan struct{} {
 	mainOnce.Do(func() {
 		mc := make(chan os.Signal, 2)
