@@ -12,24 +12,22 @@ import (
 // SetupMainSignalHandler is for main to use at last
 func SetupMainSignalHandler() <-chan struct{} {
 	mainOnce.Do(func() {
-		mc := make(chan os.Signal, 2)
+		mainStopCh = make(chan struct{})
+		mc := make(chan os.Signal, 3)
 		closeOnce := sync.Once{}
 		signal.Notify(mc, os.Interrupt, syscall.SIGTERM, syscall.SIGUSR1)
 		go func() {
 			for {
-				s := <-mc
-				switch s {
+				switch <-mc {
 				case os.Interrupt, syscall.SIGTERM:
 					closeOnce.Do(func() {
-						close(mc)
+						close(mainStopCh)
 					})
 				case syscall.SIGUSR1:
 					dumpStack()
 				}
 			}
 		}()
-
-		mainStopCh = make(chan struct{})
 	})
 	return mainStopCh
 }
