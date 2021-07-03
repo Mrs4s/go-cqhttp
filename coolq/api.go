@@ -536,7 +536,7 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) MSG {
 			"message_id": bot.InsertGroupMessage(ret),
 		})
 	}
-	return Failed(100)
+	return Failed(100, "EMPTY_NODES", "未找到任何可发送的合并转发信息")
 }
 
 // CQSendPrivateMessage 发送私聊消息
