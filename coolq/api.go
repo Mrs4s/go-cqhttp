@@ -516,7 +516,7 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) MSG {
 			})
 			return
 		}
-		log.Warnf("警告: 非法 Forward node 将跳过")
+		log.Warnf("警告: 非法 Forward node 将跳过. uin: %v name: %v content count: %v", uin, name, len(content))
 		return
 	}
 	if m.IsArray() {
