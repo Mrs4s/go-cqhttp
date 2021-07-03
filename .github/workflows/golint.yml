@@ -1,6 +1,6 @@
 name: Lint
 
-on: [push]
+on: [push,workflow_dispatch]
 
 jobs:
   golangci:
