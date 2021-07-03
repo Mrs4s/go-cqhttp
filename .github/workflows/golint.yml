@@ -18,6 +18,14 @@ jobs:
         uses: golangci/golangci-lint-action@v2
         with:
           version: latest
+          
+      - name: Cache downloaded module
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ matrix.goos }}-${{ matrix.goarch }}-${{ hashFiles('**/go.sum') }}
 
       - name: Tests
         run: |
