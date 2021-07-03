@@ -544,9 +544,9 @@ func (bot *CQBot) ConvertObjectMessage(m gjson.Result, isGroup bool) (r []messag
 			case customText != "":
 				var elem *message.ReplyElement
 				var org MSG
-				sender, senderErr := strconv.ParseInt(e.Get("data.qq").String(), 10, 64)
+				sender, senderErr := strconv.ParseInt(e.Get("data.[user_id,qq]").String(), 10, 64)
 				if senderErr != nil && err != nil {
-					log.Warnf("警告: 自定义 Reply 元素中必须包含 Uin 或 id")
+					log.Warnf("警告: 自定义 Reply 元素中必须包含 user_id 或 id")
 					break
 				}
 				msgTime, timeErr := strconv.ParseInt(e.Get("data.time").String(), 10, 64)
