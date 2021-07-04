@@ -351,7 +351,7 @@ Type: `video`
 | `file`  | string  | 支持http和file发送                                                     |
 | `cover` | string  | 视频封面，支持http，file和base64发送，格式必须为jpg                    |
 | `c`     | `2` `3` | 通过网络下载视频时的线程数, 默认单线程. (在资源不支持并发时会自动处理) |
-示例: `[CQ:image,file=file:///C:\\Users\Richard\Pictures\1.mp4]`
+示例: `[CQ:video,file=file:///C:\\Users\Richard\Videos\1.mp4]`
 
 ### XML 消息
 
