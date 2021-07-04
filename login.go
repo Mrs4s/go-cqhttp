@@ -130,6 +130,7 @@ func loginResponseProcessor(res *client.LoginResponse) error {
 				continue
 			}
 			cli.Disconnect()
+			cli = client.NewClientEmpty()
 			return qrcodeLogin()
 		case client.NeedCaptcha:
 			log.Warnf("登录需要验证码.")

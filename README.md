@@ -1,5 +1,7 @@
 <p align="center">
-  <a href="https://ishkong.github.io/go-cqhttp-docs/"><img src="https://i.loli.net/2020/12/20/qSLMDWxiocRQgu6.jpg" width="200" height="200" alt="go-cqhttp"></a>
+  <a href="https://ishkong.github.io/go-cqhttp-docs/">
+    <img src="https://user-images.githubusercontent.com/25968335/120111974-8abef880-c139-11eb-99cd-fa928348b198.png" width="200" height="200" alt="go-cqhttp">
+  </a>
 </p>
 
 <div align="center">
@@ -42,14 +44,14 @@ _✨ 基于 [Mirai](https://github.com/mamoe/mirai) 以及 [MiraiGo](https://git
 
 
 ## 兼容性
-go-cqhttp兼容[OneBot-v11](https://github.com/howmanybots/onebot/tree/master/v11/specs)绝大多数内容，并在其基础上做了一些扩展，详情请看go-cqhttp的文档
+go-cqhttp 兼容 [OneBot-v11](https://github.com/howmanybots/onebot/tree/master/v11/specs) 绝大多数内容，并在其基础上做了一些扩展，详情请看 go-cqhttp 的文档。
 
 ### 接口
 
 - [x] HTTP API
 - [x] 反向 HTTP POST
-- [x] 正向 Websocket
-- [x] 反向 Websocket
+- [x] 正向 WebSocket
+- [x] 反向 WebSocket
 
 ### 拓展支持
 
@@ -66,9 +68,9 @@ go-cqhttp兼容[OneBot-v11](https://github.com/howmanybots/onebot/tree/master/v1
 ### 实现
 
 <details>
-<summary>已实现CQ码</summary>
+<summary>已实现 CQ 码</summary>
 
-#### 符合 Onebot 标准的 CQ 码
+#### 符合 OneBot 标准的 CQ 码
 
 | CQ 码        | 功能                        |
 | ------------ | --------------------------- |
@@ -97,7 +99,7 @@ go-cqhttp兼容[OneBot-v11](https://github.com/howmanybots/onebot/tree/master/v1
 [xml 消息]: https://github.com/howmanybots/onebot/blob/master/v11/specs/message/segment.md#xml-%E6%B6%88%E6%81%AF
 [json 消息]: https://github.com/howmanybots/onebot/blob/master/v11/specs/message/segment.md#json-%E6%B6%88%E6%81%AF
 
-#### 拓展 CQ 码及与 Onebot 标准有略微差异的 CQ 码
+#### 拓展 CQ 码及与 OneBot 标准有略微差异的 CQ 码
 
 | 拓展 CQ 码     | 功能                              |
 | -------------- | --------------------------------- |
@@ -120,9 +122,9 @@ go-cqhttp兼容[OneBot-v11](https://github.com/howmanybots/onebot/tree/master/v1
 </details>
 
 <details>
-<summary>已实现API</summary>
+<summary>已实现 API</summary>
 
-#### 符合 Onebot 标准的 API
+#### 符合 OneBot 标准的 API
 
 | API                      | 功能                   |
 | ------------------------ | ---------------------- |
@@ -182,7 +184,7 @@ go-cqhttp兼容[OneBot-v11](https://github.com/howmanybots/onebot/tree/master/v1
 [重启 go-cqhttp]: https://github.com/howmanybots/onebot/blob/master/v11/specs/api/public.md#set_restart-%E9%87%8D%E5%90%AF-onebot-%E5%AE%9E%E7%8E%B0
 [对事件执行快速操作]: https://github.com/howmanybots/onebot/blob/master/v11/specs/api/hidden.md#handle_quick_operation-%E5%AF%B9%E4%BA%8B%E4%BB%B6%E6%89%A7%E8%A1%8C%E5%BF%AB%E9%80%9F%E6%93%8D%E4%BD%9C
 
-#### 拓展 API 及与 Onebot 标准有略微差异的 API
+#### 拓展 API 及与 OneBot 标准有略微差异的 API
 
 | 拓展 API                    | 功能                   |
 | --------------------------- | ---------------------- |
@@ -217,9 +219,9 @@ go-cqhttp兼容[OneBot-v11](https://github.com/howmanybots/onebot/tree/master/v1
 </details>
 
 <details>
-<summary>已实现Event</summary>
+<summary>已实现 Event</summary>
 
-#### 符合 Onebot 标准的 Event（部分 Event 比 Onebot 标准多上报几个字段，不影响使用）
+#### 符合 OneBot 标准的 Event（部分 Event 比 OneBot 标准多上报几个字段，不影响使用）
 
 | 事件类型 | Event            |
 | -------- | ---------------- |
