@@ -551,9 +551,3 @@ func formatMemberName(mem *client.GroupMemberInfo) string {
 	}
 	return fmt.Sprintf("%s(%d)", mem.DisplayName(), mem.Uin)
 }
-
-// ToJSON 生成JSON字符串
-func (m MSG) ToJSON() string {
-	b, _ := json.Marshal(m)
-	return string(b)
-}

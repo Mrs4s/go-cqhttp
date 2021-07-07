@@ -97,12 +97,9 @@ func (s *httpServer) ServeHTTP(writer http.ResponseWriter, request *http.Request
 		writer.WriteHeader(http.StatusNotFound)
 		return
 	}
-
-	if s.accessToken != "" {
-		if status := checkAuth(request, s.accessToken); status != http.StatusOK {
-			writer.WriteHeader(status)
-			return
-		}
+	if status := checkAuth(request, s.accessToken); status != http.StatusOK {
+		writer.WriteHeader(status)
+		return
 	}
 
 	action := strings.TrimPrefix(request.URL.Path, "/")
@@ -116,6 +113,10 @@ func (s *httpServer) ServeHTTP(writer http.ResponseWriter, request *http.Request
 }
 
 func checkAuth(req *http.Request, token string) int {
+	if token == "" { // quick path
+		return http.StatusOK
+	}
+
 	auth := req.Header.Get("Authorization")
 	if auth == "" {
 		auth = req.URL.Query().Get("access_token")
@@ -126,13 +127,13 @@ func checkAuth(req *http.Request, token string) int {
 		}
 	}
 
-	switch {
-	case auth == "":
-		return http.StatusUnauthorized
-	case auth != token:
-		return http.StatusForbidden
-	default:
+	switch auth {
+	case token:
 		return http.StatusOK
+	case "":
+		return http.StatusUnauthorized
+	default:
+		return http.StatusForbidden
 	}
 }
 
