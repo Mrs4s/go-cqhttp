@@ -418,14 +418,15 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) MSG {
 	}
 	var sendNodes []*message.ForwardNode
 	ts := time.Now().Add(-time.Minute * 5)
-	hasCustom := func() bool {
-		for _, item := range m.Array() {
-			if item.Get("data.uin").Exists() || item.Get("data.user_id").Exists() {
-				return true
-			}
+	hasCustom := false
+	m.ForEach(func(_, item gjson.Result) bool {
+		if item.Get("data.uin").Exists() || item.Get("data.user_id").Exists() {
+			hasCustom = true
+			return false
 		}
-		return false
-	}()
+		return true
+	})
+
 	var convert func(e gjson.Result) []*message.ForwardNode
 	convert = func(e gjson.Result) (nodes []*message.ForwardNode) {
 		if e.Get("type").Str != "node" {
@@ -455,8 +456,8 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) MSG {
 			return
 		}
 		uin := e.Get("data.[user_id,uin].0").Int()
-		msgTime, err := strconv.ParseInt(e.Get("data.time").Str, 10, 64)
-		if err != nil {
+		msgTime := e.Get("data.time").Int()
+		if msgTime == 0 {
 			msgTime = ts.Unix()
 		}
 		name := e.Get("data.name").Str
@@ -464,7 +465,7 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) MSG {
 		if c.IsArray() {
 			flag := false
 			c.ForEach(func(_, value gjson.Result) bool {
-				if value.Get("type").String() == "node" {
+				if value.Get("type").Str == "node" {
 					flag = true
 					return false
 				}
@@ -520,6 +521,10 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) MSG {
 		return
 	}
 	if m.IsArray() {
+		m.ForEach(func(_, v gjson.Result) bool {
+			sendNodes = append(sendNodes, convert(v)...)
+			return true
+		})
 		for _, item := range m.Array() {
 			sendNodes = append(sendNodes, convert(item)...)
 		}

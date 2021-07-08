@@ -131,7 +131,7 @@ func ToArrayMessage(e []message.IMessageElement, groupID int64) (r []MSG) {
 			r = append(r, MSG{
 				"type": "reply",
 				"data": map[string]string{
-					"id":   fmt.Sprint(toGlobalID(rid, replyElem.ReplySeq)),
+					"id":   strconv.FormatInt(int64(toGlobalID(rid, replyElem.ReplySeq)), 10),
 					"seq":  strconv.FormatInt(int64(replyElem.ReplySeq), 10),
 					"qq":   strconv.FormatInt(replyElem.Sender, 10),
 					"time": strconv.FormatInt(int64(replyElem.Time), 10),
@@ -141,7 +141,7 @@ func ToArrayMessage(e []message.IMessageElement, groupID int64) (r []MSG) {
 		} else {
 			r = append(r, MSG{
 				"type": "reply",
-				"data": map[string]string{"id": fmt.Sprint(toGlobalID(rid, replyElem.ReplySeq))},
+				"data": map[string]string{"id": strconv.FormatInt(int64(toGlobalID(rid, replyElem.ReplySeq)), 10)},
 			})
 		}
 	}
@@ -190,7 +190,7 @@ func ToArrayMessage(e []message.IMessageElement, groupID int64) (r []MSG) {
 		case *message.FaceElement:
 			m = MSG{
 				"type": "face",
-				"data": map[string]string{"id": fmt.Sprint(o.Index)},
+				"data": map[string]string{"id": strconv.FormatInt(int64(o.Index), 10)},
 			}
 		case *message.VoiceElement:
 			m = MSG{
