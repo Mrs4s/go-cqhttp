@@ -360,13 +360,11 @@ func (bot *CQBot) CQSendGroupMessage(groupID int64, i interface{}, autoEscape bo
 	fixAt := func(elem []message.IMessageElement) {
 		for _, e := range elem {
 			if at, ok := e.(*message.AtElement); ok && at.Target != 0 && at.Display == "" {
-				at.Display = "@" + func() string {
-					mem := group.FindMember(at.Target)
-					if mem != nil {
-						return mem.DisplayName()
-					}
-					return strconv.FormatInt(at.Target, 10)
-				}()
+				mem := group.FindMember(at.Target)
+				if mem != nil {
+					at.Display = "@" + mem.DisplayName()
+				}
+				at.Display = "@" + strconv.FormatInt(at.Target, 10)
 			}
 		}
 	}
@@ -489,23 +487,14 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) MSG {
 		if uin != 0 && name != "" && len(content) > 0 {
 			var newElem []message.IMessageElement
 			for _, elem := range content {
-				if img, ok := elem.(*LocalImageElement); ok {
-					gm, err := bot.UploadLocalImageAsGroup(groupID, img)
+				switch elem.(type) {
+				case *LocalImageElement, *LocalVideoElement:
+					gm, err := bot.uploadMedia(elem, groupID, true)
 					if err != nil {
-						log.Warnf("警告：群 %v 图片上传失败: %v", groupID, err)
+						log.Warnf("警告: 群 %d %s上传失败: %v", groupID, elem.Type().String(), err)
 						continue
 					}
-					newElem = append(newElem, gm)
-					continue
-				}
-				if video, ok := elem.(*LocalVideoElement); ok {
-					gm, err := bot.UploadLocalVideo(groupID, video)
-					if err != nil {
-						log.Warnf("警告：群 %v 视频上传失败: %v", groupID, err)
-						continue
-					}
-					newElem = append(newElem, gm)
-					continue
+					elem = gm
 				}
 				newElem = append(newElem, elem)
 			}
@@ -521,10 +510,6 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) MSG {
 		return
 	}
 	if m.IsArray() {
-		m.ForEach(func(_, v gjson.Result) bool {
-			sendNodes = append(sendNodes, convert(v)...)
-			return true
-		})
 		for _, item := range m.Array() {
 			sendNodes = append(sendNodes, convert(item)...)
 		}
