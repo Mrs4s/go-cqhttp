@@ -13,17 +13,18 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Mrs4s/go-cqhttp/global"
-	"github.com/Mrs4s/go-cqhttp/global/config"
-
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/Mrs4s/MiraiGo/utils"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/opt"
+
+	"github.com/Mrs4s/go-cqhttp/global"
+	"github.com/Mrs4s/go-cqhttp/global/config"
 )
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
@@ -189,59 +190,38 @@ func (bot *CQBot) UploadLocalImageAsPrivate(userID int64, img *LocalImageElement
 func (bot *CQBot) SendGroupMessage(groupID int64, m *message.SendingMessage) int32 {
 	newElem := make([]message.IMessageElement, 0, len(m.Elements))
 	group := bot.Client.FindGroup(groupID)
-	for _, elem := range m.Elements {
-		if i, ok := elem.(*LocalImageElement); ok {
-			gm, err := bot.UploadLocalImageAsGroup(groupID, i)
+	for _, e := range m.Elements {
+		switch i := e.(type) {
+		case *LocalImageElement, *message.VoiceElement, *LocalVideoElement:
+			i, err := bot.uploadMedia(i, groupID, true)
 			if err != nil {
-				log.Warnf("警告: 群 %v 消息图片上传失败: %v", groupID, err)
+				log.Warnf("警告: 群 %d 消息%s上传失败: %v", groupID, e.Type().String(), err)
 				continue
 			}
-			newElem = append(newElem, gm)
-			continue
-		}
-		if i, ok := elem.(*message.VoiceElement); ok {
-			gv, err := bot.Client.UploadGroupPtt(groupID, bytes.NewReader(i.Data))
-			if err != nil {
-				log.Warnf("警告: 群 %v 消息语音上传失败: %v", groupID, err)
-				continue
-			}
-			newElem = append(newElem, gv)
-			continue
-		}
-		if i, ok := elem.(*LocalVideoElement); ok {
-			gv, err := bot.UploadLocalVideo(groupID, i)
-			if err != nil {
-				log.Warnf("警告: 群 %v 消息短视频上传失败: %v", groupID, err)
-				continue
-			}
-			newElem = append(newElem, gv)
-			continue
-		}
-		if i, ok := elem.(*PokeElement); ok {
-			if group := bot.Client.FindGroup(groupID); group != nil {
+			e = i
+		case *PokeElement:
+			if group != nil {
 				if mem := group.FindMember(i.Target); mem != nil {
 					mem.Poke()
-					return 0
 				}
 			}
-		}
-		if i, ok := elem.(*GiftElement); ok {
+			return 0
+		case *GiftElement:
 			bot.Client.SendGroupGift(uint64(groupID), uint64(i.Target), i.GiftID)
 			return 0
-		}
-		if i, ok := elem.(*message.MusicShareElement); ok {
+		case *message.MusicShareElement:
 			ret, err := bot.Client.SendGroupMusicShare(groupID, i)
 			if err != nil {
 				log.Warnf("警告: 群 %v 富文本消息发送失败: %v", groupID, err)
 				return -1
 			}
 			return bot.InsertGroupMessage(ret)
+		case *message.AtElement:
+			if i.Target == 0 && group.SelfPermission() == client.Member {
+				e = message.NewText("@全体成员")
+			}
 		}
-		if i, ok := elem.(*message.AtElement); ok && i.Target == 0 && group.SelfPermission() == client.Member {
-			newElem = append(newElem, message.NewText("@全体成员"))
-			continue
-		}
-		newElem = append(newElem, elem)
+		newElem = append(newElem, e)
 	}
 	if len(newElem) == 0 {
 		log.Warnf("群消息发送失败: 消息为空.")
@@ -260,43 +240,23 @@ func (bot *CQBot) SendGroupMessage(groupID int64, m *message.SendingMessage) int
 // SendPrivateMessage 发送私聊消息
 func (bot *CQBot) SendPrivateMessage(target int64, groupID int64, m *message.SendingMessage) int32 {
 	newElem := make([]message.IMessageElement, 0, len(m.Elements))
-	for _, elem := range m.Elements {
-		if i, ok := elem.(*LocalImageElement); ok {
-			fm, err := bot.UploadLocalImageAsPrivate(target, i)
+	for _, e := range m.Elements {
+		switch i := e.(type) {
+		case *LocalImageElement, *message.VoiceElement, *LocalVideoElement:
+			i, err := bot.uploadMedia(i, groupID, false)
 			if err != nil {
-				log.Warnf("警告: 私聊 %v 消息图片上传失败: %v", target, err)
+				log.Warnf("警告: 私聊 %d 消息%s上传失败: %v", target, e.Type().String(), err)
 				continue
 			}
-			newElem = append(newElem, fm)
-			continue
-		}
-		if i, ok := elem.(*PokeElement); ok {
+			e = i
+		case *PokeElement:
 			bot.Client.SendFriendPoke(i.Target)
 			return 0
-		}
-		if i, ok := elem.(*message.VoiceElement); ok {
-			fv, err := bot.Client.UploadPrivatePtt(target, bytes.NewReader(i.Data)) // todo: io.ReadSeeker
-			if err != nil {
-				log.Warnf("警告: 私聊 %v 消息语音上传失败: %v", target, err)
-				continue
-			}
-			newElem = append(newElem, fv)
-			continue
-		}
-		if i, ok := elem.(*LocalVideoElement); ok {
-			gv, err := bot.UploadLocalVideo(target, i)
-			if err != nil {
-				log.Warnf("警告: 私聊 %v 消息短视频上传失败: %v", target, err)
-				continue
-			}
-			newElem = append(newElem, gv)
-			continue
-		}
-		if i, ok := elem.(*message.MusicShareElement); ok {
-			bot.Client.SendFriendMusicShare(target, i)
+		case *message.MusicShareElement:
+			bot.Client.SendFriendMusicShare(groupID, i)
 			return 0
 		}
-		newElem = append(newElem, elem)
+		newElem = append(newElem, e)
 	}
 	if len(newElem) == 0 {
 		log.Warnf("好友消息发送失败: 消息为空.")
@@ -522,18 +482,16 @@ func (bot *CQBot) formatGroupMessage(m *message.GroupMessage) MSG {
 			}
 		}
 		ms := gm["sender"].(MSG)
-		ms["role"] = func() string {
-			switch mem.Permission {
-			case client.Owner:
-				return "owner"
-			case client.Administrator:
-				return "admin"
-			case client.Member:
-				return "member"
-			default:
-				return "member"
-			}
-		}()
+		switch mem.Permission {
+		case client.Owner:
+			ms["role"] = "owner"
+		case client.Administrator:
+			ms["role"] = "admin"
+		case client.Member:
+			ms["role"] = "member"
+		default:
+			ms["role"] = "member"
+		}
 		ms["nickname"] = mem.Nickname
 		ms["card"] = mem.CardName
 		ms["title"] = mem.SpecialTitle
@@ -550,4 +508,22 @@ func formatMemberName(mem *client.GroupMemberInfo) string {
 		return "未知"
 	}
 	return fmt.Sprintf("%s(%d)", mem.DisplayName(), mem.Uin)
+}
+
+func (bot *CQBot) uploadMedia(raw message.IMessageElement, target int64, group bool) (message.IMessageElement, error) {
+	switch m := raw.(type) {
+	case *LocalImageElement:
+		if group {
+			return bot.UploadLocalImageAsGroup(target, m)
+		}
+		return bot.UploadLocalImageAsPrivate(target, m)
+	case *message.VoiceElement:
+		if group {
+			return bot.Client.UploadGroupPtt(target, bytes.NewReader(m.Data))
+		}
+		return bot.Client.UploadPrivatePtt(target, bytes.NewReader(m.Data))
+	case *LocalVideoElement:
+		return bot.UploadLocalVideo(target, m)
+	}
+	return nil, errors.New("unsupported message element type")
 }
