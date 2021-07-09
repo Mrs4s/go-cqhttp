@@ -70,12 +70,13 @@ func RunWebSocketServer(b *coolq.CQBot, conf *config.WebsocketServer) {
 	s.handshake = fmt.Sprintf(`{"_post_method":2,"meta_event_type":"lifecycle","post_type":"meta_event","self_id":%d,"sub_type":"connect","time":%d}`,
 		b.Client.Uin, time.Now().Unix())
 	b.OnEventPush(s.onBotPushEvent)
-	http.HandleFunc("/event", s.event)
-	http.HandleFunc("/api", s.api)
-	http.HandleFunc("/", s.any)
+	mux := http.ServeMux{}
+	mux.HandleFunc("/event", s.event)
+	mux.HandleFunc("/api", s.api)
+	mux.HandleFunc("/", s.any)
 	go func() {
 		log.Infof("CQ WebSocket 服务器已启动: %v", addr)
-		log.Fatal(http.ListenAndServe(addr, nil))
+		log.Fatal(http.ListenAndServe(addr, &mux))
 	}()
 }
 
