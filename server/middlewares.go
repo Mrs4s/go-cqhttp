@@ -1,6 +1,7 @@
 package server
 
 import (
+	"container/list"
 	"context"
 	"os"
 	"sync"
@@ -53,4 +54,38 @@ func findFilter(file string) global.Filter {
 	filterMutex.RLock()
 	defer filterMutex.RUnlock()
 	return filters[file]
+}
+
+func longPolling(bot *coolq.CQBot, maxSize int) handler {
+	var mutex sync.Mutex
+	cond := sync.NewCond(&mutex)
+	queue := list.New()
+	bot.OnEventPush(func(event *coolq.Event) {
+		mutex.Lock()
+		defer mutex.Unlock()
+		queue.PushBack(event.RawMsg)
+		for maxSize != 0 && queue.Len() > maxSize {
+			queue.Remove(queue.Front())
+		}
+		cond.Signal()
+	})
+	return func(action string, p resultGetter) coolq.MSG {
+		if action != "get_updates" {
+			return nil
+		}
+		mutex.Lock()
+		defer mutex.Unlock()
+		if queue.Len() == 0 {
+			cond.Wait()
+		}
+		limit := int(p.Get("limit").Int())
+		if limit <= 0 || queue.Len() < limit {
+			limit = queue.Len()
+		}
+		ret := make([]interface{}, limit)
+		for i := 0; i < limit; i++ {
+			ret[i] = queue.Remove(queue.Front())
+		}
+		return coolq.OK(ret)
+	}
 }

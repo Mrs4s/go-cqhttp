@@ -82,11 +82,15 @@ type MiddleWares struct {
 
 // HTTPServer HTTP通信相关配置
 type HTTPServer struct {
-	Disabled bool   `yaml:"disabled"`
-	Host     string `yaml:"host"`
-	Port     int    `yaml:"port"`
-	Timeout  int32  `yaml:"timeout"`
-	Post     []struct {
+	Disabled    bool   `yaml:"disabled"`
+	Host        string `yaml:"host"`
+	Port        int    `yaml:"port"`
+	Timeout     int32  `yaml:"timeout"`
+	LongPolling struct {
+		Enabled      bool `yaml:"enabled"`
+		MaxQueueSize int  `yaml:"max-queue-size"`
+	} `yaml:"long-polling"`
+	Post []struct {
 		URL    string `yaml:"url"`
 		Secret string `yaml:"secret"`
 	}
@@ -268,6 +272,12 @@ const httpDefault = `  # HTTP 通信设置
       # 反向HTTP超时时间, 单位秒
       # 最小值为5，小于5将会忽略本项设置
       timeout: 5
+      # 长轮询拓展
+      long-polling:
+        # 是否开启
+        enabled: false
+        # 消息队列大小，0 表示不限制队列大小，谨慎使用
+        max-queue-size: 2000
       middlewares:
         <<: *default # 引用默认中间件
       # 反向HTTP POST地址列表

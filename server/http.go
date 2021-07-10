@@ -160,6 +160,9 @@ func RunHTTPServerAndClients(bot *coolq.CQBot, conf *config.HTTPServer) {
 	if conf.RateLimit.Enabled {
 		s.api.use(rateLimit(conf.RateLimit.Frequency, conf.RateLimit.Bucket))
 	}
+	if conf.LongPolling.Enabled {
+		s.api.use(longPolling(bot, conf.LongPolling.MaxQueueSize))
+	}
 
 	go func() {
 		log.Infof("CQ HTTP 服务器已启动: %v", addr)
