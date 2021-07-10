@@ -1,6 +1,6 @@
 name: Lint
 
-on: [push,workflow_dispatch]
+on: [push,pull_request,workflow_dispatch]
 
 jobs:
   golangci:
@@ -18,21 +18,13 @@ jobs:
         uses: golangci/golangci-lint-action@v2
         with:
           version: latest
-          
-      - name: Cache downloaded module
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ matrix.goos }}-${{ matrix.goarch }}-${{ hashFiles('**/go.sum') }}
 
       - name: Tests
         run: |
           go test $(go list ./...)
 
       - name: Commit back
-        if: github.repository_owner == 'Mrs4s'
+        if: ${{ github.repository_owner == 'Mrs4s' && github.event.push }}
         continue-on-error: true
         run: |
           git config --local user.name 'github-actions[bot]'
@@ -40,3 +32,9 @@ jobs:
           git add --all
           git commit -m "ci(chore): Fix stylings"
           git push
+
+      - name: Suggester
+        if: ${{ github.event.pull_request }}
+        uses: reviewdog/action-suggester@v1
+        with:
+          tool_name: golangci-lint
