@@ -230,39 +230,29 @@ func (c *websocketClient) listenAPI(conn *webSocketConn, u bool) {
 
 func (c *websocketClient) onBotPushEvent(e *coolq.Event) {
 	filter := findFilter(c.filter)
-	if filter != nil && !filter.Eval(gjson.Parse(e.JsonString())) {
-		log.Debugf("上报Event %s 到 WS客户端 时被过滤.", e.JsonBytes())
+	if filter != nil && !filter.Eval(gjson.Parse(e.JSONString())) {
+		log.Debugf("上报Event %s 到 WS服务器 时被过滤.", e.JSONBytes())
 		return
 	}
-	if c.eventConn != nil {
-		log.Debugf("向WS服务器 %v 推送Event: %s", c.eventConn.RemoteAddr().String(), e.JsonBytes())
-		conn := c.eventConn
+	push := func(conn *webSocketConn, reconnect func()) {
+		log.Debugf("向WS服务器 %v 推送Event: %s", conn.RemoteAddr().String(), e.JSONBytes())
 		conn.Lock()
 		defer conn.Unlock()
-		_ = c.eventConn.SetWriteDeadline(time.Now().Add(time.Second * 15))
-		if err := c.eventConn.WriteMessage(websocket.TextMessage, e.JsonBytes()); err != nil {
-			log.Warnf("向WS服务器 %v 推送Event时出现错误: %v", c.eventConn.RemoteAddr().String(), err)
-			_ = c.eventConn.Close()
+		_ = conn.SetWriteDeadline(time.Now().Add(time.Second * 15))
+		if err := conn.WriteMessage(websocket.TextMessage, e.JSONBytes()); err != nil {
+			log.Warnf("向WS服务器 %v 推送Event时出现错误: %v", conn.RemoteAddr().String(), err)
+			_ = conn.Close()
 			if c.conf.ReconnectInterval != 0 {
 				time.Sleep(time.Millisecond * time.Duration(c.conf.ReconnectInterval))
-				c.connectEvent()
+				reconnect()
 			}
 		}
 	}
+	if c.eventConn != nil {
+		push(c.eventConn, c.connectEvent)
+	}
 	if c.universalConn != nil {
-		log.Debugf("向WS服务器 %v 推送Event: %s", c.universalConn.RemoteAddr().String(), e.JsonBytes())
-		conn := c.universalConn
-		conn.Lock()
-		defer conn.Unlock()
-		_ = c.universalConn.SetWriteDeadline(time.Now().Add(time.Second * 15))
-		if err := c.universalConn.WriteMessage(websocket.TextMessage, e.JsonBytes()); err != nil {
-			log.Warnf("向WS服务器 %v 推送Event时出现错误: %v", c.universalConn.RemoteAddr().String(), err)
-			_ = c.universalConn.Close()
-			if c.conf.ReconnectInterval != 0 {
-				time.Sleep(time.Millisecond * time.Duration(c.conf.ReconnectInterval))
-				c.connectUniversal()
-			}
-		}
+		push(c.universalConn, c.connectUniversal)
 	}
 }
 
@@ -391,16 +381,16 @@ func (s *webSocketServer) onBotPushEvent(e *coolq.Event) {
 	defer s.eventConnMutex.Unlock()
 
 	filter := findFilter(s.filter)
-	if filter != nil && !filter.Eval(gjson.Parse(e.JsonString())) {
-		log.Debugf("上报Event %s 到 WS客户端 时被过滤.", e.JsonBytes())
+	if filter != nil && !filter.Eval(gjson.Parse(e.JSONString())) {
+		log.Debugf("上报Event %s 到 WS客户端 时被过滤.", e.JSONBytes())
 		return
 	}
 
 	for i, l := 0, len(s.eventConn); i < l; i++ {
 		conn := s.eventConn[i]
-		log.Debugf("向WS客户端 %v 推送Event: %s", conn.RemoteAddr().String(), e.JsonBytes())
+		log.Debugf("向WS客户端 %v 推送Event: %s", conn.RemoteAddr().String(), e.JSONBytes())
 		conn.Lock()
-		if err := conn.WriteMessage(websocket.TextMessage, e.JsonBytes()); err != nil {
+		if err := conn.WriteMessage(websocket.TextMessage, e.JSONBytes()); err != nil {
 			_ = conn.Close()
 			next := i + 1
 			if next >= l {

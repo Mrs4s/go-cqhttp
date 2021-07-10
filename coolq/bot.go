@@ -45,6 +45,7 @@ type CQBot struct {
 // MSG 消息Map
 type MSG map[string]interface{}
 
+// Event 事件
 type Event struct {
 	RawMsg MSG
 
@@ -59,15 +60,15 @@ func (e *Event) marshal() {
 	_ = json.NewEncoder(e.buffer).Encode(e.RawMsg)
 }
 
-// JsonBytes return byes of json by lazy marshalling.
-func (e *Event) JsonBytes() []byte {
+// JSONBytes return byes of json by lazy marshalling.
+func (e *Event) JSONBytes() []byte {
 	e.once.Do(e.marshal)
 	return e.buffer.Bytes()
 }
 
-// JsonString return string of json without extra allocation
+// JSONString return string of json without extra allocation
 // by lazy marshalling.
-func (e *Event) JsonString() string {
+func (e *Event) JSONString() string {
 	e.once.Do(e.marshal)
 	return utils.B2S(e.buffer.Bytes())
 }

@@ -197,20 +197,20 @@ func (c *HTTPClient) onBotPushEvent(e *coolq.Event) {
 	var res string
 	if c.filter != "" {
 		filter := findFilter(c.filter)
-		if filter != nil && !filter.Eval(gjson.Parse(e.JsonString())) {
-			log.Debugf("上报Event %v 到 HTTP 服务器 %s 时被过滤.", c.addr, e.JsonBytes())
+		if filter != nil && !filter.Eval(gjson.Parse(e.JSONString())) {
+			log.Debugf("上报Event %v 到 HTTP 服务器 %s 时被过滤.", c.addr, e.JSONBytes())
 			return
 		}
 	}
 
-	err := gout.POST(c.addr).SetJSON(e.JsonBytes()).BindBody(&res).SetHeader(func() gout.H {
+	err := gout.POST(c.addr).SetJSON(e.JSONBytes()).BindBody(&res).SetHeader(func() gout.H {
 		h := gout.H{
 			"X-Self-ID":  c.bot.Client.Uin,
 			"User-Agent": "CQHttp/4.15.0",
 		}
 		if c.secret != "" {
 			mac := hmac.New(sha1.New, []byte(c.secret))
-			_, err := mac.Write(e.JsonBytes())
+			_, err := mac.Write(e.JSONBytes())
 			if err != nil {
 				log.Error(err)
 				return nil
@@ -228,12 +228,12 @@ func (c *HTTPClient) onBotPushEvent(e *coolq.Event) {
 			return nil
 		}).Do()
 	if err != nil {
-		log.Warnf("上报Event数据 %s 到 %v 失败: %v", e.JsonBytes(), c.addr, err)
+		log.Warnf("上报Event数据 %s 到 %v 失败: %v", e.JSONBytes(), c.addr, err)
 		return
 	}
-	log.Debugf("上报Event数据 %s 到 %v", e.JsonBytes(), c.addr)
+	log.Debugf("上报Event数据 %s 到 %v", e.JSONBytes(), c.addr)
 	if gjson.Valid(res) {
-		c.bot.CQHandleQuickOperation(gjson.Parse(e.JsonString()), gjson.Parse(res))
+		c.bot.CQHandleQuickOperation(gjson.Parse(e.JSONString()), gjson.Parse(res))
 	}
 }
 
