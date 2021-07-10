@@ -1,7 +1,6 @@
 package server
 
 import (
-	"bytes"
 	"context"
 	"crypto/hmac"
 	"crypto/sha1"
@@ -194,24 +193,24 @@ func (c HTTPClient) Run() {
 	log.Infof("HTTP POST上报器已启动: %v", c.addr)
 }
 
-func (c *HTTPClient) onBotPushEvent(m *bytes.Buffer) {
+func (c *HTTPClient) onBotPushEvent(e *coolq.Event) {
 	var res string
 	if c.filter != "" {
 		filter := findFilter(c.filter)
-		if filter != nil && !filter.Eval(gjson.Parse(utils.B2S(m.Bytes()))) {
-			log.Debugf("上报Event %v 到 HTTP 服务器 %v 时被过滤.", c.addr, utils.B2S(m.Bytes()))
+		if filter != nil && !filter.Eval(gjson.Parse(e.JsonString())) {
+			log.Debugf("上报Event %v 到 HTTP 服务器 %s 时被过滤.", c.addr, e.JsonBytes())
 			return
 		}
 	}
 
-	err := gout.POST(c.addr).SetJSON(m.Bytes()).BindBody(&res).SetHeader(func() gout.H {
+	err := gout.POST(c.addr).SetJSON(e.JsonBytes()).BindBody(&res).SetHeader(func() gout.H {
 		h := gout.H{
 			"X-Self-ID":  c.bot.Client.Uin,
 			"User-Agent": "CQHttp/4.15.0",
 		}
 		if c.secret != "" {
 			mac := hmac.New(sha1.New, []byte(c.secret))
-			_, err := mac.Write(m.Bytes())
+			_, err := mac.Write(e.JsonBytes())
 			if err != nil {
 				log.Error(err)
 				return nil
@@ -229,12 +228,12 @@ func (c *HTTPClient) onBotPushEvent(m *bytes.Buffer) {
 			return nil
 		}).Do()
 	if err != nil {
-		log.Warnf("上报Event数据 %v 到 %v 失败: %v", utils.B2S(m.Bytes()), c.addr, err)
+		log.Warnf("上报Event数据 %s 到 %v 失败: %v", e.JsonBytes(), c.addr, err)
 		return
 	}
-	log.Debugf("上报Event数据 %v 到 %v", utils.B2S(m.Bytes()), c.addr)
+	log.Debugf("上报Event数据 %s 到 %v", e.JsonBytes(), c.addr)
 	if gjson.Valid(res) {
-		c.bot.CQHandleQuickOperation(gjson.Parse(utils.B2S(m.Bytes())), gjson.Parse(res))
+		c.bot.CQHandleQuickOperation(gjson.Parse(e.JsonString()), gjson.Parse(res))
 	}
 }
 

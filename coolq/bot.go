@@ -33,7 +33,7 @@ var json = jsoniter.ConfigCompatibleWithStandardLibrary
 type CQBot struct {
 	Client *client.QQClient
 
-	events []func(*bytes.Buffer)
+	events []func(*Event)
 	mu     sync.Mutex
 
 	db               *leveldb.DB
@@ -44,6 +44,33 @@ type CQBot struct {
 
 // MSG 消息Map
 type MSG map[string]interface{}
+
+type Event struct {
+	RawMsg MSG
+
+	once   sync.Once
+	buffer *bytes.Buffer
+}
+
+func (e *Event) marshal() {
+	if e.buffer == nil {
+		e.buffer = global.NewBuffer()
+	}
+	_ = json.NewEncoder(e.buffer).Encode(e.RawMsg)
+}
+
+// JsonBytes return byes of json by lazy marshalling.
+func (e *Event) JsonBytes() []byte {
+	e.once.Do(e.marshal)
+	return e.buffer.Bytes()
+}
+
+// JsonString return string of json without extra allocation
+// by lazy marshalling.
+func (e *Event) JsonString() string {
+	e.once.Do(e.marshal)
+	return utils.B2S(e.buffer.Bytes())
+}
 
 // ForceFragmented 是否启用强制分片
 var ForceFragmented = false
@@ -125,7 +152,7 @@ func NewQQBot(cli *client.QQClient, conf *config.Config) *CQBot {
 }
 
 // OnEventPush 注册事件上报函数
-func (bot *CQBot) OnEventPush(f func(buf *bytes.Buffer)) {
+func (bot *CQBot) OnEventPush(f func(e *Event)) {
 	bot.mu.Lock()
 	defer bot.mu.Unlock()
 	bot.events = append(bot.events, f)
@@ -404,12 +431,11 @@ func (bot *CQBot) Release() {
 }
 
 func (bot *CQBot) dispatchEventMessage(m MSG) {
-	buf := global.NewBuffer()
+	event := &Event{RawMsg: m}
 	wg := sync.WaitGroup{}
 	wg.Add(len(bot.events))
-	_ = json.NewEncoder(buf).Encode(m)
 	for _, f := range bot.events {
-		go func(fn func(*bytes.Buffer)) {
+		go func(fn func(*Event)) {
 			defer func() {
 				wg.Done()
 				if pan := recover(); pan != nil {
@@ -418,7 +444,7 @@ func (bot *CQBot) dispatchEventMessage(m MSG) {
 			}()
 
 			start := time.Now()
-			fn(buf)
+			fn(event)
 			end := time.Now()
 			if end.Sub(start) > time.Second*5 {
 				log.Debugf("警告: 事件处理耗时超过 5 秒 (%v), 请检查应用是否有堵塞.", end.Sub(start))
@@ -426,7 +452,7 @@ func (bot *CQBot) dispatchEventMessage(m MSG) {
 		}(f)
 	}
 	wg.Wait()
-	global.PutBuffer(buf)
+	global.PutBuffer(event.buffer)
 }
 
 func (bot *CQBot) formatGroupMessage(m *message.GroupMessage) MSG {

@@ -20,7 +20,7 @@ func NewBuffer() *bytes.Buffer {
 func PutBuffer(buf *bytes.Buffer) {
 	// See https://golang.org/issue/23199
 	const maxSize = 1 << 16
-	if buf.Cap() < maxSize { // 对于大Buffer直接丢弃
+	if buf != nil && buf.Cap() < maxSize { // 对于大Buffer直接丢弃
 		buf.Reset()
 		bufferPool.Put(buf)
 	}
