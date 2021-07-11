@@ -24,7 +24,7 @@ jobs:
           go test $(go list ./...)
 
       - name: Commit back
-        if: ${{ github.repository_owner == 'Mrs4s' && github.event.push }}
+        if: ${{ github.repository_owner == 'Mrs4s' && !github.event.pull_request }}
         continue-on-error: true
         run: |
           git config --local user.name 'github-actions[bot]'
