@@ -410,7 +410,7 @@ var API = map[string]func(*coolq.CQBot, resultGetter) coolq.MSG{
 	"check_url_safely":           checkURLSafely,
 	"set_group_anonymous_ban":    setGroupAnonymousBan,
 	".handle_quick_operation":    handleQuickOperation,
-	"qidian_get_account_info":    getQiDianAccountInfo,
+	"get_qidian_account_info":    getQiDianAccountInfo,
 	"_get_model_show":            getModelShow,
 	"_set_model_show":            setModelShow,
 }
