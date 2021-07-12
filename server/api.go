@@ -350,6 +350,18 @@ func setModelShow(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 	return bot.CQSetModelShow(p.Get("model").String(), p.Get("model_show").String())
 }
 
+func uploadImage(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+	return bot.CQUploadImage(p.Get("file").Str)
+}
+
+func uploadVoice(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+	return bot.CQUploadVoice(p.Get("file").Str)
+}
+
+func uploadShortVideo(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+	return bot.CQUploadShortVideo(p.Get("file").Str)
+}
+
 // API 是go-cqhttp当前支持的所有api的映射表
 var API = map[string]func(*coolq.CQBot, resultGetter) coolq.MSG{
 	"get_login_info":             getLoginInfo,
@@ -413,6 +425,9 @@ var API = map[string]func(*coolq.CQBot, resultGetter) coolq.MSG{
 	"qidian_get_account_info":    getQiDianAccountInfo,
 	"_get_model_show":            getModelShow,
 	"_set_model_show":            setModelShow,
+	"upload_image":               uploadImage,
+	"upload_voice":               uploadVoice,
+	"upload_short_video":         uploadShortVideo,
 }
 
 func (api *apiCaller) callAPI(action string, p resultGetter) coolq.MSG {
