@@ -1,5 +1,6 @@
 // +build linux windows,!arm darwin
 // +build 386 amd64 arm arm64
+// +build !cgo
 
 // Package codec Slik编码核心模块
 package codec

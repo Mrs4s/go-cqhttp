@@ -1,4 +1,4 @@
-// +build !arm,!arm64,!amd64,!386
+// +build !arm,!arm64,!amd64,!386 cgo
 
 package codec
 

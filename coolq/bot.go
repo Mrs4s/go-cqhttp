@@ -33,8 +33,8 @@ var json = jsoniter.ConfigCompatibleWithStandardLibrary
 type CQBot struct {
 	Client *client.QQClient
 
+	lock   sync.RWMutex
 	events []func(*Event)
-	mu     sync.Mutex
 
 	db               *leveldb.DB
 	friendReqCache   sync.Map
@@ -154,9 +154,9 @@ func NewQQBot(cli *client.QQClient, conf *config.Config) *CQBot {
 
 // OnEventPush 注册事件上报函数
 func (bot *CQBot) OnEventPush(f func(e *Event)) {
-	bot.mu.Lock()
-	defer bot.mu.Unlock()
+	bot.lock.Lock()
 	bot.events = append(bot.events, f)
+	bot.lock.Unlock()
 }
 
 // GetMessage 获取给定消息id对应的消息
@@ -432,6 +432,9 @@ func (bot *CQBot) Release() {
 }
 
 func (bot *CQBot) dispatchEventMessage(m MSG) {
+	bot.lock.RLock()
+	defer bot.lock.RUnlock()
+
 	event := &Event{RawMsg: m}
 	wg := sync.WaitGroup{}
 	wg.Add(len(bot.events))
