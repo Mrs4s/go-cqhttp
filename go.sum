@@ -4,8 +4,8 @@ github.com/Baozisoftware/qrcode-terminal-go v0.0.0-20170407111555-c0650d8dff0f/g
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/Microsoft/go-winio v0.5.0 h1:Elr9Wn+sGKPlkaBvwu4mTrxtmOp3F3yV9qhaHbXGjwU=
 github.com/Microsoft/go-winio v0.5.0/go.mod h1:JPGBdM1cNvN/6ISo+n8V5iA4v8pBzdOpzfwIujj1a84=
-github.com/Mrs4s/MiraiGo v0.0.0-20210709025048-8748b9b30dc5 h1:8HnkaOZQQBV+kIK6KeHa9L/BorgCkrTFrmZrLh7He18=
-github.com/Mrs4s/MiraiGo v0.0.0-20210709025048-8748b9b30dc5/go.mod h1:CPaznIPn415uQqxJgjyMHLqGLkvLS6R6+bkW3/fe08Q=
+github.com/Mrs4s/MiraiGo v0.0.0-20210714134118-4128ec65a05d h1:8v255VPIDYl7265hw+fQjLq9PTD2VkCjDpOkjpOzhcU=
+github.com/Mrs4s/MiraiGo v0.0.0-20210714134118-4128ec65a05d/go.mod h1:CPaznIPn415uQqxJgjyMHLqGLkvLS6R6+bkW3/fe08Q=
 github.com/bits-and-blooms/bitset v1.2.0 h1:Kn4yilvwNtMACtf1eYDlG8H77R07mZSPbMjLyS07ChA=
 github.com/bits-and-blooms/bitset v1.2.0/go.mod h1:gIdJ4wp64HaoK2YrL1Q5/N7Y16edYb8uY+O0FJTyyDA=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
