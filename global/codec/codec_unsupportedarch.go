@@ -1,4 +1,4 @@
-// +build !arm,!arm64,!amd64,!386 cgo
+// +build !arm,!arm64,!amd64,!386 race
 
 package codec
 

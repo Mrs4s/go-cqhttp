@@ -1,8 +1,7 @@
 // +build linux windows,!arm darwin
 // +build 386 amd64 arm arm64
-// +build !cgo
+// +build !race
 
-// Package codec Slik编码核心模块
 package codec
 
 import (
@@ -15,9 +14,7 @@ import (
 	"github.com/wdvxdr1123/go-silk"
 )
 
-const (
-	silkCachePath = "data/cache"
-)
+const silkCachePath = "data/cache"
 
 // EncodeToSilk 将音频编码为Silk
 func EncodeToSilk(record []byte, tempName string, useCache bool) (silkWav []byte, err error) {
