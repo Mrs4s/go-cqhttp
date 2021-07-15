@@ -74,7 +74,8 @@ func init() {
 		TimestampFormat: "2006-01-02 15:04:05",
 		LogFormat:       "[%time%] [%lvl%]: %msg% \n",
 	}
-
+	log.SetOutput(os.Stdout)
+	
 	w, err := rotatelogs.New(path.Join("logs", "%Y-%m-%d.log"), rotatelogs.WithRotationTime(time.Hour*24))
 	if err != nil {
 		log.Errorf("rotatelogs init err: %v", err)
