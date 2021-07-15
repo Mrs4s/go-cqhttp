@@ -85,6 +85,11 @@ func (s *httpServer) ServeHTTP(writer http.ResponseWriter, request *http.Request
 			ctx.json = gjson.Parse(utils.B2S(body))
 		}
 		if strings.Contains(contentType, "application/x-www-form-urlencoded") {
+			err := request.ParseForm()
+			if err != nil {
+				log.Warnf("已拒绝客户端 %v 的请求: %v", request.RemoteAddr, err)
+				writer.WriteHeader(http.StatusBadRequest)
+			}
 			ctx.postForm = request.PostForm
 		}
 		fallthrough
