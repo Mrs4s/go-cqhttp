@@ -385,24 +385,23 @@ func (s *webSocketServer) onBotPushEvent(e *coolq.Event) {
 		log.Debugf("上报Event %s 到 WS客户端 时被过滤.", e.JSONBytes())
 		return
 	}
-
-	for i, l := 0, len(s.eventConn); i < l; i++ {
+	j := 0
+	for i := 0; i < len(s.eventConn); i++ {
 		conn := s.eventConn[i]
 		log.Debugf("向WS客户端 %v 推送Event: %s", conn.RemoteAddr().String(), e.JSONBytes())
 		conn.Lock()
 		if err := conn.WriteMessage(websocket.TextMessage, e.JSONBytes()); err != nil {
 			_ = conn.Close()
-			next := i + 1
-			if next >= l {
-				next = l - 1
-			}
-			s.eventConn[i], s.eventConn[next] = s.eventConn[next], s.eventConn[i]
-			s.eventConn = append(s.eventConn[:next], s.eventConn[next+1:]...)
-			i--
-			l--
 			conn = nil
 			continue
 		}
+		if i != j {
+			// i != j means that some connection has been closed.
+			// use a in-place removal to avoid copying.
+			s.eventConn[j] = conn
+		}
 		conn.Unlock()
+		j++
 	}
+	s.eventConn = s.eventConn[:j]
 }
