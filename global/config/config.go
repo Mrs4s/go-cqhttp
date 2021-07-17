@@ -56,8 +56,10 @@ type Config struct {
 	} `yaml:"message"`
 
 	Output struct {
-		LogLevel string `yaml:"log-level"`
-		Debug    bool   `yaml:"debug"`
+		LogLevel    string `yaml:"log-level"`
+		LogAging    int    `yaml:"log-aging"`
+		LogForceNew bool   `yaml:"log-force-new"`
+		Debug       bool   `yaml:"debug"`
 	} `yaml:"output"`
 
 	Servers  []map[string]yaml.Node `yaml:"servers"`

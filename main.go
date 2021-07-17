@@ -75,13 +75,25 @@ func init() {
 		LogFormat:       "[%time%] [%lvl%]: %msg% \n",
 	}
 
-	w, err := rotatelogs.New(path.Join("logs", "%Y-%m-%d.log"), rotatelogs.WithRotationTime(time.Hour*24))
+	conf = config.Get()
+
+	rotateOptions := []rotatelogs.Option{
+		rotatelogs.WithRotationTime(time.Hour * 24),
+	}
+
+	if conf.Output.LogAging > 0 {
+		rotateOptions = append(rotateOptions, rotatelogs.WithMaxAge(time.Hour*24*time.Duration(conf.Output.LogAging)))
+	}
+	if conf.Output.LogForceNew {
+		rotateOptions = append(rotateOptions, rotatelogs.ForceNewFile())
+	}
+
+	w, err := rotatelogs.New(path.Join("logs", "%Y-%m-%d.log"), rotateOptions...)
 	if err != nil {
 		log.Errorf("rotatelogs init err: %v", err)
 		panic(err)
 	}
 
-	conf = config.Get()
 	if debug {
 		conf.Output.Debug = true
 	}

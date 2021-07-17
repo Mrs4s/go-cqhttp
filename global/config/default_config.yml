@@ -43,6 +43,10 @@ message:
 output:
   # 日志等级 trace,debug,info,warn,error
   log-level: warn
+  # 日志时效 单位天. 超过这个时间之前的日志将会被自动删除. 设置为 0 表示永久保留.
+  log-aging: 15
+  # 是否在每次启动时强制创建全新的文件储存日志. 为 false 的情况下将会在上次启动时创建的日志文件续写
+  log-force-new: true
   # 是否启用 DEBUG
   debug: false # 开启调试模式
 
