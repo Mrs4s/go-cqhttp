@@ -130,6 +130,7 @@ func loginResponseProcessor(res *client.LoginResponse) error {
 				continue
 			}
 			cli.Disconnect()
+			cli.Release()
 			cli = client.NewClientEmpty()
 			return qrcodeLogin()
 		case client.NeedCaptcha:
