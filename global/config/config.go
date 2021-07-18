@@ -5,12 +5,13 @@ import (
 	"bufio"
 	_ "embed" // embed the default config file
 	"fmt"
-	"github.com/Mrs4s/go-cqhttp/global"
 	"os"
 	"path"
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/Mrs4s/go-cqhttp/global"
 
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
