@@ -38,6 +38,7 @@ type HTTPClient struct {
 	secret  string
 	addr    string
 	filter  string
+	apiPort int
 	timeout int32
 }
 
@@ -181,6 +182,7 @@ client:
 				bot:     bot,
 				secret:  c.Secret,
 				addr:    c.URL,
+				apiPort: conf.Port,
 				filter:  conf.Filter,
 				timeout: conf.Timeout,
 			}.Run()
@@ -221,6 +223,9 @@ func (c *HTTPClient) onBotPushEvent(e *coolq.Event) {
 				return nil
 			}
 			h["X-Signature"] = "sha1=" + hex.EncodeToString(mac.Sum(nil))
+		}
+		if c.apiPort != 0 {
+			h["X-API-Port"] = c.apiPort
 		}
 		return h
 	}()).SetTimeout(time.Second * time.Duration(c.timeout)).F().Retry().Attempt(5).
