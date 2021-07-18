@@ -65,9 +65,11 @@ type GiftElement struct {
 
 // LocalImageElement 本地图片
 type LocalImageElement struct {
-	message.ImageElement
 	Stream io.ReadSeeker
 	File   string
+
+	Flash    bool
+	EffectID int32
 }
 
 // LocalVoiceElement 本地语音
@@ -81,6 +83,11 @@ type LocalVideoElement struct {
 	message.ShortVideoElement
 	File  string
 	thumb io.ReadSeeker
+}
+
+// Type implements the message.IMessageElement.
+func (e *LocalImageElement) Type() message.ElementType {
+	return message.Image
 }
 
 // Type 获取元素类型ID
@@ -202,31 +209,28 @@ func ToArrayMessage(e []message.IMessageElement, groupID int64) (r []MSG) {
 				"type": "video",
 				"data": map[string]string{"file": o.Name, "url": o.Url},
 			}
-		case *message.ImageElement:
-			m = MSG{
-				"type": "image",
-				"data": map[string]string{"file": o.Filename, "url": o.Url},
-			}
 		case *message.GroupImageElement:
+			data := map[string]string{"file": hex.EncodeToString(o.Md5) + ".image", "url": o.Url}
+			switch {
+			case o.Flash:
+				data["type"] = "flash"
+			case o.EffectID != 0:
+				data["type"] = "show"
+				data["id"] = strconv.FormatInt(int64(o.EffectID), 10)
+			}
 			m = MSG{
 				"type": "image",
-				"data": map[string]string{"file": hex.EncodeToString(o.Md5) + ".image", "url": o.Url},
+				"data": data,
 			}
 		case *message.FriendImageElement:
+			data := map[string]string{"file": hex.EncodeToString(o.Md5) + ".image", "url": o.Url}
+			if o.Flash {
+				data["type"] = "flash"
+			}
 			m = MSG{
 				"type": "image",
-				"data": map[string]string{"file": hex.EncodeToString(o.Md5) + ".image", "url": o.Url},
+				"data": data,
 			}
-		case *message.GroupFlashImgElement:
-			return []MSG{{
-				"type": "image",
-				"data": map[string]string{"file": o.Filename, "type": "flash"},
-			}}
-		case *message.FriendFlashImgElement:
-			return []MSG{{
-				"type": "image",
-				"data": map[string]string{"file": o.Filename, "type": "flash"},
-			}}
 		case *message.ServiceElement:
 			if isOk := strings.Contains(o.Content, "<?xml"); isOk {
 				m = MSG{
@@ -316,28 +320,28 @@ func ToStringMessage(e []message.IMessageElement, groupID int64, isRaw ...bool) 
 			} else {
 				write(`[CQ:video,file=%s,url=%s]`, o.Name, CQCodeEscapeValue(o.Url))
 			}
-		case *message.ImageElement:
-			if ur {
-				write(`[CQ:image,file=%s]`, o.Filename)
-			} else {
-				write(`[CQ:image,file=%s,url=%s]`, o.Filename, CQCodeEscapeValue(o.Url))
-			}
 		case *message.GroupImageElement:
+			var arg string
+			if o.Flash {
+				arg = ",type=flash"
+			} else if o.EffectID != 0 {
+				arg = ",type=show,id=" + strconv.FormatInt(int64(o.EffectID), 10)
+			}
 			if ur {
-				write("[CQ:image,file=%s]", hex.EncodeToString(o.Md5)+".image")
+				write("[CQ:image,file=%s%s]", hex.EncodeToString(o.Md5)+".image", arg)
 			} else {
-				write("[CQ:image,file=%s,url=%s]", hex.EncodeToString(o.Md5)+".image", CQCodeEscapeValue(o.Url))
+				write("[CQ:image,file=%s,url=%s%s]", hex.EncodeToString(o.Md5)+".image", CQCodeEscapeValue(o.Url), arg)
 			}
 		case *message.FriendImageElement:
-			if ur {
-				write("[CQ:image,file=%s]", hex.EncodeToString(o.Md5)+".image")
-			} else {
-				write("[CQ:image,file=%s,url=%s]", hex.EncodeToString(o.Md5)+".image", CQCodeEscapeValue(o.Url))
+			var arg string
+			if o.Flash {
+				arg = ",type=flash"
 			}
-		case *message.GroupFlashImgElement:
-			return fmt.Sprintf("[CQ:image,type=flash,file=%s]", o.Filename)
-		case *message.FriendFlashImgElement:
-			return fmt.Sprintf("[CQ:image,type=flash,file=%s]", o.Filename)
+			if ur {
+				write("[CQ:image,file=%s%s]", hex.EncodeToString(o.Md5)+".image", arg)
+			} else {
+				write("[CQ:image,file=%s,url=%s%s]", hex.EncodeToString(o.Md5)+".image", CQCodeEscapeValue(o.Url), arg)
+			}
 		case *message.ServiceElement:
 			if isOk := strings.Contains(o.Content, "<?xml"); isOk {
 				write(`[CQ:xml,data=%s,resid=%d]`, CQCodeEscapeValue(o.Content), o.Id)
@@ -668,39 +672,29 @@ func (bot *CQBot) ToElement(t string, d map[string]string, isGroup bool) (m inte
 			return nil, err
 		}
 		tp := d["type"]
-		if tp != "show" && tp != "flash" {
-			return img, nil
-		}
-		if i, ok := img.(*LocalImageElement); ok { // 秀图，闪照什么的就直接传了吧
-			r := rand.Uint32()
-			if isGroup {
-				img, err = bot.UploadLocalImageAsGroup(int64(r), i)
-			} else {
-				img, err = bot.UploadLocalImageAsPrivate(int64(r), i)
-			}
-			if err != nil {
-				return nil, err
-			}
-		}
+		flash, id := false, int64(0)
 		switch tp {
 		case "flash":
-			if i, ok := img.(*message.GroupImageElement); ok {
-				return &message.GroupFlashPicElement{GroupImageElement: *i}, nil
-			}
-			if i, ok := img.(*message.FriendImageElement); ok {
-				return &message.FriendFlashPicElement{FriendImageElement: *i}, nil
-			}
+			flash = true
 		case "show":
-			id, _ := strconv.ParseInt(d["id"], 10, 64)
+			id, _ = strconv.ParseInt(d["id"], 10, 64)
 			if id < 40000 || id >= 40006 {
 				id = 40000
 			}
-			if i, ok := img.(*message.GroupImageElement); ok {
-				return &message.GroupShowPicElement{GroupImageElement: *i, EffectId: int32(id)}, nil
-			}
-			return img, nil
+		default:
+			return img, err
 		}
-
+		switch img := img.(type) {
+		case *LocalImageElement:
+			img.Flash = flash
+			img.EffectID = int32(id)
+		case *message.GroupImageElement:
+			img.Flash = flash
+			img.EffectID = int32(id)
+		case *message.FriendImageElement:
+			img.Flash = flash
+		}
+		return img, err
 	case "poke":
 		t, _ := strconv.ParseInt(d["qq"], 10, 64)
 		return &PokeElement{Target: t}, nil
@@ -935,7 +929,6 @@ func (bot *CQBot) ToElement(t string, d map[string]string, isGroup bool) (m inte
 	default:
 		return nil, errors.New("unsupported cq code: " + t)
 	}
-	return nil, nil
 }
 
 // XMLEscape 将字符串c转义为XML字符串
@@ -1189,7 +1182,7 @@ func (bot *CQBot) makeShowPic(elem message.IMessageElement, source string, brief
 				return nil, err
 			}
 			suf = gm
-			xml = fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="5" templateID="12345" action="" brief="%s" sourceMsgId="0" url="%s" flag="0" adverSign="0" multiMsgFlag="0"><item layout="0" advertiser_id="0" aid="0"><image uuid="%x" md5="%x" GroupFiledid="0" filesize="%d" local_path="%s" minWidth="%d" minHeight="%d" maxWidth="%d" maxHeight="%d" /></item><source name="%s" icon="%s" action="" appid="-1" /></msg>`, brief, "", gm.Md5, gm.Md5, len(i.Data), "", minWidth, minHeight, maxWidth, maxHeight, source, icon)
+			xml = fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="5" templateID="12345" action="" brief="%s" sourceMsgId="0" url="%s" flag="0" adverSign="0" multiMsgFlag="0"><item layout="0" advertiser_id="0" aid="0"><image uuid="%x" md5="%x" GroupFiledid="0" filesize="%d" local_path="%s" minWidth="%d" minHeight="%d" maxWidth="%d" maxHeight="%d" /></item><source name="%s" icon="%s" action="" appid="-1" /></msg>`, brief, "", gm.Md5, gm.Md5, gm.Size, "", minWidth, minHeight, maxWidth, maxHeight, source, icon)
 		} else {
 			gm, err := bot.UploadLocalImageAsGroup(int64(r), i)
 			if err != nil {
@@ -1197,7 +1190,7 @@ func (bot *CQBot) makeShowPic(elem message.IMessageElement, source string, brief
 				return nil, err
 			}
 			suf = gm
-			xml = fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="5" templateID="12345" action="" brief="%s" sourceMsgId="0" url="%s" flag="0" adverSign="0" multiMsgFlag="0"><item layout="0" advertiser_id="0" aid="0"><image uuid="%x" md5="%x" GroupFiledid="0" filesize="%d" local_path="%s" minWidth="%d" minHeight="%d" maxWidth="%d" maxHeight="%d" /></item><source name="%s" icon="%s" action="" appid="-1" /></msg>`, brief, "", gm.Md5, gm.Md5, len(i.Data), "", minWidth, minHeight, maxWidth, maxHeight, source, icon)
+			xml = fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="5" templateID="12345" action="" brief="%s" sourceMsgId="0" url="%s" flag="0" adverSign="0" multiMsgFlag="0"><item layout="0" advertiser_id="0" aid="0"><image uuid="%x" md5="%x" GroupFiledid="0" filesize="%d" local_path="%s" minWidth="%d" minHeight="%d" maxWidth="%d" maxHeight="%d" /></item><source name="%s" icon="%s" action="" appid="-1" /></msg>`, brief, "", gm.Md5, gm.Md5, gm.Size, "", minWidth, minHeight, maxWidth, maxHeight, source, icon)
 		}
 	}
 

@@ -176,11 +176,18 @@ func (bot *CQBot) GetMessage(mid int32) MSG {
 }
 
 // UploadLocalImageAsGroup 上传本地图片至群聊
-func (bot *CQBot) UploadLocalImageAsGroup(groupCode int64, img *LocalImageElement) (*message.GroupImageElement, error) {
+func (bot *CQBot) UploadLocalImageAsGroup(groupCode int64, img *LocalImageElement) (i *message.GroupImageElement, err error) {
 	if img.Stream != nil {
-		return bot.Client.UploadGroupImage(groupCode, img.Stream)
+		i, err = bot.Client.UploadGroupImage(groupCode, img.Stream)
+	} else {
+		i, err = bot.Client.UploadGroupImageByFile(groupCode, img.File)
 	}
-	return bot.Client.UploadGroupImageByFile(groupCode, img.File)
+
+	if i != nil {
+		i.Flash = img.Flash
+		i.EffectID = img.EffectID
+	}
+	return
 }
 
 // UploadLocalVideo 上传本地短视频至群聊
@@ -201,17 +208,23 @@ func (bot *CQBot) UploadLocalVideo(target int64, v *LocalVideoElement) (*message
 }
 
 // UploadLocalImageAsPrivate 上传本地图片至私聊
-func (bot *CQBot) UploadLocalImageAsPrivate(userID int64, img *LocalImageElement) (*message.FriendImageElement, error) {
+func (bot *CQBot) UploadLocalImageAsPrivate(userID int64, img *LocalImageElement) (i *message.FriendImageElement, err error) {
 	if img.Stream != nil {
-		return bot.Client.UploadPrivateImage(userID, img.Stream)
+		i, err = bot.Client.UploadPrivateImage(userID, img.Stream)
+	} else {
+		// need update.
+		f, e := os.Open(img.File)
+		if e != nil {
+			return nil, e
+		}
+		defer f.Close()
+		i, err = bot.Client.UploadPrivateImage(userID, f)
 	}
-	// need update.
-	f, err := os.Open(img.File)
-	if err != nil {
-		return nil, err
+
+	if i != nil {
+		i.Flash = img.Flash
 	}
-	defer f.Close()
-	return bot.Client.UploadPrivateImage(userID, f)
+	return
 }
 
 // SendGroupMessage 发送群消息
