@@ -5,8 +5,10 @@ import (
 	"bufio"
 	_ "embed" // embed the default config file
 	"fmt"
+	"github.com/Mrs4s/go-cqhttp/global"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -131,15 +133,83 @@ var (
 // Get 从默认配置文件路径中获取
 func Get() *Config {
 	once.Do(func() {
+		hasEnvironmentConf := os.Getenv("GCQ_UIN") != ""
+
 		file, err := os.Open(DefaultConfigFile)
-		if err != nil {
+		config = &Config{}
+		if err == nil {
+			defer func() { _ = file.Close() }()
+			if err = yaml.NewDecoder(file).Decode(config); err != nil && !hasEnvironmentConf {
+				log.Fatal("配置文件不合法!", err)
+			}
+		} else if !hasEnvironmentConf {
 			generateConfig()
 			os.Exit(0)
 		}
-		defer func() { _ = file.Close() }()
-		config = &Config{}
-		if err = yaml.NewDecoder(file).Decode(config); err != nil {
-			log.Fatal("配置文件不合法!", err)
+
+		// type convert tools
+		toInt64 := func(str string) int64 {
+			i, _ := strconv.ParseInt(str, 10, 64)
+			return i
+		}
+
+		// load config from environment variable
+		global.SetAtDefault(&config.Account.Uin, toInt64(os.Getenv("GCQ_UIN")), int64(0))
+		global.SetAtDefault(&config.Account.Password, os.Getenv("GCQ_PWD"), "")
+		global.SetAtDefault(&config.Account.Status, int32(toInt64(os.Getenv("GCQ_STATUS"))), int32(0))
+		global.SetAtDefault(&config.Account.ReLogin.Disabled, !global.EnsureBool(os.Getenv("GCQ_RELOGIN"), false), false)
+		global.SetAtDefault(&config.Account.ReLogin.Delay, uint(toInt64(os.Getenv("GCQ_RELOGIN_DELAY"))), uint(0))
+		global.SetAtDefault(&config.Account.ReLogin.MaxTimes, uint(toInt64(os.Getenv("GCQ_RELOGIN_MAX_TIMES"))), uint(0))
+		accessTokenEnv := os.Getenv("GCQ_ACCESS_TOKEN")
+		if os.Getenv("GCQ_HTTP_PORT") != "" {
+			node := &yaml.Node{}
+			httpConf := &HTTPServer{
+				Host: "0.0.0.0",
+				Port: 5700,
+				MiddleWares: MiddleWares{
+					AccessToken: accessTokenEnv,
+				},
+			}
+			global.SetExcludeDefault(&httpConf.Disabled, global.EnsureBool(os.Getenv("GCQ_HTTP_DISABLE"), false), false)
+			global.SetExcludeDefault(&httpConf.Host, os.Getenv("GCQ_HTTP_HOST"), "")
+			global.SetExcludeDefault(&httpConf.Port, int(toInt64(os.Getenv("GCQ_HTTP_PORT"))), 0)
+			if os.Getenv("GCQ_HTTP_POST_URL") != "" {
+				httpConf.Post = append(httpConf.Post, struct {
+					URL    string `yaml:"url"`
+					Secret string `yaml:"secret"`
+				}{os.Getenv("GCQ_HTTP_POST_URL"), os.Getenv("GCQ_HTTP_POST_SECRET")})
+			}
+			_ = node.Encode(httpConf)
+			config.Servers = append(config.Servers, map[string]yaml.Node{"http": *node})
+		}
+		if os.Getenv("GCQ_WS_PORT") != "" {
+			node := &yaml.Node{}
+			wsServerConf := &WebsocketServer{
+				Host: "0.0.0.0",
+				Port: 6700,
+				MiddleWares: MiddleWares{
+					AccessToken: accessTokenEnv,
+				},
+			}
+			global.SetExcludeDefault(&wsServerConf.Disabled, global.EnsureBool(os.Getenv("GCQ_WS_DISABLE"), false), false)
+			global.SetExcludeDefault(&wsServerConf.Host, os.Getenv("GCQ_WS_HOST"), "")
+			global.SetExcludeDefault(&wsServerConf.Port, int(toInt64(os.Getenv("GCQ_WS_PORT"))), 0)
+			_ = node.Encode(wsServerConf)
+			config.Servers = append(config.Servers, map[string]yaml.Node{"ws": *node})
+		}
+		if os.Getenv("GCQ_RWS_API") != "" || os.Getenv("GCQ_RWS_EVENT") != "" || os.Getenv("GCQ_RWS_UNIVERSAL") != "" {
+			node := &yaml.Node{}
+			rwsConf := &WebsocketReverse{
+				MiddleWares: MiddleWares{
+					AccessToken: accessTokenEnv,
+				},
+			}
+			global.SetExcludeDefault(&rwsConf.Disabled, global.EnsureBool(os.Getenv("GCQ_RWS_DISABLE"), false), false)
+			global.SetExcludeDefault(&rwsConf.API, os.Getenv("GCQ_RWS_API"), "")
+			global.SetExcludeDefault(&rwsConf.Event, os.Getenv("GCQ_RWS_EVENT"), "")
+			global.SetExcludeDefault(&rwsConf.Universal, os.Getenv("GCQ_RWS_UNIVERSAL"), "")
+			_ = node.Encode(rwsConf)
+			config.Servers = append(config.Servers, map[string]yaml.Node{"ws-reverse": *node})
 		}
 	})
 	return config

@@ -2,6 +2,7 @@ package global
 
 import (
 	"math"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -86,6 +87,38 @@ func VersionNameCompare(current, remote string) bool {
 		return re[4] == "" && cur[4] != re[4]
 	}
 	return cur[4] < re[4]
+}
+
+// SetAtDefault 在变量 variable 为默认值 defaultValue 的时候修改为 value
+func SetAtDefault(variable, value, defaultValue interface{}) {
+	v := reflect.ValueOf(variable)
+	v2 := reflect.ValueOf(value)
+	if v.Kind() != reflect.Ptr || v.IsNil() {
+		return
+	}
+	if v.Elem().Interface() != defaultValue {
+		return
+	}
+	if v.Elem().Kind() != v2.Kind() {
+		return
+	}
+	v.Elem().Set(v2)
+}
+
+// SetExcludeDefault 在目标值 value 不为默认值 defaultValue 时修改 variable 为 value
+func SetExcludeDefault(variable, value, defaultValue interface{}) {
+	v := reflect.ValueOf(variable)
+	v2 := reflect.ValueOf(value)
+	if v.Kind() != reflect.Ptr || v.IsNil() {
+		return
+	}
+	if v2.Elem().Interface() != defaultValue {
+		return
+	}
+	if v.Elem().Kind() != v2.Kind() {
+		return
+	}
+	v.Elem().Set(v2)
 }
 
 var (
