@@ -260,37 +260,7 @@ func main() {
 		}
 		return "未知"
 	}())
-	cli = client.NewClientEmpty()
-	if conf.Account.Uin != 0 && PasswordHash != [16]byte{} {
-		cli.Uin = conf.Account.Uin
-		cli.PasswordMd5 = PasswordHash
-	}
-	cli.OnLog(func(c *client.QQClient, e *client.LogEvent) {
-		switch e.Type {
-		case "INFO":
-			log.Info("Protocol -> " + e.Message)
-		case "ERROR":
-			log.Error("Protocol -> " + e.Message)
-		case "DEBUG":
-			log.Debug("Protocol -> " + e.Message)
-		}
-	})
-	if global.PathExists("address.txt") {
-		log.Infof("检测到 address.txt 文件. 将覆盖目标IP.")
-		addr := global.ReadAddrFile("address.txt")
-		if len(addr) > 0 {
-			cli.SetCustomServer(addr)
-		}
-		log.Infof("读取到 %v 个自定义地址.", len(addr))
-	}
-	cli.OnServerUpdated(func(bot *client.QQClient, e *client.ServerUpdatedEvent) bool {
-		if !conf.Account.UseSSOAddress {
-			log.Infof("收到服务器地址更新通知, 根据配置文件已忽略.")
-			return false
-		}
-		log.Infof("收到服务器地址更新通知, 将在下一次重连时应用. ")
-		return true
-	})
+	cli = newClient()
 	global.Proxy = conf.Message.ProxyRewrite
 	isQRCodeLogin := (conf.Account.Uin == 0 || len(conf.Account.Password) == 0) && !conf.Account.Encrypt
 	isTokenLogin := false
@@ -320,10 +290,17 @@ func main() {
 				_ = os.Remove("session.token")
 				log.Warnf("恢复会话失败: %v , 尝试使用正常流程登录.", err)
 				time.Sleep(time.Second)
+				cli.Disconnect()
+				cli.Release()
+				cli = newClient()
 			} else {
 				isTokenLogin = true
 			}
 		}
+	}
+	if conf.Account.Uin != 0 && PasswordHash != [16]byte{} {
+		cli.Uin = conf.Account.Uin
+		cli.PasswordMd5 = PasswordHash
 	}
 	if !isTokenLogin {
 		if !isQRCodeLogin {
@@ -646,4 +623,35 @@ func resetWorkDir() {
 		panic(err)
 	}
 	os.Exit(0)
+}
+
+func newClient() *client.QQClient {
+	c := client.NewClientEmpty()
+	c.OnServerUpdated(func(bot *client.QQClient, e *client.ServerUpdatedEvent) bool {
+		if !conf.Account.UseSSOAddress {
+			log.Infof("收到服务器地址更新通知, 根据配置文件已忽略.")
+			return false
+		}
+		log.Infof("收到服务器地址更新通知, 将在下一次重连时应用. ")
+		return true
+	})
+	if global.PathExists("address.txt") {
+		log.Infof("检测到 address.txt 文件. 将覆盖目标IP.")
+		addr := global.ReadAddrFile("address.txt")
+		if len(addr) > 0 {
+			cli.SetCustomServer(addr)
+		}
+		log.Infof("读取到 %v 个自定义地址.", len(addr))
+	}
+	c.OnLog(func(c *client.QQClient, e *client.LogEvent) {
+		switch e.Type {
+		case "INFO":
+			log.Info("Protocol -> " + e.Message)
+		case "ERROR":
+			log.Error("Protocol -> " + e.Message)
+		case "DEBUG":
+			log.Debug("Protocol -> " + e.Message)
+		}
+	})
+	return c
 }
