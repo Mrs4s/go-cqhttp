@@ -146,9 +146,9 @@ func main() {
 		}
 	}
 	if terminal.RunningByDoubleClick() && !isFastStart {
-		log.Warning("警告: 强烈不推荐通过双击直接运行本程序, 这将导致一些非预料的后果.")
-		log.Warning("将等待10s后启动")
-		time.Sleep(time.Second * 10)
+		//log.Warning("警告: 强烈不推荐通过双击直接运行本程序, 这将导致一些非预料的后果.")
+		//log.Warning("将等待10s后启动")
+		//time.Sleep(time.Second * 10)
 	}
 
 	if (conf.Account.Uin == 0 || (conf.Account.Password == "" && !conf.Account.Encrypt)) && !global.PathExists("session.token") {
