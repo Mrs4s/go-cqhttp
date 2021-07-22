@@ -14,6 +14,7 @@ import (
 	"os/signal"
 	"path"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -30,12 +31,65 @@ import (
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/guonaihong/gout"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
-	easy "github.com/t-tomalak/logrus-easy-formatter"
 	"github.com/tidwall/gjson"
 	"golang.org/x/crypto/pbkdf2"
 	"golang.org/x/term"
 )
+
+const (
+	// Default log format will output [INFO]: 2006-01-02T15:04:05Z07:00 - Log message
+	defaultLogFormat       = "[%lvl%]: %time% - %msg%"
+	defaultTimestampFormat = time.RFC3339
+)
+
+// Formatter implements logrus.Formatter interface.
+type Formatter struct {
+	// Timestamp format
+	TimestampFormat string
+	// Available standard keys: time, msg, lvl
+	// Also can include custom fields but limited to strings.
+	// All of fields need to be wrapped inside %% i.e %time% %msg%
+	LogFormat string
+}
+
+// Format building log message.
+func (f *Formatter) Format(entry *logrus.Entry) ([]byte, error) {
+	output := f.LogFormat
+	if output == "" {
+		output = defaultLogFormat
+	}
+
+	timestampFormat := f.TimestampFormat
+	if timestampFormat == "" {
+		timestampFormat = defaultTimestampFormat
+	}
+
+	output = strings.Replace(output, "%time%", entry.Time.Format(timestampFormat), 1)
+
+	output = strings.Replace(output, "%msg%", entry.Message, 1)
+
+	level := strings.ToUpper(entry.Level.String())
+	output = strings.Replace(output, "%lvl%", level, 1)
+
+	for k, val := range entry.Data {
+		switch v := val.(type) {
+		case string:
+			output = strings.Replace(output, "%"+k+"%", v, 1)
+		case int:
+			s := strconv.Itoa(v)
+			output = strings.Replace(output, "%"+k+"%", s, 1)
+		case bool:
+			s := strconv.FormatBool(v)
+			output = strings.Replace(output, "%"+k+"%", s, 1)
+		}
+	}
+
+	output = strings.Replace(output, "\x00", "", -1)
+
+	return []byte(output), nil
+}
 
 var (
 	conf        *config.Config
@@ -72,7 +126,7 @@ func init() {
 
 	// 通过-c 参数替换 配置文件路径
 	config.DefaultConfigFile = c
-	logFormatter := &easy.Formatter{
+	logFormatter := &Formatter{
 		TimestampFormat: "2006-01-02 15:04:05",
 		LogFormat:       "[%time%] [%lvl%]: %msg% \n",
 	}
