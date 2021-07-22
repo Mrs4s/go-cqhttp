@@ -31,7 +31,6 @@ import (
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/guonaihong/gout"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 	"golang.org/x/crypto/pbkdf2"
@@ -55,7 +54,7 @@ type Formatter struct {
 }
 
 // Format building log message.
-func (f *Formatter) Format(entry *logrus.Entry) ([]byte, error) {
+func (f *Formatter) Format(entry *log.Entry) ([]byte, error) {
 	output := f.LogFormat
 	if output == "" {
 		output = defaultLogFormat
