@@ -933,8 +933,9 @@ func (bot *CQBot) ToElement(t string, d map[string]string, isGroup bool) (m inte
 
 // XMLEscape 将字符串c转义为XML字符串
 func XMLEscape(c string) string {
-	buf := new(bytes.Buffer)
-	_ = xml2.EscapeText(buf, []byte(c))
+	buf := global.NewBuffer()
+	defer global.PutBuffer(buf)
+	_ = xml2.EscapeText(buf, utils.S2B(c))
 	return buf.String()
 }
 
@@ -1173,40 +1174,26 @@ func (bot *CQBot) makeShowPic(elem message.IMessageElement, source string, brief
 	if brief == "" {
 		brief = "&#91;分享&#93;我看到一张很赞的图片，分享给你，快来看！"
 	}
-	if i, ok := elem.(*LocalImageElement); ok {
+	if _, ok := elem.(*LocalImageElement); ok {
 		r := rand.Uint32()
-		if !group {
-			gm, err := bot.UploadLocalImageAsPrivate(int64(r), i)
-			if err != nil {
-				log.Warnf("警告: 好友消息 %v 消息图片上传失败: %v", 1, err)
-				return nil, err
-			}
-			suf = gm
-			xml = fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="5" templateID="12345" action="" brief="%s" sourceMsgId="0" url="%s" flag="0" adverSign="0" multiMsgFlag="0"><item layout="0" advertiser_id="0" aid="0"><image uuid="%x" md5="%x" GroupFiledid="0" filesize="%d" local_path="%s" minWidth="%d" minHeight="%d" maxWidth="%d" maxHeight="%d" /></item><source name="%s" icon="%s" action="" appid="-1" /></msg>`, brief, "", gm.Md5, gm.Md5, gm.Size, "", minWidth, minHeight, maxWidth, maxHeight, source, icon)
-		} else {
-			gm, err := bot.UploadLocalImageAsGroup(int64(r), i)
-			if err != nil {
-				log.Warnf("警告: 群 %v 消息图片上传失败: %v", 1, err)
-				return nil, err
-			}
-			suf = gm
-			xml = fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="5" templateID="12345" action="" brief="%s" sourceMsgId="0" url="%s" flag="0" adverSign="0" multiMsgFlag="0"><item layout="0" advertiser_id="0" aid="0"><image uuid="%x" md5="%x" GroupFiledid="0" filesize="%d" local_path="%s" minWidth="%d" minHeight="%d" maxWidth="%d" maxHeight="%d" /></item><source name="%s" icon="%s" action="" appid="-1" /></msg>`, brief, "", gm.Md5, gm.Md5, gm.Size, "", minWidth, minHeight, maxWidth, maxHeight, source, icon)
+		e, err := bot.uploadMedia(elem, int64(r), group)
+		if err != nil {
+			log.Warnf("警告: 图片上传失败: %v", err)
+			return nil, err
 		}
+		elem = e
 	}
-
-	if i, ok := elem.(*message.GroupImageElement); ok {
+	switch i := elem.(type) {
+	case *message.GroupImageElement:
+		xml = fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="5" templateID="12345" action="" brief="%s" sourceMsgId="0" url="%s" flag="0" adverSign="0" multiMsgFlag="0"><item layout="0" advertiser_id="0" aid="0"><image uuid="%x" md5="%x" GroupFiledid="0" filesize="%d" local_path="%s" minWidth="%d" minHeight="%d" maxWidth="%d" maxHeight="%d" /></item><source name="%s" icon="%s" action="" appid="-1" /></msg>`, brief, "", i.Md5, i.Md5, 0, "", minWidth, minHeight, maxWidth, maxHeight, source, icon)
+		suf = i
+	case *message.FriendImageElement:
 		xml = fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="5" templateID="12345" action="" brief="%s" sourceMsgId="0" url="%s" flag="0" adverSign="0" multiMsgFlag="0"><item layout="0" advertiser_id="0" aid="0"><image uuid="%x" md5="%x" GroupFiledid="0" filesize="%d" local_path="%s" minWidth="%d" minHeight="%d" maxWidth="%d" maxHeight="%d" /></item><source name="%s" icon="%s" action="" appid="-1" /></msg>`, brief, "", i.Md5, i.Md5, 0, "", minWidth, minHeight, maxWidth, maxHeight, source, icon)
 		suf = i
 	}
-	if i, ok := elem.(*message.FriendImageElement); ok {
-		xml = fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="5" templateID="12345" action="" brief="%s" sourceMsgId="0" url="%s" flag="0" adverSign="0" multiMsgFlag="0"><item layout="0" advertiser_id="0" aid="0"><image uuid="%x" md5="%x" GroupFiledid="0" filesize="%d" local_path="%s" minWidth="%d" minHeight="%d" maxWidth="%d" maxHeight="%d" /></item><source name="%s" icon="%s" action="" appid="-1" /></msg>`, brief, "", i.Md5, i.Md5, 0, "", minWidth, minHeight, maxWidth, maxHeight, source, icon)
-		suf = i
+	if xml == "" {
+		return nil, errors.New("生成xml图片消息失败")
 	}
-	if xml != "" {
-		// log.Warn(xml)
-		ret := []message.IMessageElement{suf}
-		ret = append(ret, message.NewRichXml(xml, 5))
-		return ret, nil
-	}
-	return nil, errors.New("生成xml图片消息失败")
+	ret := []message.IMessageElement{suf, message.NewRichXml(xml, 5)}
+	return ret, nil
 }
