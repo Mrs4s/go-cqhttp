@@ -1,7 +1,6 @@
 package server
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"net/http"
@@ -36,7 +35,6 @@ type lambdaResponse struct {
 type lambdaResponseWriter struct {
 	statusCode int
 	header     http.Header
-	buf        *bytes.Buffer
 }
 
 func (l *lambdaResponseWriter) Header() http.Header {
@@ -47,7 +45,7 @@ func (l *lambdaResponseWriter) Write(data []byte) (int, error) {
 	buffer := global.NewBuffer()
 	defer global.PutBuffer(buffer)
 	body := ""
-	if l.buf != nil {
+	if data != nil {
 		body = utils.B2S(data)
 	}
 	header := make(map[string]string)
@@ -116,18 +114,18 @@ func RunLambdaClient(bot *coolq.CQBot, conf *config.LambdaServer) {
 
 	for {
 		req := cli.next()
+		if req == nil {
+			writer := lambdaResponseWriter{statusCode: 200}
+			writer.Write(nil)
+			continue
+		}
 		func() {
 			defer func() {
 				if e := recover(); e != nil {
 					log.Warnf("Lambda 出现不可恢复错误: %v\n%s", e, debug.Stack())
 				}
 			}()
-			buffer := global.NewBuffer()
-			defer global.PutBuffer(buffer)
-			server.ServeHTTP(&lambdaResponseWriter{
-				header: make(http.Header),
-				buf:    buffer,
-			}, req)
+			server.ServeHTTP(&lambdaResponseWriter{header: make(http.Header)}, req)
 		}()
 	}
 }
@@ -159,6 +157,9 @@ func (c *lambdaClient) next() *http.Request {
 	var req = new(http.Request)
 	var invoke = new(lambdaInvoke)
 	_ = json.NewDecoder(resp.Body).Decode(invoke)
+	if invoke.HTTPMethod == "" { // 不是 api 网关
+		return nil
+	}
 
 	req.Method = invoke.HTTPMethod
 	req.Body = io.NopCloser(strings.NewReader(invoke.Body))
