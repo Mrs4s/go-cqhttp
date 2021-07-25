@@ -125,6 +125,13 @@ type WebsocketReverse struct {
 	MiddleWares `yaml:"middlewares"`
 }
 
+type LambdaServer struct {
+	Disabled bool   `yaml:"disabled"`
+	Type     string `yaml:"type"`
+
+	MiddleWares `yaml:"middlewares"`
+}
+
 // LevelDBConfig leveldb 相关配置
 type LevelDBConfig struct {
 	Enable bool `yaml:"enable"`
@@ -286,6 +293,13 @@ const httpDefault = `  # HTTP 通信设置
       #  secret: ''           # 密钥
       #- url: 127.0.0.1:5701 # 地址
       #  secret: ''          # 密钥
+`
+
+const lambdaDefault = `  # LambdaServer 配置
+  - lambda:
+      type: scf # scf: 腾讯云函数 aws: aws Lambda
+      middlewares:
+        <<: *default # 引用默认中间件
 `
 
 const wsDefault = `  # 正向WS设置

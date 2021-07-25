@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
@@ -70,12 +71,32 @@ func init() {
 
 	// 通过-c 参数替换 配置文件路径
 	config.DefaultConfigFile = c
+
+	conf = config.Get()
+	if debug {
+		conf.Output.Debug = true
+	}
+	// 在debug模式下,将在标准输出中打印当前执行行数
+	if conf.Output.Debug {
+		log.SetReportCaller(true)
+	}
+}
+
+func main() {
+	if h {
+		help()
+	}
+	if d {
+		server.Daemon()
+	}
+	if wd != "" {
+		resetWorkDir()
+	}
+
 	logFormatter := &easy.Formatter{
 		TimestampFormat: "2006-01-02 15:04:05",
 		LogFormat:       "[%time%] [%lvl%]: %msg% \n",
 	}
-
-	conf = config.Get()
 
 	rotateOptions := []rotatelogs.Option{
 		rotatelogs.WithRotationTime(time.Hour * 24),
@@ -94,13 +115,6 @@ func init() {
 		panic(err)
 	}
 
-	if debug {
-		conf.Output.Debug = true
-	}
-	// 在debug模式下,将在标准输出中打印当前执行行数
-	if conf.Output.Debug {
-		log.SetReportCaller(true)
-	}
 	log.AddHook(global.NewLocalHook(w, logFormatter, global.GetLogLevel(conf.Output.LogLevel)...))
 
 	if !global.PathExists(global.ImagePath) {
@@ -123,18 +137,7 @@ func init() {
 			log.Fatalf("创建发送图片缓存文件夹失败: %v", err)
 		}
 	}
-}
 
-func main() {
-	if h {
-		help()
-	}
-	if d {
-		server.Daemon()
-	}
-	if wd != "" {
-		resetWorkDir()
-	}
 	var byteKey []byte
 	arg := os.Args
 	if len(arg) > 1 {
@@ -418,6 +421,14 @@ func main() {
 				go server.RunPprofServer(pc)
 			}
 		}
+		if p, ok := m["lambda"]; ok {
+			lc := new(config.LambdaServer)
+			if err := p.Decode(lc); err != nil {
+				log.Warn("读取pprof配置失败 :", err)
+			} else {
+				go server.RunLambdaClient(bot, lc)
+			}
+		}
 	}
 	log.Info("资源初始化完成, 开始处理信息.")
 	log.Info("アトリは、高性能ですから!")
@@ -613,7 +624,8 @@ func resetWorkDir() {
 			args = append(args, os.Args[i])
 		}
 	}
-	proc := exec.Command(os.Args[0], args...)
+	p, _ := filepath.Abs(os.Args[0])
+	proc := exec.Command(p, args...)
 	proc.Stdin = os.Stdin
 	proc.Stdout = os.Stdout
 	proc.Stderr = os.Stderr
