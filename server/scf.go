@@ -19,12 +19,11 @@ import (
 )
 
 type lambdaClient struct {
-	nextUrl     string
+	nextURL     string
 	responseURL string
 	lambdaType  string
 
 	client http.Client
-	http   *httpServer
 }
 
 type lambdaResponse struct {
@@ -55,7 +54,7 @@ func (l *lambdaResponseWriter) Write(data []byte) (int, error) {
 	for k, v := range l.header {
 		header[k] = v[0]
 	}
-	json.NewEncoder(buffer).Encode(&lambdaResponse{
+	_ = json.NewEncoder(buffer).Encode(&lambdaResponse{
 		IsBase64Encoded: false,
 		StatusCode:      l.statusCode,
 		Headers:         header,
@@ -77,9 +76,10 @@ func (l *lambdaResponseWriter) WriteHeader(statusCode int) {
 
 var cli *lambdaClient
 
-func init() {
+// RunLambdaClient  type: [scf,aws]
+func RunLambdaClient(bot *coolq.CQBot, conf *config.LambdaServer) {
 	cli = &lambdaClient{
-		lambdaType: "scf",
+		lambdaType: conf.Type,
 		client:     http.Client{Timeout: 0},
 	}
 	switch cli.lambdaType { // todo: aws
@@ -88,7 +88,7 @@ func init() {
 			os.Getenv("SCF_RUNTIME_API"),
 			os.Getenv("SCF_RUNTIME_API_PORT"),
 		)
-		cli.nextUrl = base + "invocation/next"
+		cli.nextURL = base + "invocation/next"
 		cli.responseURL = base + "invocation/response"
 		post, err := http.Post(base+"init/ready", "", nil)
 		if err != nil {
@@ -99,13 +99,12 @@ func init() {
 	case "aws": // aws lambda
 		const apiVersion = "2018-06-01"
 		base := fmt.Sprintf("http://%s/%s/runtime/", os.Getenv("AWS_LAMBDA_RUNTIME_API"), apiVersion)
-		cli.nextUrl = base + "invocation/next"
+		cli.nextURL = base + "invocation/next"
 		cli.responseURL = base + "invocation/response"
+	default:
+		log.Fatal("unknown lambda type:", conf.Type)
 	}
-}
 
-// RunLambdaClient  type: [scf,aws]
-func RunLambdaClient(bot *coolq.CQBot, conf *config.LambdaServer) {
 	api := newAPICaller(bot)
 	if conf.RateLimit.Enabled {
 		api.use(rateLimit(conf.RateLimit.Frequency, conf.RateLimit.Bucket))
@@ -135,7 +134,7 @@ func RunLambdaClient(bot *coolq.CQBot, conf *config.LambdaServer) {
 
 type lambdaInvoke struct {
 	Headers        map[string]string
-	HttpMethod     string `json:"httpMethod"`
+	HTTPMethod     string `json:"httpMethod"`
 	Body           string `json:"body"`
 	Path           string `json:"path"`
 	QueryString    map[string]string
@@ -145,7 +144,7 @@ type lambdaInvoke struct {
 }
 
 func (c *lambdaClient) next() *http.Request {
-	r, err := http.NewRequest(http.MethodGet, c.nextUrl, nil)
+	r, err := http.NewRequest(http.MethodGet, c.nextURL, nil)
 	if err != nil {
 		return nil
 	}
@@ -161,7 +160,7 @@ func (c *lambdaClient) next() *http.Request {
 	var invoke = new(lambdaInvoke)
 	_ = json.NewDecoder(resp.Body).Decode(invoke)
 
-	req.Method = invoke.HttpMethod
+	req.Method = invoke.HTTPMethod
 	req.Body = io.NopCloser(strings.NewReader(invoke.Body))
 	req.Header = make(map[string][]string)
 	for k, v := range invoke.Headers {

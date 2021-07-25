@@ -125,6 +125,7 @@ type WebsocketReverse struct {
 	MiddleWares `yaml:"middlewares"`
 }
 
+// LambdaServer 云函数配置
 type LambdaServer struct {
 	Disabled bool   `yaml:"disabled"`
 	Type     string `yaml:"type"`
@@ -246,6 +247,7 @@ func generateConfig() {
 > 2: 正向 Websocket 通信
 > 3: 反向 Websocket 通信
 > 4: pprof 性能分析服务器
+> 5: 云函数服务
 请输入你需要的编号，可输入多个，同一编号也可输入多个(如: 233)
 您的选择是:`)
 	input := bufio.NewReader(os.Stdin)
@@ -263,6 +265,8 @@ func generateConfig() {
 			sb.WriteString(wsReverseDefault)
 		case '4':
 			sb.WriteString(pprofDefault)
+		case '5':
+			sb.WriteString(lambdaDefault)
 		}
 	}
 	_ = os.WriteFile("config.yml", []byte(sb.String()), 0o644)

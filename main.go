@@ -382,7 +382,6 @@ func main() {
 	} else {
 		coolq.SetMessageFormat(conf.Message.PostFormat)
 	}
-	log.Info("正在加载事件过滤器.")
 	coolq.IgnoreInvalidCQCode = conf.Message.IgnoreInvalidCQCode
 	coolq.SplitURL = conf.Message.FixURL
 	coolq.ForceFragmented = conf.Message.ForceFragment
