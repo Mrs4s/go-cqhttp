@@ -1,10 +1,6 @@
 #!/bin/sh
 echo "Start GOCQHTTP~~~"
-unset http_proxy
-unset https_proxy
 
-mkdir /mnt/
-rm -rf /mnt/data/leveldb
-cp -f config.yml /mnt/config.yml
-cp -f device.json /mnt/device.json
-./go-cqhttp -w="/mnt/" faststart
+cp -f config.yml /tmp/config.yml
+cp -f device.json /tmp/device.json
+./go-cqhttp -w="/tmp/" faststart
