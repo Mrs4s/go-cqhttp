@@ -116,7 +116,7 @@ func RunLambdaClient(bot *coolq.CQBot, conf *config.LambdaServer) {
 		req := cli.next()
 		if req == nil {
 			writer := lambdaResponseWriter{statusCode: 200}
-			writer.Write(nil)
+			_, _ = writer.Write(nil)
 			continue
 		}
 		func() {

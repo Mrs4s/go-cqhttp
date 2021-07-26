@@ -351,8 +351,7 @@ func (bot *CQBot) CQGetWordSlices(content string) MSG {
 // CQSendGroupMessage 发送群消息
 //
 // https://git.io/Jtz1c
-func (bot *CQBot) CQSendGroupMessage(groupID int64, i interface{}, autoEscape bool) MSG {
-	var str string
+func (bot *CQBot) CQSendGroupMessage(groupID int64, m gjson.Result, autoEscape bool) MSG {
 	group := bot.Client.FindGroup(groupID)
 	if group == nil {
 		return Failed(100, "GROUP_NOT_FOUND", "群聊不存在")
@@ -363,33 +362,26 @@ func (bot *CQBot) CQSendGroupMessage(groupID int64, i interface{}, autoEscape bo
 				mem := group.FindMember(at.Target)
 				if mem != nil {
 					at.Display = "@" + mem.DisplayName()
+				} else {
+					at.Display = "@" + strconv.FormatInt(at.Target, 10)
 				}
-				at.Display = "@" + strconv.FormatInt(at.Target, 10)
 			}
 		}
 	}
-	if m, ok := i.(gjson.Result); ok {
-		if m.Type == gjson.JSON {
-			elem := bot.ConvertObjectMessage(m, true)
-			fixAt(elem)
-			mid := bot.SendGroupMessage(groupID, &message.SendingMessage{Elements: elem})
-			if mid == -1 {
-				return Failed(100, "SEND_MSG_API_ERROR", "请参考 go-cqhttp 端输出")
-			}
-			log.Infof("发送群 %v(%v) 的消息: %v (%v)", group.Name, groupID, limitedString(ToStringMessage(elem, groupID)), mid)
-			return OK(MSG{"message_id": mid})
+
+	if m.Type == gjson.JSON {
+		elem := bot.ConvertObjectMessage(m, true)
+		fixAt(elem)
+		mid := bot.SendGroupMessage(groupID, &message.SendingMessage{Elements: elem})
+		if mid == -1 {
+			return Failed(100, "SEND_MSG_API_ERROR", "请参考 go-cqhttp 端输出")
 		}
-		str = func() string {
-			if m.Str != "" {
-				return m.Str
-			}
-			return m.Raw
-		}()
-	} else if s, ok := i.(string); ok {
-		str = s
+		log.Infof("发送群 %v(%v) 的消息: %v (%v)", group.Name, groupID, limitedString(ToStringMessage(elem, groupID)), mid)
+		return OK(MSG{"message_id": mid})
 	}
+	str := m.String()
 	if str == "" {
-		log.Warnf("群消息发送失败: 信息为空. MSG: %v", i)
+		log.Warn("群消息发送失败: 信息为空.")
 		return Failed(100, "EMPTY_MSG_ERROR", "消息为空")
 	}
 	var elem []message.IMessageElement
@@ -532,27 +524,17 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) MSG {
 // CQSendPrivateMessage 发送私聊消息
 //
 // https://git.io/Jtz1l
-func (bot *CQBot) CQSendPrivateMessage(userID int64, groupID int64, i interface{}, autoEscape bool) MSG {
-	var str string
-	if m, ok := i.(gjson.Result); ok {
-		if m.Type == gjson.JSON {
-			elem := bot.ConvertObjectMessage(m, false)
-			mid := bot.SendPrivateMessage(userID, groupID, &message.SendingMessage{Elements: elem})
-			if mid == -1 {
-				return Failed(100, "SEND_MSG_API_ERROR", "请参考 go-cqhttp 端输出")
-			}
-			log.Infof("发送好友 %v(%v)  的消息: %v (%v)", userID, userID, limitedString(m.String()), mid)
-			return OK(MSG{"message_id": mid})
+func (bot *CQBot) CQSendPrivateMessage(userID int64, groupID int64, m gjson.Result, autoEscape bool) MSG {
+	if m.Type == gjson.JSON {
+		elem := bot.ConvertObjectMessage(m, false)
+		mid := bot.SendPrivateMessage(userID, groupID, &message.SendingMessage{Elements: elem})
+		if mid == -1 {
+			return Failed(100, "SEND_MSG_API_ERROR", "请参考 go-cqhttp 端输出")
 		}
-		str = func() string {
-			if m.Str != "" {
-				return m.Str
-			}
-			return m.Raw
-		}()
-	} else if s, ok := i.(string); ok {
-		str = s
+		log.Infof("发送好友 %v(%v)  的消息: %v (%v)", userID, userID, limitedString(m.String()), mid)
+		return OK(MSG{"message_id": mid})
 	}
+	str := m.String()
 	if str == "" {
 		return Failed(100, "EMPTY_MSG_ERROR", "消息为空")
 	}
