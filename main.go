@@ -39,11 +39,6 @@ import (
 var (
 	conf        *config.Config
 	isFastStart = false
-	c           string
-	d           bool
-	h           bool
-	wd          string // reset work dir
-
 	// PasswordHash 存储QQ密码哈希供登录使用
 	PasswordHash [16]byte
 
@@ -60,44 +55,37 @@ var (
 	}
 )
 
-func init() {
-	var debug bool
-	flag.StringVar(&c, "c", config.DefaultConfigFile, "configuration filename default is config.hjson")
-	flag.BoolVar(&d, "d", false, "running as a daemon")
-	flag.BoolVar(&debug, "D", false, "debug mode")
-	flag.BoolVar(&h, "h", false, "this help")
-	flag.StringVar(&wd, "w", "", "cover the working directory")
+func main() {
+	c := flag.String("c", config.DefaultConfigFile, "configuration filename default is config.hjson")
+	d := flag.Bool("d", false, "running as a daemon")
+	h := flag.Bool("h", false, "this help")
+	wd := flag.String("w", "", "cover the working directory")
+	debug := flag.Bool("D", false, "debug mode")
 	flag.Parse()
 
-	// 通过-c 参数替换 配置文件路径
-	config.DefaultConfigFile = c
+	switch {
+	case *h:
+		help()
+	case *d:
+		server.Daemon()
+	case *wd != "":
+		resetWorkDir(*wd)
+	}
 
+	// 通过-c 参数替换 配置文件路径
+	config.DefaultConfigFile = *c
 	conf = config.Get()
-	if debug {
+	if *debug {
 		conf.Output.Debug = true
 	}
-	// 在debug模式下,将在标准输出中打印当前执行行数
 	if conf.Output.Debug {
 		log.SetReportCaller(true)
-	}
-}
-
-func main() {
-	if h {
-		help()
-	}
-	if d {
-		server.Daemon()
-	}
-	if wd != "" {
-		resetWorkDir()
 	}
 
 	logFormatter := &easy.Formatter{
 		TimestampFormat: "2006-01-02 15:04:05",
 		LogFormat:       "[%time%] [%lvl%]: %msg% \n",
 	}
-
 	rotateOptions := []rotatelogs.Option{
 		rotatelogs.WithRotationTime(time.Hour * 24),
 	}
@@ -117,26 +105,17 @@ func main() {
 
 	log.AddHook(global.NewLocalHook(w, logFormatter, global.GetLogLevel(conf.Output.LogLevel)...))
 
-	if !global.PathExists(global.ImagePath) {
-		if err := os.MkdirAll(global.ImagePath, 0o755); err != nil {
-			log.Fatalf("创建图片缓存文件夹失败: %v", err)
+	mkCacheDir := func(path string, _type string) {
+		if !global.PathExists(path) {
+			if err := os.MkdirAll(path, 0o755); err != nil {
+				log.Fatalf("创建%s缓存文件夹失败: %v", _type, err)
+			}
 		}
 	}
-	if !global.PathExists(global.VoicePath) {
-		if err := os.MkdirAll(global.VoicePath, 0o755); err != nil {
-			log.Fatalf("创建语音缓存文件夹失败: %v", err)
-		}
-	}
-	if !global.PathExists(global.VideoPath) {
-		if err := os.MkdirAll(global.VideoPath, 0o755); err != nil {
-			log.Fatalf("创建视频缓存文件夹失败: %v", err)
-		}
-	}
-	if !global.PathExists(global.CachePath) {
-		if err := os.MkdirAll(global.CachePath, 0o755); err != nil {
-			log.Fatalf("创建发送图片缓存文件夹失败: %v", err)
-		}
-	}
+	mkCacheDir(global.ImagePath, "图片")
+	mkCacheDir(global.VoicePath, "语音")
+	mkCacheDir(global.VideoPath, "视频")
+	mkCacheDir(global.CachePath, "发送图片")
 
 	var byteKey []byte
 	arg := os.Args
@@ -269,7 +248,7 @@ func main() {
 	isTokenLogin := false
 	saveToken := func() {
 		AccountToken = cli.GenToken()
-		_ = ioutil.WriteFile("session.token", AccountToken, 0o677)
+		_ = ioutil.WriteFile("session.token", AccountToken, 0o644)
 	}
 	if global.PathExists("session.token") {
 		token, err := ioutil.ReadFile("session.token")
@@ -614,7 +593,7 @@ Options:
 	os.Exit(0)
 }
 
-func resetWorkDir() {
+func resetWorkDir(wd string) {
 	args := make([]string, 0, len(os.Args))
 	for i := 1; i < len(os.Args); i++ {
 		if os.Args[i] == "-w" {

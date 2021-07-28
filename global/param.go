@@ -30,16 +30,16 @@ func EnsureBool(p interface{}, defaultVal bool) bool {
 		if !j.Exists() {
 			return defaultVal
 		}
-		if j.Type == gjson.True {
+		switch j.Type {
+		case gjson.True:
 			return true
-		}
-		if j.Type == gjson.False {
+		case gjson.False:
 			return false
-		}
-		if j.Type != gjson.String {
+		case gjson.String:
+			str = j.Str
+		default:
 			return defaultVal
 		}
-		str = j.Str
 	} else if s, ok := p.(string); ok {
 		str = s
 	}
