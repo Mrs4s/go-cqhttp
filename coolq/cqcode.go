@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math/rand"
 	"net/url"
 	"os"
@@ -897,7 +896,7 @@ func (bot *CQBot) ToElement(t string, d map[string]string, isGroup bool) (m inte
 			data, _ = global.FindFile(cover, cache, global.ImagePath)
 		} else {
 			_ = global.ExtractCover(v.File, v.File+".jpg")
-			data, _ = ioutil.ReadFile(v.File + ".jpg")
+			data, _ = os.ReadFile(v.File + ".jpg")
 		}
 		v.thumb = bytes.NewReader(data)
 		video, _ := os.Open(v.File)
@@ -1081,7 +1080,7 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video, group bool) (
 			return nil, errors.New("invalid video")
 		}
 		if path.Ext(rawPath) == ".video" {
-			b, _ := ioutil.ReadFile(rawPath)
+			b, _ := os.ReadFile(rawPath)
 			r := binary.NewReader(b)
 			return &LocalVideoElement{ShortVideoElement: message.ShortVideoElement{ // todo 检查缓存是否有效
 				Md5:       r.ReadBytes(16),

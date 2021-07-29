@@ -4,7 +4,6 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
-	"io/ioutil"
 	"math"
 	"os"
 	"path"
@@ -1001,7 +1000,7 @@ func (bot *CQBot) CQGetImage(file string) MSG {
 	if !global.PathExists(path.Join(global.ImagePath, file)) {
 		return Failed(100)
 	}
-	b, err := ioutil.ReadFile(path.Join(global.ImagePath, file))
+	b, err := os.ReadFile(path.Join(global.ImagePath, file))
 	if err == nil {
 		r := binary.NewReader(b)
 		r.ReadBytes(16)

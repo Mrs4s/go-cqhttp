@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
-	"io/ioutil"
 	"net"
 	"net/url"
 	"os"
@@ -51,7 +50,7 @@ func PathExists(path string) bool {
 
 // ReadAllText 读取给定path对应文件，无法读取时返回空值
 func ReadAllText(path string) string {
-	b, err := ioutil.ReadFile(path)
+	b, err := os.ReadFile(path)
 	if err != nil {
 		log.Error(err)
 		return ""
@@ -61,7 +60,7 @@ func ReadAllText(path string) string {
 
 // WriteAllText 将给定text写入给定path
 func WriteAllText(path, text string) error {
-	return ioutil.WriteFile(path, utils.S2B(text), 0o644)
+	return os.WriteFile(path, utils.S2B(text), 0o644)
 }
 
 // Check 检测err是否为nil
@@ -91,10 +90,10 @@ func FindFile(file, cache, p string) (data []byte, err error) {
 		hash := md5.Sum([]byte(file))
 		cacheFile := path.Join(CachePath, hex.EncodeToString(hash[:])+".cache")
 		if PathExists(cacheFile) && cache == "1" {
-			return ioutil.ReadFile(cacheFile)
+			return os.ReadFile(cacheFile)
 		}
 		data, err = GetBytes(file)
-		_ = ioutil.WriteFile(cacheFile, data, 0o644)
+		_ = os.WriteFile(cacheFile, data, 0o644)
 		if err != nil {
 			return nil, err
 		}
@@ -112,12 +111,12 @@ func FindFile(file, cache, p string) (data []byte, err error) {
 		if strings.HasPrefix(fu.Path, "/") && runtime.GOOS == `windows` {
 			fu.Path = fu.Path[1:]
 		}
-		data, err = ioutil.ReadFile(fu.Path)
+		data, err = os.ReadFile(fu.Path)
 		if err != nil {
 			return nil, err
 		}
 	case PathExists(path.Join(p, file)):
-		data, err = ioutil.ReadFile(path.Join(p, file))
+		data, err = os.ReadFile(path.Join(p, file))
 		if err != nil {
 			return nil, err
 		}
@@ -140,7 +139,7 @@ func DelFile(path string) bool {
 
 // ReadAddrFile 从给定path中读取合法的IP地址与端口,每个IP地址以换行符"\n"作为分隔
 func ReadAddrFile(path string) []*net.TCPAddr {
-	d, err := ioutil.ReadFile(path)
+	d, err := os.ReadFile(path)
 	if err != nil {
 		return nil
 	}

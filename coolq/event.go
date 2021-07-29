@@ -2,7 +2,7 @@ package coolq
 
 import (
 	"encoding/hex"
-	"io/ioutil"
+	"os"
 	"path"
 	"strconv"
 	"strings"
@@ -545,7 +545,7 @@ func (bot *CQBot) checkMedia(e []message.IMessageElement) {
 		case *message.GroupImageElement:
 			filename := hex.EncodeToString(i.Md5) + ".image"
 			if !global.PathExists(path.Join(global.ImagePath, filename)) {
-				_ = ioutil.WriteFile(path.Join(global.ImagePath, filename), binary.NewWriterF(func(w *binary.Writer) {
+				_ = os.WriteFile(path.Join(global.ImagePath, filename), binary.NewWriterF(func(w *binary.Writer) {
 					w.Write(i.Md5)
 					w.WriteUInt32(uint32(i.Size))
 					w.WriteString(i.ImageId)
@@ -555,7 +555,7 @@ func (bot *CQBot) checkMedia(e []message.IMessageElement) {
 		case *message.FriendImageElement:
 			filename := hex.EncodeToString(i.Md5) + ".image"
 			if !global.PathExists(path.Join(global.ImagePath, filename)) {
-				_ = ioutil.WriteFile(path.Join(global.ImagePath, filename), binary.NewWriterF(func(w *binary.Writer) {
+				_ = os.WriteFile(path.Join(global.ImagePath, filename), binary.NewWriterF(func(w *binary.Writer) {
 					w.Write(i.Md5)
 					w.WriteUInt32(uint32(i.Size))
 					w.WriteString(i.ImageId)
@@ -571,12 +571,12 @@ func (bot *CQBot) checkMedia(e []message.IMessageElement) {
 					log.Warnf("语音文件 %v 下载失败: %v", i.Name, err)
 					continue
 				}
-				_ = ioutil.WriteFile(path.Join(global.VoicePath, i.Name), b, 0o644)
+				_ = os.WriteFile(path.Join(global.VoicePath, i.Name), b, 0o644)
 			}
 		case *message.ShortVideoElement:
 			filename := hex.EncodeToString(i.Md5) + ".video"
 			if !global.PathExists(path.Join(global.VideoPath, filename)) {
-				_ = ioutil.WriteFile(path.Join(global.VideoPath, filename), binary.NewWriterF(func(w *binary.Writer) {
+				_ = os.WriteFile(path.Join(global.VideoPath, filename), binary.NewWriterF(func(w *binary.Writer) {
 					w.Write(i.Md5)
 					w.Write(i.ThumbMd5)
 					w.WriteUInt32(uint32(i.Size))

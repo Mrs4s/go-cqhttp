@@ -6,7 +6,6 @@
 package codec
 
 import (
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -21,7 +20,7 @@ const silkCachePath = "data/cache"
 func EncodeToSilk(record []byte, tempName string, useCache bool) (silkWav []byte, err error) {
 	// 1. 写入缓存文件
 	rawPath := path.Join(silkCachePath, tempName+".wav")
-	err = ioutil.WriteFile(rawPath, record, os.ModePerm)
+	err = os.WriteFile(rawPath, record, os.ModePerm)
 	if err != nil {
 		return nil, errors.Wrap(err, "write temp file error")
 	}
@@ -36,7 +35,7 @@ func EncodeToSilk(record []byte, tempName string, useCache bool) (silkWav []byte
 	defer os.Remove(pcmPath)
 
 	// 3. 转silk
-	pcm, err := ioutil.ReadFile(pcmPath)
+	pcm, err := os.ReadFile(pcmPath)
 	if err != nil {
 		return nil, errors.Wrap(err, "read pcm file err")
 	}
@@ -46,7 +45,7 @@ func EncodeToSilk(record []byte, tempName string, useCache bool) (silkWav []byte
 	}
 	if useCache {
 		silkPath := path.Join(silkCachePath, tempName+".silk")
-		err = ioutil.WriteFile(silkPath, silkWav, 0o666)
+		err = os.WriteFile(silkPath, silkWav, 0o666)
 	}
 	return
 }

@@ -8,7 +8,6 @@ import (
 	"encoding/hex"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -161,7 +160,7 @@ func main() {
 	if !global.PathExists("device.json") {
 		log.Warn("虚拟设备信息不存在, 将自动生成随机设备.")
 		client.GenRandomDevice()
-		_ = ioutil.WriteFile("device.json", client.SystemDeviceInfo.ToJson(), 0o644)
+		_ = os.WriteFile("device.json", client.SystemDeviceInfo.ToJson(), 0o644)
 		log.Info("已生成设备信息并保存到 device.json 文件.")
 	} else {
 		log.Info("将使用 device.json 内的设备信息运行Bot.")
@@ -248,10 +247,10 @@ func main() {
 	isTokenLogin := false
 	saveToken := func() {
 		AccountToken = cli.GenToken()
-		_ = ioutil.WriteFile("session.token", AccountToken, 0o644)
+		_ = os.WriteFile("session.token", AccountToken, 0o644)
 	}
 	if global.PathExists("session.token") {
-		token, err := ioutil.ReadFile("session.token")
+		token, err := os.ReadFile("session.token")
 		if err == nil {
 			if conf.Account.Uin != 0 {
 				r := binary.NewReader(token)
