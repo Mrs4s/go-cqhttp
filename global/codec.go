@@ -2,7 +2,7 @@ package global
 
 import (
 	"crypto/md5"
-	"fmt"
+	"encoding/hex"
 	"os"
 	"os/exec"
 	"path"
@@ -19,7 +19,7 @@ func EncoderSilk(data []byte) ([]byte, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "calc md5 failed")
 	}
-	tempName := fmt.Sprintf("%x", h.Sum(nil))
+	tempName := hex.EncodeToString(h.Sum(nil))
 	if silkPath := path.Join("data/cache", tempName+".silk"); PathExists(silkPath) {
 		return os.ReadFile(silkPath)
 	}
