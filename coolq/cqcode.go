@@ -155,7 +155,7 @@ func ToArrayMessage(e []message.IMessageElement, groupID int64) (r []MSG) {
 		var m MSG
 		switch o := elem.(type) {
 		case *message.ReplyElement:
-			if RemoveReplyAt && len(e) > i+1 {
+			if RemoveReplyAt && i+1 < len(e) && e[i+1].Type() == message.At {
 				elem, ok := e[i+1].(*message.AtElement)
 				if ok && elem.Target == o.Sender {
 					e[i+1] = nil
@@ -180,7 +180,7 @@ func ToArrayMessage(e []message.IMessageElement, groupID int64) (r []MSG) {
 			} else {
 				m = MSG{
 					"type": "at",
-					"data": map[string]string{"qq": fmt.Sprint(o.Target)},
+					"data": map[string]string{"qq": strconv.FormatInt(o.Target, 10)},
 				}
 			}
 		case *message.RedBagElement:
@@ -234,12 +234,12 @@ func ToArrayMessage(e []message.IMessageElement, groupID int64) (r []MSG) {
 			if isOk := strings.Contains(o.Content, "<?xml"); isOk {
 				m = MSG{
 					"type": "xml",
-					"data": map[string]string{"data": o.Content, "resid": fmt.Sprintf("%d", o.Id)},
+					"data": map[string]string{"data": o.Content, "resid": strconv.FormatInt(int64(o.Id), 10)},
 				}
 			} else {
 				m = MSG{
 					"type": "json",
-					"data": map[string]string{"data": o.Content, "resid": fmt.Sprintf("%d", o.Id)},
+					"data": map[string]string{"data": o.Content, "resid": strconv.FormatInt(int64(o.Id), 10)},
 				}
 			}
 		default:
@@ -947,12 +947,35 @@ func XMLEscape(c string) string {
 ] -> &#93;
 
 */
-func CQCodeEscapeText(raw string) string {
-	ret := raw
-	ret = strings.ReplaceAll(ret, "&", "&amp;")
-	ret = strings.ReplaceAll(ret, "[", "&#91;")
-	ret = strings.ReplaceAll(ret, "]", "&#93;")
-	return ret
+func CQCodeEscapeText(s string) string {
+	count := strings.Count(s, "&")
+	count += strings.Count(s, "[")
+	count += strings.Count(s, "]")
+	if count == 0 {
+		return s
+	}
+
+	// Apply replacements to buffer.
+	var b strings.Builder
+	b.Grow(len(s) + count*4)
+	start := 0
+	for i := 0; i < count; i++ {
+		j := start + strings.IndexFunc(s[start:], func(r rune) bool {
+			return r == '&' || r == '[' || r == ']'
+		})
+		b.WriteString(s[start:j])
+		switch s[j] {
+		case '&':
+			b.WriteString("&amp;")
+		case '[':
+			b.WriteString("&#91;")
+		case ']':
+			b.WriteString("&#93;")
+		}
+		start = j + 1
+	}
+	b.WriteString(s[start:])
+	return b.String()
 }
 
 /*CQCodeEscapeValue 将字符串value中部分字符转义

@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"hash"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -42,7 +41,7 @@ func FromStream(updateWith io.Reader) (err error, errRecover error) {
 	// no patch to apply, go on through
 	bufBytes := bufio.NewReader(updateWith)
 	updateWith = io.Reader(bufBytes)
-	newBytes, err = ioutil.ReadAll(updateWith)
+	newBytes, err = io.ReadAll(updateWith)
 	if err != nil {
 		return
 	}
