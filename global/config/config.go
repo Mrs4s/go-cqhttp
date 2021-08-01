@@ -56,6 +56,7 @@ type Config struct {
 		ReportSelfMessage   bool   `yaml:"report-self-message"`
 		RemoveReplyAt       bool   `yaml:"remove-reply-at"`
 		ExtraReplyData      bool   `yaml:"extra-reply-data"`
+		SkipMimeScan        bool   `yaml:"skip-mime-scan"`
 	} `yaml:"message"`
 
 	Output struct {

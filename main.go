@@ -365,6 +365,7 @@ func main() {
 	coolq.ForceFragmented = conf.Message.ForceFragment
 	coolq.RemoveReplyAt = conf.Message.RemoveReplyAt
 	coolq.ExtraReplyData = conf.Message.ExtraReplyData
+	coolq.SkipMimeScan = conf.Message.SkipMimeScan
 	for _, m := range conf.Servers {
 		if h, ok := m["http"]; ok {
 			hc := new(config.HTTPServer)

@@ -39,6 +39,8 @@ message:
   remove-reply-at: false
   # 为Reply附加更多信息
   extra-reply-data: false
+  # 跳过 Mime 扫描, 忽略错误数据
+  skip-mime-scan: false
 
 output:
   # 日志等级 trace,debug,info,warn,error

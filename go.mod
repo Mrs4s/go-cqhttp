@@ -7,6 +7,7 @@ require (
 	github.com/Microsoft/go-winio v0.5.0
 	github.com/Mrs4s/MiraiGo v0.0.0-20210726103104-1d68826cef0e
 	github.com/dustin/go-humanize v1.0.0
+	github.com/gabriel-vasile/mimetype v1.3.1 // indirect
 	github.com/gorilla/websocket v1.4.2
 	github.com/guonaihong/gout v0.2.1
 	github.com/jonboulle/clockwork v0.2.2 // indirect

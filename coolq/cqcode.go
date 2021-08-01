@@ -8,6 +8,7 @@ import (
 	xml2 "encoding/xml"
 	"errors"
 	"fmt"
+	"github.com/gabriel-vasile/mimetype"
 	"io"
 	"math/rand"
 	"net/url"
@@ -727,6 +728,12 @@ func (bot *CQBot) ToElement(t string, d map[string]string, isGroup bool) (m inte
 		}
 		if err != nil {
 			return nil, err
+		}
+		if !SkipMimeScan && !global.IsAMRorSILK(data) {
+			mt := mimetype.Detect(data).String()
+			if !mimetype.EqualsAny(mt, lawfulAudioTypes...) {
+				return nil, errors.New("audio type error: " + mt)
+			}
 		}
 		if !global.IsAMRorSILK(data) {
 			data, err = global.EncoderSilk(data)

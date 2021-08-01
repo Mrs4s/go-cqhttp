@@ -5,6 +5,7 @@ import (
 	"encoding/gob"
 	"encoding/hex"
 	"fmt"
+	"github.com/gabriel-vasile/mimetype"
 	"hash/crc32"
 	"io"
 	"os"
@@ -75,6 +76,17 @@ func (e *Event) JSONString() string {
 
 // ForceFragmented 是否启用强制分片
 var ForceFragmented = false
+
+// SkipMimeScan 是否跳过Mime扫描
+var SkipMimeScan bool
+
+var lawfulImageTypes = []string{"image/png", "image/jpeg", "image/gif", "image/bmp"}
+
+var lawfulAudioTypes = []string{
+	"audio/mpeg", "audio/flac", "audio/midi", "audio/ogg",
+	"audio/ape", "audio/amr", "audio/wav", "audio/aiff",
+	"audio/mp4", "audio/aac", "audio/x-m4a",
+}
 
 // NewQQBot 初始化一个QQBot实例
 func NewQQBot(cli *client.QQClient, conf *config.Config) *CQBot {
@@ -177,12 +189,18 @@ func (bot *CQBot) GetMessage(mid int32) MSG {
 
 // UploadLocalImageAsGroup 上传本地图片至群聊
 func (bot *CQBot) UploadLocalImageAsGroup(groupCode int64, img *LocalImageElement) (i *message.GroupImageElement, err error) {
-	if img.Stream != nil {
-		i, err = bot.Client.UploadGroupImage(groupCode, img.Stream)
-	} else {
-		i, err = bot.Client.UploadGroupImageByFile(groupCode, img.File)
+	if img.File != "" {
+		f, err := os.Open(img.File)
+		if err != nil {
+			return nil, errors.Wrap(err, "open image error")
+		}
+		defer func() { _ = f.Close() }()
+		img.Stream = f
 	}
-
+	if lawful, mime := IsLawfulImage(img.Stream); !lawful {
+		return nil, errors.New("image type error: " + mime)
+	}
+	i, err = bot.Client.UploadGroupImage(groupCode, img.Stream)
 	if i != nil {
 		i.Flash = img.Flash
 		i.EffectID = img.EffectID
@@ -569,4 +587,22 @@ func (bot *CQBot) uploadMedia(raw message.IMessageElement, target int64, group b
 		return bot.UploadLocalVideo(target, m)
 	}
 	return nil, errors.New("unsupported message element type")
+}
+
+// IsLawfulImage 判断给定流是否为合法图片
+// 返回 是否合法, 实际Mime
+// 判断后会自动将 Stream Seek 至 0
+func IsLawfulImage(r io.ReadSeeker) (bool, string) {
+	if SkipMimeScan {
+		return true, ""
+	}
+	_, _ = r.Seek(0, io.SeekStart)
+	defer func() { _, _ = r.Seek(0, io.SeekStart) }()
+	t, err := mimetype.DetectReader(r)
+	if err != nil {
+		log.Debugf("扫描 Mime 时出现问题: %v", err)
+		return false, ""
+	}
+	mime := t.String()
+	return mimetype.EqualsAny(mime, lawfulImageTypes...), mime
 }
