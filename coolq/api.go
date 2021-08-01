@@ -13,12 +13,10 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"unicode/utf8"
 
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/MiraiGo/message"
-	"github.com/Mrs4s/MiraiGo/utils"
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 
@@ -1468,15 +1466,17 @@ func convertGroupMemberInfo(groupID int64, m *client.GroupMemberInfo) MSG {
 }
 
 func limitedString(str string) string {
-	if utf8.RuneCountInString(str) <= 10 {
+	limited := [14]rune{10: ' ', 11: '.', 12: '.', 13: '.'}
+	i := 0
+	for _, r := range str {
+		if i >= 10 {
+			break
+		}
+		limited[i] = r
+		i++
+	}
+	if i != 10 {
 		return str
 	}
-	b := utils.S2B(str)
-	limited := make([]rune, 0, 10)
-	for i := 0; i < 10; i++ {
-		decodeRune, size := utf8.DecodeRune(b)
-		b = b[size:]
-		limited = append(limited, decodeRune)
-	}
-	return string(limited) + " ..."
+	return string(limited[:])
 }

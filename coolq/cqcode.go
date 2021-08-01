@@ -960,9 +960,13 @@ func CQCodeEscapeText(s string) string {
 	b.Grow(len(s) + count*4)
 	start := 0
 	for i := 0; i < count; i++ {
-		j := start + strings.IndexFunc(s[start:], func(r rune) bool {
-			return r == '&' || r == '[' || r == ']'
-		})
+		j := start
+		for index, r := range s[start:] {
+			if r == '&' || r == '[' || r == ']' {
+				j += index
+				break
+			}
+		}
 		b.WriteString(s[start:j])
 		switch s[j] {
 		case '&':
