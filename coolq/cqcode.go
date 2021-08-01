@@ -8,7 +8,6 @@ import (
 	xml2 "encoding/xml"
 	"errors"
 	"fmt"
-	"github.com/gabriel-vasile/mimetype"
 	"io"
 	"math/rand"
 	"net/url"
@@ -18,6 +17,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/gabriel-vasile/mimetype"
 
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/message"

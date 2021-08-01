@@ -5,7 +5,6 @@ import (
 	"encoding/gob"
 	"encoding/hex"
 	"fmt"
-	"github.com/gabriel-vasile/mimetype"
 	"hash/crc32"
 	"io"
 	"os"
@@ -13,6 +12,8 @@ import (
 	"runtime/debug"
 	"sync"
 	"time"
+
+	"github.com/gabriel-vasile/mimetype"
 
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/client"
