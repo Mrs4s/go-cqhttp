@@ -81,7 +81,7 @@ var ForceFragmented = false
 // SkipMimeScan 是否跳过Mime扫描
 var SkipMimeScan bool
 
-var lawfulImageTypes = []string{"image/png", "image/jpeg", "image/gif", "image/bmp"}
+var lawfulImageTypes = []string{"image/png", "image/jpeg", "image/gif", "image/bmp", "image/webp"}
 
 var lawfulAudioTypes = []string{
 	"audio/mpeg", "audio/flac", "audio/midi", "audio/ogg",
