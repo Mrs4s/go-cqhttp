@@ -414,6 +414,21 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) MSG {
 		return true
 	})
 
+	var resolveElement = func(elems []message.IMessageElement) []message.IMessageElement {
+		for i, elem := range elems {
+			switch elem.(type) {
+			case *LocalImageElement, *LocalVideoElement:
+				gm, err := bot.uploadMedia(elem, groupID, true)
+				if err != nil {
+					log.Warnf("警告: 群 %d %s上传失败: %v", groupID, elem.Type().String(), err)
+					continue
+				}
+				elems[i] = gm
+			}
+		}
+		return elems
+	}
+
 	var convert func(e gjson.Result) *message.ForwardNode
 	convert = func(e gjson.Result) *message.ForwardNode {
 		if e.Get("type").Str != "node" {
@@ -435,7 +450,7 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) MSG {
 						}
 						return msgTime
 					}(),
-					Message: bot.ConvertStringMessage(m["message"].(string), true),
+					Message: resolveElement(bot.ConvertStringMessage(m["message"].(string), true)),
 				}
 			}
 			log.Warnf("警告: 引用消息 %v 错误或数据库未开启.", e.Get("data.id").Str)
@@ -476,24 +491,11 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) MSG {
 		}
 		content := bot.ConvertObjectMessage(e.Get("data.content"), true)
 		if uin != 0 && name != "" && len(content) > 0 {
-			var newElem []message.IMessageElement
-			for _, elem := range content {
-				switch elem.(type) {
-				case *LocalImageElement, *LocalVideoElement:
-					gm, err := bot.uploadMedia(elem, groupID, true)
-					if err != nil {
-						log.Warnf("警告: 群 %d %s上传失败: %v", groupID, elem.Type().String(), err)
-						continue
-					}
-					elem = gm
-				}
-				newElem = append(newElem, elem)
-			}
 			return &message.ForwardNode{
 				SenderId:   uin,
 				SenderName: name,
 				Time:       int32(msgTime),
-				Message:    newElem,
+				Message:    resolveElement(content),
 			}
 		}
 		log.Warnf("警告: 非法 Forward node 将跳过. uin: %v name: %v content count: %v", uin, name, len(content))
