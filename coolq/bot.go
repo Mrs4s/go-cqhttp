@@ -81,9 +81,9 @@ var ForceFragmented = false
 // SkipMimeScan 是否跳过Mime扫描
 var SkipMimeScan bool
 
-var lawfulImageTypes = []string{"image/png", "image/jpeg", "image/gif", "image/bmp", "image/webp"}
+var lawfulImageTypes = [...]string{"image/png", "image/jpeg", "image/gif", "image/bmp", "image/webp"}
 
-var lawfulAudioTypes = []string{
+var lawfulAudioTypes = [...]string{
 	"audio/mpeg", "audio/flac", "audio/midi", "audio/ogg",
 	"audio/ape", "audio/amr", "audio/wav", "audio/aiff",
 	"audio/mp4", "audio/aac", "audio/x-m4a",
@@ -228,18 +228,18 @@ func (bot *CQBot) UploadLocalVideo(target int64, v *LocalVideoElement) (*message
 
 // UploadLocalImageAsPrivate 上传本地图片至私聊
 func (bot *CQBot) UploadLocalImageAsPrivate(userID int64, img *LocalImageElement) (i *message.FriendImageElement, err error) {
-	if img.Stream != nil {
-		i, err = bot.Client.UploadPrivateImage(userID, img.Stream)
-	} else {
-		// need update.
-		f, e := os.Open(img.File)
-		if e != nil {
-			return nil, e
+	if img.File != "" {
+		f, err := os.Open(img.File)
+		if err != nil {
+			return nil, errors.Wrap(err, "open image error")
 		}
-		defer f.Close()
-		i, err = bot.Client.UploadPrivateImage(userID, f)
+		defer func() { _ = f.Close() }()
+		img.Stream = f
 	}
-
+	if lawful, mime := IsLawfulImage(img.Stream); !lawful {
+		return nil, errors.New("image type error: " + mime)
+	}
+	i, err = bot.Client.UploadPrivateImage(userID, img.Stream)
 	if i != nil {
 		i.Flash = img.Flash
 	}
@@ -604,6 +604,10 @@ func IsLawfulImage(r io.ReadSeeker) (bool, string) {
 		log.Debugf("扫描 Mime 时出现问题: %v", err)
 		return false, ""
 	}
-	mime := t.String()
-	return mimetype.EqualsAny(mime, lawfulImageTypes...), mime
+	for _, lt := range lawfulImageTypes {
+		if t.Is(lt) {
+			return true, t.String()
+		}
+	}
+	return false, t.String()
 }

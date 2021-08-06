@@ -731,9 +731,16 @@ func (bot *CQBot) ToElement(t string, d map[string]string, isGroup bool) (m inte
 			return nil, err
 		}
 		if !SkipMimeScan && !global.IsAMRorSILK(data) {
-			mt := mimetype.Detect(data).String()
-			if !mimetype.EqualsAny(mt, lawfulAudioTypes...) {
-				return nil, errors.New("audio type error: " + mt)
+			mt := mimetype.Detect(data)
+			lawful := false
+			for _, lt := range lawfulAudioTypes {
+				if mt.Is(lt) {
+					lawful = true
+					break
+				}
+			}
+			if !lawful {
+				return nil, errors.New("audio type error: " + mt.String())
 			}
 		}
 		if !global.IsAMRorSILK(data) {
