@@ -21,7 +21,6 @@ require (
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e // indirect
 	github.com/stretchr/testify v1.7.0
 	github.com/syndtr/goleveldb v1.0.0
-	github.com/t-tomalak/logrus-easy-formatter v0.0.0-20190827215021-c074f06c5816
 	github.com/tidwall/gjson v1.8.1
 	github.com/tuotoo/qrcode v0.0.0-20190222102259-ac9c44189bf2
 	github.com/wdvxdr1123/go-silk v0.0.0-20210316130616-d47b553def60
