@@ -1451,11 +1451,12 @@ func convertGroupMemberInfo(groupID int64, m *client.GroupMemberInfo) MSG {
 			// unknown = 0xff
 			return "unknown"
 		}(),
-		"age":            0,
-		"area":           "",
-		"join_time":      m.JoinTime,
-		"last_sent_time": m.LastSpeakTime,
-		"level":          strconv.FormatInt(int64(m.Level), 10),
+		"age":               0,
+		"area":              "",
+		"join_time":         m.JoinTime,
+		"last_sent_time":    m.LastSpeakTime,
+		"shut_up_timestamp": m.ShutUpTimestamp,
+		"level":             strconv.FormatInt(int64(m.Level), 10),
 		"role": func() string {
 			switch m.Permission {
 			case client.Owner:
