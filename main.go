@@ -19,6 +19,7 @@ import (
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
+	"github.com/Mrs4s/go-cqhttp/global/codec"
 	"github.com/Mrs4s/go-cqhttp/global/config"
 	"github.com/Mrs4s/go-cqhttp/global/terminal"
 	"github.com/Mrs4s/go-cqhttp/global/update"
@@ -79,6 +80,7 @@ func main() {
 	}
 	if conf.Output.Debug {
 		log.SetReportCaller(true)
+		codec.Debug = true
 	}
 
 	logFormatter := &easy.Formatter{
