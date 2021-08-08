@@ -282,6 +282,21 @@ func (bot *CQBot) friendNotifyEvent(c *client.QQClient, e client.INotifyEvent) {
 	}
 }
 
+func (bot *CQBot) memberTitleUpdatedEvent(c *client.QQClient, e *client.MemberSpecialTitleUpdatedEvent) {
+	group := c.FindGroup(e.GroupCode)
+	mem := group.FindMember(e.Uin)
+	log.Infof("群 %v(%v) 内成员 %v(%v) 获得了新的头衔: %v", group.Name, group.Code, mem.DisplayName(), mem.Uin, e.NewTitle)
+	bot.dispatchEventMessage(MSG{
+		"post_type":   "notice",
+		"notice_type": "notify",
+		"sub_type":    "title",
+		"self_id":     c.Uin,
+		"user_id":     e.Uin,
+		"time":        time.Now().Unix(),
+		"title":       e.NewTitle,
+	})
+}
+
 func (bot *CQBot) friendRecallEvent(c *client.QQClient, e *client.FriendMessageRecalledEvent) {
 	f := c.FindFriend(e.FriendUin)
 	gid := toGlobalID(e.FriendUin, e.MessageId)
