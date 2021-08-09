@@ -81,7 +81,6 @@ type LocalVoiceElement struct {
 
 // LocalVideoElement 本地视频
 type LocalVideoElement struct {
-	message.ShortVideoElement
 	File  string
 	thumb io.ReadSeeker
 }
@@ -95,6 +94,11 @@ func (e *LocalImageElement) Type() message.ElementType {
 func (e *GiftElement) Type() message.ElementType {
 	// Make message.IMessageElement Happy
 	return message.At
+}
+
+// Type impl message.IMessageElement
+func (e *LocalVideoElement) Type() message.ElementType {
+	return message.Video
 }
 
 // GiftID 礼物ID数组
@@ -902,7 +906,10 @@ func (bot *CQBot) ToElement(t string, d map[string]string, isGroup bool) (m inte
 		if err != nil {
 			return nil, err
 		}
-		v := file.(*LocalVideoElement)
+		v, ok := file.(*LocalVideoElement)
+		if !ok {
+			return file, nil
+		}
 		if v.File == "" {
 			return v, nil
 		}
@@ -1124,14 +1131,14 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video, group bool) (
 		if path.Ext(rawPath) == ".video" {
 			b, _ := os.ReadFile(rawPath)
 			r := binary.NewReader(b)
-			return &LocalVideoElement{ShortVideoElement: message.ShortVideoElement{ // todo 检查缓存是否有效
+			return &message.ShortVideoElement{ // todo 检查缓存是否有效
 				Md5:       r.ReadBytes(16),
 				ThumbMd5:  r.ReadBytes(16),
 				Size:      r.ReadInt32(),
 				ThumbSize: r.ReadInt32(),
 				Name:      r.ReadString(),
 				Uuid:      r.ReadAvailable(),
-			}}, nil
+			}, nil
 		}
 		return &LocalVideoElement{File: rawPath}, nil
 	}

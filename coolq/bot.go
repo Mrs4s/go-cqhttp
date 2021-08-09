@@ -212,19 +212,16 @@ func (bot *CQBot) UploadLocalImageAsGroup(groupCode int64, img *LocalImageElemen
 
 // UploadLocalVideo 上传本地短视频至群聊
 func (bot *CQBot) UploadLocalVideo(target int64, v *LocalVideoElement) (*message.ShortVideoElement, error) {
-	if v.File != "" {
-		video, err := os.Open(v.File)
-		if err != nil {
-			return nil, err
-		}
-		defer video.Close()
-		hash, _ := utils.ComputeMd5AndLength(io.MultiReader(video, v.thumb))
-		cacheFile := path.Join(global.CachePath, hex.EncodeToString(hash)+".cache")
-		_, _ = video.Seek(0, io.SeekStart)
-		_, _ = v.thumb.Seek(0, io.SeekStart)
-		return bot.Client.UploadGroupShortVideo(target, video, v.thumb, cacheFile)
+	video, err := os.Open(v.File)
+	if err != nil {
+		return nil, err
 	}
-	return &v.ShortVideoElement, nil
+	defer video.Close()
+	hash, _ := utils.ComputeMd5AndLength(io.MultiReader(video, v.thumb))
+	cacheFile := path.Join(global.CachePath, hex.EncodeToString(hash)+".cache")
+	_, _ = video.Seek(0, io.SeekStart)
+	_, _ = v.thumb.Seek(0, io.SeekStart)
+	return bot.Client.UploadGroupShortVideo(target, video, v.thumb, cacheFile)
 }
 
 // UploadLocalImageAsPrivate 上传本地图片至私聊
