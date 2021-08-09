@@ -222,7 +222,7 @@ database: # 数据库相关设置
 在部署前，请在本地完成登录，并将 `config.yml` ， `device.json` ，`bootstrap` 和 `go-cqhttp`
 一起打包。
 
-在触发器中创建一个API网关触发器，并启用继承响应， 创建完成后即可通过api网关访问go-cqhttp(建议配置 AccessToken)。
+在触发器中创建一个API网关触发器，并启用集成响应，创建完成后即可通过api网关访问go-cqhttp(建议配置 AccessToken)。
 
 > scripts/bootstrap 中使用的工作路径为 /tmp, 这个目录最大能容下500M文件, 如需长期使用，
 > 请挂载文件存储(CFS).
