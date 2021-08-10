@@ -268,7 +268,11 @@ func (bot *CQBot) groupNotifyEvent(c *client.QQClient, e client.INotifyEvent) {
 func (bot *CQBot) friendNotifyEvent(c *client.QQClient, e client.INotifyEvent) {
 	friend := c.FindFriend(e.From())
 	if notify, ok := e.(*client.FriendPokeNotifyEvent); ok {
-		log.Infof("好友 %v 戳了戳你.", friend.Nickname)
+		if notify.Receiver == notify.Sender {
+			log.Infof("好友 %v 戳了戳自己.", friend.Nickname)
+		} else {
+			log.Infof("好友 %v 戳了戳你.", friend.Nickname)
+		}
 		bot.dispatchEventMessage(MSG{
 			"post_type":   "notice",
 			"notice_type": "notify",
