@@ -514,7 +514,7 @@ func (bot *CQBot) formatGroupMessage(m *message.GroupMessage) MSG {
 			"user_id": m.Sender.Uin,
 		},
 		"sub_type": "normal",
-		"time":     time.Now().Unix(),
+		"time":     m.Time,
 		"user_id":  m.Sender.Uin,
 	}
 	if m.Sender.IsAnonymous() {
