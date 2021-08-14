@@ -117,21 +117,7 @@ func loginResponseProcessor(res *client.LoginResponse) error {
 		var text string
 		switch res.Error {
 		case client.SliderNeededError:
-			log.Warnf("登录需要滑条验证码. ")
-			log.Warnf("请参考文档 -> https://docs.go-cqhttp.org/faq/slider.html <- 进行处理")
-			log.Warnf("1. 自行抓包并获取 Ticket 输入.")
-			log.Warnf("2. 使用手机QQ扫描二维码登入. (推荐)")
-			log.Warn("请输入(1 - 2) (将在10秒后自动选择2)：")
-			text = readLineTimeout(time.Second*10, "2")
-			if strings.Contains(text, "1") {
-				println()
-				log.Warnf("请用浏览器打开 -> %v <- 并获取Ticket.", res.VerifyUrl)
-				println()
-				log.Warn("请输入Ticket： (Enter 提交)")
-				text = readLine()
-				res, err = cli.SubmitTicket(text)
-				continue
-			}
+			log.Warnf("登录需要滑条验证码, 请使用手机QQ扫描二维码以继续登录.")
 			cli.Disconnect()
 			cli.Release()
 			cli = client.NewClientEmpty()
