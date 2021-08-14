@@ -81,9 +81,9 @@ var ForceFragmented = false
 // SkipMimeScan 是否跳过Mime扫描
 var SkipMimeScan bool
 
-var lawfulImageTypes = []string{"image/png", "image/jpeg", "image/gif", "image/bmp"}
+var lawfulImageTypes = [...]string{"image/png", "image/jpeg", "image/gif", "image/bmp", "image/webp"}
 
-var lawfulAudioTypes = []string{
+var lawfulAudioTypes = [...]string{
 	"audio/mpeg", "audio/flac", "audio/midi", "audio/ogg",
 	"audio/ape", "audio/amr", "audio/wav", "audio/aiff",
 	"audio/mp4", "audio/aac", "audio/x-m4a",
@@ -126,6 +126,7 @@ func NewQQBot(cli *client.QQClient, conf *config.Config) *CQBot {
 	bot.Client.OnGroupMessageRecalled(bot.groupRecallEvent)
 	bot.Client.OnGroupNotify(bot.groupNotifyEvent)
 	bot.Client.OnFriendNotify(bot.friendNotifyEvent)
+	bot.Client.OnMemberSpecialTitleUpdated(bot.memberTitleUpdatedEvent)
 	bot.Client.OnFriendMessageRecalled(bot.friendRecallEvent)
 	bot.Client.OnReceivedOfflineFile(bot.offlineFileEvent)
 	bot.Client.OnJoinGroup(bot.joinGroupEvent)
@@ -211,35 +212,32 @@ func (bot *CQBot) UploadLocalImageAsGroup(groupCode int64, img *LocalImageElemen
 
 // UploadLocalVideo 上传本地短视频至群聊
 func (bot *CQBot) UploadLocalVideo(target int64, v *LocalVideoElement) (*message.ShortVideoElement, error) {
-	if v.File != "" {
-		video, err := os.Open(v.File)
-		if err != nil {
-			return nil, err
-		}
-		defer video.Close()
-		hash, _ := utils.ComputeMd5AndLength(io.MultiReader(video, v.thumb))
-		cacheFile := path.Join(global.CachePath, hex.EncodeToString(hash)+".cache")
-		_, _ = video.Seek(0, io.SeekStart)
-		_, _ = v.thumb.Seek(0, io.SeekStart)
-		return bot.Client.UploadGroupShortVideo(target, video, v.thumb, cacheFile)
+	video, err := os.Open(v.File)
+	if err != nil {
+		return nil, err
 	}
-	return &v.ShortVideoElement, nil
+	defer video.Close()
+	hash, _ := utils.ComputeMd5AndLength(io.MultiReader(video, v.thumb))
+	cacheFile := path.Join(global.CachePath, hex.EncodeToString(hash)+".cache")
+	_, _ = video.Seek(0, io.SeekStart)
+	_, _ = v.thumb.Seek(0, io.SeekStart)
+	return bot.Client.UploadGroupShortVideo(target, video, v.thumb, cacheFile)
 }
 
 // UploadLocalImageAsPrivate 上传本地图片至私聊
 func (bot *CQBot) UploadLocalImageAsPrivate(userID int64, img *LocalImageElement) (i *message.FriendImageElement, err error) {
-	if img.Stream != nil {
-		i, err = bot.Client.UploadPrivateImage(userID, img.Stream)
-	} else {
-		// need update.
-		f, e := os.Open(img.File)
-		if e != nil {
-			return nil, e
+	if img.File != "" {
+		f, err := os.Open(img.File)
+		if err != nil {
+			return nil, errors.Wrap(err, "open image error")
 		}
-		defer f.Close()
-		i, err = bot.Client.UploadPrivateImage(userID, f)
+		defer func() { _ = f.Close() }()
+		img.Stream = f
 	}
-
+	if lawful, mime := IsLawfulImage(img.Stream); !lawful {
+		return nil, errors.New("image type error: " + mime)
+	}
+	i, err = bot.Client.UploadPrivateImage(userID, img.Stream)
 	if i != nil {
 		i.Flash = img.Flash
 	}
@@ -428,7 +426,7 @@ func (bot *CQBot) InsertTempMessage(target int64, m *message.TempMessage) int32 
 	val := MSG{
 		"message-id": m.Id,
 		// FIXME(InsertTempMessage) InternalId missing
-		"group":      m.GroupCode,
+		"from-group": m.GroupCode,
 		"group-name": m.GroupName,
 		"target":     target,
 		"sender":     m.Sender,
@@ -516,7 +514,7 @@ func (bot *CQBot) formatGroupMessage(m *message.GroupMessage) MSG {
 			"user_id": m.Sender.Uin,
 		},
 		"sub_type": "normal",
-		"time":     time.Now().Unix(),
+		"time":     m.Time,
 		"user_id":  m.Sender.Uin,
 	}
 	if m.Sender.IsAnonymous() {
@@ -604,6 +602,10 @@ func IsLawfulImage(r io.ReadSeeker) (bool, string) {
 		log.Debugf("扫描 Mime 时出现问题: %v", err)
 		return false, ""
 	}
-	mime := t.String()
-	return mimetype.EqualsAny(mime, lawfulImageTypes...), mime
+	for _, lt := range lawfulImageTypes {
+		if t.Is(lt) {
+			return true, t.String()
+		}
+	}
+	return false, t.String()
 }

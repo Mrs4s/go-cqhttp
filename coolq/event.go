@@ -69,9 +69,6 @@ func (bot *CQBot) privateMessageEvent(c *client.QQClient, m *message.PrivateMess
 		},
 	}
 	bot.dispatchEventMessage(fm)
-	if m.Sender.Uin != c.Uin {
-		c.MarkPrivateMessageReaded(m.Sender.Uin, int64(m.Time))
-	}
 }
 
 func (bot *CQBot) groupMessageEvent(c *client.QQClient, m *message.GroupMessage) {
@@ -109,9 +106,6 @@ func (bot *CQBot) groupMessageEvent(c *client.QQClient, m *message.GroupMessage)
 	}
 	gm["message_id"] = id
 	bot.dispatchEventMessage(gm)
-	if m.Sender.Uin != c.Uin {
-		c.MarkGroupMessageReaded(m.GroupCode, int64(m.Id))
-	}
 }
 
 func (bot *CQBot) tempMessageEvent(c *client.QQClient, e *client.TempMessageEvent) {
@@ -268,7 +262,11 @@ func (bot *CQBot) groupNotifyEvent(c *client.QQClient, e client.INotifyEvent) {
 func (bot *CQBot) friendNotifyEvent(c *client.QQClient, e client.INotifyEvent) {
 	friend := c.FindFriend(e.From())
 	if notify, ok := e.(*client.FriendPokeNotifyEvent); ok {
-		log.Infof("好友 %v 戳了戳你.", friend.Nickname)
+		if notify.Receiver == notify.Sender {
+			log.Infof("好友 %v 戳了戳自己.", friend.Nickname)
+		} else {
+			log.Infof("好友 %v 戳了戳你.", friend.Nickname)
+		}
 		bot.dispatchEventMessage(MSG{
 			"post_type":   "notice",
 			"notice_type": "notify",
@@ -280,6 +278,22 @@ func (bot *CQBot) friendNotifyEvent(c *client.QQClient, e client.INotifyEvent) {
 			"time":        time.Now().Unix(),
 		})
 	}
+}
+
+func (bot *CQBot) memberTitleUpdatedEvent(c *client.QQClient, e *client.MemberSpecialTitleUpdatedEvent) {
+	group := c.FindGroup(e.GroupCode)
+	mem := group.FindMember(e.Uin)
+	log.Infof("群 %v(%v) 内成员 %v(%v) 获得了新的头衔: %v", group.Name, group.Code, mem.DisplayName(), mem.Uin, e.NewTitle)
+	bot.dispatchEventMessage(MSG{
+		"post_type":   "notice",
+		"notice_type": "notify",
+		"sub_type":    "title",
+		"group_id":    group.Code,
+		"self_id":     c.Uin,
+		"user_id":     e.Uin,
+		"time":        time.Now().Unix(),
+		"title":       e.NewTitle,
+	})
 }
 
 func (bot *CQBot) friendRecallEvent(c *client.QQClient, e *client.FriendMessageRecalledEvent) {

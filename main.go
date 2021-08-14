@@ -19,6 +19,7 @@ import (
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
+	"github.com/Mrs4s/go-cqhttp/global/codec"
 	"github.com/Mrs4s/go-cqhttp/global/config"
 	"github.com/Mrs4s/go-cqhttp/global/terminal"
 	"github.com/Mrs4s/go-cqhttp/global/update"
@@ -29,7 +30,6 @@ import (
 	"github.com/guonaihong/gout"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	log "github.com/sirupsen/logrus"
-	easy "github.com/t-tomalak/logrus-easy-formatter"
 	"github.com/tidwall/gjson"
 	"golang.org/x/crypto/pbkdf2"
 	"golang.org/x/term"
@@ -79,12 +79,9 @@ func main() {
 	}
 	if conf.Output.Debug {
 		log.SetReportCaller(true)
+		codec.Debug = true
 	}
 
-	logFormatter := &easy.Formatter{
-		TimestampFormat: "2006-01-02 15:04:05",
-		LogFormat:       "[%time%] [%lvl%]: %msg% \n",
-	}
 	rotateOptions := []rotatelogs.Option{
 		rotatelogs.WithRotationTime(time.Hour * 24),
 	}
@@ -102,7 +99,7 @@ func main() {
 		panic(err)
 	}
 
-	log.AddHook(global.NewLocalHook(w, logFormatter, global.GetLogLevel(conf.Output.LogLevel)...))
+	log.AddHook(global.NewLocalHook(w, global.LogFormat{}, global.GetLogLevel(conf.Output.LogLevel)...))
 
 	mkCacheDir := func(path string, _type string) {
 		if !global.PathExists(path) {
@@ -263,6 +260,7 @@ func main() {
 					text := readLineTimeout(time.Second*5, "1")
 					if text == "2" {
 						_ = os.Remove("session.token")
+						log.Infof("缓存已删除.")
 						os.Exit(0)
 					}
 				}

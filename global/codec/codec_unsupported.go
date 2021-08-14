@@ -1,5 +1,5 @@
-//go:build (!arm && !arm64 && !amd64 && !386) || race
-// +build !arm,!arm64,!amd64,!386 race
+//go:build (!arm && !arm64 && !amd64 && !386) || race || (!windows && !linux && !darwin) || (windows && arm)
+// +build !arm,!arm64,!amd64,!386 race !windows,!linux,!darwin windows,arm
 
 package codec
 

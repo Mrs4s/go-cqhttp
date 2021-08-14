@@ -81,7 +81,6 @@ type LocalVoiceElement struct {
 
 // LocalVideoElement 本地视频
 type LocalVideoElement struct {
-	message.ShortVideoElement
 	File  string
 	thumb io.ReadSeeker
 }
@@ -95,6 +94,11 @@ func (e *LocalImageElement) Type() message.ElementType {
 func (e *GiftElement) Type() message.ElementType {
 	// Make message.IMessageElement Happy
 	return message.At
+}
+
+// Type impl message.IMessageElement
+func (e *LocalVideoElement) Type() message.ElementType {
+	return message.Video
 }
 
 // GiftID 礼物ID数组
@@ -731,9 +735,16 @@ func (bot *CQBot) ToElement(t string, d map[string]string, isGroup bool) (m inte
 			return nil, err
 		}
 		if !SkipMimeScan && !global.IsAMRorSILK(data) {
-			mt := mimetype.Detect(data).String()
-			if !mimetype.EqualsAny(mt, lawfulAudioTypes...) {
-				return nil, errors.New("audio type error: " + mt)
+			mt := mimetype.Detect(data)
+			lawful := false
+			for _, lt := range lawfulAudioTypes {
+				if mt.Is(lt) {
+					lawful = true
+					break
+				}
+			}
+			if !lawful {
+				return nil, errors.New("audio type error: " + mt.String())
 			}
 		}
 		if !global.IsAMRorSILK(data) {
@@ -895,7 +906,10 @@ func (bot *CQBot) ToElement(t string, d map[string]string, isGroup bool) (m inte
 		if err != nil {
 			return nil, err
 		}
-		v := file.(*LocalVideoElement)
+		v, ok := file.(*LocalVideoElement)
+		if !ok {
+			return file, nil
+		}
 		if v.File == "" {
 			return v, nil
 		}
@@ -1117,14 +1131,14 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video, group bool) (
 		if path.Ext(rawPath) == ".video" {
 			b, _ := os.ReadFile(rawPath)
 			r := binary.NewReader(b)
-			return &LocalVideoElement{ShortVideoElement: message.ShortVideoElement{ // todo 检查缓存是否有效
+			return &message.ShortVideoElement{ // todo 检查缓存是否有效
 				Md5:       r.ReadBytes(16),
 				ThumbMd5:  r.ReadBytes(16),
 				Size:      r.ReadInt32(),
 				ThumbSize: r.ReadInt32(),
 				Name:      r.ReadString(),
 				Uuid:      r.ReadAvailable(),
-			}}, nil
+			}, nil
 		}
 		return &LocalVideoElement{File: rawPath}, nil
 	}
@@ -1133,72 +1147,50 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video, group bool) (
 		exist = true
 		rawPath = path.Join(global.ImagePathOld, f)
 	}
-	if !exist && global.PathExists(rawPath+".cqimg") {
-		exist = true
-		rawPath += ".cqimg"
+	if !exist {
+		if d["url"] != "" {
+			return bot.makeImageOrVideoElem(map[string]string{"file": d["url"]}, false, group)
+		}
+		return nil, errors.New("invalid image")
 	}
-	if !exist && d["url"] != "" {
-		return bot.makeImageOrVideoElem(map[string]string{"file": d["url"]}, false, group)
+	if path.Ext(rawPath) != ".image" {
+		return &LocalImageElement{File: rawPath}, nil
 	}
-	if exist {
-		if path.Ext(rawPath) != ".image" && path.Ext(rawPath) != ".cqimg" {
-			return &LocalImageElement{File: rawPath}, nil
-		}
-		b, err := os.ReadFile(rawPath)
-		if err != nil {
-			return nil, err
-		}
-		if len(b) < 20 {
-			return nil, errors.New("invalid local file")
-		}
-		var (
-			size     int32
-			hash     []byte
-			imageURL string
-		)
-		if path.Ext(rawPath) == ".cqimg" {
-			for _, line := range strings.Split(global.ReadAllText(rawPath), "\n") {
-				kv := strings.SplitN(line, "=", 2)
-				switch kv[0] {
-				case "md5":
-					hash, _ = hex.DecodeString(strings.ReplaceAll(kv[1], "\r", ""))
-				case "size":
-					t, _ := strconv.Atoi(strings.ReplaceAll(kv[1], "\r", ""))
-					size = int32(t)
-				}
-			}
-		} else {
-			r := binary.NewReader(b)
-			hash = r.ReadBytes(16)
-			size = r.ReadInt32()
-			r.ReadString()
-			imageURL = r.ReadString()
-		}
-		if size == 0 {
-			if imageURL != "" {
-				return bot.makeImageOrVideoElem(map[string]string{"file": imageURL}, false, group)
-			}
-			return nil, errors.New("img size is 0")
-		}
-		if len(hash) != 16 {
-			return nil, errors.New("invalid hash")
-		}
-		var rsp message.IMessageElement
-		if group {
-			rsp, err = bot.Client.QueryGroupImage(int64(rand.Uint32()), hash, size)
-			goto ok
-		}
-		rsp, err = bot.Client.QueryFriendImage(int64(rand.Uint32()), hash, size)
-	ok:
-		if err != nil {
-			if imageURL != "" {
-				return bot.makeImageOrVideoElem(map[string]string{"file": imageURL}, false, group)
-			}
-			return nil, err
-		}
-		return rsp, nil
+	b, err := os.ReadFile(rawPath)
+	if err != nil {
+		return nil, err
 	}
-	return nil, errors.New("invalid image")
+	if len(b) < 20 {
+		return nil, errors.New("invalid local file")
+	}
+	r := binary.NewReader(b)
+	hash := r.ReadBytes(16)
+	size := r.ReadInt32()
+	r.ReadString()
+	imageURL := r.ReadString()
+	if size == 0 {
+		if imageURL != "" {
+			return bot.makeImageOrVideoElem(map[string]string{"file": imageURL}, false, group)
+		}
+		return nil, errors.New("img size is 0")
+	}
+	if len(hash) != 16 {
+		return nil, errors.New("invalid hash")
+	}
+	var rsp message.IMessageElement
+	if group {
+		rsp, err = bot.Client.QueryGroupImage(int64(rand.Uint32()), hash, size)
+		goto ok
+	}
+	rsp, err = bot.Client.QueryFriendImage(int64(rand.Uint32()), hash, size)
+ok:
+	if err != nil {
+		if imageURL != "" {
+			return bot.makeImageOrVideoElem(map[string]string{"file": imageURL}, false, group)
+		}
+		return nil, err
+	}
+	return rsp, nil
 }
 
 // makeShowPic 一种xml 方式发送的群消息图片

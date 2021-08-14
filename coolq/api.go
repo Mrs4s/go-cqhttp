@@ -403,7 +403,7 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) MSG {
 	if m.Type != gjson.JSON {
 		return Failed(100)
 	}
-	var sendNodes []*message.ForwardNode
+	fm := message.NewForwardMessage()
 	ts := time.Now().Add(-time.Minute * 5)
 	hasCustom := false
 	m.ForEach(func(_, item gjson.Result) bool {
@@ -414,8 +414,23 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) MSG {
 		return true
 	})
 
-	var convert func(e gjson.Result) []*message.ForwardNode
-	convert = func(e gjson.Result) (nodes []*message.ForwardNode) {
+	var resolveElement = func(elems []message.IMessageElement) []message.IMessageElement {
+		for i, elem := range elems {
+			switch elem.(type) {
+			case *LocalImageElement, *LocalVideoElement:
+				gm, err := bot.uploadMedia(elem, groupID, true)
+				if err != nil {
+					log.Warnf("警告: 群 %d %s上传失败: %v", groupID, elem.Type().String(), err)
+					continue
+				}
+				elems[i] = gm
+			}
+		}
+		return elems
+	}
+
+	var convert func(e gjson.Result) *message.ForwardNode
+	convert = func(e gjson.Result) *message.ForwardNode {
 		if e.Get("type").Str != "node" {
 			return nil
 		}
@@ -425,7 +440,7 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) MSG {
 			m := bot.GetMessage(int32(i))
 			if m != nil {
 				sender := m["sender"].(message.Sender)
-				nodes = append(nodes, &message.ForwardNode{
+				return &message.ForwardNode{
 					SenderId:   sender.Uin,
 					SenderName: (&sender).DisplayName(),
 					Time: func() int32 {
@@ -435,12 +450,11 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) MSG {
 						}
 						return msgTime
 					}(),
-					Message: bot.ConvertStringMessage(m["message"].(string), true),
-				})
-				return
+					Message: resolveElement(bot.ConvertStringMessage(m["message"].(string), true)),
+				}
 			}
 			log.Warnf("警告: 引用消息 %v 错误或数据库未开启.", e.Get("data.id").Str)
-			return
+			return nil
 		}
 		uin := e.Get("data.[user_id,uin].0").Int()
 		msgTime := e.Get("data.time").Int()
@@ -450,63 +464,59 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) MSG {
 		name := e.Get("data.name").Str
 		c := e.Get("data.content")
 		if c.IsArray() {
-			flag := false
+			nested := false
 			c.ForEach(func(_, value gjson.Result) bool {
 				if value.Get("type").Str == "node" {
-					flag = true
+					nested = true
 					return false
 				}
 				return true
 			})
-			if flag {
-				var taowa []*message.ForwardNode
+			if nested { // 处理嵌套
+				nest := message.NewForwardMessage()
 				for _, item := range c.Array() {
-					taowa = append(taowa, convert(item)...)
+					node := convert(item)
+					if node != nil {
+						nest.AddNode(node)
+					}
 				}
-				nodes = append(nodes, &message.ForwardNode{
+				elem := bot.Client.UploadGroupForwardMessage(groupID, nest)
+				return &message.ForwardNode{
 					SenderId:   uin,
 					SenderName: name,
 					Time:       int32(msgTime),
-					Message:    []message.IMessageElement{bot.Client.UploadGroupForwardMessage(groupID, &message.ForwardMessage{Nodes: taowa})},
-				})
-				return
+					Message:    []message.IMessageElement{elem},
+				}
 			}
 		}
 		content := bot.ConvertObjectMessage(e.Get("data.content"), true)
 		if uin != 0 && name != "" && len(content) > 0 {
-			var newElem []message.IMessageElement
-			for _, elem := range content {
-				switch elem.(type) {
-				case *LocalImageElement, *LocalVideoElement:
-					gm, err := bot.uploadMedia(elem, groupID, true)
-					if err != nil {
-						log.Warnf("警告: 群 %d %s上传失败: %v", groupID, elem.Type().String(), err)
-						continue
-					}
-					elem = gm
-				}
-				newElem = append(newElem, elem)
-			}
-			nodes = append(nodes, &message.ForwardNode{
+			return &message.ForwardNode{
 				SenderId:   uin,
 				SenderName: name,
 				Time:       int32(msgTime),
-				Message:    newElem,
-			})
-			return
+				Message:    resolveElement(content),
+			}
 		}
 		log.Warnf("警告: 非法 Forward node 将跳过. uin: %v name: %v content count: %v", uin, name, len(content))
-		return
+		return nil
 	}
 	if m.IsArray() {
 		for _, item := range m.Array() {
-			sendNodes = append(sendNodes, convert(item)...)
+			node := convert(item)
+			if node != nil {
+				fm.AddNode(node)
+			}
 		}
 	} else {
-		sendNodes = convert(m)
+		node := convert(m)
+		if node != nil {
+			fm.AddNode(node)
+		}
 	}
-	if len(sendNodes) > 0 {
-		ret := bot.Client.SendGroupForwardMessage(groupID, &message.ForwardMessage{Nodes: sendNodes})
+	if fm.Length() > 0 {
+		fe := bot.Client.UploadGroupForwardMessage(groupID, fm)
+		ret := bot.Client.SendGroupForwardMessage(groupID, fe)
 		if ret == nil || ret.Id == -1 {
 			log.Warnf("合并转发(群)消息发送失败: 账号可能被风控.")
 			return Failed(100, "SEND_MSG_API_ERROR", "请参考 go-cqhttp 端输出")
@@ -1408,6 +1418,23 @@ func (bot *CQBot) CQSetModelShow(modelName string, modelShow string) MSG {
 	return OK(nil)
 }
 
+// CQMarkMessageAsRead 标记消息已读
+func (bot *CQBot) CQMarkMessageAsRead(msgID int32) MSG {
+	m := bot.GetMessage(msgID)
+	if m == nil {
+		return Failed(100, "MSG_NOT_FOUND", "消息不存在")
+	}
+	if _, ok := m["group"]; ok {
+		bot.Client.MarkGroupMessageReaded(m["group"].(int64), int64(m["message-id"].(int32)))
+		return OK(nil)
+	}
+	if _, ok := m["from-group"]; ok {
+		return Failed(100, "MSG_TYPE_ERROR", "不支持标记临时会话")
+	}
+	bot.Client.MarkPrivateMessageReaded(m["sender"].(*message.Sender).Uin, m["time"].(int64))
+	return OK(nil)
+}
+
 // OK 生成成功返回值
 func OK(data interface{}) MSG {
 	return MSG{"data": data, "retcode": 0, "status": "ok"}
@@ -1441,11 +1468,12 @@ func convertGroupMemberInfo(groupID int64, m *client.GroupMemberInfo) MSG {
 			// unknown = 0xff
 			return "unknown"
 		}(),
-		"age":            0,
-		"area":           "",
-		"join_time":      m.JoinTime,
-		"last_sent_time": m.LastSpeakTime,
-		"level":          strconv.FormatInt(int64(m.Level), 10),
+		"age":               0,
+		"area":              "",
+		"join_time":         m.JoinTime,
+		"last_sent_time":    m.LastSpeakTime,
+		"shut_up_timestamp": m.ShutUpTimestamp,
+		"level":             strconv.FormatInt(int64(m.Level), 10),
 		"role": func() string {
 			switch m.Permission {
 			case client.Owner:

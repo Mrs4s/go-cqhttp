@@ -174,6 +174,12 @@ func Get() *Config {
 		global.SetAtDefault(&config.Account.ReLogin.Disabled, !global.EnsureBool(os.Getenv("GCQ_RELOGIN"), false), false)
 		global.SetAtDefault(&config.Account.ReLogin.Delay, uint(toInt64(os.Getenv("GCQ_RELOGIN_DELAY"))), uint(0))
 		global.SetAtDefault(&config.Account.ReLogin.MaxTimes, uint(toInt64(os.Getenv("GCQ_RELOGIN_MAX_TIMES"))), uint(0))
+		dbConf := &LevelDBConfig{Enable: global.EnsureBool(os.Getenv("GCQ_LEVELDB"), true)}
+		config.Database["leveldb"] = func() yaml.Node {
+			n := &yaml.Node{}
+			_ = n.Encode(dbConf)
+			return *n
+		}()
 		accessTokenEnv := os.Getenv("GCQ_ACCESS_TOKEN")
 		if os.Getenv("GCQ_HTTP_PORT") != "" {
 			node := &yaml.Node{}

@@ -160,7 +160,12 @@ func (c *websocketClient) connectEvent() {
 	}
 
 	log.Infof("已连接到反向WebSocket Event服务器 %v", c.conf.Event)
-	c.eventConn = &webSocketConn{Conn: conn, apiCaller: newAPICaller(c.bot)}
+	if c.eventConn == nil {
+		wrappedConn := &webSocketConn{Conn: conn, apiCaller: newAPICaller(c.bot)}
+		c.eventConn = wrappedConn
+	} else {
+		c.eventConn.Conn = conn
+	}
 }
 
 func (c *websocketClient) connectUniversal() {
@@ -189,12 +194,16 @@ func (c *websocketClient) connectUniversal() {
 		log.Warnf("反向WebSocket 握手时出现错误: %v", err)
 	}
 
-	wrappedConn := &webSocketConn{Conn: conn, apiCaller: newAPICaller(c.bot)}
-	if c.conf.RateLimit.Enabled {
-		wrappedConn.apiCaller.use(rateLimit(c.conf.RateLimit.Frequency, c.conf.RateLimit.Bucket))
+	if c.universalConn == nil {
+		wrappedConn := &webSocketConn{Conn: conn, apiCaller: newAPICaller(c.bot)}
+		if c.conf.RateLimit.Enabled {
+			wrappedConn.apiCaller.use(rateLimit(c.conf.RateLimit.Frequency, c.conf.RateLimit.Bucket))
+		}
+		c.universalConn = wrappedConn
+	} else {
+		c.universalConn.Conn = conn
 	}
-	go c.listenAPI(wrappedConn, true)
-	c.universalConn = wrappedConn
+	go c.listenAPI(c.universalConn, true)
 }
 
 func (c *websocketClient) listenAPI(conn *webSocketConn, u bool) {
