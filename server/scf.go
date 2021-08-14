@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"net/http"
@@ -34,20 +35,22 @@ type lambdaResponse struct {
 
 type lambdaResponseWriter struct {
 	statusCode int
+	buf        bytes.Buffer
 	header     http.Header
+}
+
+func (l *lambdaResponseWriter) Write(p []byte) (n int, err error) {
+	return l.buf.Write(p)
 }
 
 func (l *lambdaResponseWriter) Header() http.Header {
 	return l.header
 }
 
-func (l *lambdaResponseWriter) Write(data []byte) (int, error) {
+func (l *lambdaResponseWriter) flush() error {
 	buffer := global.NewBuffer()
 	defer global.PutBuffer(buffer)
-	body := ""
-	if data != nil {
-		body = utils.B2S(data)
-	}
+	body := utils.B2S(l.buf.Bytes())
 	header := make(map[string]string)
 	for k, v := range l.header {
 		header[k] = v[0]
@@ -62,10 +65,9 @@ func (l *lambdaResponseWriter) Write(data []byte) (int, error) {
 	r, _ := http.NewRequest("POST", cli.responseURL, buffer)
 	do, err := cli.client.Do(r)
 	if err != nil {
-		return 0, err
+		return err
 	}
-	_ = do.Body.Close()
-	return len(data), nil
+	return do.Body.Close()
 }
 
 func (l *lambdaResponseWriter) WriteHeader(statusCode int) {
@@ -125,7 +127,11 @@ func RunLambdaClient(bot *coolq.CQBot, conf *config.LambdaServer) {
 					log.Warnf("Lambda 出现不可恢复错误: %v\n%s", e, debug.Stack())
 				}
 			}()
-			server.ServeHTTP(&lambdaResponseWriter{header: make(http.Header)}, req)
+			writer := lambdaResponseWriter{header: make(http.Header)}
+			server.ServeHTTP(&writer, req)
+			if err := writer.flush(); err != nil {
+				log.Warnf("Lambda 发送响应失败: %v", err)
+			}
 		}()
 	}
 }
