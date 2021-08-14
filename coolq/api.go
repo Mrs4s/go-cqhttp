@@ -1419,8 +1419,8 @@ func (bot *CQBot) CQSetModelShow(modelName string, modelShow string) MSG {
 }
 
 // CQMarkMessageAsRead 标记消息已读
-func (bot *CQBot) CQMarkMessageAsRead(msgId int32) MSG {
-	m := bot.GetMessage(msgId)
+func (bot *CQBot) CQMarkMessageAsRead(msgID int32) MSG {
+	m := bot.GetMessage(msgID)
 	if m == nil {
 		return Failed(100, "MSG_NOT_FOUND", "消息不存在")
 	}
