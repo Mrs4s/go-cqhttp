@@ -426,7 +426,7 @@ func (bot *CQBot) InsertTempMessage(target int64, m *message.TempMessage) int32 
 	val := MSG{
 		"message-id": m.Id,
 		// FIXME(InsertTempMessage) InternalId missing
-		"group":      m.GroupCode,
+		"from-group": m.GroupCode,
 		"group-name": m.GroupName,
 		"target":     target,
 		"sender":     m.Sender,

@@ -1418,6 +1418,22 @@ func (bot *CQBot) CQSetModelShow(modelName string, modelShow string) MSG {
 	return OK(nil)
 }
 
+func (bot *CQBot) CQMarkMessageAsRead(msgId int32) MSG {
+	m := bot.GetMessage(msgId)
+	if m == nil {
+		return Failed(100, "MSG_NOT_FOUND", "消息不存在")
+	}
+	if _, ok := m["group"]; ok {
+		bot.Client.MarkGroupMessageReaded(m["group"].(int64), int64(m["message-id"].(int32)))
+		return OK(nil)
+	}
+	if _, ok := m["from-group"]; ok {
+		return Failed(100, "MSG_TYPE_ERROR", "不支持标记临时会话")
+	}
+	bot.Client.MarkPrivateMessageReaded(m["sender"].(*message.Sender).Uin, m["time"].(int64))
+	return OK(nil)
+}
+
 // OK 生成成功返回值
 func OK(data interface{}) MSG {
 	return MSG{"data": data, "retcode": 0, "status": "ok"}
