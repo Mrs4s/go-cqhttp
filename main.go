@@ -260,6 +260,7 @@ func main() {
 					text := readLineTimeout(time.Second*5, "1")
 					if text == "2" {
 						_ = os.Remove("session.token")
+						log.Infof("缓存已删除.")
 						os.Exit(0)
 					}
 				}
