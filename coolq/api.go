@@ -1418,6 +1418,7 @@ func (bot *CQBot) CQSetModelShow(modelName string, modelShow string) MSG {
 	return OK(nil)
 }
 
+// CQMarkMessageAsRead 标记消息已读
 func (bot *CQBot) CQMarkMessageAsRead(msgId int32) MSG {
 	m := bot.GetMessage(msgId)
 	if m == nil {
