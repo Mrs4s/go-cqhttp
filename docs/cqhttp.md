@@ -7,6 +7,7 @@
 <p>
 
 ##### CQCode
+
 - [图片](#图片)
 - [回复](#回复)
 - [红包](#红包)
@@ -21,6 +22,7 @@
 - [图片](#图片)
 
 ##### API
+
 - [设置群名](#设置群名)
 - [设置群头像](#设置群头像)
 - [获取图片信息](#获取图片信息)
@@ -47,6 +49,7 @@
 - [重载事件过滤器](#重载事件过滤器)
 
 ##### 事件
+
 - [群消息撤回](#群消息撤回)
 - [好友消息撤回](#好友消息撤回)
 - [好友戳一戳](#好友戳一戳)
@@ -112,9 +115,7 @@ Type : `reply`
 | `time` | int64  | 可选. 自定义回复时的时间, 格式为Unix时间 |
 | `seq` | int64  | 起始消息序号, 可通过 `get_msg` 获得 |
 
-
-
-示例: `[CQ:reply,id=123456]` 
+示例: `[CQ:reply,id=123456]`
 \
 自定义回复示例: `[CQ:reply,text=Hello World,qq=10086,time=3376656000,seq=5123]`
 
@@ -122,11 +123,11 @@ Type : `reply`
 
 ```json
 {
-    "type": "music",
-    "data": {
-        "type": "163",
-        "id": "28949129"
-    }
+  "type": "music",
+  "data": {
+    "type": "163",
+    "id": "28949129"
+  }
 }
 ```
 
@@ -143,13 +144,13 @@ Type : `reply`
 
 ```json
 {
-    "type": "music",
-    "data": {
-        "type": "custom",
-        "url": "http://baidu.com",
-        "audio": "http://baidu.com/1.mp3",
-        "title": "音乐标题"
-    }
+  "type": "music",
+  "data": {
+    "type": "custom",
+    "url": "http://baidu.com",
+    "audio": "http://baidu.com/1.mp3",
+    "title": "音乐标题"
+  }
 }
 ```
 
@@ -231,11 +232,9 @@ Type: `gift`
 | 12  | 我超忙的   |
 | 13  | 爱心口罩   |
 
-
-
 示例: `[CQ:gift,qq=123456,id=8]`
 
- ### 合并转发
+### 合并转发
 
 Type: `forward`
 
@@ -259,32 +258,33 @@ Type: `node`
 
 | 参数名    | 类型    | 说明           | 特殊说明                                                                               |
 | --------- | ------- | -------------- | -------------------------------------------------------------------------------------- |
-| `id`      | int32   | 转发消息id     | 直接引用他人的消息合并转发,  实际查看顺序为原消息发送顺序 **与下面的自定义消息二选一** |
+| `id`      | int32   | 转发消息id     | 直接引用他人的消息合并转发, 实际查看顺序为原消息发送顺序 **与下面的自定义消息二选一** |
 | `name`    | string  | 发送者显示名字 | 用于自定义消息 (自定义消息并合并转发，实际查看顺序为自定义消息段顺序)                  |
 | `uin`     | int64   | 发送者QQ号     | 用于自定义消息                                                                         |
 | `content` | message | 具体消息       | 用于自定义消息                                                                         |
 | `seq`     | message | 具体消息       | 用于自定义消息                                                                         |
 
-特殊说明: **需要使用单独的API `/send_group_forward_msg` 发送，并且由于消息段较为复杂，仅支持Array形式入参。 如果引用消息和自定义消息同时出现，实际查看顺序将取消息段顺序.  另外按 [CQHTTP](https://git.io/JtxtN) 文档说明, `data` 应全为字符串, 但由于需要接收`message` 类型的消息, 所以 *仅限此Type的content字段* 支持Array套娃**
+特殊说明: **需要使用单独的API `/send_group_forward_msg` 发送，并且由于消息段较为复杂，仅支持Array形式入参。 如果引用消息和自定义消息同时出现，实际查看顺序将取消息段顺序.
+另外按 [CQHTTP](https://git.io/JtxtN) 文档说明, `data` 应全为字符串, 但由于需要接收`message` 类型的消息, 所以 *仅限此Type的content字段* 支持Array套娃**
 
-示例: 
+示例:
 
 直接引用消息合并转发:
 
 ````json
 [
-    {
-        "type": "node",
-        "data": {
-            "id": "123"
-        }
-    },
-    {
-        "type": "node",
-        "data": {
-            "id": "456"
-        }
+  {
+    "type": "node",
+    "data": {
+      "id": "123"
     }
+  },
+  {
+    "type": "node",
+    "data": {
+      "id": "456"
+    }
+  }
 ]
 ````
 
@@ -292,27 +292,29 @@ Type: `node`
 
 ````json
 [
-    {
-        "type": "node",
-        "data": {
-            "name": "消息发送者A",
-            "uin": "10086",
-            "content": [
-                {
-                    "type": "text",
-                    "data": {"text": "测试消息1"}
-                }
-            ]
+  {
+    "type": "node",
+    "data": {
+      "name": "消息发送者A",
+      "uin": "10086",
+      "content": [
+        {
+          "type": "text",
+          "data": {
+            "text": "测试消息1"
+          }
         }
-    },
-    {
-        "type": "node",
-        "data": {
-            "name": "消息发送者B",
-            "uin": "10087",
-            "content": "[CQ:image,file=xxxxx]测试消息2"
-        }
+      ]
     }
+  },
+  {
+    "type": "node",
+    "data": {
+      "name": "消息发送者B",
+      "uin": "10087",
+      "content": "[CQ:image,file=xxxxx]测试消息2"
+    }
+  }
 ]
 ````
 
@@ -320,24 +322,25 @@ Type: `node`
 
 ````json
 [
-    {
-        "type": "node",
-        "data": {
-            "name": "自定义发送者",
-            "uin": "10086",
-            "content": "我是自定义消息",
-            "seq": "5123",
-            "time": "3376656000"
-        }
-    },
-    {
-        "type": "node",
-        "data": {
-            "id": "123"
-        }
+  {
+    "type": "node",
+    "data": {
+      "name": "自定义发送者",
+      "uin": "10086",
+      "content": "我是自定义消息",
+      "seq": "5123",
+      "time": "3376656000"
     }
+  },
+  {
+    "type": "node",
+    "data": {
+      "id": "123"
+    }
+  }
 ]
 ````
+
 ### 短视频消息
 
 Type: `video`
@@ -351,6 +354,7 @@ Type: `video`
 | `file`  | string  | 支持http和file发送                                                     |
 | `cover` | string  | 视频封面，支持http，file和base64发送，格式必须为jpg                    |
 | `c`     | `2` `3` | 通过网络下载视频时的线程数, 默认单线程. (在资源不支持并发时会自动处理) |
+
 示例: `[CQ:video,file=file:///C:\\Users\Richard\Videos\1.mp4]`
 
 ### XML 消息
@@ -375,30 +379,61 @@ Type: `xml`
 #### qq音乐
 
 ```xml
-<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="2" templateID="1" action="web" brief="&#91;分享&#93; 十年" sourceMsgId="0" url="https://i.y.qq.com/v8/playsong.html?_wv=1&amp;songid=4830342&amp;souce=qqshare&amp;source=qqshare&amp;ADTAG=qqshare" flag="0" adverSign="0" multiMsgFlag="0" ><item layout="2"><audio cover="http://imgcache.qq.com/music/photo/album_500/26/500_albumpic_89526_0.jpg" src="http://ws.stream.qqmusic.qq.com/C400003mAan70zUy5O.m4a?guid=1535153710&amp;vkey=D5315B8C0603653592AD4879A8A3742177F59D582A7A86546E24DD7F282C3ACF81526C76E293E57EA1E42CF19881C561275D919233333ADE&amp;uin=&amp;fromtag=3" /><title>十年</title><summary>陈奕迅</summary></item><source name="QQ音乐" icon="https://i.gtimg.cn/open/app_icon/01/07/98/56/1101079856_100_m.png" url="http://web.p.qq.com/qqmpmobile/aio/app.html?id=1101079856" action="app"  a_actionData="com.tencent.qqmusic" i_actionData="tencent1101079856://" appid="1101079856" /></msg>
+<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
+<msg serviceID="2" templateID="1" action="web" brief="&#91;分享&#93; 十年" sourceMsgId="0"
+     url="https://i.y.qq.com/v8/playsong.html?_wv=1&amp;songid=4830342&amp;souce=qqshare&amp;source=qqshare&amp;ADTAG=qqshare"
+     flag="0" adverSign="0" multiMsgFlag="0">
+    <item layout="2">
+        <audio cover="http://imgcache.qq.com/music/photo/album_500/26/500_albumpic_89526_0.jpg"
+               src="http://ws.stream.qqmusic.qq.com/C400003mAan70zUy5O.m4a?guid=1535153710&amp;vkey=D5315B8C0603653592AD4879A8A3742177F59D582A7A86546E24DD7F282C3ACF81526C76E293E57EA1E42CF19881C561275D919233333ADE&amp;uin=&amp;fromtag=3"/>
+        <title>十年</title>
+        <summary>陈奕迅</summary>
+    </item>
+    <source name="QQ音乐" icon="https://i.gtimg.cn/open/app_icon/01/07/98/56/1101079856_100_m.png"
+            url="http://web.p.qq.com/qqmpmobile/aio/app.html?id=1101079856" action="app"
+            a_actionData="com.tencent.qqmusic" i_actionData="tencent1101079856://" appid="1101079856"/>
+</msg>
 ```
+
 #### 网易音乐
+
 ```xml
-<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="2" templateID="1" action="web" brief="&#91;分享&#93; 十年" sourceMsgId="0" url="http://music.163.com/m/song/409650368" flag="0" adverSign="0" multiMsgFlag="0" ><item layout="2"><audio cover="http://p2.music.126.net/g-Qgb9ibk9Wp_0HWra0xQQ==/16636710440565853.jpg?param=90y90" src="https://music.163.com/song/media/outer/url?id=409650368.mp3" /><title>十年</title><summary>黄梦之</summary></item><source name="网易云音乐" icon="https://pic.rmb.bdstatic.com/911423bee2bef937975b29b265d737b3.png" url="http://web.p.qq.com/qqmpmobile/aio/app.html?id=1101079856" action="app" a_actionData="com.netease.cloudmusic" i_actionData="tencent100495085://" appid="100495085" /></msg>
+<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
+<msg serviceID="2" templateID="1" action="web" brief="&#91;分享&#93; 十年" sourceMsgId="0"
+     url="http://music.163.com/m/song/409650368" flag="0" adverSign="0" multiMsgFlag="0">
+    <item layout="2">
+        <audio cover="http://p2.music.126.net/g-Qgb9ibk9Wp_0HWra0xQQ==/16636710440565853.jpg?param=90y90"
+               src="https://music.163.com/song/media/outer/url?id=409650368.mp3"/>
+        <title>十年</title>
+        <summary>黄梦之</summary>
+    </item>
+    <source name="网易云音乐" icon="https://pic.rmb.bdstatic.com/911423bee2bef937975b29b265d737b3.png"
+            url="http://web.p.qq.com/qqmpmobile/aio/app.html?id=1101079856" action="app"
+            a_actionData="com.netease.cloudmusic" i_actionData="tencent100495085://" appid="100495085"/>
+</msg>
 ```
 
 #### 卡片消息1
+
 ```xml
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <msg serviceID="1">
-<item><title>生死8秒！女司机高速急刹，他一个操作救下一车性命</title></item>
-<source name="官方认证消息" icon="https://qzs.qq.com/ac/qzone_v5/client/auth_icon.png" action="" appid="-1" />
+    <item>
+        <title>生死8秒！女司机高速急刹，他一个操作救下一车性命</title>
+    </item>
+    <source name="官方认证消息" icon="https://qzs.qq.com/ac/qzone_v5/client/auth_icon.png" action="" appid="-1"/>
 </msg>
 ```
 
 #### 卡片消息2
+
 ```xml
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <msg serviceID="1">
-<item layout="4">
-<title>test title</title>
-<picture cover="http://url.cn/5CEwIUy"/>
-</item>
+    <item layout="4">
+        <title>test title</title>
+        <picture cover="http://url.cn/5CEwIUy"/>
+    </item>
 </msg>
 ```
 
@@ -417,23 +452,24 @@ Type: `json`
 
 json中的字符串需要进行转义：
 
->","=> `&#44;`
+> ","=> `&#44;`
 
->"&"=> `&amp;`
+> "&"=> `&amp;`
 
->"["=> `&#91;`
+> "["=> `&#91;`
 
->"]"=> `&#93;`
+> "]"=> `&#93;`
 
 否则无法正确得到解析
 
 示例json 的cq码：
+
 ```test
 [CQ:json,data={"app":"com.tencent.miniapp"&#44;"desc":""&#44;"view":"notification"&#44;"ver":"0.0.0.1"&#44;"prompt":"&#91;应用&#93;"&#44;"appID":""&#44;"sourceName":""&#44;"actionData":""&#44;"actionData_A":""&#44;"sourceUrl":""&#44;"meta":{"notification":{"appInfo":{"appName":"全国疫情数据统计"&#44;"appType":4&#44;"appid":1109659848&#44;"iconUrl":"http:\/\/gchat.qpic.cn\/gchatpic_new\/719328335\/-2010394141-6383A777BEB79B70B31CE250142D740F\/0"}&#44;"data":&#91;{"title":"确诊"&#44;"value":"80932"}&#44;{"title":"今日确诊"&#44;"value":"28"}&#44;{"title":"疑似"&#44;"value":"72"}&#44;{"title":"今日疑似"&#44;"value":"5"}&#44;{"title":"治愈"&#44;"value":"60197"}&#44;{"title":"今日治愈"&#44;"value":"1513"}&#44;{"title":"死亡"&#44;"value":"3140"}&#44;{"title":"今**亡"&#44;"value":"17"}&#93;&#44;"title":"中国加油，武汉加油"&#44;"button":&#91;{"name":"病毒：SARS-CoV-2，其导致疾病命名 COVID-19"&#44;"action":""}&#44;{"name":"传染源：新冠肺炎的患者。无症状感染者也可能成为传染源。"&#44;"action":""}&#93;&#44;"emphasis_keyword":""}}&#44;"text":""&#44;"sourceAd":""}]
 ```
 
-
 ### cardimage
+
 一种xml的图片消息（装逼大图）
 
 ps: xml 接口的消息都存在风控风险，请自行兼容发送失败后的处理（可以失败后走普通图片模式）
@@ -454,8 +490,8 @@ Type: `cardimage`
 | `source`    | string | 分享来源的名称，可以留空              |
 | `icon`      | string | 分享来源的icon图标url，可以留空       |
 
-
 示例cardimage 的cq码：
+
 ```test
 [CQ:cardimage,file=https://i.pixiv.cat/img-master/img/2020/03/25/00/00/08/80334602_p0_master1200.jpg]
 ```
@@ -480,9 +516,9 @@ Type: `tts`
 
 ### 设置群名
 
-终结点: `/set_group_name`  
+终结点: `/set_group_name`
 
-**参数** 
+**参数**
 
 | 字段         | 类型   | 说明 |
 | ------------ | ------ | ---- |
@@ -491,9 +527,9 @@ Type: `tts`
 
 ### 设置群头像
 
-终结点: `/set_group_portrait`  
+终结点: `/set_group_portrait`
 
-**参数** 
+**参数**
 
 | 字段       | 类型   | 说明                     |
 | ---------- | ------ | ------------------------ |
@@ -505,7 +541,8 @@ Type: `tts`
 
 - 绝对路径，例如 `file:///C:\\Users\Richard\Pictures\1.png`，格式使用 [`file` URI](https://tools.ietf.org/html/rfc8089)
 - 网络 URL，例如 `http://i1.piimg.com/567571/fdd6e7b6d93f1ef0.jpg`
-- Base64 编码，例如 `base64://iVBORw0KGgoAAAANSUhEUgAAABQAAAAVCAIAAADJt1n/AAAAKElEQVQ4EWPk5+RmIBcwkasRpG9UM4mhNxpgowFGMARGEwnBIEJVAAAdBgBNAZf+QAAAAABJRU5ErkJggg==`
+- Base64
+  编码，例如 `base64://iVBORw0KGgoAAAANSUhEUgAAABQAAAAVCAIAAADJt1n/AAAAKElEQVQ4EWPk5+RmIBcwkasRpG9UM4mhNxpgowFGMARGEwnBIEJVAAAdBgBNAZf+QAAAAABJRU5ErkJggg==`
 
 [2]`cache`参数: 通过网络 URL 发送时有效，`1`表示使用缓存，`0`关闭关闭缓存，默认 为`1`
 
@@ -513,7 +550,7 @@ Type: `tts`
 
 ### 获取图片信息
 
-终结点: `/get_image`  
+终结点: `/get_image`
 
 > 该接口为 CQHTTP 接口修改
 
@@ -533,7 +570,7 @@ Type: `tts`
 
 ### 获取消息
 
-终结点: `/get_msg` 
+终结点: `/get_msg`
 
 参数
 
@@ -571,28 +608,29 @@ Type: `tts`
 
 ````json5
 {
-    "data": {
-        "messages": [
-            {
-                "content": "合并转发1",
-                "sender": {
-                    "nickname": "发送者A",
-                    "user_id": 10086
-                },
-                "time": 1595694374
-            },
-            {
-                "content": "合并转发2[CQ:image,file=xxxx,url=xxxx]",
-                "sender": {
-                    "nickname": "发送者B",
-                    "user_id": 10087
-                },
-                "time": 1595694393 //  可选
-            }
-        ]
-    },
-    "retcode": 0,
-    "status": "ok"
+  "data": {
+    "messages": [
+      {
+        "content": "合并转发1",
+        "sender": {
+          "nickname": "发送者A",
+          "user_id": 10086
+        },
+        "time": 1595694374
+      },
+      {
+        "content": "合并转发2[CQ:image,file=xxxx,url=xxxx]",
+        "sender": {
+          "nickname": "发送者B",
+          "user_id": 10087
+        },
+        "time": 1595694393
+        //  可选
+      }
+    ]
+  },
+  "retcode": 0,
+  "status": "ok"
 }
 ````
 
@@ -600,7 +638,7 @@ Type: `tts`
 
 终结点: `/send_group_forward_msg`
 
-**参数** 
+**参数**
 
 | 字段       | 类型           | 说明                         |
 | ---------- | -------------- | ---------------------------- |
@@ -608,16 +646,16 @@ Type: `tts`
 | `messages` | forward node[] | 自定义转发消息, 具体看 [CQCode](https://github.com/Mrs4s/go-cqhttp/blob/master/docs/cqhttp.md#%E5%90%88%E5%B9%B6%E8%BD%AC%E5%8F%91%E6%B6%88%E6%81%AF%E8%8A%82%E7%82%B9) |
 
 响应数据
-    
+
 | 字段         | 类型   | 说明   |
 | ------------ | ------ | ------ |
 | `message_id` | string | 消息id |
 
 ### 获取中文分词
 
-终结点: `/.get_word_slices`  
+终结点: `/.get_word_slices`
 
-**参数** 
+**参数**
 
 | 字段      | 类型   | 说明 |
 | --------- | ------ | ---- |
@@ -685,9 +723,9 @@ Type: `tts`
 
 > 注意: 目前图片OCR接口仅支持接受的图片
 
-终结点: `/ocr_image` 
+终结点: `/ocr_image`
 
-**参数** 
+**参数**
 
 | 字段    | 类型   | 说明   |
 | ------- | ------ | ------ |
@@ -708,7 +746,6 @@ Type: `tts`
 | `confidence`  | int32   | 置信度 |
 | `coordinates` | vector2 | 坐标   |
 
-
 ### 获取群系统消息
 
 终结点: `/get_group_system_msg`
@@ -720,9 +757,9 @@ Type: `tts`
 | `invited_requests` | InvitedRequest[] | 邀请消息列表 |
 | `join_requests`    | JoinRequest[]    | 进群消息列表 |
 
- > 注意: 如果列表不存在任何消息, 将返回 `null`
+> 注意: 如果列表不存在任何消息, 将返回 `null`
 
- **InvitedRequest**
+**InvitedRequest**
 
 | 字段           | 类型   | 说明              |
 | -------------- | ------ | ----------------- |
@@ -734,7 +771,7 @@ Type: `tts`
 | `checked`      | bool   | 是否已被处理      |
 | `actor`        | int64  | 处理者, 未处理为0 |
 
-  **JoinRequest**
+**JoinRequest**
 
 | 字段             | 类型   | 说明              |
 | ---------------- | ------ | ----------------- |
@@ -751,7 +788,7 @@ Type: `tts`
 
 终结点: `/get_group_file_system_info`
 
-**参数** 
+**参数**
 
 | 字段       | 类型  | 说明 |
 | ---------- | ----- | ---- |
@@ -772,7 +809,7 @@ Type: `tts`
 
 终结点: `/get_group_root_files`
 
-**参数** 
+**参数**
 
 | 字段       | 类型  | 说明 |
 | ---------- | ----- | ---- |
@@ -791,7 +828,7 @@ Type: `tts`
 
 终结点: `/get_group_files_by_folder`
 
-**参数** 
+**参数**
 
 | 字段        | 类型   | 说明                        |
 | ----------- | ------ | --------------------------- |
@@ -811,7 +848,7 @@ Type: `tts`
 
 终结点: `/get_group_file_url`
 
-**参数** 
+**参数**
 
 | 字段       | 类型   | 说明                      |
 | ---------- | ------ | ------------------------- |
@@ -825,7 +862,7 @@ Type: `tts`
 | ----- | ------ | ------------ |
 | `url` | string | 文件下载链接 |
 
- **File**
+**File**
 
 | 字段             | 类型   | 说明                   |
 | ---------------- | ------ | ---------------------- |
@@ -840,7 +877,7 @@ Type: `tts`
 | `uploader`       | int64  | 上传者ID               |
 | `uploader_name`  | string | 上传者名字             |
 
- **Folder**
+**Folder**
 
 | 字段               | 类型   | 说明       |
 | ------------------ | ------ | ---------- |
@@ -855,7 +892,7 @@ Type: `tts`
 
 终结点: `/upload_group_file`
 
-**参数** 
+**参数**
 
 | 字段       | 类型   | 说明                      |
 | ---------- | ------ | ------------------------- |
@@ -885,7 +922,6 @@ Type: `tts`
 
 **Statistics**
 
-
 | 字段               | 类型   | 说明             |
 | ------------------ | ------ | ---------------- |
 | `packet_received`  | uint64 | 收到的数据包总数 |
@@ -902,7 +938,7 @@ Type: `tts`
 
 终结点: `/get_group_at_all_remain`
 
-**参数** 
+**参数**
 
 | 字段       | 类型  | 说明 |
 | ---------- | ----- | ---- |
@@ -920,7 +956,7 @@ Type: `tts`
 
 终结点: `/download_file`
 
-**参数** 
+**参数**
 
 | 字段           | 类型            | 说明         |
 | -------------- | --------------- | ------------ |
@@ -960,7 +996,7 @@ JSON数组:
 
 终结点：`/get_group_msg_history`
 
-**参数** 
+**参数**
 
 | 字段          | 类型  | 说明                                |
 | ------------- | ----- | ----------------------------------- |
@@ -979,7 +1015,7 @@ JSON数组:
 
 终结点：`/get_online_clients`
 
-**参数** 
+**参数**
 
 | 字段       | 类型 | 说明         |
 | ---------- | ---- | ------------ |
@@ -1003,7 +1039,7 @@ JSON数组:
 
 终结点：`/check_url_safely`
 
-**参数** 
+**参数**
 
 | 字段       | 类型   | 说明                      |
 | ---------- | ------ | ------------------------- |
@@ -1076,12 +1112,21 @@ JSON数组:
 | `ext_name`         | string  | 用户昵称     |
 | `create_time`      | int64   | 账号创建时间  |
 
+### 标记消息已读
+
+终结点: `/mark_msg_as_read`
+
+**参数**
+
+| 字段名     | 数据类型 | 默认值 | 说明     |
+| ---------- | -------- | ------ | -------- |
+| `message_id`       | int32    |        | 消息ID   |
+
 ### 重载事件过滤器
 
 终结点：`/reload_event_filter`
 
 `该 API 无需参数也没有响应数据`
-
 
 ## 事件
 
