@@ -288,6 +288,7 @@ func (bot *CQBot) memberTitleUpdatedEvent(c *client.QQClient, e *client.MemberSp
 		"post_type":   "notice",
 		"notice_type": "notify",
 		"sub_type":    "title",
+		"group_id":    group.Code,
 		"self_id":     c.Uin,
 		"user_id":     e.Uin,
 		"time":        time.Now().Unix(),
