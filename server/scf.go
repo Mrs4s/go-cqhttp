@@ -116,23 +116,20 @@ func RunLambdaClient(bot *coolq.CQBot, conf *config.LambdaServer) {
 
 	for {
 		req := cli.next()
-		if req == nil {
-			writer := lambdaResponseWriter{statusCode: 200}
-			_, _ = writer.Write(nil)
-			continue
-		}
+		writer := lambdaResponseWriter{statusCode: 200, header: make(http.Header)}
 		func() {
 			defer func() {
 				if e := recover(); e != nil {
 					log.Warnf("Lambda 出现不可恢复错误: %v\n%s", e, debug.Stack())
 				}
 			}()
-			writer := lambdaResponseWriter{header: make(http.Header)}
-			server.ServeHTTP(&writer, req)
-			if err := writer.flush(); err != nil {
-				log.Warnf("Lambda 发送响应失败: %v", err)
+			if req != nil {
+				server.ServeHTTP(&writer, req)
 			}
 		}()
+		if err := writer.flush(); err != nil {
+			log.Warnf("Lambda 发送响应失败: %v", err)
+		}
 	}
 }
 
