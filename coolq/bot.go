@@ -301,7 +301,7 @@ func (bot *CQBot) SendPrivateMessage(target int64, groupID int64, m *message.Sen
 	for _, e := range m.Elements {
 		switch i := e.(type) {
 		case *LocalImageElement, *message.VoiceElement, *LocalVideoElement:
-			i, err := bot.uploadMedia(i, groupID, false)
+			i, err := bot.uploadMedia(i, target, false)
 			if err != nil {
 				log.Warnf("警告: 私聊 %d 消息%s上传失败: %v", target, e.Type().String(), err)
 				continue
@@ -311,7 +311,7 @@ func (bot *CQBot) SendPrivateMessage(target int64, groupID int64, m *message.Sen
 			bot.Client.SendFriendPoke(i.Target)
 			return 0
 		case *message.MusicShareElement:
-			bot.Client.SendFriendMusicShare(groupID, i)
+			bot.Client.SendFriendMusicShare(target, i)
 			return 0
 		}
 		newElem = append(newElem, e)
