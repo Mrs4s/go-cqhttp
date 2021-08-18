@@ -1,5 +1,5 @@
-//go:build (linux || (windows && !arm) || darwin) && (386 || amd64 || arm || arm64) && !race
-// +build linux windows,!arm darwin
+//go:build (linux || (windows && !arm && !arm64) || darwin) && (386 || amd64 || arm || arm64) && !race
+// +build linux windows,!arm,!arm64 darwin
 // +build 386 amd64 arm arm64
 // +build !race
 
