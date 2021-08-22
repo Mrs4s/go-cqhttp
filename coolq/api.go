@@ -414,7 +414,7 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) MSG {
 		return true
 	})
 
-	var resolveElement = func(elems []message.IMessageElement) []message.IMessageElement {
+	resolveElement := func(elems []message.IMessageElement) []message.IMessageElement {
 		for i, elem := range elems {
 			switch elem.(type) {
 			case *LocalImageElement, *LocalVideoElement:

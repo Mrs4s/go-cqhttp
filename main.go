@@ -134,6 +134,15 @@ func main() {
 		}
 	}
 	if terminal.RunningByDoubleClick() && !isFastStart {
+		err := terminal.NoMoreDoubleClick()
+		if err != nil {
+			log.Errorf("遇到错误: %v", err)
+			time.Sleep(time.Second * 5)
+			return
+		}
+		if runtime.GOOS == "windows" {
+			return
+		}
 		log.Warning("警告: 强烈不推荐通过双击直接运行本程序, 这将导致一些非预料的后果.")
 		log.Warning("将等待10s后启动")
 		time.Sleep(time.Second * 10)

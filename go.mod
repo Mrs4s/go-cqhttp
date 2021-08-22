@@ -33,6 +33,7 @@ require (
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/jonboulle/clockwork v0.2.2 // indirect
+	github.com/kr/pretty v0.1.0 // indirect
 	github.com/lestrrat-go/strftime v1.0.5 // indirect
 	github.com/maruel/rs v1.0.0 // indirect
 	github.com/mattn/go-colorable v0.1.8 // indirect
@@ -49,6 +50,7 @@ require (
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/sys v0.0.0-20210820121016-41cdb8703e55 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
+	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	modernc.org/libc v1.10.0 // indirect
 	modernc.org/mathutil v1.4.1 // indirect
