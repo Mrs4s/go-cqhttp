@@ -8,7 +8,7 @@ import (
 )
 
 func TestVersionNameCompare(t *testing.T) {
-	var tests = [...]struct {
+	tests := [...]struct {
 		current  string
 		remote   string
 		expected bool

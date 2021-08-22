@@ -157,8 +157,8 @@ func (c *lambdaClient) next() *http.Request {
 	if resp.StatusCode != http.StatusOK {
 		return nil
 	}
-	var req = new(http.Request)
-	var invoke = new(lambdaInvoke)
+	req := new(http.Request)
+	invoke := new(lambdaInvoke)
 	_ = json.NewDecoder(resp.Body).Decode(invoke)
 	if invoke.HTTPMethod == "" { // 不是 api 网关
 		return nil
