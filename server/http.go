@@ -53,13 +53,22 @@ func (h *httpCtx) Get(s string) gjson.Result {
 	if j.Exists() {
 		return j
 	}
+	validJSONParam := func(p string) bool {
+		return (strings.HasPrefix(p, "{") || strings.HasPrefix(p, "[")) && gjson.Valid(p)
+	}
 	if h.postForm != nil {
 		if form := h.postForm.Get(s); form != "" {
+			if validJSONParam(form) {
+				return gjson.Result{Type: gjson.JSON, Raw: form}
+			}
 			return gjson.Result{Type: gjson.String, Str: form}
 		}
 	}
 	if h.query != nil {
 		if query := h.query.Get(s); query != "" {
+			if validJSONParam(query) {
+				return gjson.Result{Type: gjson.JSON, Raw: query}
+			}
 			return gjson.Result{Type: gjson.String, Str: query}
 		}
 	}
