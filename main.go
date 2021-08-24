@@ -88,6 +88,8 @@ func main() {
 
 	if conf.Output.LogAging > 0 {
 		rotateOptions = append(rotateOptions, rotatelogs.WithMaxAge(time.Hour*24*time.Duration(conf.Output.LogAging)))
+	} else {
+		rotateOptions = append(rotateOptions, rotatelogs.WithMaxAge(time.Hour*24*365*10))
 	}
 	if conf.Output.LogForceNew {
 		rotateOptions = append(rotateOptions, rotatelogs.ForceNewFile())
