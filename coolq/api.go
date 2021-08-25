@@ -3,6 +3,7 @@ package coolq
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"math"
 	"os"
@@ -17,6 +18,7 @@ import (
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/MiraiGo/message"
+	"github.com/Mrs4s/MiraiGo/utils"
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 
@@ -939,7 +941,7 @@ func (bot *CQBot) CQHandleQuickOperation(context, operation gjson.Result) MSG {
 					},
 				})
 
-				err := json.UnmarshalFromString(reply.Raw, &replySegments)
+				err := json.Unmarshal(utils.S2B(reply.Raw), &replySegments)
 				if err != nil {
 					log.WithError(err).Warnf("处理 at_sender 过程中发生错误")
 					return Failed(-1, "处理 at_sender 过程中发生错误", err.Error())
@@ -947,13 +949,13 @@ func (bot *CQBot) CQHandleQuickOperation(context, operation gjson.Result) MSG {
 
 				segments = append(segments, replySegments...)
 
-				modified, err := json.MarshalToString(segments)
+				modified, err := json.Marshal(segments)
 				if err != nil {
 					log.WithError(err).Warnf("处理 at_sender 过程中发生错误")
 					return Failed(-1, "处理 at_sender 过程中发生错误", err.Error())
 				}
 
-				reply = gjson.Parse(modified)
+				reply = gjson.Parse(utils.B2S(modified))
 			} else if at && reply.Type == gjson.String {
 				reply = gjson.Parse(fmt.Sprintf(
 					"\"[CQ:at,qq=%d]%s\"",
