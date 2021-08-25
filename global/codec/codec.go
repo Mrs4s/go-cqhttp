@@ -1,7 +1,8 @@
-//go:build (linux || (windows && !arm && !arm64) || darwin) && (386 || amd64 || arm || arm64) && !race
+//go:build (linux || (windows && !arm && !arm64) || darwin) && (386 || amd64 || arm || arm64) && !race && !nosilk
 // +build linux windows,!arm,!arm64 darwin
 // +build 386 amd64 arm arm64
 // +build !race
+// +build !nosilk
 
 package codec
 
