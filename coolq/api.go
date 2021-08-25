@@ -1431,7 +1431,7 @@ func (bot *CQBot) CQMarkMessageAsRead(msgID int32) MSG {
 	if _, ok := m["from-group"]; ok {
 		return Failed(100, "MSG_TYPE_ERROR", "不支持标记临时会话")
 	}
-	bot.Client.MarkPrivateMessageReaded(m["sender"].(*message.Sender).Uin, m["time"].(int64))
+	bot.Client.MarkPrivateMessageReaded(m["sender"].(message.Sender).Uin, int64(m["time"].(int32)))
 	return OK(nil)
 }
 
