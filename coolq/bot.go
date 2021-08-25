@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"hash/crc32"
 	"io"
@@ -19,7 +20,6 @@ import (
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/Mrs4s/MiraiGo/utils"
-	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/syndtr/goleveldb/leveldb"
@@ -28,8 +28,6 @@ import (
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/global/config"
 )
-
-var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 // CQBot CQBot结构体,存储Bot实例相关配置
 type CQBot struct {

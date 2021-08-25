@@ -5,6 +5,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -16,7 +17,6 @@ import (
 	"github.com/Mrs4s/MiraiGo/utils"
 	"github.com/guonaihong/gout"
 	"github.com/guonaihong/gout/dataflow"
-	jsoniter "github.com/json-iterator/go"
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 
@@ -29,8 +29,6 @@ type httpServer struct {
 	api         *apiCaller
 	accessToken string
 }
-
-var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 // HTTPClient 反向HTTP上报客户端
 type HTTPClient struct {
