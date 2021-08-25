@@ -1,5 +1,5 @@
-//go:build (!arm && !arm64 && !amd64 && !386) || (!windows && !linux && !darwin) || (windows && arm) || (windows && arm64) || race
-// +build !arm,!arm64,!amd64,!386 !windows,!linux,!darwin windows,arm windows,arm64 race
+//go:build (!arm && !arm64 && !amd64 && !386) || (!windows && !linux && !darwin) || (windows && arm) || (windows && arm64) || race || nosilk
+// +build !arm,!arm64,!amd64,!386 !windows,!linux,!darwin windows,arm windows,arm64 race nosilk
 
 package codec
 
