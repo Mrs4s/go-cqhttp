@@ -45,7 +45,7 @@ var (
 // PathExists 判断给定path是否存在
 func PathExists(path string) bool {
 	_, err := os.Stat(path)
-	return err == nil || os.IsExist(err)
+	return err == nil || errors.Is(err, os.ErrExist)
 }
 
 // ReadAllText 读取给定path对应文件，无法读取时返回空值
