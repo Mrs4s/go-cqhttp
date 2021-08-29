@@ -161,7 +161,7 @@ func ToArrayMessage(e []message.IMessageElement, groupID int64) (r []MSG) {
 		var m MSG
 		switch o := elem.(type) {
 		case *message.ReplyElement:
-			if RemoveReplyAt && i+1 < len(e) && e[i+1].Type() == message.At {
+			if RemoveReplyAt && i+1 < len(e) {
 				elem, ok := e[i+1].(*message.AtElement)
 				if ok && elem.Target == o.Sender {
 					e[i+1] = nil

@@ -368,33 +368,27 @@ func (bot *CQBot) CQSendGroupMessage(groupID int64, m gjson.Result, autoEscape b
 		}
 	}
 
-	if m.Type == gjson.JSON {
-		elem := bot.ConvertObjectMessage(m, true)
-		fixAt(elem)
-		mid := bot.SendGroupMessage(groupID, &message.SendingMessage{Elements: elem})
-		if mid == -1 {
-			return Failed(100, "SEND_MSG_API_ERROR", "请参考 go-cqhttp 端输出")
-		}
-		log.Infof("发送群 %v(%v) 的消息: %v (%v)", group.Name, groupID, limitedString(ToStringMessage(elem, groupID)), mid)
-		return OK(MSG{"message_id": mid})
-	}
-	str := m.String()
-	if str == "" {
-		log.Warn("群消息发送失败: 信息为空.")
-		return Failed(100, "EMPTY_MSG_ERROR", "消息为空")
-	}
 	var elem []message.IMessageElement
-	if autoEscape {
-		elem = append(elem, message.NewText(str))
+	if m.Type == gjson.JSON {
+		elem = bot.ConvertObjectMessage(m, true)
 	} else {
-		elem = bot.ConvertStringMessage(str, true)
+		str := m.String()
+		if str == "" {
+			log.Warn("群消息发送失败: 信息为空.")
+			return Failed(100, "EMPTY_MSG_ERROR", "消息为空")
+		}
+		if autoEscape {
+			elem = []message.IMessageElement{message.NewText(str)}
+		} else {
+			elem = bot.ConvertStringMessage(str, true)
+		}
 	}
 	fixAt(elem)
 	mid := bot.SendGroupMessage(groupID, &message.SendingMessage{Elements: elem})
 	if mid == -1 {
 		return Failed(100, "SEND_MSG_API_ERROR", "请参考 go-cqhttp 端输出")
 	}
-	log.Infof("发送群 %v(%v) 的消息: %v (%v)", group.Name, groupID, limitedString(str), mid)
+	log.Infof("发送群 %v(%v) 的消息: %v (%v)", group.Name, groupID, limitedString(m.String()), mid)
 	return OK(MSG{"message_id": mid})
 }
 
@@ -534,30 +528,25 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) MSG {
 //
 // https://git.io/Jtz1l
 func (bot *CQBot) CQSendPrivateMessage(userID int64, groupID int64, m gjson.Result, autoEscape bool) MSG {
-	if m.Type == gjson.JSON {
-		elem := bot.ConvertObjectMessage(m, false)
-		mid := bot.SendPrivateMessage(userID, groupID, &message.SendingMessage{Elements: elem})
-		if mid == -1 {
-			return Failed(100, "SEND_MSG_API_ERROR", "请参考 go-cqhttp 端输出")
-		}
-		log.Infof("发送好友 %v(%v)  的消息: %v (%v)", userID, userID, limitedString(m.String()), mid)
-		return OK(MSG{"message_id": mid})
-	}
-	str := m.String()
-	if str == "" {
-		return Failed(100, "EMPTY_MSG_ERROR", "消息为空")
-	}
 	var elem []message.IMessageElement
-	if autoEscape {
-		elem = append(elem, message.NewText(str))
+	if m.Type == gjson.JSON {
+		elem = bot.ConvertObjectMessage(m, false)
 	} else {
-		elem = bot.ConvertStringMessage(str, false)
+		str := m.String()
+		if str == "" {
+			return Failed(100, "EMPTY_MSG_ERROR", "消息为空")
+		}
+		if autoEscape {
+			elem = []message.IMessageElement{message.NewText(str)}
+		} else {
+			elem = bot.ConvertStringMessage(str, false)
+		}
 	}
 	mid := bot.SendPrivateMessage(userID, groupID, &message.SendingMessage{Elements: elem})
 	if mid == -1 {
 		return Failed(100, "SEND_MSG_API_ERROR", "请参考 go-cqhttp 端输出")
 	}
-	log.Infof("发送好友 %v(%v)  的消息: %v (%v)", userID, userID, limitedString(str), mid)
+	log.Infof("发送好友 %v(%v)  的消息: %v (%v)", userID, userID, limitedString(m.String()), mid)
 	return OK(MSG{"message_id": mid})
 }
 
