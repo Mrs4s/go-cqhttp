@@ -632,7 +632,7 @@ func newClient() *client.QQClient {
 		log.Infof("检测到 address.txt 文件. 将覆盖目标IP.")
 		addr := global.ReadAddrFile("address.txt")
 		if len(addr) > 0 {
-			cli.SetCustomServer(addr)
+			c.SetCustomServer(addr)
 		}
 		log.Infof("读取到 %v 个自定义地址.", len(addr))
 	}

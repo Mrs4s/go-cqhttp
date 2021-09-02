@@ -87,8 +87,7 @@ func RunLambdaClient(bot *coolq.CQBot, conf *config.LambdaServer) {
 	case "scf": // tencent serverless function
 		base := fmt.Sprintf("http://%s:%s/runtime/",
 			os.Getenv("SCF_RUNTIME_API"),
-			os.Getenv("SCF_RUNTIME_API_PORT"),
-		)
+			os.Getenv("SCF_RUNTIME_API_PORT"))
 		cli.nextURL = base + "invocation/next"
 		cli.responseURL = base + "invocation/response"
 		post, err := http.Post(base+"init/ready", "", nil)
