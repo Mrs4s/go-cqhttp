@@ -3,7 +3,6 @@ package global
 import (
 	"bytes"
 	"crypto/md5"
-	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	"net"
@@ -15,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/Mrs4s/MiraiGo/utils"
+	"github.com/segmentio/asm/base64"
 	log "github.com/sirupsen/logrus"
 )
 
