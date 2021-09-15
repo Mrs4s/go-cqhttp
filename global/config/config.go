@@ -160,7 +160,6 @@ func Get() *Config {
 			generateConfig()
 			os.Exit(0)
 		}
-
 		if hasEnvironmentConf {
 			// type convert tools
 			toInt64 := func(str string) int64 {
@@ -172,7 +171,7 @@ func Get() *Config {
 			global.SetAtDefault(&config.Account.Uin, toInt64(os.Getenv("GCQ_UIN")), int64(0))
 			global.SetAtDefault(&config.Account.Password, os.Getenv("GCQ_PWD"), "")
 			global.SetAtDefault(&config.Account.Status, int32(toInt64(os.Getenv("GCQ_STATUS"))), int32(0))
-			global.SetAtDefault(&config.Account.ReLogin.Disabled, !global.EnsureBool(os.Getenv("GCQ_RELOGIN"), false), false)
+			global.SetAtDefault(&config.Account.ReLogin.Disabled, !global.EnsureBool(os.Getenv("GCQ_RELOGIN_DISABLED"), true), false)
 			global.SetAtDefault(&config.Account.ReLogin.Delay, uint(toInt64(os.Getenv("GCQ_RELOGIN_DELAY"))), uint(0))
 			global.SetAtDefault(&config.Account.ReLogin.MaxTimes, uint(toInt64(os.Getenv("GCQ_RELOGIN_MAX_TIMES"))), uint(0))
 			dbConf := &LevelDBConfig{Enable: global.EnsureBool(os.Getenv("GCQ_LEVELDB"), true)}
