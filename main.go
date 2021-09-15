@@ -310,6 +310,7 @@ func main() {
 		time.Sleep(time.Second * time.Duration(conf.Account.ReLogin.Delay))
 		for {
 			if conf.Account.ReLogin.Disabled {
+				log.Warnf("未启用自动重连, 将退出.")
 				os.Exit(1)
 			}
 			if times > conf.Account.ReLogin.MaxTimes && conf.Account.ReLogin.MaxTimes != 0 {
