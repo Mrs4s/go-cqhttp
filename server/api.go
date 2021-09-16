@@ -37,7 +37,11 @@ func getUnidirectionalFriendList(bot *coolq.CQBot, _ resultGetter) coolq.MSG {
 }
 
 func deleteFriend(bot *coolq.CQBot, p resultGetter) coolq.MSG {
-	return bot.CQDeleteFriend(p.Get("id").Int())
+	return bot.CQDeleteFriend(p.Get("[user_id,id]").Int())
+}
+
+func deleteUnidirectionalFriend(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+	return bot.CQDeleteUnidirectionalFriend(p.Get("user_id").Int())
 }
 
 func getGroupList(bot *coolq.CQBot, p resultGetter) coolq.MSG {
@@ -364,6 +368,7 @@ var API = map[string]func(*coolq.CQBot, resultGetter) coolq.MSG{
 	"get_friend_list":                getFriendList,
 	"get_unidirectional_friend_list": getUnidirectionalFriendList,
 	"delete_friend":                  deleteFriend,
+	"delete_unidirectional_friend":   deleteUnidirectionalFriend,
 	"get_group_list":                 getGroupList,
 	"get_group_info":                 getGroupInfo,
 	"get_group_member_list":          getGroupMemberList,
