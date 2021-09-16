@@ -36,9 +36,6 @@ func ToFormattedMessage(e []message.IMessageElement, groupID int64, isRaw ...boo
 func (bot *CQBot) privateMessageEvent(c *client.QQClient, m *message.PrivateMessage) {
 	bot.checkMedia(m.Elements)
 	cqm := ToStringMessage(m.Elements, 0, true)
-	if !m.Sender.IsFriend {
-		bot.oneWayMsgCache.Store(m.Sender.Uin, "")
-	}
 	id := m.Id
 	if bot.db != nil {
 		id = bot.InsertPrivateMessage(m)

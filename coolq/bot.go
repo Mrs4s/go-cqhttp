@@ -39,7 +39,6 @@ type CQBot struct {
 	db               *leveldb.DB
 	friendReqCache   sync.Map
 	tempSessionCache sync.Map
-	oneWayMsgCache   sync.Map
 }
 
 // MSG 消息Map
@@ -335,6 +334,21 @@ func (bot *CQBot) SendPrivateMessage(target int64, groupID int64, m *message.Sen
 	}
 	m.Elements = newElem
 	bot.checkMedia(newElem)
+
+	// 单向好友是否存在
+	unidirectionalFriendExists := func() bool {
+		list, err := bot.Client.GetUnidirectionalFriendList()
+		if err != nil {
+			return false
+		}
+		for _, f := range list {
+			if f.Uin == target {
+				return true
+			}
+		}
+		return false
+	}
+
 	var id int32 = -1
 	if bot.Client.FindFriend(target) != nil { // 双向好友
 		msg := bot.Client.SendPrivateMessage(target, m)
@@ -366,7 +380,7 @@ func (bot *CQBot) SendPrivateMessage(target int64, groupID int64, m *message.Sen
 				id = bot.InsertTempMessage(target, msg)
 			}
 		}
-	} else if _, ok := bot.oneWayMsgCache.Load(target); ok { // 单向好友
+	} else if unidirectionalFriendExists() { // 单向好友
 		msg := bot.Client.SendPrivateMessage(target, m)
 		if msg != nil {
 			id = bot.InsertPrivateMessage(msg)
