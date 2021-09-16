@@ -32,7 +32,6 @@ heartbeat:
   # -1 为关闭心跳
   interval: 5
 
-message:
   # 上报数据类型
   # 可选: string,array
   post-format: string
@@ -48,6 +47,12 @@ message:
   proxy-rewrite: ''
   # 是否上报自身消息
   report-self-message: false
+  # 移除服务端的Reply附带的At
+  remove-reply-at: false
+  # 为Reply附加更多信息
+  extra-reply-data: false
+  # 跳过 Mime 扫描, 忽略错误数据
+  skip-mime-scan: false
 
 output:
   # 日志等级 trace,debug,info,warn,error
@@ -148,6 +153,8 @@ database: # 数据库相关设置
 > 注3: 分片发送为原酷Q发送长消息的老方案, 发送速度更优/兼容性更好，但在有发言频率限制的群里，可能无法发送。关闭后将优先使用新方案, 能发送更长的消息, 但发送速度更慢，在部分老客户端将无法解析.
 
 > 注4：关闭心跳服务可能引起断线，请谨慎关闭
+
+> 注5：关于MINE扫描， 详见[MINE](file.md#MINE)
 
 ## 在线状态
 

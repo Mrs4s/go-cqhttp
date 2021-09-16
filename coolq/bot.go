@@ -79,12 +79,27 @@ var ForceFragmented = false
 // SkipMimeScan 是否跳过Mime扫描
 var SkipMimeScan bool
 
-var lawfulImageTypes = [...]string{"image/png", "image/jpeg", "image/gif", "image/bmp", "image/webp"}
+// keep sync with /docs/file.md#MINE
+var lawfulImageTypes = [...]string{
+	"image/bmp",
+	"image/gif",
+	"image/jpeg",
+	"image/png",
+	"image/webp",
+}
 
 var lawfulAudioTypes = [...]string{
-	"audio/mpeg", "audio/flac", "audio/midi", "audio/ogg",
-	"audio/ape", "audio/amr", "audio/wav", "audio/aiff",
-	"audio/mp4", "audio/aac", "audio/x-m4a",
+	"audio/aac",
+	"audio/aiff",
+	"audio/amr",
+	"audio/ape",
+	"audio/flac",
+	"audio/midi",
+	"audio/mp4",
+	"audio/mpeg",
+	"audio/ogg",
+	"audio/wav",
+	"audio/x-m4a",
 }
 
 // NewQQBot 初始化一个QQBot实例
