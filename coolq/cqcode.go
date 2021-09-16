@@ -215,7 +215,7 @@ func ToArrayMessage(e []message.IMessageElement, groupID int64) (r []MSG) {
 				"data": map[string]string{"file": o.Name, "url": o.Url},
 			}
 		case *message.GroupImageElement:
-			data := map[string]string{"file": hex.EncodeToString(o.Md5) + ".image", "url": o.Url}
+			data := map[string]string{"file": hex.EncodeToString(o.Md5) + ".image", "url": o.Url, "subType": strconv.FormatInt(int64(o.ImageBizType), 10)}
 			switch {
 			case o.Flash:
 				data["type"] = "flash"
@@ -332,6 +332,7 @@ func ToStringMessage(e []message.IMessageElement, groupID int64, isRaw ...bool) 
 			} else if o.EffectID != 0 {
 				arg = ",type=show,id=" + strconv.FormatInt(int64(o.EffectID), 10)
 			}
+			arg += ",subType=" + strconv.FormatInt(int64(o.ImageBizType), 10)
 			if ur {
 				write("[CQ:image,file=%s%s]", hex.EncodeToString(o.Md5)+".image", arg)
 			} else {
@@ -696,6 +697,8 @@ func (bot *CQBot) ToElement(t string, d map[string]string, isGroup bool) (m inte
 		case *message.GroupImageElement:
 			img.Flash = flash
 			img.EffectID = int32(id)
+			i, _ := strconv.ParseInt(d["subType"], 10, 64)
+			img.ImageBizType = message.ImageBizType(i)
 		case *message.FriendImageElement:
 			img.Flash = flash
 		}
