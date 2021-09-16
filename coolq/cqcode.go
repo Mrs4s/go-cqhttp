@@ -3,7 +3,6 @@ package coolq
 import (
 	"bytes"
 	"crypto/md5"
-	"encoding/base64"
 	"encoding/hex"
 	xml2 "encoding/xml"
 	"errors"
@@ -18,11 +17,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gabriel-vasile/mimetype"
-
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/Mrs4s/MiraiGo/utils"
+	"github.com/gabriel-vasile/mimetype"
+	"github.com/segmentio/asm/base64"
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 

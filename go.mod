@@ -15,6 +15,7 @@ require (
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
 	github.com/pkg/errors v0.9.1
+	github.com/segmentio/asm v1.0.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.0
 	github.com/syndtr/goleveldb v1.0.0
@@ -32,6 +33,7 @@ require (
 	github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db // indirect
 	github.com/google/uuid v1.1.1 // indirect
 	github.com/jonboulle/clockwork v0.2.2 // indirect
+	github.com/klauspost/cpuid/v2 v2.0.6 // indirect
 	github.com/lestrrat-go/strftime v1.0.5 // indirect
 	github.com/maruel/rs v0.0.0-20150922171536-2c81c4312fe4 // indirect
 	github.com/mattn/go-colorable v0.1.8 // indirect
