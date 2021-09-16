@@ -323,6 +323,10 @@ func main() {
 			} else {
 				time.Sleep(time.Second)
 			}
+			if cli.Online {
+				log.Infof("登录已完成")
+				break
+			}
 			log.Warnf("尝试重连...")
 			err := cli.TokenLogin(AccountToken)
 			if err == nil {
