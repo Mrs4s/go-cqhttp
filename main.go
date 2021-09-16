@@ -55,7 +55,7 @@ var (
 )
 
 func main() {
-	c := flag.String("c", config.DefaultConfigFile, "configuration filename default is config.hjson")
+	c := flag.String("c", config.DefaultConfigFile, "configuration filename")
 	d := flag.Bool("d", false, "running as a daemon")
 	h := flag.Bool("h", false, "this help")
 	wd := flag.String("w", "", "cover the working directory")
