@@ -7,7 +7,7 @@ replace github.com/willf/bitset v1.2.0 => github.com/bits-and-blooms/bitset v1.2
 require (
 	github.com/Baozisoftware/qrcode-terminal-go v0.0.0-20170407111555-c0650d8dff0f
 	github.com/Microsoft/go-winio v0.5.0
-	github.com/Mrs4s/MiraiGo v0.0.0-20210916095246-e1502ecb48e1
+	github.com/Mrs4s/MiraiGo v0.0.0-20210916113136-0238b2382b82
 	github.com/dustin/go-humanize v1.0.0
 	github.com/gabriel-vasile/mimetype v1.3.1
 	github.com/gorilla/websocket v1.4.2
