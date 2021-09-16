@@ -72,6 +72,26 @@ func (bot *CQBot) CQGetFriendList() MSG {
 	return OK(fs)
 }
 
+// CQGetUnidirectionalFriendList 获取单向好友列表
+//
+//
+func (bot *CQBot) CQGetUnidirectionalFriendList() MSG {
+	list, err := bot.Client.GetUnidirectionalFriendList()
+	if err != nil {
+		log.Errorf("获取单向好友列表时出现错误: %v", err)
+		return Failed(100, "API_ERROR", err.Error())
+	}
+	fs := make([]MSG, 0, len(list))
+	for _, f := range list {
+		fs = append(fs, MSG{
+			"nickname": f.Nickname,
+			"user_id":  f.Uin,
+			"source":   f.Source,
+		})
+	}
+	return OK(fs)
+}
+
 // CQDeleteFriend 删除好友
 //
 //
