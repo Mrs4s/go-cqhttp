@@ -47,11 +47,11 @@ go-cqhttp 默认生成的文件树如下所示:
 详细允许类型如下所示:
 
 图片：
-> image/bmp 
-> image/gif
-> image/jpeg
-> image/png
-> image/webp
+> image/bmp  
+> image/gif  
+> image/jpeg  
+> image/png  
+> image/webp  
 
 语音:
 > audio/aac  
@@ -61,8 +61,8 @@ go-cqhttp 默认生成的文件树如下所示:
 > audio/flac  
 > audio/midi  
 > audio/mp4  
-> audio/mpeg
-> audio/ogg
-> audio/wav
+> audio/mpeg  
+> audio/ogg  
+> audio/wav  
 > audio/x-m4a  
 
