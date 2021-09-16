@@ -1102,6 +1102,22 @@ JSON数组:
 
 `该 API 没有响应数据`
 
+### 获取单向好友列表
+
+终结点: `/get_unidirectional_friend_list`
+
+**响应数据**
+
+数组信息: 
+
+| 字段          | 类型   | 说明     |
+| ------------- | ------ | -------- |
+| `nickname`    | string  | 昵称 |
+| `user_id`     | int64   | 用户QQ号 |
+| `source`      | string | 添加途径 |
+
+> 添加途径为用户显示内容, 如 `精确查找` `QQ群 - xxxx`
+
 ### 删除好友
 
 终结点: `/delete_friend`
