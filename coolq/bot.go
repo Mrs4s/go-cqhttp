@@ -349,13 +349,16 @@ func (bot *CQBot) SendPrivateMessage(target int64, groupID int64, m *message.Sen
 		return false
 	}
 
+	session, ok := bot.tempSessionCache.Load(target)
 	var id int32 = -1
-	if bot.Client.FindFriend(target) != nil { // 双向好友
+
+	switch {
+	case bot.Client.FindFriend(target) != nil: // 双向好友
 		msg := bot.Client.SendPrivateMessage(target, m)
 		if msg != nil {
 			id = bot.InsertPrivateMessage(msg)
 		}
-	} else if session, ok := bot.tempSessionCache.Load(target); ok || groupID != 0 { // 临时会话
+	case ok || groupID != 0: // 临时会话
 		switch {
 		case groupID != 0 && bot.Client.FindGroup(groupID) == nil:
 			log.Errorf("错误: 找不到群(%v)", groupID)
@@ -380,12 +383,12 @@ func (bot *CQBot) SendPrivateMessage(target int64, groupID int64, m *message.Sen
 				id = bot.InsertTempMessage(target, msg)
 			}
 		}
-	} else if unidirectionalFriendExists() { // 单向好友
+	case unidirectionalFriendExists(): // 单向好友
 		msg := bot.Client.SendPrivateMessage(target, m)
 		if msg != nil {
 			id = bot.InsertPrivateMessage(msg)
 		}
-	} else {
+	default:
 		nickname := "Unknown"
 		if summaryInfo, _ := bot.Client.GetSummaryInfo(target); summaryInfo != nil {
 			nickname = summaryInfo.Nickname
