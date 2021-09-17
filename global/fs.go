@@ -14,7 +14,6 @@ import (
 	"strings"
 
 	"github.com/Mrs4s/MiraiGo/utils"
-	"github.com/segmentio/asm/base64"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -98,7 +97,7 @@ func FindFile(file, cache, p string) (data []byte, err error) {
 			return nil, err
 		}
 	case strings.HasPrefix(file, "base64"):
-		data, err = base64.StdEncoding.DecodeString(strings.TrimPrefix(file, "base64://"))
+		data, err = Base64DecodeString(strings.TrimPrefix(file, "base64://"))
 		if err != nil {
 			return nil, err
 		}
