@@ -37,7 +37,7 @@ func getUnidirectionalFriendList(bot *coolq.CQBot, _ resultGetter) coolq.MSG {
 }
 
 func deleteFriend(bot *coolq.CQBot, p resultGetter) coolq.MSG {
-	return bot.CQDeleteFriend(p.Get("[user_id,id]").Int())
+	return bot.CQDeleteFriend(p.Get("[user_id,id].0").Int())
 }
 
 func deleteUnidirectionalFriend(bot *coolq.CQBot, p resultGetter) coolq.MSG {
