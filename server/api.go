@@ -13,56 +13,56 @@ type resultGetter interface {
 	Get(string) gjson.Result
 }
 
-type handler func(action string, p resultGetter) coolq.MSG
+type handler func(action string, p resultGetter) global.MSG
 
 type apiCaller struct {
 	bot      *coolq.CQBot
 	handlers []handler
 }
 
-func getLoginInfo(bot *coolq.CQBot, _ resultGetter) coolq.MSG {
+func getLoginInfo(bot *coolq.CQBot, _ resultGetter) global.MSG {
 	return bot.CQGetLoginInfo()
 }
 
-func getQiDianAccountInfo(bot *coolq.CQBot, _ resultGetter) coolq.MSG {
+func getQiDianAccountInfo(bot *coolq.CQBot, _ resultGetter) global.MSG {
 	return bot.CQGetQiDianAccountInfo()
 }
 
-func getFriendList(bot *coolq.CQBot, _ resultGetter) coolq.MSG {
+func getFriendList(bot *coolq.CQBot, _ resultGetter) global.MSG {
 	return bot.CQGetFriendList()
 }
 
-func getUnidirectionalFriendList(bot *coolq.CQBot, _ resultGetter) coolq.MSG {
+func getUnidirectionalFriendList(bot *coolq.CQBot, _ resultGetter) global.MSG {
 	return bot.CQGetUnidirectionalFriendList()
 }
 
-func deleteFriend(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func deleteFriend(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQDeleteFriend(p.Get("[user_id,id].0").Int())
 }
 
-func deleteUnidirectionalFriend(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func deleteUnidirectionalFriend(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQDeleteUnidirectionalFriend(p.Get("user_id").Int())
 }
 
-func getGroupList(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func getGroupList(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQGetGroupList(p.Get("no_cache").Bool())
 }
 
-func getGroupInfo(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func getGroupInfo(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQGetGroupInfo(p.Get("group_id").Int(), p.Get("no_cache").Bool())
 }
 
-func getGroupMemberList(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func getGroupMemberList(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQGetGroupMemberList(p.Get("group_id").Int(), p.Get("no_cache").Bool())
 }
 
-func getGroupMemberInfo(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func getGroupMemberInfo(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQGetGroupMemberInfo(
 		p.Get("group_id").Int(), p.Get("user_id").Int(), p.Get("no_cache").Bool(),
 	)
 }
 
-func sendMSG(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func sendMSG(bot *coolq.CQBot, p resultGetter) global.MSG {
 	autoEscape := global.EnsureBool(p.Get("auto_escape"), false)
 	if p.Get("message_type").Str == "private" {
 		return bot.CQSendPrivateMessage(p.Get("user_id").Int(), p.Get("group_id").Int(), p.Get("message"), autoEscape)
@@ -76,28 +76,28 @@ func sendMSG(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 	if p.Get("group_id").Int() != 0 {
 		return bot.CQSendGroupMessage(p.Get("group_id").Int(), p.Get("message"), autoEscape)
 	}
-	return coolq.MSG{}
+	return global.MSG{}
 }
 
-func sendGroupMSG(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func sendGroupMSG(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQSendGroupMessage(p.Get("group_id").Int(), p.Get("message"),
 		global.EnsureBool(p.Get("auto_escape"), false))
 }
 
-func sendGroupForwardMSG(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func sendGroupForwardMSG(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQSendGroupForwardMessage(p.Get("group_id").Int(), p.Get("messages"))
 }
 
-func sendPrivateMSG(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func sendPrivateMSG(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQSendPrivateMessage(p.Get("user_id").Int(), p.Get("group_id").Int(), p.Get("message"),
 		global.EnsureBool(p.Get("auto_escape"), false))
 }
 
-func deleteMSG(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func deleteMSG(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQDeleteMessage(int32(p.Get("message_id").Int()))
 }
 
-func setFriendAddRequest(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func setFriendAddRequest(bot *coolq.CQBot, p resultGetter) global.MSG {
 	apr := true
 	if p.Get("approve").Exists() {
 		apr = p.Get("approve").Bool()
@@ -105,7 +105,7 @@ func setFriendAddRequest(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 	return bot.CQProcessFriendRequest(p.Get("flag").Str, apr)
 }
 
-func setGroupAddRequest(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func setGroupAddRequest(bot *coolq.CQBot, p resultGetter) global.MSG {
 	subType := p.Get("sub_type").Str
 	apr := true
 	if subType == "" {
@@ -117,19 +117,19 @@ func setGroupAddRequest(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 	return bot.CQProcessGroupRequest(p.Get("flag").Str, subType, p.Get("reason").Str, apr)
 }
 
-func setGroupCard(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func setGroupCard(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQSetGroupCard(p.Get("group_id").Int(), p.Get("user_id").Int(), p.Get("card").Str)
 }
 
-func setGroupSpecialTitle(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func setGroupSpecialTitle(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQSetGroupSpecialTitle(p.Get("group_id").Int(), p.Get("user_id").Int(), p.Get("special_title").Str)
 }
 
-func setGroupKick(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func setGroupKick(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQSetGroupKick(p.Get("group_id").Int(), p.Get("user_id").Int(), p.Get("message").Str, p.Get("reject_add_request").Bool())
 }
 
-func setGroupBan(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func setGroupBan(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQSetGroupBan(p.Get("group_id").Int(), p.Get("user_id").Int(), func() uint32 {
 		if p.Get("duration").Exists() {
 			return uint32(p.Get("duration").Int())
@@ -138,7 +138,7 @@ func setGroupBan(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 	}())
 }
 
-func setGroupWholeBan(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func setGroupWholeBan(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQSetGroupWholeBan(p.Get("group_id").Int(), func() bool {
 		if p.Get("enable").Exists() {
 			return p.Get("enable").Bool()
@@ -147,11 +147,11 @@ func setGroupWholeBan(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 	}())
 }
 
-func setGroupName(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func setGroupName(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQSetGroupName(p.Get("group_id").Int(), p.Get("group_name").Str)
 }
 
-func setGroupAdmin(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func setGroupAdmin(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQSetGroupAdmin(p.Get("group_id").Int(), p.Get("user_id").Int(), func() bool {
 		if p.Get("enable").Exists() {
 			return p.Get("enable").Bool()
@@ -160,19 +160,19 @@ func setGroupAdmin(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 	}())
 }
 
-func sendGroupNotice(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func sendGroupNotice(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQSetGroupMemo(p.Get("group_id").Int(), p.Get("content").Str, p.Get("image").String())
 }
 
-func setGroupLeave(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func setGroupLeave(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQSetGroupLeave(p.Get("group_id").Int())
 }
 
-func getImage(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func getImage(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQGetImage(p.Get("file").Str)
 }
 
-func getForwardMSG(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func getForwardMSG(bot *coolq.CQBot, p resultGetter) global.MSG {
 	id := p.Get("message_id").Str
 	if id == "" {
 		id = p.Get("id").Str
@@ -180,11 +180,11 @@ func getForwardMSG(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 	return bot.CQGetForwardMessage(id)
 }
 
-func getMSG(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func getMSG(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQGetMessage(int32(p.Get("message_id").Int()))
 }
 
-func downloadFile(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func downloadFile(bot *coolq.CQBot, p resultGetter) global.MSG {
 	headers := map[string]string{}
 	headersToken := p.Get("headers")
 	if headersToken.IsArray() {
@@ -207,11 +207,11 @@ func downloadFile(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 	return bot.CQDownloadFile(p.Get("url").Str, headers, int(p.Get("thread_count").Int()))
 }
 
-func getGroupHonorInfo(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func getGroupHonorInfo(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQGetGroupHonorInfo(p.Get("group_id").Int(), p.Get("type").Str)
 }
 
-func setRestart(_ *coolq.CQBot, _ resultGetter) coolq.MSG {
+func setRestart(_ *coolq.CQBot, _ resultGetter) global.MSG {
 	/*
 		var delay int64
 		delay = p.Get("delay").Int()
@@ -223,115 +223,115 @@ func setRestart(_ *coolq.CQBot, _ resultGetter) coolq.MSG {
 			Restart <- struct{}{}
 		}(delay)
 	*/
-	return coolq.MSG{"data": nil, "retcode": 99, "msg": "restart un-supported now", "wording": "restart函数暂不兼容", "status": "failed"}
+	return global.MSG{"data": nil, "retcode": 99, "msg": "restart un-supported now", "wording": "restart函数暂不兼容", "status": "failed"}
 }
 
-func canSendImage(bot *coolq.CQBot, _ resultGetter) coolq.MSG {
+func canSendImage(bot *coolq.CQBot, _ resultGetter) global.MSG {
 	return bot.CQCanSendImage()
 }
 
-func canSendRecord(bot *coolq.CQBot, _ resultGetter) coolq.MSG {
+func canSendRecord(bot *coolq.CQBot, _ resultGetter) global.MSG {
 	return bot.CQCanSendRecord()
 }
 
-func getStrangerInfo(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func getStrangerInfo(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQGetStrangerInfo(p.Get("user_id").Int())
 }
 
-func getStatus(bot *coolq.CQBot, _ resultGetter) coolq.MSG {
+func getStatus(bot *coolq.CQBot, _ resultGetter) global.MSG {
 	return bot.CQGetStatus()
 }
 
-func getVersionInfo(bot *coolq.CQBot, _ resultGetter) coolq.MSG {
+func getVersionInfo(bot *coolq.CQBot, _ resultGetter) global.MSG {
 	return bot.CQGetVersionInfo()
 }
 
-func getGroupSystemMSG(bot *coolq.CQBot, _ resultGetter) coolq.MSG {
+func getGroupSystemMSG(bot *coolq.CQBot, _ resultGetter) global.MSG {
 	return bot.CQGetGroupSystemMessages()
 }
 
-func getGroupFileSystemInfo(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func getGroupFileSystemInfo(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQGetGroupFileSystemInfo(p.Get("group_id").Int())
 }
 
-func getGroupRootFiles(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func getGroupRootFiles(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQGetGroupRootFiles(p.Get("group_id").Int())
 }
 
-func getGroupFilesByFolder(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func getGroupFilesByFolder(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQGetGroupFilesByFolderID(p.Get("group_id").Int(), p.Get("folder_id").Str)
 }
 
-func getGroupFileURL(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func getGroupFileURL(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQGetGroupFileURL(p.Get("group_id").Int(), p.Get("file_id").Str, int32(p.Get("busid").Int()))
 }
 
-func uploadGroupFile(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func uploadGroupFile(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQUploadGroupFile(p.Get("group_id").Int(), p.Get("file").Str, p.Get("name").Str, p.Get("folder").Str)
 }
 
-func groupFileCreateFolder(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func groupFileCreateFolder(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQGroupFileCreateFolder(p.Get("group_id").Int(), p.Get("folder_id").Str, p.Get("name").Str)
 }
 
-func deleteGroupFolder(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func deleteGroupFolder(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQGroupFileDeleteFolder(p.Get("group_id").Int(), p.Get("folder_id").Str)
 }
 
-func deleteGroupFile(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func deleteGroupFile(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQGroupFileDeleteFile(p.Get("group_id").Int(), p.Get("file_id").Str, int32(p.Get("bus_id").Int()))
 }
 
-func getGroupMsgHistory(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func getGroupMsgHistory(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQGetGroupMessageHistory(p.Get("group_id").Int(), p.Get("message_seq").Int())
 }
 
-func getVipInfo(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func getVipInfo(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQGetVipInfo(p.Get("user_id").Int())
 }
 
-func reloadEventFilter(_ *coolq.CQBot, p resultGetter) coolq.MSG {
+func reloadEventFilter(_ *coolq.CQBot, p resultGetter) global.MSG {
 	addFilter(p.Get("file").String())
 	return coolq.OK(nil)
 }
 
-func getGroupAtAllRemain(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func getGroupAtAllRemain(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQGetAtAllRemain(p.Get("group_id").Int())
 }
 
-func ocrImage(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func ocrImage(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQOcrImage(p.Get("image").Str)
 }
 
-func getOnlineClients(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func getOnlineClients(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQGetOnlineClients(p.Get("no_cache").Bool())
 }
 
-func getWordSlices(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func getWordSlices(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQGetWordSlices(p.Get("content").Str)
 }
 
-func setGroupPortrait(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func setGroupPortrait(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQSetGroupPortrait(p.Get("group_id").Int(), p.Get("file").String(), p.Get("cache").String())
 }
 
-func setEssenceMSG(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func setEssenceMSG(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQSetEssenceMessage(int32(p.Get("message_id").Int()))
 }
 
-func deleteEssenceMSG(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func deleteEssenceMSG(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQDeleteEssenceMessage(int32(p.Get("message_id").Int()))
 }
 
-func getEssenceMsgList(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func getEssenceMsgList(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQGetEssenceMessageList(p.Get("group_id").Int())
 }
 
-func checkURLSafely(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func checkURLSafely(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQCheckURLSafely(p.Get("url").String())
 }
 
-func setGroupAnonymousBan(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func setGroupAnonymousBan(bot *coolq.CQBot, p resultGetter) global.MSG {
 	obj := p.Get("anonymous")
 	flag := p.Get("anonymous_flag")
 	if !flag.Exists() {
@@ -346,24 +346,24 @@ func setGroupAnonymousBan(bot *coolq.CQBot, p resultGetter) coolq.MSG {
 	return bot.CQSetGroupAnonymousBan(p.Get("group_id").Int(), flag.String(), int32(p.Get("duration").Int()))
 }
 
-func handleQuickOperation(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func handleQuickOperation(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQHandleQuickOperation(p.Get("context"), p.Get("operation"))
 }
 
-func getModelShow(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func getModelShow(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQGetModelShow(p.Get("model").String())
 }
 
-func setModelShow(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func setModelShow(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQSetModelShow(p.Get("model").String(), p.Get("model_show").String())
 }
 
-func markMSGAsRead(bot *coolq.CQBot, p resultGetter) coolq.MSG {
+func markMSGAsRead(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQMarkMessageAsRead(int32(p.Get("message_id").Int()))
 }
 
 // API 是go-cqhttp当前支持的所有api的映射表
-var API = map[string]func(*coolq.CQBot, resultGetter) coolq.MSG{
+var API = map[string]func(*coolq.CQBot, resultGetter) global.MSG{
 	"get_login_info":                 getLoginInfo,
 	"get_friend_list":                getFriendList,
 	"get_unidirectional_friend_list": getUnidirectionalFriendList,
@@ -430,7 +430,7 @@ var API = map[string]func(*coolq.CQBot, resultGetter) coolq.MSG{
 	"mark_msg_as_read":               markMSGAsRead,
 }
 
-func (api *apiCaller) callAPI(action string, p resultGetter) coolq.MSG {
+func (api *apiCaller) callAPI(action string, p resultGetter) global.MSG {
 	for _, fn := range api.handlers {
 		if ret := fn(action, p); ret != nil {
 			return ret

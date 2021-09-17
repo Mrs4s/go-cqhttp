@@ -41,12 +41,9 @@ type CQBot struct {
 	tempSessionCache sync.Map
 }
 
-// MSG 消息Map
-type MSG map[string]interface{}
-
 // Event 事件
 type Event struct {
-	RawMsg MSG
+	RawMsg global.MSG
 
 	once   sync.Once
 	buffer *bytes.Buffer
@@ -165,7 +162,7 @@ func NewQQBot(cli *client.QQClient, conf *config.Config) *CQBot {
 		t := time.NewTicker(time.Second * time.Duration(i))
 		for {
 			<-t.C
-			bot.dispatchEventMessage(MSG{
+			bot.dispatchEventMessage(global.MSG{
 				"time":            time.Now().Unix(),
 				"self_id":         bot.Client.Uin,
 				"post_type":       "meta_event",
@@ -186,9 +183,9 @@ func (bot *CQBot) OnEventPush(f func(e *Event)) {
 }
 
 // GetMessage 获取给定消息id对应的消息
-func (bot *CQBot) GetMessage(mid int32) MSG {
+func (bot *CQBot) GetMessage(mid int32) global.MSG {
 	if bot.db != nil {
-		m := MSG{}
+		m := global.MSG{}
 		data, err := bot.db.Get(binary.ToBytes(mid), nil)
 		if err == nil {
 			err = gob.NewDecoder(bytes.NewReader(data)).Decode(&m)
@@ -400,7 +397,7 @@ func (bot *CQBot) SendPrivateMessage(target int64, groupID int64, m *message.Sen
 
 // InsertGroupMessage 群聊消息入数据库
 func (bot *CQBot) InsertGroupMessage(m *message.GroupMessage) int32 {
-	val := MSG{
+	val := global.MSG{
 		"message-id":  m.Id,
 		"internal-id": m.InternalId,
 		"group":       m.GroupCode,
@@ -427,7 +424,7 @@ func (bot *CQBot) InsertGroupMessage(m *message.GroupMessage) int32 {
 
 // InsertPrivateMessage 私聊消息入数据库
 func (bot *CQBot) InsertPrivateMessage(m *message.PrivateMessage) int32 {
-	val := MSG{
+	val := global.MSG{
 		"message-id":  m.Id,
 		"internal-id": m.InternalId,
 		"target":      m.Target,
@@ -453,7 +450,7 @@ func (bot *CQBot) InsertPrivateMessage(m *message.PrivateMessage) int32 {
 
 // InsertTempMessage 临时消息入数据库
 func (bot *CQBot) InsertTempMessage(target int64, m *message.TempMessage) int32 {
-	val := MSG{
+	val := global.MSG{
 		"message-id": m.Id,
 		// FIXME(InsertTempMessage) InternalId missing
 		"from-group": m.GroupCode,
@@ -491,7 +488,7 @@ func (bot *CQBot) Release() {
 	}
 }
 
-func (bot *CQBot) dispatchEventMessage(m MSG) {
+func (bot *CQBot) dispatchEventMessage(m global.MSG) {
 	bot.lock.RLock()
 	defer bot.lock.RUnlock()
 
@@ -519,9 +516,9 @@ func (bot *CQBot) dispatchEventMessage(m MSG) {
 	global.PutBuffer(event.buffer)
 }
 
-func (bot *CQBot) formatGroupMessage(m *message.GroupMessage) MSG {
+func (bot *CQBot) formatGroupMessage(m *message.GroupMessage) global.MSG {
 	cqm := ToStringMessage(m.Elements, m.GroupCode, true)
-	gm := MSG{
+	gm := global.MSG{
 		"anonymous":    nil,
 		"font":         0,
 		"group_id":     m.GroupCode,
@@ -536,7 +533,7 @@ func (bot *CQBot) formatGroupMessage(m *message.GroupMessage) MSG {
 		}(),
 		"raw_message": cqm,
 		"self_id":     bot.Client.Uin,
-		"sender": MSG{
+		"sender": global.MSG{
 			"age":     0,
 			"area":    "",
 			"level":   "",
@@ -548,12 +545,12 @@ func (bot *CQBot) formatGroupMessage(m *message.GroupMessage) MSG {
 		"user_id":  m.Sender.Uin,
 	}
 	if m.Sender.IsAnonymous() {
-		gm["anonymous"] = MSG{
+		gm["anonymous"] = global.MSG{
 			"flag": m.Sender.AnonymousInfo.AnonymousId + "|" + m.Sender.AnonymousInfo.AnonymousNick,
 			"id":   m.Sender.Uin,
 			"name": m.Sender.AnonymousInfo.AnonymousNick,
 		}
-		gm["sender"].(MSG)["nickname"] = "匿名消息"
+		gm["sender"].(global.MSG)["nickname"] = "匿名消息"
 		gm["sub_type"] = "anonymous"
 	} else {
 		group := bot.Client.FindGroup(m.GroupCode)
@@ -571,7 +568,7 @@ func (bot *CQBot) formatGroupMessage(m *message.GroupMessage) MSG {
 				return nil
 			}
 		}
-		ms := gm["sender"].(MSG)
+		ms := gm["sender"].(global.MSG)
 		switch mem.Permission {
 		case client.Owner:
 			ms["role"] = "owner"

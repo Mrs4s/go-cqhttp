@@ -23,7 +23,7 @@ var (
 
 func rateLimit(frequency float64, bucketSize int) handler {
 	limiter := rate.NewLimiter(rate.Limit(frequency), bucketSize)
-	return func(_ string, _ resultGetter) coolq.MSG {
+	return func(_ string, _ resultGetter) global.MSG {
 		_ = limiter.Wait(context.Background())
 		return nil
 	}
@@ -71,7 +71,7 @@ func longPolling(bot *coolq.CQBot, maxSize int) handler {
 		}
 		cond.Signal()
 	})
-	return func(action string, p resultGetter) coolq.MSG {
+	return func(action string, p resultGetter) global.MSG {
 		if action != "get_updates" {
 			return nil
 		}

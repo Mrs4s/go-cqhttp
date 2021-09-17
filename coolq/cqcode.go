@@ -124,8 +124,8 @@ func (e *PokeElement) Type() message.ElementType {
 }
 
 // ToArrayMessage 将消息元素数组转为MSG数组以用于消息上报
-func ToArrayMessage(e []message.IMessageElement, groupID int64) (r []MSG) {
-	r = make([]MSG, 0, len(e))
+func ToArrayMessage(e []message.IMessageElement, groupID int64) (r []global.MSG) {
+	r = make([]global.MSG, 0, len(e))
 	m := &message.SendingMessage{Elements: e}
 	reply := m.FirstOrNil(func(e message.IMessageElement) bool {
 		_, ok := e.(*message.ReplyElement)
@@ -138,7 +138,7 @@ func ToArrayMessage(e []message.IMessageElement, groupID int64) (r []MSG) {
 			rid = replyElem.Sender
 		}
 		if ExtraReplyData {
-			r = append(r, MSG{
+			r = append(r, global.MSG{
 				"type": "reply",
 				"data": map[string]string{
 					"id":   strconv.FormatInt(int64(toGlobalID(rid, replyElem.ReplySeq)), 10),
@@ -149,14 +149,14 @@ func ToArrayMessage(e []message.IMessageElement, groupID int64) (r []MSG) {
 				},
 			})
 		} else {
-			r = append(r, MSG{
+			r = append(r, global.MSG{
 				"type": "reply",
 				"data": map[string]string{"id": strconv.FormatInt(int64(toGlobalID(rid, replyElem.ReplySeq)), 10)},
 			})
 		}
 	}
 	for i, elem := range e {
-		var m MSG
+		var m global.MSG
 		switch o := elem.(type) {
 		case *message.ReplyElement:
 			if RemoveReplyAt && i+1 < len(e) {
@@ -166,49 +166,49 @@ func ToArrayMessage(e []message.IMessageElement, groupID int64) (r []MSG) {
 				}
 			}
 		case *message.TextElement:
-			m = MSG{
+			m = global.MSG{
 				"type": "text",
 				"data": map[string]string{"text": o.Content},
 			}
 		case *message.LightAppElement:
-			m = MSG{
+			m = global.MSG{
 				"type": "json",
 				"data": map[string]string{"data": o.Content},
 			}
 		case *message.AtElement:
 			if o.Target == 0 {
-				m = MSG{
+				m = global.MSG{
 					"type": "at",
 					"data": map[string]string{"qq": "all"},
 				}
 			} else {
-				m = MSG{
+				m = global.MSG{
 					"type": "at",
 					"data": map[string]string{"qq": strconv.FormatInt(o.Target, 10)},
 				}
 			}
 		case *message.RedBagElement:
-			m = MSG{
+			m = global.MSG{
 				"type": "redbag",
 				"data": map[string]string{"title": o.Title},
 			}
 		case *message.ForwardElement:
-			m = MSG{
+			m = global.MSG{
 				"type": "forward",
 				"data": map[string]string{"id": o.ResId},
 			}
 		case *message.FaceElement:
-			m = MSG{
+			m = global.MSG{
 				"type": "face",
 				"data": map[string]string{"id": strconv.FormatInt(int64(o.Index), 10)},
 			}
 		case *message.VoiceElement:
-			m = MSG{
+			m = global.MSG{
 				"type": "record",
 				"data": map[string]string{"file": o.Name, "url": o.Url},
 			}
 		case *message.ShortVideoElement:
-			m = MSG{
+			m = global.MSG{
 				"type": "video",
 				"data": map[string]string{"file": o.Name, "url": o.Url},
 			}
@@ -221,7 +221,7 @@ func ToArrayMessage(e []message.IMessageElement, groupID int64) (r []MSG) {
 				data["type"] = "show"
 				data["id"] = strconv.FormatInt(int64(o.EffectID), 10)
 			}
-			m = MSG{
+			m = global.MSG{
 				"type": "image",
 				"data": data,
 			}
@@ -230,18 +230,18 @@ func ToArrayMessage(e []message.IMessageElement, groupID int64) (r []MSG) {
 			if o.Flash {
 				data["type"] = "flash"
 			}
-			m = MSG{
+			m = global.MSG{
 				"type": "image",
 				"data": data,
 			}
 		case *message.ServiceElement:
 			if isOk := strings.Contains(o.Content, "<?xml"); isOk {
-				m = MSG{
+				m = global.MSG{
 					"type": "xml",
 					"data": map[string]string{"data": o.Content, "resid": strconv.FormatInt(int64(o.Id), 10)},
 				}
 			} else {
-				m = MSG{
+				m = global.MSG{
 					"type": "json",
 					"data": map[string]string{"data": o.Content, "resid": strconv.FormatInt(int64(o.Id), 10)},
 				}
@@ -379,7 +379,7 @@ func (bot *CQBot) ConvertStringMessage(raw string, isGroup bool) (r []message.IM
 			switch {
 			case customText != "":
 				var elem *message.ReplyElement
-				var org MSG
+				var org global.MSG
 				sender, senderErr := strconv.ParseInt(d["qq"], 10, 64)
 				if senderErr != nil && err != nil {
 					log.Warnf("警告: 自定义 Reply 元素中必须包含 Uin 或 id")
@@ -551,7 +551,7 @@ func (bot *CQBot) ConvertObjectMessage(m gjson.Result, isGroup bool) (r []messag
 			switch {
 			case customText != "":
 				var elem *message.ReplyElement
-				var org MSG
+				var org global.MSG
 				sender, senderErr := strconv.ParseInt(e.Get("data.[user_id,qq]").String(), 10, 64)
 				if senderErr != nil && err != nil {
 					log.Warnf("警告: 自定义 Reply 元素中必须包含 user_id 或 id")

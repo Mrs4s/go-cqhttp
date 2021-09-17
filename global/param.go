@@ -14,6 +14,9 @@ import (
 	"github.com/tidwall/gjson"
 )
 
+// MSG 消息Map
+type MSG map[string]interface{}
+
 // EnsureBool 判断给定的p是否可表示为合法Bool类型,否则返回defaultVal
 //
 // 支持的合法类型有
