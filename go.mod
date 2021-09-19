@@ -9,6 +9,7 @@ require (
 	github.com/Microsoft/go-winio v0.5.0
 	github.com/Mrs4s/MiraiGo v0.0.0-20210916113136-0238b2382b82
 	github.com/dustin/go-humanize v1.0.0
+	github.com/fumiama/go-hide-param v0.1.4
 	github.com/gabriel-vasile/mimetype v1.3.1
 	github.com/gorilla/websocket v1.4.2
 	github.com/guonaihong/gout v0.2.4
