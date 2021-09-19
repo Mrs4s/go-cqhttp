@@ -120,7 +120,6 @@ func main() {
 	arg := os.Args
 	if len(arg) > 1 {
 		for i := range arg {
-			fmt.Println(i)
 			switch arg[i] {
 			case "update":
 				if len(arg) > i+1 {
