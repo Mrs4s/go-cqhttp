@@ -27,6 +27,7 @@ import (
 
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/client"
+	para "github.com/fumiama/go-hide-param"
 	"github.com/guonaihong/gout"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	log "github.com/sirupsen/logrus"
@@ -119,6 +120,7 @@ func main() {
 	arg := os.Args
 	if len(arg) > 1 {
 		for i := range arg {
+			fmt.Println(i)
 			switch arg[i] {
 			case "update":
 				if len(arg) > i+1 {
@@ -127,8 +129,10 @@ func main() {
 					selfUpdate("")
 				}
 			case "key":
-				if len(arg) > i+1 {
-					byteKey = []byte(arg[i+1])
+				p := i + 1
+				if len(arg) > p {
+					byteKey = []byte(arg[p])
+					para.Hide(p)
 				}
 			case "faststart":
 				isFastStart = true
