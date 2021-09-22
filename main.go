@@ -223,7 +223,7 @@ func main() {
 			}
 			copy(PasswordHash[:], ph)
 		}
-	} else {
+	} else if len(conf.Account.Password) > 0 {
 		PasswordHash = md5.Sum([]byte(conf.Account.Password))
 	}
 	if !isFastStart {
