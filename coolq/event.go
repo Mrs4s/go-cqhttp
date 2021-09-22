@@ -2,6 +2,7 @@ package coolq
 
 import (
 	"encoding/hex"
+	"github.com/Mrs4s/go-cqhttp/db"
 	"os"
 	"path"
 	"strconv"
@@ -112,7 +113,7 @@ func (bot *CQBot) tempMessageEvent(c *client.QQClient, e *client.TempMessageEven
 	bot.tempSessionCache.Store(m.Sender.Uin, e.Session)
 	id := m.Id
 	if bot.db != nil {
-		id = bot.InsertTempMessage(m.Sender.Uin, m)
+		// id = bot.InsertTempMessage(m.Sender.Uin, m)
 	}
 	log.Infof("收到来自群 %v(%v) 内 %v(%v) 的临时会话消息: %v", m.GroupName, m.GroupCode, m.Sender.DisplayName(), m.Sender.Uin, cqm)
 	tm := global.MSG{
@@ -178,7 +179,7 @@ func (bot *CQBot) groupMutedEvent(c *client.QQClient, e *client.GroupMuteEvent) 
 
 func (bot *CQBot) groupRecallEvent(c *client.QQClient, e *client.GroupMessageRecalledEvent) {
 	g := c.FindGroup(e.GroupCode)
-	gid := toGlobalID(e.GroupCode, e.MessageId)
+	gid := db.ToGlobalID(e.GroupCode, e.MessageId)
 	log.Infof("群 %v 内 %v 撤回了 %v 的消息: %v.",
 		formatGroupName(g), formatMemberName(g.FindMember(e.OperatorUin)), formatMemberName(g.FindMember(e.AuthorUin)), gid)
 	bot.dispatchEventMessage(global.MSG{
@@ -295,7 +296,7 @@ func (bot *CQBot) memberTitleUpdatedEvent(c *client.QQClient, e *client.MemberSp
 
 func (bot *CQBot) friendRecallEvent(c *client.QQClient, e *client.FriendMessageRecalledEvent) {
 	f := c.FindFriend(e.FriendUin)
-	gid := toGlobalID(e.FriendUin, e.MessageId)
+	gid := db.ToGlobalID(e.FriendUin, e.MessageId)
 	if f != nil {
 		log.Infof("好友 %v(%v) 撤回了消息: %v", f.Nickname, f.Uin, gid)
 	} else {
@@ -472,7 +473,7 @@ func (bot *CQBot) otherClientStatusChangedEvent(c *client.QQClient, e *client.Ot
 
 func (bot *CQBot) groupEssenceMsg(c *client.QQClient, e *client.GroupDigestEvent) {
 	g := c.FindGroup(e.GroupCode)
-	gid := toGlobalID(e.GroupCode, e.MessageID)
+	gid := db.ToGlobalID(e.GroupCode, e.MessageID)
 	if e.OperationType == 1 {
 		log.Infof(
 			"群 %v 内 %v 将 %v 的消息(%v)设为了精华消息.",

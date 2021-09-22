@@ -7,6 +7,7 @@ import (
 	xml2 "encoding/xml"
 	"errors"
 	"fmt"
+	"github.com/Mrs4s/go-cqhttp/db"
 	"io"
 	"math/rand"
 	"net/url"
@@ -141,7 +142,7 @@ func ToArrayMessage(e []message.IMessageElement, groupID int64) (r []global.MSG)
 			r = append(r, global.MSG{
 				"type": "reply",
 				"data": map[string]string{
-					"id":   strconv.FormatInt(int64(toGlobalID(rid, replyElem.ReplySeq)), 10),
+					"id":   strconv.FormatInt(int64(db.ToGlobalID(rid, replyElem.ReplySeq)), 10),
 					"seq":  strconv.FormatInt(int64(replyElem.ReplySeq), 10),
 					"qq":   strconv.FormatInt(replyElem.Sender, 10),
 					"time": strconv.FormatInt(int64(replyElem.Time), 10),
@@ -151,7 +152,7 @@ func ToArrayMessage(e []message.IMessageElement, groupID int64) (r []global.MSG)
 		} else {
 			r = append(r, global.MSG{
 				"type": "reply",
-				"data": map[string]string{"id": strconv.FormatInt(int64(toGlobalID(rid, replyElem.ReplySeq)), 10)},
+				"data": map[string]string{"id": strconv.FormatInt(int64(db.ToGlobalID(rid, replyElem.ReplySeq)), 10)},
 			})
 		}
 	}
@@ -281,11 +282,11 @@ func ToStringMessage(e []message.IMessageElement, groupID int64, isRaw ...bool) 
 		}
 		if ExtraReplyData {
 			write("[CQ:reply,id=%d,seq=%d,qq=%d,time=%d,text=%s]",
-				toGlobalID(rid, replyElem.ReplySeq),
+				db.ToGlobalID(rid, replyElem.ReplySeq),
 				replyElem.ReplySeq, replyElem.Sender, replyElem.Time,
 				CQCodeEscapeValue(ToStringMessage(replyElem.Elements, groupID)))
 		} else {
-			write("[CQ:reply,id=%d]", toGlobalID(rid, replyElem.ReplySeq))
+			write("[CQ:reply,id=%d]", db.ToGlobalID(rid, replyElem.ReplySeq))
 		}
 	}
 	for i, elem := range e {
@@ -361,6 +362,110 @@ func ToStringMessage(e []message.IMessageElement, groupID int64, isRaw ...bool) 
 	return
 }
 
+// ToMessageContent 将消息转换成 Content. 忽略 Reply
+// 不同于 onebot 的 Array Message, 此函数转换出来的 Content 的 data 段为实际类型
+// 方便数据库查询
+func ToMessageContent(e []message.IMessageElement) (r []global.MSG) {
+	for _, elem := range e {
+		var m global.MSG
+		switch o := elem.(type) {
+		case *message.TextElement:
+			m = global.MSG{
+				"type": "text",
+				"data": global.MSG{"text": o.Content},
+			}
+		case *message.LightAppElement:
+			m = global.MSG{
+				"type": "json",
+				"data": global.MSG{"data": o.Content},
+			}
+		case *message.AtElement:
+			if o.Target == 0 {
+				m = global.MSG{
+					"type": "at",
+					"data": global.MSG{
+						"subType": "all",
+					},
+				}
+			} else {
+				m = global.MSG{
+					"type": "at",
+					"data": global.MSG{
+						"subType": "user",
+						"target":  o.Target,
+						"display": o.Display,
+					},
+				}
+			}
+		case *message.RedBagElement:
+			m = global.MSG{
+				"type": "redbag",
+				"data": global.MSG{"title": o.Title, "type": o.MsgType},
+			}
+		case *message.ForwardElement:
+			m = global.MSG{
+				"type": "forward",
+				"data": global.MSG{"id": o.ResId},
+			}
+		case *message.FaceElement:
+			m = global.MSG{
+				"type": "face",
+				"data": global.MSG{"id": o.Index},
+			}
+		case *message.VoiceElement:
+			m = global.MSG{
+				"type": "record",
+				"data": global.MSG{"file": o.Name, "url": o.Url},
+			}
+		case *message.ShortVideoElement:
+			m = global.MSG{
+				"type": "video",
+				"data": global.MSG{"file": o.Name, "url": o.Url},
+			}
+		case *message.GroupImageElement:
+			data := global.MSG{"file": hex.EncodeToString(o.Md5) + ".image", "url": o.Url, "subType": uint32(o.ImageBizType)}
+			switch {
+			case o.Flash:
+				data["type"] = "flash"
+			case o.EffectID != 0:
+				data["type"] = "show"
+				data["id"] = o.EffectID
+			}
+			m = global.MSG{
+				"type": "image",
+				"data": data,
+			}
+		case *message.FriendImageElement:
+			data := global.MSG{"file": hex.EncodeToString(o.Md5) + ".image", "url": o.Url}
+			if o.Flash {
+				data["type"] = "flash"
+			}
+			m = global.MSG{
+				"type": "image",
+				"data": data,
+			}
+		case *message.ServiceElement:
+			if isOk := strings.Contains(o.Content, "<?xml"); isOk {
+				m = global.MSG{
+					"type": "xml",
+					"data": global.MSG{"data": o.Content, "resid": o.Id},
+				}
+			} else {
+				m = global.MSG{
+					"type": "json",
+					"data": global.MSG{"data": o.Content, "resid": o.Id},
+				}
+			}
+		default:
+			continue
+		}
+		if m != nil {
+			r = append(r, m)
+		}
+	}
+	return
+}
+
 // ConvertStringMessage 将消息字符串转为消息元素数组
 func (bot *CQBot) ConvertStringMessage(raw string, isGroup bool) (r []message.IMessageElement) {
 	var t, key string
@@ -379,7 +484,7 @@ func (bot *CQBot) ConvertStringMessage(raw string, isGroup bool) (r []message.IM
 			switch {
 			case customText != "":
 				var elem *message.ReplyElement
-				var org global.MSG
+				var org db.IStoredMessage
 				sender, senderErr := strconv.ParseInt(d["qq"], 10, 64)
 				if senderErr != nil && err != nil {
 					log.Warnf("警告: 自定义 Reply 元素中必须包含 Uin 或 id")
@@ -391,13 +496,13 @@ func (bot *CQBot) ConvertStringMessage(raw string, isGroup bool) (r []message.IM
 				}
 				messageSeq, seqErr := strconv.ParseInt(d["seq"], 10, 64)
 				if err == nil {
-					org = bot.GetMessage(int32(mid))
+					org, _ = bot.db.GetMessageByGlobalID(int32(mid))
 				}
 				if org != nil {
 					elem = &message.ReplyElement{
-						ReplySeq: org["message-id"].(int32),
-						Sender:   org["sender"].(message.Sender).Uin,
-						Time:     org["time"].(int32),
+						ReplySeq: org.GetAttribute().MessageSeq,
+						Sender:   org.GetAttribute().SenderUin,
+						Time:     int32(org.GetAttribute().Timestamp),
 						Elements: bot.ConvertStringMessage(customText, isGroup),
 					}
 					if senderErr != nil {
@@ -419,14 +524,14 @@ func (bot *CQBot) ConvertStringMessage(raw string, isGroup bool) (r []message.IM
 				}
 				r = append([]message.IMessageElement{elem}, r...)
 			case err == nil:
-				org := bot.GetMessage(int32(mid))
-				if org != nil {
+				org, err := bot.db.GetMessageByGlobalID(int32(mid))
+				if err == nil {
 					r = append([]message.IMessageElement{
 						&message.ReplyElement{
-							ReplySeq: org["message-id"].(int32),
-							Sender:   org["sender"].(message.Sender).Uin,
-							Time:     org["time"].(int32),
-							Elements: bot.ConvertStringMessage(org["message"].(string), isGroup),
+							ReplySeq: org.GetAttribute().MessageSeq,
+							Sender:   org.GetAttribute().SenderUin,
+							Time:     int32(org.GetAttribute().Timestamp),
+							Elements: bot.ConvertContentMessage(org.GetContent(), isGroup),
 						},
 					}, r...)
 				}
@@ -551,7 +656,7 @@ func (bot *CQBot) ConvertObjectMessage(m gjson.Result, isGroup bool) (r []messag
 			switch {
 			case customText != "":
 				var elem *message.ReplyElement
-				var org global.MSG
+				var org db.IStoredMessage
 				sender, senderErr := strconv.ParseInt(e.Get("data.[user_id,qq]").String(), 10, 64)
 				if senderErr != nil && err != nil {
 					log.Warnf("警告: 自定义 Reply 元素中必须包含 user_id 或 id")
@@ -563,13 +668,13 @@ func (bot *CQBot) ConvertObjectMessage(m gjson.Result, isGroup bool) (r []messag
 				}
 				messageSeq, seqErr := strconv.ParseInt(e.Get("data.seq").String(), 10, 64)
 				if err == nil {
-					org = bot.GetMessage(int32(mid))
+					org, _ = bot.db.GetMessageByGlobalID(int32(mid))
 				}
 				if org != nil {
 					elem = &message.ReplyElement{
-						ReplySeq: org["message-id"].(int32),
-						Sender:   org["sender"].(message.Sender).Uin,
-						Time:     org["time"].(int32),
+						ReplySeq: org.GetAttribute().MessageSeq,
+						Sender:   org.GetAttribute().SenderUin,
+						Time:     int32(org.GetAttribute().Timestamp),
 						Elements: bot.ConvertStringMessage(customText, isGroup),
 					}
 					if senderErr != nil {
@@ -591,14 +696,14 @@ func (bot *CQBot) ConvertObjectMessage(m gjson.Result, isGroup bool) (r []messag
 				}
 				r = append([]message.IMessageElement{elem}, r...)
 			case err == nil:
-				org := bot.GetMessage(int32(mid))
-				if org != nil {
+				org, err := bot.db.GetMessageByGlobalID(int32(mid))
+				if err == nil {
 					r = append([]message.IMessageElement{
 						&message.ReplyElement{
-							ReplySeq: org["message-id"].(int32),
-							Sender:   org["sender"].(message.Sender).Uin,
-							Time:     org["time"].(int32),
-							Elements: bot.ConvertStringMessage(org["message"].(string), isGroup),
+							ReplySeq: org.GetAttribute().MessageSeq,
+							Sender:   org.GetAttribute().SenderUin,
+							Time:     int32(org.GetAttribute().Timestamp),
+							Elements: bot.ConvertContentMessage(org.GetContent(), isGroup),
 						},
 					}, r...)
 				}
@@ -650,6 +755,75 @@ func (bot *CQBot) ConvertObjectMessage(m gjson.Result, isGroup bool) (r []messag
 	}
 	if m.IsObject() {
 		convertElem(m)
+	}
+	return
+}
+
+// ConvertContentMessage 将数据库用的 content 转换为消息元素数组
+func (bot *CQBot) ConvertContentMessage(content []global.MSG, group bool) (r []message.IMessageElement) {
+	for _, c := range content {
+		data := c["data"].(global.MSG)
+		switch c["type"] {
+		case "text":
+			r = append(r, message.NewText(data["text"].(string)))
+		case "image":
+			e, err := bot.makeImageOrVideoElem(map[string]string{"file": data["file"].(string)}, false, group)
+			if err != nil {
+				log.Warnf("make image elem error: %v", err)
+				continue
+			}
+			flash, id := false, int32(0)
+			if t, ok := data["type"]; ok {
+				if t.(string) == "flash" {
+					flash = true
+				}
+				if t.(string) == "show" {
+					id = data["id"].(int32)
+					if id < 40000 || id >= 40006 {
+						id = 40000
+					}
+				}
+			}
+			switch img := e.(type) {
+			case *LocalImageElement:
+				img.Flash = flash
+				img.EffectID = id
+			case *message.GroupImageElement:
+				img.Flash = flash
+				img.EffectID = id
+				img.ImageBizType = message.ImageBizType(data["subType"].(uint32))
+			case *message.FriendImageElement:
+				img.Flash = flash
+			}
+			r = append(r, e)
+		case "at":
+			switch data["subType"].(string) {
+			case "all":
+				r = append(r, message.NewAt(0))
+			case "user":
+				r = append(r, message.NewAt(data["target"].(int64), data["display"].(string)))
+			default:
+				continue
+			}
+		case "redbag":
+			r = append(r, &message.RedBagElement{
+				MsgType: message.RedBagMessageType(data["type"].(int)),
+				Title:   data["title"].(string),
+			})
+		case "forward":
+			r = append(r, &message.ForwardElement{
+				ResId: data["id"].(string),
+			})
+		case "face":
+			r = append(r, message.NewFace(data["id"].(int32)))
+		case "video":
+			e, err := bot.makeImageOrVideoElem(map[string]string{"file": data["file"].(string)}, true, group)
+			if err != nil {
+				log.Warnf("make image elem error: %v", err)
+				continue
+			}
+			r = append(r, e)
+		}
 	}
 	return
 }
