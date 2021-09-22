@@ -72,10 +72,6 @@ type (
 		PrevGlobalID  int32        `bson:"prevGlobalId"`
 		QuotedContent []global.MSG `bson:"quotedContent"`
 	}
-
-	// MultiDatabase todo
-	MultiDatabase struct {
-	}
 )
 
 // ToGlobalID 构建`code`-`msgID`的字符串并返回其CRC32 Checksum的值

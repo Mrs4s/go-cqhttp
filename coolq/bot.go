@@ -107,16 +107,14 @@ func NewQQBot(cli *client.QQClient, conf *config.Config) *CQBot {
 		_ = node.Decode(lconf)
 		enableLevelDB = lconf.Enable
 	}
+	multiDB := db.NewMultiDatabase()
 	if enableLevelDB {
-		level := db.UseLevelDB()
-		if err := level.Open(); err != nil {
-			log.Fatalf("打开数据库失败: %v", err)
-		}
-		bot.db = level
-		log.Info("信息数据库初始化完成.")
-	} else {
-		log.Warn("警告: 信息数据库已关闭，将无法使用 [回复/撤回] 等功能。")
+		multiDB.UseDB(db.UseLevelDB())
 	}
+	if err := multiDB.Open(); err != nil {
+		log.Fatalf("打开数据库失败: %v", err)
+	}
+	bot.db = multiDB
 	bot.Client.OnPrivateMessage(bot.privateMessageEvent)
 	bot.Client.OnGroupMessage(bot.groupMessageEvent)
 	if conf.Message.ReportSelfMessage {
