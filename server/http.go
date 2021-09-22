@@ -75,7 +75,7 @@ func (h *httpCtx) Get(s string) gjson.Result {
 
 func (s *httpServer) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	var ctx httpCtx
-	contentType := request.Header.Get("Content-SubType")
+	contentType := request.Header.Get("Content-Type")
 	switch request.Method {
 	case http.MethodPost:
 		if strings.Contains(contentType, "application/json") {
@@ -119,7 +119,7 @@ func (s *httpServer) ServeHTTP(writer http.ResponseWriter, request *http.Request
 	log.Debugf("HTTPServer接收到API调用: %v", action)
 	ret := s.api.callAPI(action, &ctx)
 
-	writer.Header().Set("Content-SubType", "application/json; charset=utf-8")
+	writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 	writer.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(writer).Encode(ret)
 }
