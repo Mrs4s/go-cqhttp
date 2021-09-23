@@ -12,9 +12,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 
-	"github.com/guonaihong/gout"
 	"github.com/pkg/errors"
 
 	"github.com/tidwall/gjson"
@@ -247,22 +245,6 @@ func DownloadFileMultiThreading(url, path string, limit int64, threadCount int, 
 	}
 	wg.Wait()
 	return lastErr
-}
-
-// GetSliderTicket 通过给定的验证链接raw和id,获取验证结果Ticket
-func GetSliderTicket(raw, id string) (string, error) {
-	var rsp string
-	if err := gout.POST("https://api.shkong.com/gocqhttpapi/task").SetJSON(gout.H{
-		"id":  id,
-		"url": raw,
-	}).SetTimeout(time.Second * 35).BindBody(&rsp).Do(); err != nil {
-		return "", err
-	}
-	g := gjson.Parse(rsp)
-	if g.Get("error").Str != "" {
-		return "", errors.New(g.Get("error").Str)
-	}
-	return g.Get("ticket").Str, nil
 }
 
 // QQMusicSongInfo 通过给定id在QQ音乐上查找曲目信息

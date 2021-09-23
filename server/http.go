@@ -8,15 +8,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/Mrs4s/MiraiGo/utils"
-	"github.com/guonaihong/gout"
-	"github.com/guonaihong/gout/dataflow"
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 
@@ -211,7 +211,6 @@ func (c HTTPClient) Run() {
 }
 
 func (c *HTTPClient) onBotPushEvent(e *coolq.Event) {
-	var res string
 	if c.filter != "" {
 		filter := findFilter(c.filter)
 		if filter != nil && !filter.Eval(gjson.Parse(e.JSONString())) {
@@ -220,40 +219,50 @@ func (c *HTTPClient) onBotPushEvent(e *coolq.Event) {
 		}
 	}
 
-	err := gout.POST(c.addr).SetJSON(e.JSONBytes()).BindBody(&res).SetHeader(func() gout.H {
-		h := gout.H{
-			"X-Self-ID":  c.bot.Client.Uin,
-			"User-Agent": "CQHttp/4.15.0",
+	client := http.Client{Timeout: time.Second * time.Duration(c.timeout)}
+	req, _ := http.NewRequest("POST", c.addr, nil)
+	req.Header.Set("X-Self-ID", strconv.FormatInt(c.bot.Client.Uin, 10))
+	req.Header.Set("User-Agent", "CQHttp/4.15.0")
+	if c.secret != "" {
+		mac := hmac.New(sha1.New, []byte(c.secret))
+		_, _ = mac.Write(e.JSONBytes())
+		req.Header.Set("X-Signature", "sha1="+hex.EncodeToString(mac.Sum(nil)))
+	}
+	if c.apiPort != 0 {
+		req.Header.Set("X-API-Port", strconv.FormatInt(int64(c.apiPort), 10))
+	}
+
+	var res *http.Response
+	var err error
+	const maxAttemptTimes = 5
+
+	for i := 0; i <= maxAttemptTimes; i++ {
+		res, err = client.Do(req)
+		if err == nil {
+			break
 		}
-		if c.secret != "" {
-			mac := hmac.New(sha1.New, []byte(c.secret))
-			_, err := mac.Write(e.JSONBytes())
-			if err != nil {
-				log.Error(err)
-				return nil
-			}
-			h["X-Signature"] = "sha1=" + hex.EncodeToString(mac.Sum(nil))
+		if i != maxAttemptTimes {
+			log.Warnf("上报 Event 数据到 %v 失败: %v 将进行第 %d 次重试", c.addr, err, i+1)
 		}
-		if c.apiPort != 0 {
-			h["X-API-Port"] = c.apiPort
-		}
-		return h
-	}()).SetTimeout(time.Second * time.Duration(c.timeout)).F().Retry().Attempt(5).
-		WaitTime(time.Millisecond * 500).MaxWaitTime(time.Second * 5).
-		Func(func(con *dataflow.Context) error {
-			if con.Error != nil {
-				log.Warnf("上报Event到 HTTP 服务器 %v 时出现错误: %v 将重试.", c.addr, con.Error)
-				return con.Error
-			}
-			return nil
-		}).Do()
+		const maxWait = int64(time.Second * 3)
+		const minWait = int64(time.Millisecond * 500)
+		wait := rand.Int63n(maxWait-minWait) + minWait
+		time.Sleep(time.Duration(wait))
+	}
+
 	if err != nil {
 		log.Warnf("上报Event数据 %s 到 %v 失败: %v", e.JSONBytes(), c.addr, err)
 		return
 	}
 	log.Debugf("上报Event数据 %s 到 %v", e.JSONBytes(), c.addr)
-	if gjson.Valid(res) {
-		c.bot.CQHandleQuickOperation(gjson.Parse(e.JSONString()), gjson.Parse(res))
+
+	defer res.Body.Close()
+	r, err := io.ReadAll(res.Body)
+	if err != nil {
+		return
+	}
+	if gjson.ValidBytes(r) {
+		c.bot.CQHandleQuickOperation(gjson.Parse(e.JSONString()), gjson.ParseBytes(r))
 	}
 }
 

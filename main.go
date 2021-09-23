@@ -17,6 +17,16 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Mrs4s/MiraiGo/binary"
+	"github.com/Mrs4s/MiraiGo/client"
+	"github.com/Mrs4s/MiraiGo/utils"
+	para "github.com/fumiama/go-hide-param"
+	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
+	log "github.com/sirupsen/logrus"
+	"github.com/tidwall/gjson"
+	"golang.org/x/crypto/pbkdf2"
+	"golang.org/x/term"
+
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/global/codec"
@@ -24,16 +34,6 @@ import (
 	"github.com/Mrs4s/go-cqhttp/global/terminal"
 	"github.com/Mrs4s/go-cqhttp/global/update"
 	"github.com/Mrs4s/go-cqhttp/server"
-
-	"github.com/Mrs4s/MiraiGo/binary"
-	"github.com/Mrs4s/MiraiGo/client"
-	para "github.com/fumiama/go-hide-param"
-	"github.com/guonaihong/gout"
-	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
-	log "github.com/sirupsen/logrus"
-	"github.com/tidwall/gjson"
-	"golang.org/x/crypto/pbkdf2"
-	"golang.org/x/term"
 )
 
 var (
@@ -464,12 +464,12 @@ func checkUpdate() {
 		log.Warnf("检查更新失败: 使用的 Actions 测试版或自编译版本.")
 		return
 	}
-	var res string
-	if err := gout.GET("https://api.github.com/repos/Mrs4s/go-cqhttp/releases/latest").BindBody(&res).Do(); err != nil {
+	r, err := global.GetBytes("https://api.github.com/repos/Mrs4s/go-cqhttp/releases/latest")
+	if err != nil {
 		log.Warnf("检查更新失败: %v", err)
 		return
 	}
-	info := gjson.Parse(res)
+	info := gjson.Parse(utils.B2S(r))
 	if global.VersionNameCompare(coolq.Version, info.Get("tag_name").Str) {
 		log.Infof("当前有更新的 go-cqhttp 可供更新, 请前往 https://github.com/Mrs4s/go-cqhttp/releases 下载.")
 		log.Infof("当前版本: %v 最新版本: %v", coolq.Version, info.Get("tag_name").Str)
@@ -480,12 +480,13 @@ func checkUpdate() {
 
 func selfUpdate(imageURL string) {
 	log.Infof("正在检查更新.")
-	var res, r string
-	if err := gout.GET("https://api.github.com/repos/Mrs4s/go-cqhttp/releases/latest").BindBody(&res).Do(); err != nil {
+	var r string
+	res, err := global.GetBytes("https://api.github.com/repos/Mrs4s/go-cqhttp/releases/latest")
+	if err != nil {
 		log.Warnf("检查更新失败: %v", err)
 		return
 	}
-	info := gjson.Parse(res)
+	info := gjson.Parse(utils.B2S(res))
 	version := info.Get("tag_name").Str
 	if coolq.Version == version {
 		log.Info("当前版本已经是最新版本!")
