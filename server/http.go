@@ -239,6 +239,8 @@ func (c *HTTPClient) onBotPushEvent(e *coolq.Event) {
 	for i := 0; i <= maxAttemptTimes; i++ {
 		res, err = client.Do(req)
 		if err == nil {
+			//goland:noinspection GoDeferInLoop
+			defer res.Body.Close()
 			break
 		}
 		if i != maxAttemptTimes {
@@ -256,7 +258,6 @@ func (c *HTTPClient) onBotPushEvent(e *coolq.Event) {
 	}
 	log.Debugf("上报Event数据 %s 到 %v", e.JSONBytes(), c.addr)
 
-	defer res.Body.Close()
 	r, err := io.ReadAll(res.Body)
 	if err != nil {
 		return
