@@ -23,6 +23,7 @@ import (
 
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
+	"github.com/Mrs4s/go-cqhttp/internal/param"
 )
 
 // CQGetLoginInfo 获取登录号信息
@@ -945,7 +946,7 @@ func (bot *CQBot) CQHandleQuickOperation(context, operation gjson.Result) global
 		reply := operation.Get("reply")
 
 		if reply.Exists() {
-			autoEscape := global.EnsureBool(operation.Get("auto_escape"), false)
+			autoEscape := param.EnsureBool(operation.Get("auto_escape"), false)
 			at := operation.Get("at_sender").Bool() && !isAnonymous && msgType == "group"
 			if at && reply.IsArray() {
 				// 在 reply 数组头部插入CQ码

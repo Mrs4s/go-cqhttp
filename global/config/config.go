@@ -11,7 +11,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/Mrs4s/go-cqhttp/global"
+	"github.com/Mrs4s/go-cqhttp/internal/param"
 
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
@@ -168,13 +168,13 @@ func Get() *Config {
 			}
 
 			// load config from environment variable
-			global.SetAtDefault(&config.Account.Uin, toInt64(os.Getenv("GCQ_UIN")), int64(0))
-			global.SetAtDefault(&config.Account.Password, os.Getenv("GCQ_PWD"), "")
-			global.SetAtDefault(&config.Account.Status, int32(toInt64(os.Getenv("GCQ_STATUS"))), int32(0))
-			global.SetAtDefault(&config.Account.ReLogin.Disabled, !global.EnsureBool(os.Getenv("GCQ_RELOGIN_DISABLED"), true), false)
-			global.SetAtDefault(&config.Account.ReLogin.Delay, uint(toInt64(os.Getenv("GCQ_RELOGIN_DELAY"))), uint(0))
-			global.SetAtDefault(&config.Account.ReLogin.MaxTimes, uint(toInt64(os.Getenv("GCQ_RELOGIN_MAX_TIMES"))), uint(0))
-			dbConf := &LevelDBConfig{Enable: global.EnsureBool(os.Getenv("GCQ_LEVELDB"), true)}
+			param.SetAtDefault(&config.Account.Uin, toInt64(os.Getenv("GCQ_UIN")), int64(0))
+			param.SetAtDefault(&config.Account.Password, os.Getenv("GCQ_PWD"), "")
+			param.SetAtDefault(&config.Account.Status, int32(toInt64(os.Getenv("GCQ_STATUS"))), int32(0))
+			param.SetAtDefault(&config.Account.ReLogin.Disabled, !param.EnsureBool(os.Getenv("GCQ_RELOGIN_DISABLED"), true), false)
+			param.SetAtDefault(&config.Account.ReLogin.Delay, uint(toInt64(os.Getenv("GCQ_RELOGIN_DELAY"))), uint(0))
+			param.SetAtDefault(&config.Account.ReLogin.MaxTimes, uint(toInt64(os.Getenv("GCQ_RELOGIN_MAX_TIMES"))), uint(0))
+			dbConf := &LevelDBConfig{Enable: param.EnsureBool(os.Getenv("GCQ_LEVELDB"), true)}
 			if config.Database == nil {
 				config.Database = make(map[string]yaml.Node)
 			}
@@ -193,9 +193,9 @@ func Get() *Config {
 						AccessToken: accessTokenEnv,
 					},
 				}
-				global.SetExcludeDefault(&httpConf.Disabled, global.EnsureBool(os.Getenv("GCQ_HTTP_DISABLE"), false), false)
-				global.SetExcludeDefault(&httpConf.Host, os.Getenv("GCQ_HTTP_HOST"), "")
-				global.SetExcludeDefault(&httpConf.Port, int(toInt64(os.Getenv("GCQ_HTTP_PORT"))), 0)
+				param.SetExcludeDefault(&httpConf.Disabled, param.EnsureBool(os.Getenv("GCQ_HTTP_DISABLE"), false), false)
+				param.SetExcludeDefault(&httpConf.Host, os.Getenv("GCQ_HTTP_HOST"), "")
+				param.SetExcludeDefault(&httpConf.Port, int(toInt64(os.Getenv("GCQ_HTTP_PORT"))), 0)
 				if os.Getenv("GCQ_HTTP_POST_URL") != "" {
 					httpConf.Post = append(httpConf.Post, struct {
 						URL    string `yaml:"url"`
@@ -214,9 +214,9 @@ func Get() *Config {
 						AccessToken: accessTokenEnv,
 					},
 				}
-				global.SetExcludeDefault(&wsServerConf.Disabled, global.EnsureBool(os.Getenv("GCQ_WS_DISABLE"), false), false)
-				global.SetExcludeDefault(&wsServerConf.Host, os.Getenv("GCQ_WS_HOST"), "")
-				global.SetExcludeDefault(&wsServerConf.Port, int(toInt64(os.Getenv("GCQ_WS_PORT"))), 0)
+				param.SetExcludeDefault(&wsServerConf.Disabled, param.EnsureBool(os.Getenv("GCQ_WS_DISABLE"), false), false)
+				param.SetExcludeDefault(&wsServerConf.Host, os.Getenv("GCQ_WS_HOST"), "")
+				param.SetExcludeDefault(&wsServerConf.Port, int(toInt64(os.Getenv("GCQ_WS_PORT"))), 0)
 				_ = node.Encode(wsServerConf)
 				config.Servers = append(config.Servers, map[string]yaml.Node{"ws": *node})
 			}
@@ -227,10 +227,10 @@ func Get() *Config {
 						AccessToken: accessTokenEnv,
 					},
 				}
-				global.SetExcludeDefault(&rwsConf.Disabled, global.EnsureBool(os.Getenv("GCQ_RWS_DISABLE"), false), false)
-				global.SetExcludeDefault(&rwsConf.API, os.Getenv("GCQ_RWS_API"), "")
-				global.SetExcludeDefault(&rwsConf.Event, os.Getenv("GCQ_RWS_EVENT"), "")
-				global.SetExcludeDefault(&rwsConf.Universal, os.Getenv("GCQ_RWS_UNIVERSAL"), "")
+				param.SetExcludeDefault(&rwsConf.Disabled, param.EnsureBool(os.Getenv("GCQ_RWS_DISABLE"), false), false)
+				param.SetExcludeDefault(&rwsConf.API, os.Getenv("GCQ_RWS_API"), "")
+				param.SetExcludeDefault(&rwsConf.Event, os.Getenv("GCQ_RWS_EVENT"), "")
+				param.SetExcludeDefault(&rwsConf.Universal, os.Getenv("GCQ_RWS_UNIVERSAL"), "")
 				_ = node.Encode(rwsConf)
 				config.Servers = append(config.Servers, map[string]yaml.Node{"ws-reverse": *node})
 			}

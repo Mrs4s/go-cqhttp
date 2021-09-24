@@ -27,6 +27,7 @@ import (
 
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/global/config"
+	"github.com/Mrs4s/go-cqhttp/internal/base"
 )
 
 // CQBot CQBot结构体,存储Bot实例相关配置
@@ -68,12 +69,6 @@ func (e *Event) JSONString() string {
 	e.once.Do(e.marshal)
 	return utils.B2S(e.buffer.Bytes())
 }
-
-// ForceFragmented 是否启用强制分片
-var ForceFragmented = false
-
-// SkipMimeScan 是否跳过Mime扫描
-var SkipMimeScan bool
 
 // keep sync with /docs/file.md#MINE
 var lawfulImageTypes = [...]string{
@@ -296,7 +291,7 @@ func (bot *CQBot) SendGroupMessage(groupID int64, m *message.SendingMessage) int
 	}
 	m.Elements = newElem
 	bot.checkMedia(newElem)
-	ret := bot.Client.SendGroupMessage(groupID, m, ForceFragmented)
+	ret := bot.Client.SendGroupMessage(groupID, m, base.ForceFragmented)
 	if ret == nil || ret.Id == -1 {
 		log.Warnf("群消息发送失败: 账号可能被风控.")
 		return -1
@@ -619,7 +614,7 @@ func (bot *CQBot) uploadMedia(raw message.IMessageElement, target int64, group b
 // 返回 是否合法, 实际Mime
 // 判断后会自动将 Stream Seek 至 0
 func IsLawfulImage(r io.ReadSeeker) (bool, string) {
-	if SkipMimeScan {
+	if base.SkipMimeScan {
 		return true, ""
 	}
 	_, _ = r.Seek(0, io.SeekStart)

@@ -13,6 +13,8 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/wdvxdr1123/go-silk"
+
+	"github.com/Mrs4s/go-cqhttp/internal/base"
 )
 
 const silkCachePath = "data/cache"
@@ -30,7 +32,7 @@ func EncodeToSilk(record []byte, tempName string, useCache bool) (silkWav []byte
 	// 2.转换pcm
 	pcmPath := path.Join(silkCachePath, tempName+".pcm")
 	cmd := exec.Command("ffmpeg", "-i", rawPath, "-f", "s16le", "-ar", "24000", "-ac", "1", pcmPath)
-	if Debug {
+	if base.Debug {
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 	}

@@ -16,16 +16,18 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/tidwall/gjson"
+
+	"github.com/Mrs4s/go-cqhttp/internal/base"
 )
 
 var (
 	client = &http.Client{
 		Transport: &http.Transport{
 			Proxy: func(request *http.Request) (u *url.URL, e error) {
-				if Proxy == "" {
+				if base.Proxy == "" {
 					return http.ProxyFromEnvironment(request)
 				}
-				return url.Parse(Proxy)
+				return url.Parse(base.Proxy)
 			},
 			ForceAttemptHTTP2:   true,
 			MaxConnsPerHost:     0,
@@ -33,9 +35,6 @@ var (
 			MaxIdleConnsPerHost: 999,
 		},
 	}
-
-	// Proxy 存储Config.proxy_rewrite,用于设置代理
-	Proxy string
 
 	// ErrOverSize 响应主体过大时返回此错误
 	ErrOverSize = errors.New("oversize")

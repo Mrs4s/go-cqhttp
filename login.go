@@ -18,7 +18,7 @@ import (
 
 var console = bufio.NewReader(os.Stdin)
 
-var readLine = func() (str string) {
+func readLine() (str string) {
 	str, _ = console.ReadString('\n')
 	str = strings.TrimSpace(str)
 	return

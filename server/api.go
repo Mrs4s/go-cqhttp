@@ -5,6 +5,7 @@ import (
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
+	"github.com/Mrs4s/go-cqhttp/internal/param"
 
 	"github.com/tidwall/gjson"
 )
@@ -63,7 +64,7 @@ func getGroupMemberInfo(bot *coolq.CQBot, p resultGetter) global.MSG {
 }
 
 func sendMSG(bot *coolq.CQBot, p resultGetter) global.MSG {
-	autoEscape := global.EnsureBool(p.Get("auto_escape"), false)
+	autoEscape := param.EnsureBool(p.Get("auto_escape"), false)
 	if p.Get("message_type").Str == "private" {
 		return bot.CQSendPrivateMessage(p.Get("user_id").Int(), p.Get("group_id").Int(), p.Get("message"), autoEscape)
 	}
@@ -81,7 +82,7 @@ func sendMSG(bot *coolq.CQBot, p resultGetter) global.MSG {
 
 func sendGroupMSG(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQSendGroupMessage(p.Get("group_id").Int(), p.Get("message"),
-		global.EnsureBool(p.Get("auto_escape"), false))
+		param.EnsureBool(p.Get("auto_escape"), false))
 }
 
 func sendGroupForwardMSG(bot *coolq.CQBot, p resultGetter) global.MSG {
@@ -90,7 +91,7 @@ func sendGroupForwardMSG(bot *coolq.CQBot, p resultGetter) global.MSG {
 
 func sendPrivateMSG(bot *coolq.CQBot, p resultGetter) global.MSG {
 	return bot.CQSendPrivateMessage(p.Get("user_id").Int(), p.Get("group_id").Int(), p.Get("message"),
-		global.EnsureBool(p.Get("auto_escape"), false))
+		param.EnsureBool(p.Get("auto_escape"), false))
 }
 
 func deleteMSG(bot *coolq.CQBot, p resultGetter) global.MSG {

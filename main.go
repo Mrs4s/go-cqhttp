@@ -29,21 +29,16 @@ import (
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
-	"github.com/Mrs4s/go-cqhttp/global/codec"
 	"github.com/Mrs4s/go-cqhttp/global/config"
 	"github.com/Mrs4s/go-cqhttp/global/terminal"
 	"github.com/Mrs4s/go-cqhttp/global/update"
+	"github.com/Mrs4s/go-cqhttp/internal/base"
 	"github.com/Mrs4s/go-cqhttp/server"
 )
 
 var (
 	conf        *config.Config
 	isFastStart = false
-	// PasswordHash 存储QQ密码哈希供登录使用
-	PasswordHash [16]byte
-
-	// AccountToken 存储AccountToken供登录使用
-	AccountToken []byte
 
 	// 允许通过配置文件设置的状态列表
 	allowStatus = [...]client.UserOnlineStatus{
@@ -62,6 +57,7 @@ func main() {
 	wd := flag.String("w", "", "cover the working directory")
 	debug := flag.Bool("D", false, "debug mode")
 	flag.Parse()
+	// todo: maybe move flag to internal/base?
 
 	switch {
 	case *h:
@@ -78,9 +74,9 @@ func main() {
 	if *debug {
 		conf.Output.Debug = true
 	}
-	if conf.Output.Debug {
+	base.Parse()
+	if base.Debug {
 		log.SetReportCaller(true)
-		codec.Debug = true
 	}
 
 	rotateOptions := []rotatelogs.Option{
@@ -155,8 +151,8 @@ func main() {
 		}
 	}
 
-	log.Info("当前版本:", coolq.Version)
-	if conf.Output.Debug {
+	log.Info("当前版本:", base.Version)
+	if base.Debug {
 		log.SetLevel(log.DebugLevel)
 		log.Warnf("已开启Debug模式.")
 		log.Debugf("开发交流群: 192548878")
@@ -183,8 +179,8 @@ func main() {
 			}
 			log.Infof("密码加密已启用, 请输入Key对密码进行加密: (Enter 提交)")
 			byteKey, _ = term.ReadPassword(int(os.Stdin.Fd()))
-			PasswordHash = md5.Sum([]byte(conf.Account.Password))
-			_ = os.WriteFile("password.encrypt", []byte(PasswordHashEncrypt(PasswordHash[:], byteKey)), 0o644)
+			base.PasswordHash = md5.Sum([]byte(conf.Account.Password))
+			_ = os.WriteFile("password.encrypt", []byte(PasswordHashEncrypt(base.PasswordHash[:], byteKey)), 0o644)
 			log.Info("密码已加密，为了您的账号安全，请删除配置文件中的密码后重新启动.")
 			readLine()
 			os.Exit(0)
@@ -221,10 +217,10 @@ func main() {
 			if err != nil {
 				log.Fatalf("加密存储的密码损坏，请尝试重新配置密码")
 			}
-			copy(PasswordHash[:], ph)
+			copy(base.PasswordHash[:], ph)
 		}
 	} else if len(conf.Account.Password) > 0 {
-		PasswordHash = md5.Sum([]byte(conf.Account.Password))
+		base.PasswordHash = md5.Sum([]byte(conf.Account.Password))
 	}
 	if !isFastStart {
 		log.Info("Bot将在5秒后登录并开始信息处理, 按 Ctrl+C 取消.")
@@ -247,12 +243,11 @@ func main() {
 		return "未知"
 	}())
 	cli = newClient()
-	global.Proxy = conf.Message.ProxyRewrite
 	isQRCodeLogin := (conf.Account.Uin == 0 || len(conf.Account.Password) == 0) && !conf.Account.Encrypt
 	isTokenLogin := false
 	saveToken := func() {
-		AccountToken = cli.GenToken()
-		_ = os.WriteFile("session.token", AccountToken, 0o644)
+		base.AccountToken = cli.GenToken()
+		_ = os.WriteFile("session.token", base.AccountToken, 0o644)
 	}
 	if global.PathExists("session.token") {
 		token, err := os.ReadFile("session.token")
@@ -285,9 +280,9 @@ func main() {
 			}
 		}
 	}
-	if conf.Account.Uin != 0 && PasswordHash != [16]byte{} {
+	if conf.Account.Uin != 0 && base.PasswordHash != [16]byte{} {
 		cli.Uin = conf.Account.Uin
-		cli.PasswordMd5 = PasswordHash
+		cli.PasswordMd5 = base.PasswordHash
 	}
 	if !isTokenLogin {
 		if !isQRCodeLogin {
@@ -331,7 +326,7 @@ func main() {
 				break
 			}
 			log.Warnf("尝试重连...")
-			err := cli.TokenLogin(AccountToken)
+			err := cli.TokenLogin(base.AccountToken)
 			if err == nil {
 				saveToken()
 				return
@@ -371,12 +366,6 @@ func main() {
 	} else {
 		coolq.SetMessageFormat(conf.Message.PostFormat)
 	}
-	coolq.IgnoreInvalidCQCode = conf.Message.IgnoreInvalidCQCode
-	coolq.SplitURL = conf.Message.FixURL
-	coolq.ForceFragmented = conf.Message.ForceFragment
-	coolq.RemoveReplyAt = conf.Message.RemoveReplyAt
-	coolq.ExtraReplyData = conf.Message.ExtraReplyData
-	coolq.SkipMimeScan = conf.Message.SkipMimeScan
 	for _, m := range conf.Servers {
 		if h, ok := m["http"]; ok {
 			hc := new(config.HTTPServer)
@@ -460,7 +449,7 @@ func PasswordHashDecrypt(encryptedPasswordHash string, key []byte) ([]byte, erro
 
 func checkUpdate() {
 	log.Infof("正在检查更新.")
-	if coolq.Version == "(devel)" {
+	if base.Version == "(devel)" {
 		log.Warnf("检查更新失败: 使用的 Actions 测试版或自编译版本.")
 		return
 	}
@@ -470,9 +459,9 @@ func checkUpdate() {
 		return
 	}
 	info := gjson.Parse(utils.B2S(r))
-	if global.VersionNameCompare(coolq.Version, info.Get("tag_name").Str) {
+	if global.VersionNameCompare(base.Version, info.Get("tag_name").Str) {
 		log.Infof("当前有更新的 go-cqhttp 可供更新, 请前往 https://github.com/Mrs4s/go-cqhttp/releases 下载.")
-		log.Infof("当前版本: %v 最新版本: %v", coolq.Version, info.Get("tag_name").Str)
+		log.Infof("当前版本: %v 最新版本: %v", base.Version, info.Get("tag_name").Str)
 		return
 	}
 	log.Infof("检查更新完成. 当前已运行最新版本.")
@@ -488,7 +477,7 @@ func selfUpdate(imageURL string) {
 	}
 	info := gjson.Parse(utils.B2S(res))
 	version := info.Get("tag_name").Str
-	if coolq.Version == version {
+	if base.Version == version {
 		log.Info("当前版本已经是最新版本!")
 		goto wait
 	}
@@ -556,39 +545,6 @@ wait:
 	os.Exit(0)
 }
 
-/*
-func restart(args []string) {
-	var cmd *exec.Cmd
-	if runtime.GOOS == "windows" {
-		file, err := exec.LookPath(args[0])
-		if err != nil {
-			log.Errorf("重启失败:%s", err.Error())
-			return
-		}
-		path, err := filepath.Abs(file)
-		if err != nil {
-			log.Errorf("重启失败:%s", err.Error())
-		}
-		args = append([]string{"/c", "start ", path, "faststart"}, args[1:]...)
-		cmd = &exec.Cmd{
-			Path:   "cmd.exe",
-			Args:   args,
-			Stderr: os.Stderr,
-			Stdout: os.Stdout,
-		}
-	} else {
-		args = append(args, "faststart")
-		cmd = &exec.Cmd{
-			Path:   args[0],
-			Args:   args,
-			Stderr: os.Stderr,
-			Stdout: os.Stdout,
-		}
-	}
-	_ = cmd.Start()
-}
-*/
-
 // help cli命令行-h的帮助提示
 func help() {
 	fmt.Printf(`go-cqhttp service
@@ -599,7 +555,7 @@ Usage:
 server [OPTIONS]
 
 Options:
-`, coolq.Version)
+`, base.Version)
 
 	flag.PrintDefaults()
 	os.Exit(0)
