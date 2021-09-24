@@ -10,7 +10,6 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
-	"runtime/debug"
 	"strconv"
 	"strings"
 	"time"
@@ -23,20 +22,8 @@ import (
 	"github.com/tidwall/gjson"
 
 	"github.com/Mrs4s/go-cqhttp/global"
+	"github.com/Mrs4s/go-cqhttp/internal/base"
 )
-
-// Version go-cqhttp的版本信息，在编译时使用ldflags进行覆盖
-var Version = "unknown"
-
-func init() {
-	if Version != "unknown" {
-		return
-	}
-	info, ok := debug.ReadBuildInfo()
-	if ok {
-		Version = info.Main.Version
-	}
-}
 
 // CQGetLoginInfo 获取登录号信息
 //
@@ -1388,8 +1375,8 @@ func (bot *CQBot) CQGetVersionInfo() global.MSG {
 	wd, _ := os.Getwd()
 	return OK(global.MSG{
 		"app_name":                   "go-cqhttp",
-		"app_version":                Version,
-		"app_full_name":              fmt.Sprintf("go-cqhttp-%s_%s_%s-%s", Version, runtime.GOOS, runtime.GOARCH, runtime.Version()),
+		"app_version":                base.Version,
+		"app_full_name":              fmt.Sprintf("go-cqhttp-%s_%s_%s-%s", base.Version, runtime.GOOS, runtime.GOARCH, runtime.Version()),
 		"protocol_version":           "v11",
 		"coolq_directory":            wd,
 		"coolq_edition":              "pro",
@@ -1399,7 +1386,7 @@ func (bot *CQBot) CQGetVersionInfo() global.MSG {
 		"plugin_build_configuration": "release",
 		"runtime_version":            runtime.Version(),
 		"runtime_os":                 runtime.GOOS,
-		"version":                    Version,
+		"version":                    base.Version,
 		"protocol": func() int {
 			switch client.SystemDeviceInfo.Protocol {
 			case client.IPad:
