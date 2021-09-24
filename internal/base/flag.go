@@ -3,6 +3,7 @@ package base
 
 import "github.com/Mrs4s/go-cqhttp/global/config"
 
+// flags
 var (
 	Debug               bool // 是否开启 debug 模式
 	RemoveReplyAt       bool // 是否删除reply后的at
@@ -17,6 +18,7 @@ var (
 	AccountToken []byte   // 存储AccountToken供登录使用
 )
 
+// Parse parses flags from config file
 func Parse() {
 	conf := config.Get()
 	{ // bool config
