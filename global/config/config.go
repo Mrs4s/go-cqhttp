@@ -26,20 +26,22 @@ var currentPath = getCurrentPath()
 // DefaultConfigFile 默认配置文件路径
 var DefaultConfigFile = path.Join(currentPath, "config.yml")
 
+type Reconnect struct {
+	Disabled bool `yaml:"disabled"`
+	Delay    uint `yaml:"delay"`
+	MaxTimes uint `yaml:"max-times"`
+	Interval int  `yaml:"interval"`
+}
+
 // Config 总配置文件
 type Config struct {
 	Account struct {
-		Uin      int64  `yaml:"uin"`
-		Password string `yaml:"password"`
-		Encrypt  bool   `yaml:"encrypt"`
-		Status   int32  `yaml:"status"`
-		ReLogin  struct {
-			Disabled bool `yaml:"disabled"`
-			Delay    uint `yaml:"delay"`
-			MaxTimes uint `yaml:"max-times"`
-			Interval int  `yaml:"interval"`
-		}
-		UseSSOAddress bool `yaml:"use-sso-address"`
+		Uin           int64      `yaml:"uin"`
+		Password      string     `yaml:"password"`
+		Encrypt       bool       `yaml:"encrypt"`
+		Status        int        `yaml:"status"`
+		ReLogin       *Reconnect `yaml:"relogin"`
+		UseSSOAddress bool       `yaml:"use-sso-address"`
 	} `yaml:"account"`
 
 	Heartbeat struct {

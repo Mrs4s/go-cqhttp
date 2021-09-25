@@ -151,9 +151,6 @@ func checkAuth(req *http.Request, token string) int {
 
 // RunHTTPServerAndClients 启动HTTP服务器与HTTP上报客户端
 func RunHTTPServerAndClients(bot *coolq.CQBot, conf *config.HTTPServer) {
-	if conf.Disabled {
-		return
-	}
 	var (
 		s    = new(httpServer)
 		addr string

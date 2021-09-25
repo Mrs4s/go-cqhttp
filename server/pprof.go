@@ -14,9 +14,6 @@ import (
 
 // RunPprofServer 启动 pprof 性能分析服务器
 func RunPprofServer(conf *config.PprofServer) {
-	if conf.Disabled {
-		return
-	}
 	addr := fmt.Sprintf("%s:%d", conf.Host, conf.Port)
 	mux := http.NewServeMux()
 	mux.HandleFunc("/debug/pprof/", pprof.Index)

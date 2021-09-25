@@ -35,68 +35,42 @@ import (
 	"github.com/Mrs4s/go-cqhttp/server"
 )
 
-var (
-	conf        *config.Config
-	isFastStart = false
-
-	// 允许通过配置文件设置的状态列表
-	allowStatus = [...]client.UserOnlineStatus{
-		client.StatusOnline, client.StatusAway, client.StatusInvisible, client.StatusBusy,
-		client.StatusListening, client.StatusConstellation, client.StatusWeather, client.StatusMeetSpring,
-		client.StatusTimi, client.StatusEatChicken, client.StatusLoving, client.StatusWangWang, client.StatusCookedRice,
-		client.StatusStudy, client.StatusStayUp, client.StatusPlayBall, client.StatusSignal, client.StatusStudyOnline,
-		client.StatusGaming, client.StatusVacationing, client.StatusWatchingTV, client.StatusFitness,
-	}
-)
+// 允许通过配置文件设置的状态列表
+var allowStatus = [...]client.UserOnlineStatus{
+	client.StatusOnline, client.StatusAway, client.StatusInvisible, client.StatusBusy,
+	client.StatusListening, client.StatusConstellation, client.StatusWeather, client.StatusMeetSpring,
+	client.StatusTimi, client.StatusEatChicken, client.StatusLoving, client.StatusWangWang, client.StatusCookedRice,
+	client.StatusStudy, client.StatusStayUp, client.StatusPlayBall, client.StatusSignal, client.StatusStudyOnline,
+	client.StatusGaming, client.StatusVacationing, client.StatusWatchingTV, client.StatusFitness,
+}
 
 func main() {
-	c := flag.String("c", config.DefaultConfigFile, "configuration filename")
-	d := flag.Bool("d", false, "running as a daemon")
-	h := flag.Bool("h", false, "this help")
-	wd := flag.String("w", "", "cover the working directory")
-	debug := flag.Bool("D", false, "debug mode")
-	flag.Parse()
-	// todo: maybe move flag to internal/base?
-
-	switch {
-	case *h:
-		help()
-	case *d:
-		server.Daemon()
-	case *wd != "":
-		resetWorkDir(*wd)
-	}
-
-	// 通过-c 参数替换 配置文件路径
-	config.DefaultConfigFile = *c
-	conf = config.Get()
-	if *debug {
-		conf.Output.Debug = true
-	}
 	base.Parse()
-	if base.Debug {
-		log.SetReportCaller(true)
+	switch {
+	case base.LittleH:
+		help()
+	case base.LittleD:
+		server.Daemon()
+	case base.LittleWD != "":
+		resetWorkDir()
 	}
+	base.Init()
+
+	// todo: do all config parse in internal/base?
+	conf := config.Get()
 
 	rotateOptions := []rotatelogs.Option{
 		rotatelogs.WithRotationTime(time.Hour * 24),
 	}
-
-	if conf.Output.LogAging > 0 {
-		rotateOptions = append(rotateOptions, rotatelogs.WithMaxAge(time.Hour*24*time.Duration(conf.Output.LogAging)))
-	} else {
-		rotateOptions = append(rotateOptions, rotatelogs.WithMaxAge(time.Hour*24*365*10))
-	}
-	if conf.Output.LogForceNew {
+	rotateOptions = append(rotateOptions, rotatelogs.WithMaxAge(base.LogAging))
+	if base.LogForceNew {
 		rotateOptions = append(rotateOptions, rotatelogs.ForceNewFile())
 	}
-
 	w, err := rotatelogs.New(path.Join("logs", "%Y-%m-%d.log"), rotateOptions...)
 	if err != nil {
 		log.Errorf("rotatelogs init err: %v", err)
 		panic(err)
 	}
-
 	log.AddHook(global.NewLocalHook(w, global.LogFormat{}, global.GetLogLevel(conf.Output.LogLevel)...))
 
 	mkCacheDir := func(path string, _type string) {
@@ -129,11 +103,12 @@ func main() {
 					para.Hide(p)
 				}
 			case "faststart":
-				isFastStart = true
+				base.FastStart = true
 			}
 		}
 	}
-	if terminal.RunningByDoubleClick() && !isFastStart {
+
+	if !base.FastStart && terminal.RunningByDoubleClick() {
 		err := terminal.NoMoreDoubleClick()
 		if err != nil {
 			log.Errorf("遇到错误: %v", err)
@@ -144,7 +119,7 @@ func main() {
 
 	if (conf.Account.Uin == 0 || (conf.Account.Password == "" && !conf.Account.Encrypt)) && !global.PathExists("session.token") {
 		log.Warn("账号密码未配置, 将使用二维码登录.")
-		if !isFastStart {
+		if !base.FastStart {
 			log.Warn("将在 5秒 后继续.")
 			time.Sleep(time.Second * 5)
 		}
@@ -153,6 +128,7 @@ func main() {
 	log.Info("当前版本:", base.Version)
 	if base.Debug {
 		log.SetLevel(log.DebugLevel)
+		log.SetReportCaller(true)
 		log.Warnf("已开启Debug模式.")
 		log.Debugf("开发交流群: 192548878")
 	}
@@ -221,7 +197,7 @@ func main() {
 	} else if len(conf.Account.Password) > 0 {
 		base.PasswordHash = md5.Sum([]byte(conf.Account.Password))
 	}
-	if !isFastStart {
+	if !base.FastStart {
 		log.Info("Bot将在5秒后登录并开始信息处理, 按 Ctrl+C 取消.")
 		time.Sleep(time.Second * 5)
 	}
@@ -304,19 +280,19 @@ func main() {
 			return
 		}
 		log.Warnf("Bot已离线: %v", e.Message)
-		time.Sleep(time.Second * time.Duration(conf.Account.ReLogin.Delay))
+		time.Sleep(time.Second * time.Duration(base.Reconnect.Delay))
 		for {
-			if conf.Account.ReLogin.Disabled {
+			if base.Reconnect.Disabled {
 				log.Warnf("未启用自动重连, 将退出.")
 				os.Exit(1)
 			}
-			if times > conf.Account.ReLogin.MaxTimes && conf.Account.ReLogin.MaxTimes != 0 {
+			if times > base.Reconnect.MaxTimes && base.Reconnect.MaxTimes != 0 {
 				log.Fatalf("Bot重连次数超过限制, 停止")
 			}
 			times++
-			if conf.Account.ReLogin.Interval > 0 {
-				log.Warnf("将在 %v 秒后尝试重连. 重连次数：%v/%v", conf.Account.ReLogin.Interval, times, conf.Account.ReLogin.MaxTimes)
-				time.Sleep(time.Second * time.Duration(conf.Account.ReLogin.Interval))
+			if base.Reconnect.Interval > 0 {
+				log.Warnf("将在 %v 秒后尝试重连. 重连次数：%v/%v", base.Reconnect.Interval, times, base.Reconnect.MaxTimes)
+				time.Sleep(time.Second * time.Duration(base.Reconnect.Interval))
 			} else {
 				time.Sleep(time.Second)
 			}
@@ -353,17 +329,17 @@ func main() {
 	log.Infof("开始加载群列表...")
 	global.Check(cli.ReloadGroupList(), true)
 	log.Infof("共加载 %v 个群.", len(cli.GroupList))
-	if conf.Account.Status >= int32(len(allowStatus)) || conf.Account.Status < 0 {
+	if uint(conf.Account.Status) >= uint(len(allowStatus)) {
 		conf.Account.Status = 0
 	}
-	cli.SetOnlineStatus(allowStatus[int(conf.Account.Status)])
+	cli.SetOnlineStatus(allowStatus[conf.Account.Status])
 	bot := coolq.NewQQBot(cli, conf)
 	for _, m := range conf.Servers {
 		if h, ok := m["http"]; ok {
 			hc := new(config.HTTPServer)
 			if err := h.Decode(hc); err != nil {
 				log.Warn("读取http配置失败 :", err)
-			} else {
+			} else if !hc.Disabled {
 				go server.RunHTTPServerAndClients(bot, hc)
 			}
 		}
@@ -371,7 +347,7 @@ func main() {
 			sc := new(config.WebsocketServer)
 			if err := s.Decode(sc); err != nil {
 				log.Warn("读取正向Websocket配置失败 :", err)
-			} else {
+			} else if !sc.Disabled {
 				go server.RunWebSocketServer(bot, sc)
 			}
 		}
@@ -379,7 +355,7 @@ func main() {
 			rc := new(config.WebsocketReverse)
 			if err := c.Decode(rc); err != nil {
 				log.Warn("读取反向Websocket配置失败 :", err)
-			} else {
+			} else if !rc.Disabled {
 				go server.RunWebSocketClient(bot, rc)
 			}
 		}
@@ -387,7 +363,7 @@ func main() {
 			pc := new(config.PprofServer)
 			if err := p.Decode(pc); err != nil {
 				log.Warn("读取pprof配置失败 :", err)
-			} else {
+			} else if !pc.Disabled {
 				go server.RunPprofServer(pc)
 			}
 		}
@@ -395,7 +371,7 @@ func main() {
 			lc := new(config.LambdaServer)
 			if err := p.Decode(lc); err != nil {
 				log.Warn("读取pprof配置失败 :", err)
-			} else {
+			} else if !lc.Disabled {
 				go server.RunLambdaClient(bot, lc)
 			}
 		}
@@ -455,7 +431,8 @@ Options:
 	os.Exit(0)
 }
 
-func resetWorkDir(wd string) {
+func resetWorkDir() {
+	wd := base.LittleWD
 	args := make([]string, 0, len(os.Args))
 	for i := 1; i < len(os.Args); i++ {
 		if os.Args[i] == "-w" {
@@ -480,7 +457,7 @@ func resetWorkDir(wd string) {
 func newClient() *client.QQClient {
 	c := client.NewClientEmpty()
 	c.OnServerUpdated(func(bot *client.QQClient, e *client.ServerUpdatedEvent) bool {
-		if !conf.Account.UseSSOAddress {
+		if !base.UseSSOAddress {
 			log.Infof("收到服务器地址更新通知, 根据配置文件已忽略.")
 			return false
 		}
