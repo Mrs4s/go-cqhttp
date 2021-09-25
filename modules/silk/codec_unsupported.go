@@ -6,7 +6,7 @@ package silk
 import "errors"
 
 // encode 将音频编码为Silk
-func encode(record []byte, tempName string, useCache bool) ([]byte, error) {
+func encode(record []byte, tempName string) ([]byte, error) {
 	return nil, errors.New("not supported now")
 }
 

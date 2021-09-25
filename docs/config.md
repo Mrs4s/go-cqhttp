@@ -154,7 +154,7 @@ database: # 数据库相关设置
 
 > 注4：关闭心跳服务可能引起断线，请谨慎关闭
 
-> 注5：关于MINE扫描， 详见[MINE](file.md#MINE)
+> 注5：关于MIME扫描， 详见[MIME](file.md#MIME)
 
 ## 在线状态
 
