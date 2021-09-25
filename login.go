@@ -24,7 +24,7 @@ func readLine() (str string) {
 	return
 }
 
-var readLineTimeout = func(t time.Duration, de string) (str string) {
+func readLineTimeout(t time.Duration, de string) (str string) {
 	r := make(chan string)
 	go func() {
 		select {

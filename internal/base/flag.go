@@ -1,7 +1,11 @@
 // Package base provides base config for go-cqhttp
 package base
 
-import "github.com/Mrs4s/go-cqhttp/global/config"
+import (
+	log "github.com/sirupsen/logrus"
+
+	"github.com/Mrs4s/go-cqhttp/global/config"
+)
 
 // flags
 var (
@@ -13,9 +17,10 @@ var (
 	ForceFragmented     bool // 是否启用强制分片
 	SkipMimeScan        bool // 是否跳过Mime扫描
 
-	Proxy        string   // 存储 proxy_rewrite,用于设置代理
-	PasswordHash [16]byte // 存储QQ密码哈希供登录使用
-	AccountToken []byte   // 存储AccountToken供登录使用
+	PostFormat   = "string" // 上报格式 string or array
+	Proxy        string     // 存储 proxy_rewrite,用于设置代理
+	PasswordHash [16]byte   // 存储QQ密码哈希供登录使用
+	AccountToken []byte     // 存储AccountToken供登录使用
 )
 
 // Parse parses flags from config file
@@ -32,5 +37,11 @@ func Parse() {
 	}
 	{ // string
 		Proxy = conf.Message.ProxyRewrite
+		if conf.Message.PostFormat != "string" && conf.Message.PostFormat != "array" {
+			log.Warnf("post-format 配置错误, 将自动使用 string")
+			PostFormat = "string"
+		} else {
+			PostFormat = conf.Message.PostFormat
+		}
 	}
 }

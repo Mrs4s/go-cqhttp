@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"crypto/aes"
 	"crypto/md5"
 	"crypto/sha1"
@@ -12,18 +11,15 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/client"
-	"github.com/Mrs4s/MiraiGo/utils"
 	para "github.com/fumiama/go-hide-param"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	log "github.com/sirupsen/logrus"
-	"github.com/tidwall/gjson"
 	"golang.org/x/crypto/pbkdf2"
 	"golang.org/x/term"
 
@@ -31,8 +27,8 @@ import (
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/global/config"
 	"github.com/Mrs4s/go-cqhttp/global/terminal"
-	"github.com/Mrs4s/go-cqhttp/global/update"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
+	"github.com/Mrs4s/go-cqhttp/internal/selfupdate"
 	"github.com/Mrs4s/go-cqhttp/server"
 )
 
@@ -119,9 +115,9 @@ func main() {
 			switch arg[i] {
 			case "update":
 				if len(arg) > i+1 {
-					selfUpdate(arg[i+1])
+					selfupdate.SelfUpdate(arg[i+1])
 				} else {
-					selfUpdate("")
+					selfupdate.SelfUpdate("")
 				}
 			case "key":
 				p := i + 1
@@ -359,13 +355,6 @@ func main() {
 	}
 	cli.SetOnlineStatus(allowStatus[int(conf.Account.Status)])
 	bot := coolq.NewQQBot(cli, conf)
-	_ = bot.Client
-	if conf.Message.PostFormat != "string" && conf.Message.PostFormat != "array" {
-		log.Warnf("post-format 配置错误, 将自动使用 string")
-		coolq.SetMessageFormat("string")
-	} else {
-		coolq.SetMessageFormat(conf.Message.PostFormat)
-	}
 	for _, m := range conf.Servers {
 		if h, ok := m["http"]; ok {
 			hc := new(config.HTTPServer)
@@ -411,7 +400,7 @@ func main() {
 	log.Info("资源初始化完成, 开始处理信息.")
 	log.Info("アトリは、高性能ですから!")
 
-	go checkUpdate()
+	go selfupdate.CheckUpdate()
 
 	<-global.SetupMainSignalHandler()
 }
@@ -445,104 +434,6 @@ func PasswordHashDecrypt(encryptedPasswordHash string, key []byte) ([]byte, erro
 	cipher.Decrypt(result, ciphertext)
 
 	return result, nil
-}
-
-func checkUpdate() {
-	log.Infof("正在检查更新.")
-	if base.Version == "(devel)" {
-		log.Warnf("检查更新失败: 使用的 Actions 测试版或自编译版本.")
-		return
-	}
-	r, err := global.GetBytes("https://api.github.com/repos/Mrs4s/go-cqhttp/releases/latest")
-	if err != nil {
-		log.Warnf("检查更新失败: %v", err)
-		return
-	}
-	info := gjson.Parse(utils.B2S(r))
-	if global.VersionNameCompare(base.Version, info.Get("tag_name").Str) {
-		log.Infof("当前有更新的 go-cqhttp 可供更新, 请前往 https://github.com/Mrs4s/go-cqhttp/releases 下载.")
-		log.Infof("当前版本: %v 最新版本: %v", base.Version, info.Get("tag_name").Str)
-		return
-	}
-	log.Infof("检查更新完成. 当前已运行最新版本.")
-}
-
-func selfUpdate(imageURL string) {
-	log.Infof("正在检查更新.")
-	var r string
-	res, err := global.GetBytes("https://api.github.com/repos/Mrs4s/go-cqhttp/releases/latest")
-	if err != nil {
-		log.Warnf("检查更新失败: %v", err)
-		return
-	}
-	info := gjson.Parse(utils.B2S(res))
-	version := info.Get("tag_name").Str
-	if base.Version == version {
-		log.Info("当前版本已经是最新版本!")
-		goto wait
-	}
-	log.Info("当前最新版本为 ", version)
-	log.Warn("是否更新(y/N): ")
-	r = strings.TrimSpace(readLine())
-	if r != "y" && r != "Y" {
-		log.Warn("已取消更新！")
-	} else {
-		log.Info("正在更新,请稍等...")
-		sumURL := fmt.Sprintf("%v/Mrs4s/go-cqhttp/releases/download/%v/go-cqhttp_checksums.txt",
-			func() string {
-				if imageURL != "" {
-					return imageURL
-				}
-				return "https://github.com"
-			}(), version)
-		closer, err := global.HTTPGetReadCloser(sumURL)
-		if err != nil {
-			log.Error("更新失败: ", err)
-			goto wait
-		}
-		rd := bufio.NewReader(closer)
-		binaryName := fmt.Sprintf("go-cqhttp_%v_%v.%v", runtime.GOOS, func() string {
-			if runtime.GOARCH == "arm" {
-				return "armv7"
-			}
-			return runtime.GOARCH
-		}(), func() string {
-			if runtime.GOOS == "windows" {
-				return "zip"
-			}
-			return "tar.gz"
-		}())
-		var sum []byte
-		for {
-			str, err := rd.ReadString('\n')
-			if err != nil {
-				break
-			}
-			str = strings.TrimSpace(str)
-			if strings.HasSuffix(str, binaryName) {
-				sum, _ = hex.DecodeString(strings.TrimSuffix(str, "  "+binaryName))
-				break
-			}
-		}
-		url := fmt.Sprintf("%v/Mrs4s/go-cqhttp/releases/download/%v/%v",
-			func() string {
-				if imageURL != "" {
-					return imageURL
-				}
-				return "https://github.com"
-			}(), version, binaryName)
-
-		err = update.Update(url, sum)
-		if err != nil {
-			log.Error("更新失败: ", err)
-		} else {
-			log.Info("更新成功!")
-		}
-	}
-wait:
-	log.Info("按 Enter 继续....")
-	readLine()
-	os.Exit(0)
 }
 
 // help cli命令行-h的帮助提示

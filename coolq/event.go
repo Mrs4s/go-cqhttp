@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/Mrs4s/go-cqhttp/global"
+	"github.com/Mrs4s/go-cqhttp/internal/base"
 
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/client"
@@ -16,18 +17,16 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var format = "string"
-
 // SetMessageFormat 设置消息上报格式，默认为string
 func SetMessageFormat(f string) {
-	format = f
+	base.PostFormat = f
 }
 
 // ToFormattedMessage 将给定[]message.IMessageElement转换为通过coolq.SetMessageFormat所定义的消息上报格式
 func ToFormattedMessage(e []message.IMessageElement, groupID int64, isRaw ...bool) (r interface{}) {
-	if format == "string" {
+	if base.PostFormat == "string" {
 		r = ToStringMessage(e, groupID, isRaw...)
-	} else if format == "array" {
+	} else if base.PostFormat == "array" {
 		r = ToArrayMessage(e, groupID)
 	}
 	return
