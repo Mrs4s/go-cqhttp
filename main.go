@@ -23,6 +23,9 @@ import (
 	"golang.org/x/crypto/pbkdf2"
 	"golang.org/x/term"
 
+	_ "github.com/Mrs4s/go-cqhttp/modules/mime" // mime检查模块
+	_ "github.com/Mrs4s/go-cqhttp/modules/silk" // silk编码模块
+
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/global/config"

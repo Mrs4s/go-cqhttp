@@ -20,12 +20,10 @@ import (
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/Mrs4s/MiraiGo/utils"
-	"github.com/gabriel-vasile/mimetype"
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 
 	"github.com/Mrs4s/go-cqhttp/global"
-	"github.com/Mrs4s/go-cqhttp/global/codec"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
 	"github.com/Mrs4s/go-cqhttp/internal/param"
 )
@@ -715,7 +713,7 @@ func (bot *CQBot) ToElement(t string, d map[string]string, isGroup bool) (m inte
 		if err != nil {
 			return nil, err
 		}
-		return &message.VoiceElement{Data: codec.RecodeTo24K(data)}, nil
+		return &message.VoiceElement{Data: base.ResampleSilk(data)}, nil
 	case "record":
 		f := d["file"]
 		data, err := global.FindFile(f, d["cache"], global.VoicePath)
@@ -725,17 +723,10 @@ func (bot *CQBot) ToElement(t string, d map[string]string, isGroup bool) (m inte
 		if err != nil {
 			return nil, err
 		}
-		if !base.SkipMimeScan && !global.IsAMRorSILK(data) {
-			mt := mimetype.Detect(data)
-			lawful := false
-			for _, lt := range lawfulAudioTypes {
-				if mt.Is(lt) {
-					lawful = true
-					break
-				}
-			}
+		if !global.IsAMRorSILK(data) {
+			lawful, mt := base.IsLawfulAudio(bytes.NewReader(data))
 			if !lawful {
-				return nil, errors.New("audio type error: " + mt.String())
+				return nil, errors.New("audio type error: " + mt)
 			}
 		}
 		if !global.IsAMRorSILK(data) {

@@ -4,7 +4,7 @@
 // +build !race
 // +build !nosilk
 
-package codec
+package silk
 
 import (
 	"os"
@@ -19,8 +19,8 @@ import (
 
 const silkCachePath = "data/cache"
 
-// EncodeToSilk 将音频编码为Silk
-func EncodeToSilk(record []byte, tempName string, useCache bool) (silkWav []byte, err error) {
+// encode 将音频编码为Silk
+func encode(record []byte, tempName string) (silkWav []byte, err error) {
 	// 1. 写入缓存文件
 	rawPath := path.Join(silkCachePath, tempName+".wav")
 	err = os.WriteFile(rawPath, record, os.ModePerm)
@@ -50,15 +50,13 @@ func EncodeToSilk(record []byte, tempName string, useCache bool) (silkWav []byte
 	if err != nil {
 		return nil, errors.Wrap(err, "silk encode error")
 	}
-	if useCache {
-		silkPath := path.Join(silkCachePath, tempName+".silk")
-		err = os.WriteFile(silkPath, silkWav, 0o666)
-	}
+	silkPath := path.Join(silkCachePath, tempName+".silk")
+	err = os.WriteFile(silkPath, silkWav, 0o666)
 	return
 }
 
-// RecodeTo24K 将silk重新编码为 24000 bit rate
-func RecodeTo24K(data []byte) []byte {
+// resample 将silk重新编码为 24000 bit rate
+func resample(data []byte) []byte {
 	pcm, err := silk.DecodeSilkBuffToPcm(data, 24000)
 	if err != nil {
 		panic(err)
