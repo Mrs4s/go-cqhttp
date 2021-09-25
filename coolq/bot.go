@@ -13,8 +13,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gabriel-vasile/mimetype"
-
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/MiraiGo/message"
@@ -24,6 +22,7 @@ import (
 
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/global/config"
+	"github.com/Mrs4s/go-cqhttp/internal/base"
 )
 
 // CQBot CQBot结构体,存储Bot实例相关配置
@@ -64,35 +63,6 @@ func (e *Event) JSONBytes() []byte {
 func (e *Event) JSONString() string {
 	e.once.Do(e.marshal)
 	return utils.B2S(e.buffer.Bytes())
-}
-
-// ForceFragmented 是否启用强制分片
-var ForceFragmented = false
-
-// SkipMimeScan 是否跳过Mime扫描
-var SkipMimeScan bool
-
-// keep sync with /docs/file.md#MINE
-var lawfulImageTypes = [...]string{
-	"image/bmp",
-	"image/gif",
-	"image/jpeg",
-	"image/png",
-	"image/webp",
-}
-
-var lawfulAudioTypes = [...]string{
-	"audio/aac",
-	"audio/aiff",
-	"audio/amr",
-	"audio/ape",
-	"audio/flac",
-	"audio/midi",
-	"audio/mp4",
-	"audio/mpeg",
-	"audio/ogg",
-	"audio/wav",
-	"audio/x-m4a",
 }
 
 // NewQQBot 初始化一个QQBot实例
@@ -183,7 +153,7 @@ func (bot *CQBot) UploadLocalImageAsGroup(groupCode int64, img *LocalImageElemen
 		defer func() { _ = f.Close() }()
 		img.Stream = f
 	}
-	if lawful, mime := IsLawfulImage(img.Stream); !lawful {
+	if lawful, mime := base.IsLawfulImage(img.Stream); !lawful {
 		return nil, errors.New("image type error: " + mime)
 	}
 	i, err = bot.Client.UploadGroupImage(groupCode, img.Stream)
@@ -218,7 +188,7 @@ func (bot *CQBot) UploadLocalImageAsPrivate(userID int64, img *LocalImageElement
 		defer func() { _ = f.Close() }()
 		img.Stream = f
 	}
-	if lawful, mime := IsLawfulImage(img.Stream); !lawful {
+	if lawful, mime := base.IsLawfulImage(img.Stream); !lawful {
 		return nil, errors.New("image type error: " + mime)
 	}
 	i, err = bot.Client.UploadPrivateImage(userID, img.Stream)
@@ -271,7 +241,7 @@ func (bot *CQBot) SendGroupMessage(groupID int64, m *message.SendingMessage) int
 	}
 	m.Elements = newElem
 	bot.checkMedia(newElem)
-	ret := bot.Client.SendGroupMessage(groupID, m, ForceFragmented)
+	ret := bot.Client.SendGroupMessage(groupID, m, base.ForceFragmented)
 	if ret == nil || ret.Id == -1 {
 		log.Warnf("群消息发送失败: 账号可能被风控.")
 		return -1
@@ -616,28 +586,6 @@ func (bot *CQBot) uploadMedia(raw message.IMessageElement, target int64, group b
 		return bot.UploadLocalVideo(target, m)
 	}
 	return nil, errors.New("unsupported message element type")
-}
-
-// IsLawfulImage 判断给定流是否为合法图片
-// 返回 是否合法, 实际Mime
-// 判断后会自动将 Stream Seek 至 0
-func IsLawfulImage(r io.ReadSeeker) (bool, string) {
-	if SkipMimeScan {
-		return true, ""
-	}
-	_, _ = r.Seek(0, io.SeekStart)
-	defer func() { _, _ = r.Seek(0, io.SeekStart) }()
-	t, err := mimetype.DetectReader(r)
-	if err != nil {
-		log.Debugf("扫描 Mime 时出现问题: %v", err)
-		return false, ""
-	}
-	for _, lt := range lawfulImageTypes {
-		if t.Is(lt) {
-			return true, t.String()
-		}
-	}
-	return false, t.String()
 }
 
 // encodeMessageId 临时先这样, 暂时用不上

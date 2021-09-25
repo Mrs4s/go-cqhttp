@@ -39,11 +39,11 @@ go-cqhttp 默认生成的文件树如下所示:
 | 0x14            | string   | 图片原名(QQ内部ID) |
 | 0x14 + 原名长度 | string   | 图片下载链接         |
 
-# MINE
+# MIME
 
 启用MINE检查可以及时发现媒体资源格式错误引起的上传失败(通常表现为，请求网页图片，但服务端返回404.html)
 
-在配置文件中设置 `skip-mine-scan: false`后 ，go-cqhttp 会在上传媒体资源(视频暂不支持)前对MINE进行检查，
+在配置文件中设置 `skip-mine-scan: false`后 ，go-cqhttp 会在上传媒体资源(视频暂不支持)前对MIME进行检查，
 详细允许类型如下所示:
 
 图片：

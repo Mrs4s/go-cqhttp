@@ -21,12 +21,12 @@ import (
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/Mrs4s/MiraiGo/utils"
-	"github.com/gabriel-vasile/mimetype"
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 
 	"github.com/Mrs4s/go-cqhttp/global"
-	"github.com/Mrs4s/go-cqhttp/global/codec"
+	"github.com/Mrs4s/go-cqhttp/internal/base"
+	"github.com/Mrs4s/go-cqhttp/internal/param"
 )
 
 /*
@@ -34,18 +34,6 @@ var matchReg = regexp.MustCompile(`\[CQ:\w+?.*?]`)
 var typeReg = regexp.MustCompile(`\[CQ:(\w+)`)
 var paramReg = regexp.MustCompile(`,([\w\-.]+?)=([^,\]]+)`)
 */
-
-// RemoveReplyAt 是否删除reply后的at
-var RemoveReplyAt bool
-
-// ExtraReplyData 是否上报额外reply信息
-var ExtraReplyData bool
-
-// IgnoreInvalidCQCode 是否忽略无效CQ码
-var IgnoreInvalidCQCode = false
-
-// SplitURL 是否分割URL
-var SplitURL = false
 
 const (
 	maxImageSize = 1024 * 1024 * 30  // 30MB
@@ -138,7 +126,7 @@ func ToArrayMessage(e []message.IMessageElement, groupID int64) (r []global.MSG)
 		if rid == 0 {
 			rid = replyElem.Sender
 		}
-		if ExtraReplyData {
+		if base.ExtraReplyData {
 			r = append(r, global.MSG{
 				"type": "reply",
 				"data": map[string]string{
@@ -160,7 +148,7 @@ func ToArrayMessage(e []message.IMessageElement, groupID int64) (r []global.MSG)
 		var m global.MSG
 		switch o := elem.(type) {
 		case *message.ReplyElement:
-			if RemoveReplyAt && i+1 < len(e) {
+			if base.RemoveReplyAt && i+1 < len(e) {
 				elem, ok := e[i+1].(*message.AtElement)
 				if ok && elem.Target == o.Sender {
 					e[i+1] = nil
@@ -280,7 +268,7 @@ func ToStringMessage(e []message.IMessageElement, groupID int64, isRaw ...bool) 
 		if rid == 0 {
 			rid = replyElem.Sender
 		}
-		if ExtraReplyData {
+		if base.ExtraReplyData {
 			write("[CQ:reply,id=%d,seq=%d,qq=%d,time=%d,text=%s]",
 				db.ToGlobalID(rid, replyElem.ReplySeq),
 				replyElem.ReplySeq, replyElem.Sender, replyElem.Time,
@@ -292,7 +280,7 @@ func ToStringMessage(e []message.IMessageElement, groupID int64, isRaw ...bool) 
 	for i, elem := range e {
 		switch o := elem.(type) {
 		case *message.ReplyElement:
-			if RemoveReplyAt && len(e) > i+1 {
+			if base.RemoveReplyAt && len(e) > i+1 {
 				elem, ok := e[i+1].(*message.AtElement)
 				if ok && elem.Target == o.Sender {
 					e[i+1] = nil
@@ -559,7 +547,7 @@ func (bot *CQBot) ConvertStringMessage(raw string, isGroup bool) (r []message.IM
 				org += "," + k + "=" + v
 			}
 			org += "]"
-			if !IgnoreInvalidCQCode {
+			if !base.IgnoreInvalidCQCode {
 				log.Warnf("转换CQ码 %v 时出现错误: %v 将原样发送.", org, err)
 				r = append(r, message.NewText(org))
 			} else {
@@ -581,8 +569,8 @@ func (bot *CQBot) ConvertStringMessage(raw string, isGroup bool) (r []message.IM
 			i++
 		}
 		if i > 0 {
-			if SplitURL {
-				for _, txt := range global.SplitURL(CQCodeUnescapeText(raw[:i])) {
+			if base.SplitURL {
+				for _, txt := range param.SplitURL(CQCodeUnescapeText(raw[:i])) {
 					r = append(r, message.NewText(txt))
 				}
 			} else {
@@ -836,9 +824,9 @@ func (bot *CQBot) ConvertContentMessage(content []global.MSG, group bool) (r []m
 func (bot *CQBot) ToElement(t string, d map[string]string, isGroup bool) (m interface{}, err error) {
 	switch t {
 	case "text":
-		if SplitURL {
+		if base.SplitURL {
 			var ret []message.IMessageElement
-			for _, text := range global.SplitURL(d["text"]) {
+			for _, text := range param.SplitURL(d["text"]) {
 				ret = append(ret, message.NewText(text))
 			}
 			return ret, nil
@@ -899,7 +887,7 @@ func (bot *CQBot) ToElement(t string, d map[string]string, isGroup bool) (m inte
 		if err != nil {
 			return nil, err
 		}
-		return &message.VoiceElement{Data: codec.RecodeTo24K(data)}, nil
+		return &message.VoiceElement{Data: base.ResampleSilk(data)}, nil
 	case "record":
 		f := d["file"]
 		data, err := global.FindFile(f, d["cache"], global.VoicePath)
@@ -909,17 +897,10 @@ func (bot *CQBot) ToElement(t string, d map[string]string, isGroup bool) (m inte
 		if err != nil {
 			return nil, err
 		}
-		if !SkipMimeScan && !global.IsAMRorSILK(data) {
-			mt := mimetype.Detect(data)
-			lawful := false
-			for _, lt := range lawfulAudioTypes {
-				if mt.Is(lt) {
-					lawful = true
-					break
-				}
-			}
+		if !global.IsAMRorSILK(data) {
+			lawful, mt := base.IsLawfulAudio(bytes.NewReader(data))
 			if !lawful {
-				return nil, errors.New("audio type error: " + mt.String())
+				return nil, errors.New("audio type error: " + mt)
 			}
 		}
 		if !global.IsAMRorSILK(data) {
@@ -1291,7 +1272,7 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video, group bool) (
 		return &LocalImageElement{File: fu.Path}, nil
 	}
 	if strings.HasPrefix(f, "base64") && !video {
-		b, err := global.Base64DecodeString(strings.TrimPrefix(f, "base64://"))
+		b, err := param.Base64DecodeString(strings.TrimPrefix(f, "base64://"))
 		if err != nil {
 			return nil, err
 		}

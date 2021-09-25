@@ -18,13 +18,13 @@ import (
 
 var console = bufio.NewReader(os.Stdin)
 
-var readLine = func() (str string) {
+func readLine() (str string) {
 	str, _ = console.ReadString('\n')
 	str = strings.TrimSpace(str)
 	return
 }
 
-var readLineTimeout = func(t time.Duration, de string) (str string) {
+func readLineTimeout(t time.Duration, de string) (str string) {
 	r := make(chan string)
 	go func() {
 		select {
