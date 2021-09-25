@@ -14,6 +14,8 @@ RUN set -ex \
 
 FROM alpine:latest
 
+RUN apk add --no-cache ffmpeg
+
 COPY --from=builder /build/cqhttp /usr/bin/cqhttp
 RUN chmod +x /usr/bin/cqhttp
 
