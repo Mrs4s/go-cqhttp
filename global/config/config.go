@@ -26,6 +26,7 @@ var currentPath = getCurrentPath()
 // DefaultConfigFile 默认配置文件路径
 var DefaultConfigFile = path.Join(currentPath, "config.yml")
 
+// Reconnect 重连配置
 type Reconnect struct {
 	Disabled bool `yaml:"disabled"`
 	Delay    uint `yaml:"delay"`
