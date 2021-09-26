@@ -3,11 +3,14 @@ package base
 
 import (
 	"flag"
+	"os"
+	"path"
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v3"
 
-	"github.com/Mrs4s/go-cqhttp/global/config"
+	"github.com/Mrs4s/go-cqhttp/modules/config"
 )
 
 // command flags
@@ -27,28 +30,36 @@ var (
 	SplitURL            bool // 是否分割URL
 	ForceFragmented     bool // 是否启用强制分片
 	SkipMimeScan        bool // 是否跳过Mime扫描
+	ReportSelfMessage   bool // 是否上报自身消息
 	UseSSOAddress       bool // 是否使用服务器下发的新地址进行重连
 	LogForceNew         bool // 是否在每次启动时强制创建全新的文件储存日志
 	FastStart           bool // 是否为快速启动
 
-	PostFormat   string                 // 上报格式 string or array
-	Proxy        string                 // 存储 proxy_rewrite,用于设置代理
-	PasswordHash [16]byte               // 存储QQ密码哈希供登录使用
-	AccountToken []byte                 // 存储 AccountToken 供登录使用
-	Reconnect    *config.Reconnect      // 重连配置
-	LogAging     = time.Hour * 24 * 365 // 日志时效
+	PostFormat        string                 // 上报格式 string or array
+	Proxy             string                 // 存储 proxy_rewrite,用于设置代理
+	PasswordHash      [16]byte               // 存储QQ密码哈希供登录使用
+	AccountToken      []byte                 // 存储 AccountToken 供登录使用
+	Account           *config.Account        // 账户配置
+	Reconnect         *config.Reconnect      // 重连配置
+	LogLevel          string                 // 日志等级
+	LogAging          = time.Hour * 24 * 365 // 日志时效
+	HeartbeatInterval = time.Second * 5      // 心跳间隔
+
+	Servers  []map[string]yaml.Node // 连接服务列表
+	Database map[string]yaml.Node   // 数据库列表
 )
 
 // Parse parse flags
 func Parse() {
-	flag.StringVar(&LittleC, "c", config.DefaultConfigFile, "configuration filename")
+	wd, _ := os.Getwd()
+	dc := path.Join(wd, "config.yml")
+	flag.StringVar(&LittleC, "c", dc, "configuration filename")
 	flag.BoolVar(&LittleD, "d", false, "running as a daemon")
 	flag.BoolVar(&LittleH, "h", false, "this help")
 	flag.StringVar(&LittleWD, "w", "", "cover the working directory")
 	d := flag.Bool("D", false, "debug mode")
 	flag.Parse()
 
-	config.DefaultConfigFile = LittleC // cover config file
 	if *d {
 		Debug = true
 	}
@@ -56,7 +67,7 @@ func Parse() {
 
 // Init read config from yml file
 func Init() {
-	conf := config.Get()
+	conf := config.Parse(LittleC)
 	{ // bool config
 		if conf.Output.Debug {
 			Debug = true
@@ -67,11 +78,16 @@ func Init() {
 		ExtraReplyData = conf.Message.ExtraReplyData
 		ForceFragmented = conf.Message.ForceFragment
 		SkipMimeScan = conf.Message.SkipMimeScan
+		ReportSelfMessage = conf.Message.ReportSelfMessage
 		UseSSOAddress = conf.Account.UseSSOAddress
 	}
 	{ // others
 		Proxy = conf.Message.ProxyRewrite
+		Account = conf.Account
 		Reconnect = conf.Account.ReLogin
+		Servers = conf.Servers
+		Database = conf.Database
+		LogLevel = conf.Output.LogLevel
 		if conf.Message.PostFormat != "string" && conf.Message.PostFormat != "array" {
 			log.Warnf("post-format 配置错误, 将自动使用 string")
 			PostFormat = "string"
@@ -80,6 +96,12 @@ func Init() {
 		}
 		if conf.Output.LogAging > 0 {
 			LogAging = time.Hour * 24 * time.Duration(conf.Output.LogAging)
+		}
+		if conf.Heartbeat.Interval > 0 {
+			HeartbeatInterval = time.Second * time.Duration(conf.Heartbeat.Interval)
+		}
+		if conf.Heartbeat.Disabled || conf.Heartbeat.Interval < 0 {
+			HeartbeatInterval = 0
 		}
 	}
 }

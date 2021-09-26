@@ -21,7 +21,7 @@ import (
 	"github.com/tidwall/gjson"
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
-	"github.com/Mrs4s/go-cqhttp/global/config"
+	"github.com/Mrs4s/go-cqhttp/modules/config"
 )
 
 type httpServer struct {

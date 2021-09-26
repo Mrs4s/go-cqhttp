@@ -28,10 +28,10 @@ import (
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
-	"github.com/Mrs4s/go-cqhttp/global/config"
 	"github.com/Mrs4s/go-cqhttp/global/terminal"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
 	"github.com/Mrs4s/go-cqhttp/internal/selfupdate"
+	"github.com/Mrs4s/go-cqhttp/modules/config"
 	"github.com/Mrs4s/go-cqhttp/server"
 )
 
@@ -56,9 +56,6 @@ func main() {
 	}
 	base.Init()
 
-	// todo: do all config parse in internal/base?
-	conf := config.Get()
-
 	rotateOptions := []rotatelogs.Option{
 		rotatelogs.WithRotationTime(time.Hour * 24),
 	}
@@ -71,7 +68,7 @@ func main() {
 		log.Errorf("rotatelogs init err: %v", err)
 		panic(err)
 	}
-	log.AddHook(global.NewLocalHook(w, global.LogFormat{}, global.GetLogLevel(conf.Output.LogLevel)...))
+	log.AddHook(global.NewLocalHook(w, global.LogFormat{}, global.GetLogLevel(base.LogLevel)...))
 
 	mkCacheDir := func(path string, _type string) {
 		if !global.PathExists(path) {
@@ -117,7 +114,7 @@ func main() {
 		return
 	}
 
-	if (conf.Account.Uin == 0 || (conf.Account.Password == "" && !conf.Account.Encrypt)) && !global.PathExists("session.token") {
+	if (base.Account.Uin == 0 || (base.Account.Password == "" && !base.Account.Encrypt)) && !global.PathExists("session.token") {
 		log.Warn("账号密码未配置, 将使用二维码登录.")
 		if !base.FastStart {
 			log.Warn("将在 5秒 后继续.")
@@ -145,22 +142,22 @@ func main() {
 		}
 	}
 
-	if conf.Account.Encrypt {
+	if base.Account.Encrypt {
 		if !global.PathExists("password.encrypt") {
-			if conf.Account.Password == "" {
+			if base.Account.Password == "" {
 				log.Error("无法进行加密，请在配置文件中的添加密码后重新启动.")
 				readLine()
 				os.Exit(0)
 			}
 			log.Infof("密码加密已启用, 请输入Key对密码进行加密: (Enter 提交)")
 			byteKey, _ = term.ReadPassword(int(os.Stdin.Fd()))
-			base.PasswordHash = md5.Sum([]byte(conf.Account.Password))
+			base.PasswordHash = md5.Sum([]byte(base.Account.Password))
 			_ = os.WriteFile("password.encrypt", []byte(PasswordHashEncrypt(base.PasswordHash[:], byteKey)), 0o644)
 			log.Info("密码已加密，为了您的账号安全，请删除配置文件中的密码后重新启动.")
 			readLine()
 			os.Exit(0)
 		} else {
-			if conf.Account.Password != "" {
+			if base.Account.Password != "" {
 				log.Error("密码已加密，为了您的账号安全，请删除配置文件中的密码后重新启动.")
 				readLine()
 				os.Exit(0)
@@ -194,8 +191,8 @@ func main() {
 			}
 			copy(base.PasswordHash[:], ph)
 		}
-	} else if len(conf.Account.Password) > 0 {
-		base.PasswordHash = md5.Sum([]byte(conf.Account.Password))
+	} else if len(base.Account.Password) > 0 {
+		base.PasswordHash = md5.Sum([]byte(base.Account.Password))
 	}
 	if !base.FastStart {
 		log.Info("Bot将在5秒后登录并开始信息处理, 按 Ctrl+C 取消.")
@@ -218,7 +215,7 @@ func main() {
 		return "未知"
 	}())
 	cli = newClient()
-	isQRCodeLogin := (conf.Account.Uin == 0 || len(conf.Account.Password) == 0) && !conf.Account.Encrypt
+	isQRCodeLogin := (base.Account.Uin == 0 || len(base.Account.Password) == 0) && !base.Account.Encrypt
 	isTokenLogin := false
 	saveToken := func() {
 		base.AccountToken = cli.GenToken()
@@ -227,11 +224,11 @@ func main() {
 	if global.PathExists("session.token") {
 		token, err := os.ReadFile("session.token")
 		if err == nil {
-			if conf.Account.Uin != 0 {
+			if base.Account.Uin != 0 {
 				r := binary.NewReader(token)
 				cu := r.ReadInt64()
-				if cu != conf.Account.Uin {
-					log.Warnf("警告: 配置文件内的QQ号 (%v) 与缓存内的QQ号 (%v) 不相同", conf.Account.Uin, cu)
+				if cu != base.Account.Uin {
+					log.Warnf("警告: 配置文件内的QQ号 (%v) 与缓存内的QQ号 (%v) 不相同", base.Account.Uin, cu)
 					log.Warnf("1. 使用会话缓存继续.")
 					log.Warnf("2. 删除会话缓存并重启.")
 					log.Warnf("请选择: (5秒后自动选1)")
@@ -255,8 +252,8 @@ func main() {
 			}
 		}
 	}
-	if conf.Account.Uin != 0 && base.PasswordHash != [16]byte{} {
-		cli.Uin = conf.Account.Uin
+	if base.Account.Uin != 0 && base.PasswordHash != [16]byte{} {
+		cli.Uin = base.Account.Uin
 		cli.PasswordMd5 = base.PasswordHash
 	}
 	if !isTokenLogin {
@@ -329,12 +326,12 @@ func main() {
 	log.Infof("开始加载群列表...")
 	global.Check(cli.ReloadGroupList(), true)
 	log.Infof("共加载 %v 个群.", len(cli.GroupList))
-	if uint(conf.Account.Status) >= uint(len(allowStatus)) {
-		conf.Account.Status = 0
+	if uint(base.Account.Status) >= uint(len(allowStatus)) {
+		base.Account.Status = 0
 	}
-	cli.SetOnlineStatus(allowStatus[conf.Account.Status])
-	bot := coolq.NewQQBot(cli, conf)
-	for _, m := range conf.Servers {
+	cli.SetOnlineStatus(allowStatus[base.Account.Status])
+	bot := coolq.NewQQBot(cli)
+	for _, m := range base.Servers {
 		if h, ok := m["http"]; ok {
 			hc := new(config.HTTPServer)
 			if err := h.Decode(hc); err != nil {
