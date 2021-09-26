@@ -34,17 +34,19 @@ type Reconnect struct {
 	Interval int  `yaml:"interval"`
 }
 
+// Account 账号配置
+type Account struct {
+	Uin           int64      `yaml:"uin"`
+	Password      string     `yaml:"password"`
+	Encrypt       bool       `yaml:"encrypt"`
+	Status        int        `yaml:"status"`
+	ReLogin       *Reconnect `yaml:"relogin"`
+	UseSSOAddress bool       `yaml:"use-sso-address"`
+}
+
 // Config 总配置文件
 type Config struct {
-	Account struct {
-		Uin           int64      `yaml:"uin"`
-		Password      string     `yaml:"password"`
-		Encrypt       bool       `yaml:"encrypt"`
-		Status        int        `yaml:"status"`
-		ReLogin       *Reconnect `yaml:"relogin"`
-		UseSSOAddress bool       `yaml:"use-sso-address"`
-	} `yaml:"account"`
-
+	Account   *Account `yaml:"account"`
 	Heartbeat struct {
 		Disabled bool `yaml:"disabled"`
 		Interval int  `yaml:"interval"`
@@ -52,10 +54,10 @@ type Config struct {
 
 	Message struct {
 		PostFormat          string `yaml:"post-format"`
+		ProxyRewrite        string `yaml:"proxy-rewrite"`
 		IgnoreInvalidCQCode bool   `yaml:"ignore-invalid-cqcode"`
 		ForceFragment       bool   `yaml:"force-fragment"`
 		FixURL              bool   `yaml:"fix-url"`
-		ProxyRewrite        string `yaml:"proxy-rewrite"`
 		ReportSelfMessage   bool   `yaml:"report-self-message"`
 		RemoveReplyAt       bool   `yaml:"remove-reply-at"`
 		ExtraReplyData      bool   `yaml:"extra-reply-data"`

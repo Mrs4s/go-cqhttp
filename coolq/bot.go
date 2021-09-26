@@ -24,8 +24,8 @@ import (
 	"github.com/syndtr/goleveldb/leveldb/opt"
 
 	"github.com/Mrs4s/go-cqhttp/global"
-	"github.com/Mrs4s/go-cqhttp/global/config"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
+	"github.com/Mrs4s/go-cqhttp/internal/config"
 )
 
 // CQBot CQBot结构体,存储Bot实例相关配置
@@ -69,12 +69,12 @@ func (e *Event) JSONString() string {
 }
 
 // NewQQBot 初始化一个QQBot实例
-func NewQQBot(cli *client.QQClient, conf *config.Config) *CQBot {
+func NewQQBot(cli *client.QQClient) *CQBot {
 	bot := &CQBot{
 		Client: cli,
 	}
 	enableLevelDB := false
-	node, ok := conf.Database["leveldb"]
+	node, ok := base.Database["leveldb"]
 	if ok {
 		lconf := new(config.LevelDBConfig)
 		_ = node.Decode(lconf)
@@ -96,7 +96,7 @@ func NewQQBot(cli *client.QQClient, conf *config.Config) *CQBot {
 	}
 	bot.Client.OnPrivateMessage(bot.privateMessageEvent)
 	bot.Client.OnGroupMessage(bot.groupMessageEvent)
-	if conf.Message.ReportSelfMessage {
+	if base.ReportSelfMessage {
 		bot.Client.OnSelfPrivateMessage(bot.privateMessageEvent)
 		bot.Client.OnSelfGroupMessage(bot.groupMessageEvent)
 	}
@@ -121,15 +121,11 @@ func NewQQBot(cli *client.QQClient, conf *config.Config) *CQBot {
 	bot.Client.OnOtherClientStatusChanged(bot.otherClientStatusChangedEvent)
 	bot.Client.OnGroupDigest(bot.groupEssenceMsg)
 	go func() {
-		i := conf.Heartbeat.Interval
-		if i < 0 || conf.Heartbeat.Disabled {
+		if base.HeartbeatInterval == 0 {
 			log.Warn("警告: 心跳功能已关闭，若非预期，请检查配置文件。")
 			return
 		}
-		if i == 0 {
-			i = 5
-		}
-		t := time.NewTicker(time.Second * time.Duration(i))
+		t := time.NewTicker(base.HeartbeatInterval)
 		for {
 			<-t.C
 			bot.dispatchEventMessage(global.MSG{
@@ -138,7 +134,7 @@ func NewQQBot(cli *client.QQClient, conf *config.Config) *CQBot {
 				"post_type":       "meta_event",
 				"meta_event_type": "heartbeat",
 				"status":          bot.CQGetStatus()["data"],
-				"interval":        1000 * i,
+				"interval":        base.HeartbeatInterval.Milliseconds(),
 			})
 		}
 	}()
