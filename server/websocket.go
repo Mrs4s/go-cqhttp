@@ -12,7 +12,7 @@ import (
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
-	"github.com/Mrs4s/go-cqhttp/internal/config"
+	"github.com/Mrs4s/go-cqhttp/modules/config"
 
 	"github.com/Mrs4s/MiraiGo/utils"
 	"github.com/gorilla/websocket"

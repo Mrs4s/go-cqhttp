@@ -9,7 +9,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/Mrs4s/go-cqhttp/internal/config"
+	"github.com/Mrs4s/go-cqhttp/modules/config"
 )
 
 // RunPprofServer 启动 pprof 性能分析服务器

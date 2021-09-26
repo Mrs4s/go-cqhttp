@@ -3,12 +3,14 @@ package base
 
 import (
 	"flag"
+	"os"
+	"path"
 	"time"
 
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 
-	"github.com/Mrs4s/go-cqhttp/internal/config"
+	"github.com/Mrs4s/go-cqhttp/modules/config"
 )
 
 // command flags
@@ -49,14 +51,15 @@ var (
 
 // Parse parse flags
 func Parse() {
-	flag.StringVar(&LittleC, "c", config.DefaultConfigFile, "configuration filename")
+	wd, _ := os.Getwd()
+	dc := path.Join(wd, "config.yml")
+	flag.StringVar(&LittleC, "c", dc, "configuration filename")
 	flag.BoolVar(&LittleD, "d", false, "running as a daemon")
 	flag.BoolVar(&LittleH, "h", false, "this help")
 	flag.StringVar(&LittleWD, "w", "", "cover the working directory")
 	d := flag.Bool("D", false, "debug mode")
 	flag.Parse()
 
-	config.DefaultConfigFile = LittleC // cover config file
 	if *d {
 		Debug = true
 	}
@@ -64,7 +67,7 @@ func Parse() {
 
 // Init read config from yml file
 func Init() {
-	conf := config.Get()
+	conf := config.Parse(LittleC)
 	{ // bool config
 		if conf.Output.Debug {
 			Debug = true

@@ -25,7 +25,7 @@ import (
 
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
-	"github.com/Mrs4s/go-cqhttp/internal/config"
+	"github.com/Mrs4s/go-cqhttp/modules/config"
 )
 
 // CQBot CQBot结构体,存储Bot实例相关配置
