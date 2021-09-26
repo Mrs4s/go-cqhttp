@@ -142,6 +142,12 @@ type LevelDBConfig struct {
 	Enable bool `yaml:"enable"`
 }
 
+type MongoDBConfig struct {
+	Enable   bool   `yaml:"enable"`
+	Uri      string `yaml:"uri"`
+	Database string `yaml:"database"`
+}
+
 var (
 	config *Config
 	once   sync.Once

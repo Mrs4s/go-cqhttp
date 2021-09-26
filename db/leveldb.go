@@ -20,7 +20,7 @@ const (
 	private byte = 0x1
 )
 
-func UseLevelDB() IDatabase {
+func UseLevelDB() *LevelDBImpl {
 	gob.Register(StoredMessageAttribute{})
 	gob.Register(QuotedInfo{})
 	gob.Register(global.MSG{})

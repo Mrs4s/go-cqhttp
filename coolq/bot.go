@@ -70,16 +70,25 @@ func NewQQBot(cli *client.QQClient, conf *config.Config) *CQBot {
 	bot := &CQBot{
 		Client: cli,
 	}
-	enableLevelDB := false
-	node, ok := conf.Database["leveldb"]
-	if ok {
-		lconf := new(config.LevelDBConfig)
-		_ = node.Decode(lconf)
-		enableLevelDB = lconf.Enable
-	}
+	levelNode, levelDB := conf.Database["leveldb"]
+	mongoNode, mongoDB := conf.Database["mongodb"]
 	multiDB := db.NewMultiDatabase()
-	if enableLevelDB {
-		multiDB.UseDB(db.UseLevelDB())
+	if levelDB {
+		lconf := new(config.LevelDBConfig)
+		_ = levelNode.Decode(lconf)
+		if lconf.Enable {
+			multiDB.UseDB(db.UseLevelDB())
+		}
+	}
+	if mongoDB {
+		lconf := new(config.MongoDBConfig)
+		_ = mongoNode.Decode(lconf)
+		if lconf.Database == "" {
+			lconf.Database = "gocq-database"
+		}
+		if lconf.Enable {
+			multiDB.UseDB(db.UseMongoDB(lconf.Uri, lconf.Database))
+		}
 	}
 	if err := multiDB.Open(); err != nil {
 		log.Fatalf("打开数据库失败: %v", err)
