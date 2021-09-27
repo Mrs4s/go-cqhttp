@@ -2,8 +2,9 @@ package db
 
 import (
 	"fmt"
-	"github.com/Mrs4s/go-cqhttp/global"
 	"hash/crc32"
+
+	"github.com/Mrs4s/go-cqhttp/global"
 )
 
 type (

@@ -5,13 +5,14 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/Mrs4s/go-cqhttp/db"
 	"io"
 	"os"
 	"path"
 	"runtime/debug"
 	"sync"
 	"time"
+
+	"github.com/Mrs4s/go-cqhttp/db"
 
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/client"

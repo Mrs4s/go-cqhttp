@@ -43,7 +43,7 @@ func check(r io.ReadSeeker, list []string) (bool, string) {
 		return true, ""
 	}
 	_, _ = r.Seek(0, io.SeekStart)
-	defer r.Seek(0, io.SeekStart) // nolint
+	defer r.Seek(0, io.SeekStart)
 	t, err := mimetype.DetectReader(r)
 	if err != nil {
 		logrus.Debugf("扫描 Mime 时出现问题: %v", err)

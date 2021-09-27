@@ -3,12 +3,14 @@ package db
 import (
 	"bytes"
 	"encoding/gob"
+	"path"
+
 	"github.com/Mrs4s/MiraiGo/binary"
-	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/pkg/errors"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/opt"
-	"path"
+
+	"github.com/Mrs4s/go-cqhttp/global"
 )
 
 type LevelDBImpl struct {

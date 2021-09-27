@@ -7,7 +7,6 @@ import (
 	xml2 "encoding/xml"
 	"errors"
 	"fmt"
-	"github.com/Mrs4s/go-cqhttp/db"
 	"io"
 	"math/rand"
 	"net/url"
@@ -17,6 +16,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Mrs4s/go-cqhttp/db"
 
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/message"

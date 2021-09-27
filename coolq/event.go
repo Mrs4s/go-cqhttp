@@ -2,12 +2,13 @@ package coolq
 
 import (
 	"encoding/hex"
-	"github.com/Mrs4s/go-cqhttp/db"
 	"os"
 	"path"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Mrs4s/go-cqhttp/db"
 
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
