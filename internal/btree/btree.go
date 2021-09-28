@@ -12,8 +12,8 @@ import (
 
 const (
 	sha1Size        = 20 // md5 sha1
-	tableSize       = (4096 - 1) / int(unsafe.Sizeof(item{}))
-	cacheSlots      = 23 // prime
+	tableSize       = (2048 - 1) / int(unsafe.Sizeof(item{}))
+	cacheSlots      = 13 // prime
 	superSize       = int(unsafe.Sizeof(super{}))
 	tableStructSize = int(unsafe.Sizeof(table{}))
 )
