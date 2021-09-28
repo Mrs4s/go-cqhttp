@@ -396,7 +396,7 @@ func (bt *Btree) delete(offset int64, hash *byte) int64 {
 	return ret
 }
 
-func (bt *Btree) insertTopLevel(toff *int64, sha1 *byte, data []byte, size int) int64 {
+func (bt *Btree) insertTopLevel(toff *int64, sha1 *byte, data []byte, size int) int64 { // nolint:unparam
 	var off, ret, rc int64
 	if *toff != 0 {
 		ret = bt.insert(*toff, sha1, data, size)
