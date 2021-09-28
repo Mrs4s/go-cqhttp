@@ -2,7 +2,6 @@
 package btree
 
 import (
-	"encoding/binary"
 	"io"
 	"math/rand"
 	"os"
@@ -15,7 +14,7 @@ const (
 	sha1Size        = 20 // md5 sha1
 	tableSize       = (4096 - 1) / int(unsafe.Sizeof(item{}))
 	cacheSlots      = 23 // prime
-	superSize       = unsafe.Sizeof(super{})
+	superSize       = int(unsafe.Sizeof(super{}))
 	tableStructSize = int(unsafe.Sizeof(table{}))
 )
 
@@ -65,7 +64,7 @@ func (bt *Btree) get(offset int64) *table {
 	table := new(table)
 
 	bt.fd.Seek(offset, io.SeekStart)
-	err := binary.Read(bt.fd, binary.LittleEndian, table) // todo(wdvxdr): efficient reading
+	err := readTable(bt.fd, table)
 	if err != nil {
 		panic(errors.Wrap(err, "btree I/O error"))
 	}
@@ -85,7 +84,7 @@ func (bt *Btree) flush(t *table, offset int64) {
 	assert(offset != 0)
 
 	bt.fd.Seek(offset, io.SeekStart)
-	err := binary.Write(bt.fd, binary.LittleEndian, t)
+	err := writeTable(bt.fd, t)
 	if err != nil {
 		panic(errors.Wrap(err, "btree I/O error"))
 	}
@@ -99,7 +98,7 @@ func (bt *Btree) flushSuper() {
 		freeTop: bt.freeTop,
 		alloc:   bt.alloc,
 	}
-	err := binary.Write(bt.fd, binary.LittleEndian, super)
+	err := writeSuper(bt.fd, &super)
 	if err != nil {
 		panic(errors.Wrap(err, "btree I/O error"))
 	}
@@ -115,7 +114,7 @@ func Open(name string) (*Btree, error) {
 	btree.fd = fd
 
 	super := super{}
-	err = binary.Read(fd, binary.LittleEndian, &super)
+	err = readSuper(fd, &super)
 	btree.top = super.top
 	btree.freeTop = super.freeTop
 	btree.alloc = super.alloc
@@ -138,6 +137,7 @@ func Create(name string) (*Btree, error) {
 
 // Close closes the database
 func (bt *Btree) Close() error {
+	_ = bt.fd.Sync()
 	err := bt.fd.Close()
 	for i := 0; i < cacheSlots; i++ {
 		bt.cache[i] = cache{}
@@ -256,10 +256,7 @@ func (bt *Btree) remove(t *table, i int, sha1 *byte) int64 {
 	} else {
 		// memmove(&table->items[i], &table->items[i + 1],
 		//	(table->size - i) * sizeof(struct btree_item));
-		// table->size--;
-		for j := i; j < t.size-i; j++ { // fuck you, go!
-			t.items[j] = t.items[j+1]
-		}
+		copy(t.items[i:], t.items[i+1:])
 		t.size--
 
 		if lc != 0 {
@@ -319,9 +316,9 @@ func (bt *Btree) insert(toff int64, sha1 *byte, data []byte, size int) int64 {
 	}
 
 	table.size++
-	// todo:
 	// memmove(&table->items[i + 1], &table->items[i],
-	// 	(table->size - i) * sizeof(struct btree_item));
+	//  (table->size - i) * sizeof(struct btree_item));
+	copy(table.items[i+1:], table.items[i:])
 	copysha1(&table.items[i].sha1[0], sha1)
 	table.items[i].offset = off
 	table.items[i].child = lc
@@ -340,7 +337,7 @@ func (bt *Btree) insertData(data []byte, size int) int64 {
 	offset := bt.allocChunk(4 + len(data))
 
 	bt.fd.Seek(offset, io.SeekStart)
-	err := binary.Write(bt.fd, binary.LittleEndian, int32(len(data)))
+	err := write32(bt.fd, int32(len(data)))
 	if err != nil {
 		panic(errors.Wrap(err, "btree I/O error"))
 	}
@@ -486,8 +483,7 @@ func (bt *Btree) Get(sha1 *byte) []byte {
 	}
 
 	bt.fd.Seek(off, io.SeekStart)
-	var length int32
-	err := binary.Read(bt.fd, binary.LittleEndian, &length)
+	length, err := read32(bt.fd)
 	if err != nil {
 		return nil
 	}
