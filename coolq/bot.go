@@ -88,7 +88,7 @@ func NewQQBot(cli *client.QQClient) *CQBot {
 			lconf.Database = "gocq-database"
 		}
 		if lconf.Enable {
-			multiDB.UseDB(db.UseMongoDB(lconf.Uri, lconf.Database))
+			multiDB.UseDB(db.UseMongoDB(lconf.URI, lconf.Database))
 		}
 	}
 	if err := multiDB.Open(); err != nil {
@@ -317,7 +317,8 @@ func (bot *CQBot) SendPrivateMessage(target int64, groupID int64, m *message.Sen
 		default:
 			if session == nil && groupID != 0 {
 				msg := bot.Client.SendGroupTempMessage(groupID, target, m)
-				if msg != nil {
+				if msg != nil { // nolint
+					// todo(Mrs4s)
 					// id = bot.InsertTempMessage(target, msg)
 				}
 				break
@@ -327,7 +328,8 @@ func (bot *CQBot) SendPrivateMessage(target int64, groupID int64, m *message.Sen
 				log.Errorf("发送临时会话消息失败: %v", err)
 				break
 			}
-			if msg != nil {
+			if msg != nil { // nolint
+				// todo(Mrs4s)
 				// id = bot.InsertTempMessage(target, msg)
 			}
 		}
@@ -354,7 +356,7 @@ func (bot *CQBot) InsertGroupMessage(m *message.GroupMessage) int32 {
 		return ok
 	})
 	msg := &db.StoredGroupMessage{
-		ID:       encodeMessageId(m.GroupCode, m.Id),
+		ID:       encodeMessageID(m.GroupCode, m.Id),
 		GlobalID: db.ToGlobalID(m.GroupCode, m.Id),
 		SubType:  "normal",
 		Attribute: &db.StoredMessageAttribute{
@@ -377,7 +379,7 @@ func (bot *CQBot) InsertGroupMessage(m *message.GroupMessage) int32 {
 		reply := replyElem.(*message.ReplyElement)
 		msg.SubType = "quote"
 		msg.QuotedInfo = &db.QuotedInfo{
-			PrevID:        encodeMessageId(m.GroupCode, reply.ReplySeq),
+			PrevID:        encodeMessageID(m.GroupCode, reply.ReplySeq),
 			PrevGlobalID:  db.ToGlobalID(m.GroupCode, reply.ReplySeq),
 			QuotedContent: ToMessageContent(reply.Elements),
 		}
@@ -397,7 +399,7 @@ func (bot *CQBot) InsertPrivateMessage(m *message.PrivateMessage) int32 {
 		return ok
 	})
 	msg := &db.StoredPrivateMessage{
-		ID:       encodeMessageId(m.Sender.Uin, m.Id),
+		ID:       encodeMessageID(m.Sender.Uin, m.Id),
 		GlobalID: db.ToGlobalID(m.Sender.Uin, m.Id),
 		SubType:  "normal",
 		Attribute: &db.StoredMessageAttribute{
@@ -420,7 +422,7 @@ func (bot *CQBot) InsertPrivateMessage(m *message.PrivateMessage) int32 {
 		reply := replyElem.(*message.ReplyElement)
 		msg.SubType = "quote"
 		msg.QuotedInfo = &db.QuotedInfo{
-			PrevID:        encodeMessageId(reply.Sender, reply.ReplySeq),
+			PrevID:        encodeMessageID(reply.Sender, reply.ReplySeq),
 			PrevGlobalID:  db.ToGlobalID(reply.Sender, reply.ReplySeq),
 			QuotedContent: ToMessageContent(m.Elements),
 		}
@@ -594,8 +596,8 @@ func (bot *CQBot) uploadMedia(raw message.IMessageElement, target int64, group b
 	return nil, errors.New("unsupported message element type")
 }
 
-// encodeMessageId 临时先这样, 暂时用不上
-func encodeMessageId(target int64, seq int32) string {
+// encodeMessageID 临时先这样, 暂时用不上
+func encodeMessageID(target int64, seq int32) string {
 	return hex.EncodeToString(binary.NewWriterF(func(w *binary.Writer) {
 		w.WriteUInt64(uint64(target))
 		w.WriteUInt32(uint32(seq))

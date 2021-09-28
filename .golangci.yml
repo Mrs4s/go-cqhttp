@@ -78,7 +78,9 @@ run:
   # concurrency: 4 # explicitly omit this value to fully utilize available resources.
   deadline: 5m
   issues-exit-code: 1
-  tests: false
+  skip-dirs:
+    - db
+  tests: true
 
 # output configuration options
 output:

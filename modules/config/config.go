@@ -137,9 +137,10 @@ type LevelDBConfig struct {
 	Enable bool `yaml:"enable"`
 }
 
+// MongoDBConfig mongodb 相关配置
 type MongoDBConfig struct {
 	Enable   bool   `yaml:"enable"`
-	Uri      string `yaml:"uri"`
+	URI      string `yaml:"uri"`
 	Database string `yaml:"database"`
 }
 

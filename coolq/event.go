@@ -107,7 +107,8 @@ func (bot *CQBot) tempMessageEvent(c *client.QQClient, e *client.TempMessageEven
 	cqm := ToStringMessage(m.Elements, 0, true)
 	bot.tempSessionCache.Store(m.Sender.Uin, e.Session)
 	id := m.Id
-	if bot.db != nil {
+	if bot.db != nil { // nolint
+		// todo(Mrs4s)
 		// id = bot.InsertTempMessage(m.Sender.Uin, m)
 	}
 	log.Infof("收到来自群 %v(%v) 内 %v(%v) 的临时会话消息: %v", m.GroupName, m.GroupCode, m.Sender.DisplayName(), m.Sender.Uin, cqm)

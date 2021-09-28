@@ -41,7 +41,7 @@ const bText = `123456789[]&987654321[]&987654321[]&987654321[]&987654321[]&98765
 func BenchmarkCQCodeEscapeText(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		ret := bText
-		ret = CQCodeEscapeText(ret)
+		CQCodeEscapeText(ret)
 	}
 }
 
@@ -50,7 +50,7 @@ func BenchmarkCQCodeEscapeTextBefore(b *testing.B) {
 		ret := bText
 		ret = strings.ReplaceAll(ret, "&", "&amp;")
 		ret = strings.ReplaceAll(ret, "[", "&#91;")
-		ret = strings.ReplaceAll(ret, "]", "&#93;")
+		strings.ReplaceAll(ret, "]", "&#93;")
 	}
 }
 
