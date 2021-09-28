@@ -44,6 +44,7 @@ func TestBtree(t *testing.T) {
 	assert2.NoError(t, bt.Close())
 
 	bt, err = Open(f)
+	assert2.NoError(t, err)
 	for i, tt := range tests {
 		assert2.Equal(t, []byte(tt), bt.Get(sha[i]))
 	}

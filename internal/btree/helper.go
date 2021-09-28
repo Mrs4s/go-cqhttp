@@ -32,7 +32,7 @@ func cmp(a, b *byte) int64 {
 	if *(*uint64)(pa) != *(*uint64)(pb) {
 		return int64(*(*uint64)(pa) - *(*uint64)(pb))
 	}
-	return int64(*(*uint32)(unsafe.Add(pa, 8)) - *(*uint32)(unsafe.Add(pa, 8)))
+	return int64(*(*uint32)(unsafe.Add(pa, 8)) - *(*uint32)(unsafe.Add(pb, 8)))
 }
 
 func copysha1(dst *byte, src *byte) {
