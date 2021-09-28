@@ -138,7 +138,7 @@ func Create(name string) (*Btree, error) {
 
 // Close closes the database
 func (bt *Btree) Close() error {
-	err := bt.Close()
+	err := bt.fd.Close()
 	for i := 0; i < cacheSlots; i++ {
 		bt.cache[i] = cache{}
 	}
@@ -271,7 +271,7 @@ func (bt *Btree) remove(t *table, i int, sha1 *byte) int64 {
 	return offset
 }
 
-func (bt *Btree) insert(toff int64, sha1 *byte, data []byte, len int) int64 {
+func (bt *Btree) insert(toff int64, sha1 *byte, data []byte, size int) int64 {
 	table := bt.get(toff)
 	assert(table.size < tableSize-1)
 
@@ -296,7 +296,7 @@ func (bt *Btree) insert(toff int64, sha1 *byte, data []byte, len int) int64 {
 	lc := table.items[i].child
 	if lc != 0 {
 		/* recursion */
-		ret = bt.insert(lc, sha1, data, len)
+		ret = bt.insert(lc, sha1, data, size)
 
 		/* check if we need to split */
 		child := bt.get(lc)
@@ -314,7 +314,7 @@ func (bt *Btree) insert(toff int64, sha1 *byte, data []byte, len int) int64 {
 		// make sure data is written before a reference is added to it
 		_ = bt.fd.Sync()
 	} else {
-		off = bt.insertData(data, len)
+		off = bt.insertData(data, size)
 		ret = off
 	}
 
@@ -399,10 +399,10 @@ func (bt *Btree) delete(offset int64, hash *byte) int64 {
 	return ret
 }
 
-func (bt *Btree) insertTopLevel(toff *int64, sha1 *byte, data []byte, len int) int64 {
+func (bt *Btree) insertTopLevel(toff *int64, sha1 *byte, data []byte, size int) int64 {
 	var off, ret, rc int64
 	if *toff != 0 {
-		ret = bt.insert(*toff, sha1, data, len)
+		ret = bt.insert(*toff, sha1, data, size)
 
 		/* check if we need to split */
 		table := bt.get(*toff)
@@ -414,7 +414,7 @@ func (bt *Btree) insertTopLevel(toff *int64, sha1 *byte, data []byte, len int) i
 		rc = bt.split(table, sha1, &off)
 		bt.flush(table, *toff)
 	} else {
-		off = bt.insertData(data, len)
+		off = bt.insertData(data, size)
 		ret = off
 	}
 
@@ -471,7 +471,7 @@ func (bt *Btree) Insert(csha1 *byte, data []byte) {
 	var sha1 [sha1Size]byte
 	copysha1(&sha1[0], csha1)
 
-	bt.insertTopLevel(&bt.top, &sha1[0], data, len(data))
+	_ = bt.insertTopLevel(&bt.top, &sha1[0], data, len(data))
 	freeQueued(bt)
 	bt.flushSuper()
 }
