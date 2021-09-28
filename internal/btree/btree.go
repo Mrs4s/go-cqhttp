@@ -12,8 +12,8 @@ import (
 
 const (
 	sha1Size        = 20 // md5 sha1
-	tableSize       = (2048 - 1) / int(unsafe.Sizeof(item{}))
-	cacheSlots      = 13 // prime
+	tableSize       = (1024 - 1) / int(unsafe.Sizeof(item{}))
+	cacheSlots      = 11 // prime
 	superSize       = int(unsafe.Sizeof(super{}))
 	tableStructSize = int(unsafe.Sizeof(table{}))
 )
@@ -40,8 +40,8 @@ type super struct {
 	alloc   int64
 }
 
-// Btree ...
-type Btree struct {
+// DB ...
+type DB struct {
 	fd      *os.File
 	top     int64
 	freeTop int64
@@ -52,61 +52,61 @@ type Btree struct {
 	deleteLarger bool
 }
 
-func (bt *Btree) get(offset int64) *table {
+func (d *DB) get(offset int64) *table {
 	assert(offset != 0)
 
 	// take from cache
-	slot := &bt.cache[offset%cacheSlots]
+	slot := &d.cache[offset%cacheSlots]
 	if slot.offset == offset {
 		return slot.table
 	}
 
 	table := new(table)
 
-	bt.fd.Seek(offset, io.SeekStart)
-	err := readTable(bt.fd, table)
+	d.fd.Seek(offset, io.SeekStart)
+	err := readTable(d.fd, table)
 	if err != nil {
 		panic(errors.Wrap(err, "btree I/O error"))
 	}
 	return table
 }
 
-func (bt *Btree) put(t *table, offset int64) {
+func (d *DB) put(t *table, offset int64) {
 	assert(offset != 0)
 
-	/* overwrite cache */
-	slot := &bt.cache[offset%cacheSlots]
+	// overwrite cache
+	slot := &d.cache[offset%cacheSlots]
 	slot.table = t
 	slot.offset = offset
 }
 
-func (bt *Btree) flush(t *table, offset int64) {
+func (d *DB) flush(t *table, offset int64) {
 	assert(offset != 0)
 
-	bt.fd.Seek(offset, io.SeekStart)
-	err := writeTable(bt.fd, t)
+	d.fd.Seek(offset, io.SeekStart)
+	err := writeTable(d.fd, t)
 	if err != nil {
 		panic(errors.Wrap(err, "btree I/O error"))
 	}
-	bt.put(t, offset)
+	d.put(t, offset)
 }
 
-func (bt *Btree) flushSuper() {
-	bt.fd.Seek(0, io.SeekStart)
+func (d *DB) flushSuper() {
+	d.fd.Seek(0, io.SeekStart)
 	super := super{
-		top:     bt.top,
-		freeTop: bt.freeTop,
-		alloc:   bt.alloc,
+		top:     d.top,
+		freeTop: d.freeTop,
+		alloc:   d.alloc,
 	}
-	err := writeSuper(bt.fd, &super)
+	err := writeSuper(d.fd, &super)
 	if err != nil {
 		panic(errors.Wrap(err, "btree I/O error"))
 	}
 }
 
 // Open opens an existed btree file
-func Open(name string) (*Btree, error) {
-	btree := new(Btree)
+func Open(name string) (*DB, error) {
+	btree := new(DB)
 	fd, err := os.OpenFile(name, os.O_RDWR, 0o644)
 	if err != nil {
 		return nil, errors.Wrap(err, "btree open file failed")
@@ -122,8 +122,8 @@ func Open(name string) (*Btree, error) {
 }
 
 // Create creates a database
-func Create(name string) (*Btree, error) {
-	btree := new(Btree)
+func Create(name string) (*DB, error) {
+	btree := new(DB)
 	fd, err := os.OpenFile(name, os.O_RDWR|os.O_TRUNC|os.O_CREATE, 0o644)
 	if err != nil {
 		return nil, errors.Wrap(err, "btree open file failed")
@@ -136,16 +136,16 @@ func Create(name string) (*Btree, error) {
 }
 
 // Close closes the database
-func (bt *Btree) Close() error {
-	_ = bt.fd.Sync()
-	err := bt.fd.Close()
+func (d *DB) Close() error {
+	_ = d.fd.Sync()
+	err := d.fd.Close()
 	for i := 0; i < cacheSlots; i++ {
-		bt.cache[i] = cache{}
+		d.cache[i] = cache{}
 	}
 	return errors.Wrap(err, "btree close failed")
 }
 
-func collapse(bt *Btree, offset int64) int64 {
+func collapse(bt *DB, offset int64) int64 {
 	table := bt.get(offset)
 	if table.size != 0 {
 		/* unable to collapse */
@@ -165,7 +165,7 @@ func collapse(bt *Btree, offset int64) int64 {
 
 // split a table. The pivot item is stored to 'sha1' and 'offset'.
 // Returns offset to the new table.
-func (bt *Btree) split(t *table, hash *byte, offset *int64) int64 {
+func (d *DB) split(t *table, hash *byte, offset *int64) int64 {
 	copysha1(hash, &t.items[tableSize/2].sha1[0])
 	*offset = t.items[tableSize/2].offset
 
@@ -176,61 +176,61 @@ func (bt *Btree) split(t *table, hash *byte, offset *int64) int64 {
 
 	copy(ntable.items[:ntable.size+1], t.items[tableSize/2+1:])
 
-	noff := bt.allocChunk(tableStructSize)
-	bt.flush(ntable, noff)
+	noff := d.allocChunk(tableStructSize)
+	d.flush(ntable, noff)
 
 	// make sure data is written before a reference is added to it
-	_ = bt.fd.Sync()
+	_ = d.fd.Sync()
 	return noff
 }
 
 // takeSmallest find and remove the smallest item from the given table. The key of the item
 // is stored to 'sha1'. Returns offset to the item
-func (bt *Btree) takeSmallest(toff int64, sha1 *byte) int64 {
-	table := bt.get(toff)
+func (d *DB) takeSmallest(toff int64, sha1 *byte) int64 {
+	table := d.get(toff)
 	assert(table.size > 0)
 
 	var off int64
 	child := table.items[0].child
 	if child == 0 {
-		off = bt.remove(table, 0, sha1)
+		off = d.remove(table, 0, sha1)
 	} else {
 		/* recursion */
-		off = bt.takeSmallest(child, sha1)
-		table.items[0].child = collapse(bt, child)
+		off = d.takeSmallest(child, sha1)
+		table.items[0].child = collapse(d, child)
 	}
-	bt.flush(table, toff)
+	d.flush(table, toff)
 
 	// make sure data is written before a reference is added to it
-	_ = bt.fd.Sync()
+	_ = d.fd.Sync()
 	return off
 }
 
 // takeLargest find and remove the largest item from the given table. The key of the item
 // is stored to 'sha1'. Returns offset to the item
-func (bt *Btree) takeLargest(toff int64, sha1 *byte) int64 {
-	table := bt.get(toff)
+func (d *DB) takeLargest(toff int64, sha1 *byte) int64 {
+	table := d.get(toff)
 	assert(table.size > 0)
 
 	var off int64
 	child := table.items[table.size].child
 	if child == 0 {
-		off = bt.remove(table, table.size-1, sha1)
+		off = d.remove(table, table.size-1, sha1)
 	} else {
 		/* recursion */
-		off = bt.takeLargest(child, sha1)
-		table.items[table.size].child = collapse(bt, child)
+		off = d.takeLargest(child, sha1)
+		table.items[table.size].child = collapse(d, child)
 	}
-	bt.flush(table, toff)
+	d.flush(table, toff)
 
 	// make sure data is written before a reference is added to it
-	_ = bt.fd.Sync()
+	_ = d.fd.Sync()
 	return off
 }
 
 // remove an item in position 'i' from the given table. The key of the
 // removed item is stored to 'sha1'. Returns offset to the item.
-func (bt *Btree) remove(t *table, i int, sha1 *byte) int64 {
+func (d *DB) remove(t *table, i int, sha1 *byte) int64 {
 	assert(i < t.size)
 
 	if sha1 != nil {
@@ -246,11 +246,11 @@ func (bt *Btree) remove(t *table, i int, sha1 *byte) int64 {
 		   child tables */
 		var noff int64
 		if rand.Int()&1 != 0 {
-			noff = bt.takeLargest(lc, &t.items[i].sha1[0])
-			t.items[i].child = collapse(bt, lc)
+			noff = d.takeLargest(lc, &t.items[i].sha1[0])
+			t.items[i].child = collapse(d, lc)
 		} else {
-			noff = bt.takeSmallest(rc, &t.items[i].sha1[0])
-			t.items[i+1].child = collapse(bt, rc)
+			noff = d.takeSmallest(rc, &t.items[i].sha1[0])
+			t.items[i+1].child = collapse(d, rc)
 		}
 		t.items[i].child = noff
 	} else {
@@ -268,8 +268,8 @@ func (bt *Btree) remove(t *table, i int, sha1 *byte) int64 {
 	return offset
 }
 
-func (bt *Btree) insert(toff int64, sha1 *byte, data []byte, size int) int64 {
-	table := bt.get(toff)
+func (d *DB) insert(toff int64, sha1 *byte, data []byte, size int) int64 {
+	table := d.get(toff)
 	assert(table.size < tableSize-1)
 
 	left, right := 0, table.size
@@ -279,7 +279,7 @@ func (bt *Btree) insert(toff int64, sha1 *byte, data []byte, size int) int64 {
 		case cmp == 0:
 			// already in the table
 			ret := table.items[mid].offset
-			bt.put(table, toff)
+			d.put(table, toff)
 			return ret
 		case cmp < 0:
 			right = mid
@@ -293,25 +293,25 @@ func (bt *Btree) insert(toff int64, sha1 *byte, data []byte, size int) int64 {
 	lc := table.items[i].child
 	if lc != 0 {
 		/* recursion */
-		ret = bt.insert(lc, sha1, data, size)
+		ret = d.insert(lc, sha1, data, size)
 
 		/* check if we need to split */
-		child := bt.get(lc)
+		child := d.get(lc)
 		if child.size < tableSize-1 {
 			/* nothing to do */
-			bt.put(table, toff)
-			bt.put(child, lc)
+			d.put(table, toff)
+			d.put(child, lc)
 			return ret
 		}
 		/* overwrites SHA-1 */
-		rc = bt.split(child, sha1, &off)
+		rc = d.split(child, sha1, &off)
 		/* flush just in case changes happened */
-		bt.flush(child, lc)
+		d.flush(child, lc)
 
 		// make sure data is written before a reference is added to it
-		_ = bt.fd.Sync()
+		_ = d.fd.Sync()
 	} else {
-		off = bt.insertData(data, size)
+		off = d.insertData(data, size)
 		ret = off
 	}
 
@@ -324,41 +324,41 @@ func (bt *Btree) insert(toff int64, sha1 *byte, data []byte, size int) int64 {
 	table.items[i].child = lc
 	table.items[i+1].child = rc
 
-	bt.flush(table, toff)
+	d.flush(table, toff)
 	return ret
 }
 
-func (bt *Btree) insertData(data []byte, size int) int64 {
+func (d *DB) insertData(data []byte, size int) int64 {
 	if data == nil {
 		return int64(size)
 	}
 	assert(len(data) == size)
 
-	offset := bt.allocChunk(4 + len(data))
+	offset := d.allocChunk(4 + len(data))
 
-	bt.fd.Seek(offset, io.SeekStart)
-	err := write32(bt.fd, int32(len(data)))
+	d.fd.Seek(offset, io.SeekStart)
+	err := write32(d.fd, int32(len(data)))
 	if err != nil {
 		panic(errors.Wrap(err, "btree I/O error"))
 	}
-	_, err = bt.fd.Write(data)
+	_, err = d.fd.Write(data)
 	if err != nil {
 		panic(errors.Wrap(err, "btree I/O error"))
 	}
 
 	// make sure data is written before a reference is added to it
-	_ = bt.fd.Sync()
+	_ = d.fd.Sync()
 	return offset
 }
 
 // delete remove an item with key 'sha1' from the given table. The offset to the
 // removed item is returned.
 // Please note that 'sha1' is overwritten when called inside the allocator.
-func (bt *Btree) delete(offset int64, hash *byte) int64 {
+func (d *DB) delete(offset int64, hash *byte) int64 {
 	if offset == 0 {
 		return 0
 	}
-	table := bt.get(offset)
+	table := d.get(offset)
 
 	left, right := 0, table.size
 	for left < right {
@@ -366,8 +366,8 @@ func (bt *Btree) delete(offset int64, hash *byte) int64 {
 		switch cmp := cmp(hash, &table.items[i].sha1[0]); {
 		case cmp == 0:
 			// found
-			ret := bt.remove(table, i, hash)
-			bt.flush(table, offset)
+			ret := d.remove(table, i, hash)
+			d.flush(table, offset)
 			return ret
 		case cmp < 0:
 			right = i
@@ -379,39 +379,39 @@ func (bt *Btree) delete(offset int64, hash *byte) int64 {
 	// not found - recursion
 	i := left
 	child := table.items[i].child
-	ret := bt.delete(child, hash)
+	ret := d.delete(child, hash)
 	if ret != 0 {
-		table.items[i].child = collapse(bt, child)
+		table.items[i].child = collapse(d, child)
 	}
 
-	if ret == 0 && bt.deleteLarger && i < table.size {
-		ret = bt.remove(table, i, hash)
+	if ret == 0 && d.deleteLarger && i < table.size {
+		ret = d.remove(table, i, hash)
 	}
 	if ret != 0 {
 		/* flush just in case changes happened */
-		bt.flush(table, offset)
+		d.flush(table, offset)
 	} else {
-		bt.put(table, offset)
+		d.put(table, offset)
 	}
 	return ret
 }
 
-func (bt *Btree) insertTopLevel(toff *int64, sha1 *byte, data []byte, size int) int64 { // nolint:unparam
+func (d *DB) insertTopLevel(toff *int64, sha1 *byte, data []byte, size int) int64 { // nolint:unparam
 	var off, ret, rc int64
 	if *toff != 0 {
-		ret = bt.insert(*toff, sha1, data, size)
+		ret = d.insert(*toff, sha1, data, size)
 
 		/* check if we need to split */
-		table := bt.get(*toff)
+		table := d.get(*toff)
 		if table.size < tableSize-1 {
 			/* nothing to do */
-			bt.put(table, *toff)
+			d.put(table, *toff)
 			return ret
 		}
-		rc = bt.split(table, sha1, &off)
-		bt.flush(table, *toff)
+		rc = d.split(table, sha1, &off)
+		d.flush(table, *toff)
 	} else {
-		off = bt.insertData(data, size)
+		off = d.insertData(data, size)
 		ret = off
 	}
 
@@ -423,21 +423,21 @@ func (bt *Btree) insertTopLevel(toff *int64, sha1 *byte, data []byte, size int) 
 	t.items[0].child = *toff
 	t.items[1].child = rc
 
-	ntoff := bt.allocChunk(tableStructSize)
-	bt.flush(t, ntoff)
+	ntoff := d.allocChunk(tableStructSize)
+	d.flush(t, ntoff)
 
 	*toff = ntoff
 
 	// make sure data is written before a reference is added to it
-	_ = bt.fd.Sync()
+	_ = d.fd.Sync()
 	return ret
 }
 
-func (bt *Btree) lookup(toff int64, sha1 *byte) int64 {
+func (d *DB) lookup(toff int64, sha1 *byte) int64 {
 	if toff == 0 {
 		return 0
 	}
-	table := bt.get(toff)
+	table := d.get(toff)
 
 	left, right := 0, table.size
 	for left < right {
@@ -446,7 +446,7 @@ func (bt *Btree) lookup(toff int64, sha1 *byte) int64 {
 		case cmp == 0:
 			// found
 			ret := table.items[mid].offset
-			bt.put(table, toff)
+			d.put(table, toff)
 			return ret
 		case cmp < 0:
 			right = mid
@@ -457,38 +457,38 @@ func (bt *Btree) lookup(toff int64, sha1 *byte) int64 {
 
 	i := left
 	child := table.items[i].child
-	bt.put(table, toff)
-	return bt.lookup(child, sha1)
+	d.put(table, toff)
+	return d.lookup(child, sha1)
 }
 
 // Insert a new item with key 'sha1' with the contents in 'data' to the
 // database file.
-func (bt *Btree) Insert(csha1 *byte, data []byte) {
+func (d *DB) Insert(csha1 *byte, data []byte) {
 	/* SHA-1 must be in writable memory */
 	var sha1 [sha1Size]byte
 	copysha1(&sha1[0], csha1)
 
-	_ = bt.insertTopLevel(&bt.top, &sha1[0], data, len(data))
-	freeQueued(bt)
-	bt.flushSuper()
+	_ = d.insertTopLevel(&d.top, &sha1[0], data, len(data))
+	freeQueued(d)
+	d.flushSuper()
 }
 
 // Get look up item with the given key 'sha1' in the database file. Length of the
 // item is stored in 'len'. Returns a pointer to the contents of the item.
 // The returned pointer should be released with free() after use.
-func (bt *Btree) Get(sha1 *byte) []byte {
-	off := bt.lookup(bt.top, sha1)
+func (d *DB) Get(sha1 *byte) []byte {
+	off := d.lookup(d.top, sha1)
 	if off == 0 {
 		return nil
 	}
 
-	bt.fd.Seek(off, io.SeekStart)
-	length, err := read32(bt.fd)
+	d.fd.Seek(off, io.SeekStart)
+	length, err := read32(d.fd)
 	if err != nil {
 		return nil
 	}
 	data := make([]byte, length)
-	n, err := io.ReadFull(bt.fd, data)
+	n, err := io.ReadFull(d.fd, data)
 	if err != nil {
 		return nil
 	}
@@ -496,6 +496,6 @@ func (bt *Btree) Get(sha1 *byte) []byte {
 }
 
 // Delete remove item with the given key 'sha1' from the database file.
-func (bt *Btree) Delete(sha1 *byte) error {
+func (d *DB) Delete(sha1 *byte) error {
 	return errors.New("impl me")
 }

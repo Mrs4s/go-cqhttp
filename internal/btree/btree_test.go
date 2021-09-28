@@ -50,3 +50,7 @@ func TestBtree(t *testing.T) {
 	}
 	assert2.NoError(t, bt.Close())
 }
+
+func TestOpen(t *testing.T) {
+	println(tableSize)
+}

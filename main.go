@@ -23,16 +23,17 @@ import (
 	"golang.org/x/crypto/pbkdf2"
 	"golang.org/x/term"
 
-	_ "github.com/Mrs4s/go-cqhttp/modules/mime" // mime检查模块
-	_ "github.com/Mrs4s/go-cqhttp/modules/silk" // silk编码模块
-
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/global/terminal"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
+	"github.com/Mrs4s/go-cqhttp/internal/cache"
 	"github.com/Mrs4s/go-cqhttp/internal/selfupdate"
 	"github.com/Mrs4s/go-cqhttp/modules/config"
 	"github.com/Mrs4s/go-cqhttp/server"
+
+	_ "github.com/Mrs4s/go-cqhttp/modules/mime" // mime检查模块
+	_ "github.com/Mrs4s/go-cqhttp/modules/silk" // silk编码模块
 )
 
 // 允许通过配置文件设置的状态列表
@@ -81,6 +82,7 @@ func main() {
 	mkCacheDir(global.VoicePath, "语音")
 	mkCacheDir(global.VideoPath, "视频")
 	mkCacheDir(global.CachePath, "发送图片")
+	cache.Init()
 
 	var byteKey []byte
 	arg := os.Args

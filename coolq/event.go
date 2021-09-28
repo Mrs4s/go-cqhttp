@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/Mrs4s/go-cqhttp/db"
+	"github.com/Mrs4s/go-cqhttp/internal/cache"
 
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
@@ -548,29 +549,37 @@ func (bot *CQBot) groupDecrease(groupCode, userUin int64, operator *client.Group
 }
 
 func (bot *CQBot) checkMedia(e []message.IMessageElement) {
+	// TODO(wdvxdr): remove these old cache file in v1.0.0
 	for _, elem := range e {
 		switch i := elem.(type) {
 		case *message.GroupImageElement:
+			data := binary.NewWriterF(func(w *binary.Writer) {
+				w.Write(i.Md5)
+				w.WriteUInt32(uint32(i.Size))
+				w.WriteString(i.ImageId)
+				w.WriteString(i.Url)
+			})
 			filename := hex.EncodeToString(i.Md5) + ".image"
-			if !global.PathExists(path.Join(global.ImagePath, filename)) {
-				_ = os.WriteFile(path.Join(global.ImagePath, filename), binary.NewWriterF(func(w *binary.Writer) {
-					w.Write(i.Md5)
-					w.WriteUInt32(uint32(i.Size))
-					w.WriteString(i.ImageId)
-					w.WriteString(i.Url)
-				}), 0o644)
+			if cache.EnableCacheDB {
+				cache.Image.Insert(i.Md5, data)
+			} else if !global.PathExists(path.Join(global.ImagePath, filename)) {
+				_ = os.WriteFile(path.Join(global.ImagePath, filename), data, 0o644)
 			}
 		case *message.FriendImageElement:
+			data := binary.NewWriterF(func(w *binary.Writer) {
+				w.Write(i.Md5)
+				w.WriteUInt32(uint32(i.Size))
+				w.WriteString(i.ImageId)
+				w.WriteString(i.Url)
+			})
 			filename := hex.EncodeToString(i.Md5) + ".image"
-			if !global.PathExists(path.Join(global.ImagePath, filename)) {
-				_ = os.WriteFile(path.Join(global.ImagePath, filename), binary.NewWriterF(func(w *binary.Writer) {
-					w.Write(i.Md5)
-					w.WriteUInt32(uint32(i.Size))
-					w.WriteString(i.ImageId)
-					w.WriteString(i.Url)
-				}), 0o644)
+			if cache.EnableCacheDB {
+				cache.Image.Insert(i.Md5, data)
+			} else if !global.PathExists(path.Join(global.ImagePath, filename)) {
+				_ = os.WriteFile(path.Join(global.ImagePath, filename), data, 0o644)
 			}
 		case *message.VoiceElement:
+			// todo: don't download original file?
 			i.Name = strings.ReplaceAll(i.Name, "{", "")
 			i.Name = strings.ReplaceAll(i.Name, "}", "")
 			if !global.PathExists(path.Join(global.VoicePath, i.Name)) {
@@ -582,16 +591,19 @@ func (bot *CQBot) checkMedia(e []message.IMessageElement) {
 				_ = os.WriteFile(path.Join(global.VoicePath, i.Name), b, 0o644)
 			}
 		case *message.ShortVideoElement:
+			data := binary.NewWriterF(func(w *binary.Writer) {
+				w.Write(i.Md5)
+				w.Write(i.ThumbMd5)
+				w.WriteUInt32(uint32(i.Size))
+				w.WriteUInt32(uint32(i.ThumbSize))
+				w.WriteString(i.Name)
+				w.Write(i.Uuid)
+			})
 			filename := hex.EncodeToString(i.Md5) + ".video"
-			if !global.PathExists(path.Join(global.VideoPath, filename)) {
-				_ = os.WriteFile(path.Join(global.VideoPath, filename), binary.NewWriterF(func(w *binary.Writer) {
-					w.Write(i.Md5)
-					w.Write(i.ThumbMd5)
-					w.WriteUInt32(uint32(i.Size))
-					w.WriteUInt32(uint32(i.ThumbSize))
-					w.WriteString(i.Name)
-					w.Write(i.Uuid)
-				}), 0o644)
+			if cache.EnableCacheDB {
+				cache.Video.Insert(i.Md5, data)
+			} else if !global.PathExists(path.Join(global.VideoPath, filename)) {
+				_ = os.WriteFile(path.Join(global.VideoPath, filename), data, 0o644)
 			}
 			i.Name = filename
 			i.Url = bot.Client.GetShortVideoUrl(i.Uuid, i.Md5)
