@@ -17,16 +17,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Mrs4s/go-cqhttp/db"
-
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/Mrs4s/MiraiGo/utils"
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 
+	"github.com/Mrs4s/go-cqhttp/db"
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
+	"github.com/Mrs4s/go-cqhttp/internal/cache"
 	"github.com/Mrs4s/go-cqhttp/internal/param"
 )
 
@@ -1281,23 +1281,31 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video, group bool) (
 	}
 	rawPath := path.Join(global.ImagePath, f)
 	if video {
+		if strings.HasSuffix(f, ".video") && cache.EnableCacheDB {
+			hash, err := hex.DecodeString(strings.TrimSuffix(f, ".video"))
+			if err == nil {
+				if b := cache.Video.Get(hash); b != nil {
+					return bot.readVideoCache(b), nil
+				}
+			}
+		}
 		rawPath = path.Join(global.VideoPath, f)
 		if !global.PathExists(rawPath) {
 			return nil, errors.New("invalid video")
 		}
-		if path.Ext(rawPath) == ".video" {
-			b, _ := os.ReadFile(rawPath)
-			r := binary.NewReader(b)
-			return &message.ShortVideoElement{ // todo 检查缓存是否有效
-				Md5:       r.ReadBytes(16),
-				ThumbMd5:  r.ReadBytes(16),
-				Size:      r.ReadInt32(),
-				ThumbSize: r.ReadInt32(),
-				Name:      r.ReadString(),
-				Uuid:      r.ReadAvailable(),
-			}, nil
+		if path.Ext(rawPath) != ".video" {
+			return &LocalVideoElement{File: rawPath}, nil
 		}
-		return &LocalVideoElement{File: rawPath}, nil
+		b, _ := os.ReadFile(rawPath)
+		return bot.readVideoCache(b), nil
+	}
+	if strings.HasSuffix(f, ".image") && cache.EnableCacheDB {
+		hash, err := hex.DecodeString(strings.TrimSuffix(f, ".image"))
+		if err == nil {
+			if b := cache.Image.Get(hash); b != nil {
+				return bot.readImageCache(b, group)
+			}
+		}
 	}
 	exist := global.PathExists(rawPath)
 	if !exist && global.PathExists(path.Join(global.ImagePathOld, f)) {
@@ -1317,8 +1325,13 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video, group bool) (
 	if err != nil {
 		return nil, err
 	}
+	return bot.readImageCache(b, group)
+}
+
+func (bot *CQBot) readImageCache(b []byte, group bool) (message.IMessageElement, error) {
+	var err error
 	if len(b) < 20 {
-		return nil, errors.New("invalid local file")
+		return nil, errors.New("invalid cache")
 	}
 	r := binary.NewReader(b)
 	hash := r.ReadBytes(16)
@@ -1348,6 +1361,18 @@ ok:
 		return nil, err
 	}
 	return rsp, nil
+}
+
+func (bot *CQBot) readVideoCache(b []byte) message.IMessageElement {
+	r := binary.NewReader(b)
+	return &message.ShortVideoElement{ // todo 检查缓存是否有效
+		Md5:       r.ReadBytes(16),
+		ThumbMd5:  r.ReadBytes(16),
+		Size:      r.ReadInt32(),
+		ThumbSize: r.ReadInt32(),
+		Name:      r.ReadString(),
+		Uuid:      r.ReadAvailable(),
+	}
 }
 
 // makeShowPic 一种xml 方式发送的群消息图片
