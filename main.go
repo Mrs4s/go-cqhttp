@@ -19,6 +19,7 @@ import (
 	"golang.org/x/term"
 
 	_ "github.com/Mrs4s/go-cqhttp/modules/mime" // mime检查模块
+	"github.com/Mrs4s/go-cqhttp/modules/servers"
 	_ "github.com/Mrs4s/go-cqhttp/modules/silk" // silk编码模块
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
@@ -26,7 +27,6 @@ import (
 	"github.com/Mrs4s/go-cqhttp/global/terminal"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
 	"github.com/Mrs4s/go-cqhttp/internal/selfupdate"
-	"github.com/Mrs4s/go-cqhttp/modules/config"
 	"github.com/Mrs4s/go-cqhttp/server"
 )
 
@@ -325,49 +325,8 @@ func main() {
 		base.Account.Status = 0
 	}
 	cli.SetOnlineStatus(allowStatus[base.Account.Status])
-	bot := coolq.NewQQBot(cli)
-	for _, m := range base.Servers {
-		if h, ok := m["http"]; ok {
-			hc := new(config.HTTPServer)
-			if err := h.Decode(hc); err != nil {
-				log.Warn("读取http配置失败 :", err)
-			} else if !hc.Disabled {
-				go server.RunHTTPServerAndClients(bot, hc)
-			}
-		}
-		if s, ok := m["ws"]; ok {
-			sc := new(config.WebsocketServer)
-			if err := s.Decode(sc); err != nil {
-				log.Warn("读取正向Websocket配置失败 :", err)
-			} else if !sc.Disabled {
-				go server.RunWebSocketServer(bot, sc)
-			}
-		}
-		if c, ok := m["ws-reverse"]; ok {
-			rc := new(config.WebsocketReverse)
-			if err := c.Decode(rc); err != nil {
-				log.Warn("读取反向Websocket配置失败 :", err)
-			} else if !rc.Disabled {
-				go server.RunWebSocketClient(bot, rc)
-			}
-		}
-		if p, ok := m["pprof"]; ok {
-			pc := new(config.PprofServer)
-			if err := p.Decode(pc); err != nil {
-				log.Warn("读取pprof配置失败 :", err)
-			} else if !pc.Disabled {
-				go server.RunPprofServer(pc)
-			}
-		}
-		if p, ok := m["lambda"]; ok {
-			lc := new(config.LambdaServer)
-			if err := p.Decode(lc); err != nil {
-				log.Warn("读取pprof配置失败 :", err)
-			} else if !lc.Disabled {
-				go server.RunLambdaClient(bot, lc)
-			}
-		}
-	}
+
+	servers.Run(coolq.NewQQBot(cli))
 	log.Info("资源初始化完成, 开始处理信息.")
 	log.Info("アトリは、高性能ですから!")
 

@@ -19,6 +19,7 @@ import (
 	"github.com/Mrs4s/MiraiGo/utils"
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
+	"gopkg.in/yaml.v3"
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/modules/config"
@@ -149,13 +150,19 @@ func checkAuth(req *http.Request, token string) int {
 	}
 }
 
-// RunHTTPServerAndClients 启动HTTP服务器与HTTP上报客户端
-func RunHTTPServerAndClients(bot *coolq.CQBot, conf *config.HTTPServer) {
-	var (
-		s    = new(httpServer)
-		addr string
-	)
-	s.accessToken = conf.AccessToken
+// runHTTP 启动HTTP服务器与HTTP上报客户端
+func runHTTP(bot *coolq.CQBot, node yaml.Node) {
+	var conf config.HTTPServer
+	switch err := node.Decode(&conf); {
+	case err != nil:
+		log.Warn("读取http配置失败 :", err)
+		fallthrough
+	case conf.Disabled:
+		return
+	}
+
+	var addr string
+	s := &httpServer{accessToken: conf.AccessToken}
 	if conf.Host == "" || conf.Port == 0 {
 		goto client
 	}

@@ -13,6 +13,7 @@ import (
 
 	"github.com/Mrs4s/MiraiGo/utils"
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v3"
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
@@ -77,8 +78,17 @@ func (l *lambdaResponseWriter) WriteHeader(statusCode int) {
 
 var cli *lambdaClient
 
-// RunLambdaClient  type: [scf,aws]
-func RunLambdaClient(bot *coolq.CQBot, conf *config.LambdaServer) {
+// runLambda  type: [scf,aws]
+func runLambda(bot *coolq.CQBot, node yaml.Node) {
+	var conf config.LambdaServer
+	switch err := node.Decode(&conf); {
+	case err != nil:
+		log.Warn("读取lambda配置失败 :", err)
+		fallthrough
+	case conf.Disabled:
+		return
+	}
+
 	cli = &lambdaClient{
 		lambdaType: conf.Type,
 		client:     http.Client{Timeout: 0},

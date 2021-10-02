@@ -10,6 +10,8 @@ import (
 	"sync"
 	"time"
 
+	"gopkg.in/yaml.v3"
+
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/modules/config"
@@ -54,11 +56,20 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-// RunWebSocketServer 运行一个正向WS server
-func RunWebSocketServer(b *coolq.CQBot, conf *config.WebsocketServer) {
+// runWSServer 运行一个正向WS server
+func runWSServer(b *coolq.CQBot, node yaml.Node) {
+	var conf config.WebsocketServer
+	switch err := node.Decode(&conf); {
+	case err != nil:
+		log.Warn("读取正向Websocket配置失败 :", err)
+		fallthrough
+	case conf.Disabled:
+		return
+	}
+
 	s := &webSocketServer{
 		bot:    b,
-		conf:   conf,
+		conf:   &conf,
 		token:  conf.AccessToken,
 		filter: conf.Filter,
 	}
@@ -77,11 +88,20 @@ func RunWebSocketServer(b *coolq.CQBot, conf *config.WebsocketServer) {
 	}()
 }
 
-// RunWebSocketClient 运行一个正向WS client
-func RunWebSocketClient(b *coolq.CQBot, conf *config.WebsocketReverse) {
+// runWSClient 运行一个反向向WS client
+func runWSClient(b *coolq.CQBot, node yaml.Node) {
+	var conf config.WebsocketReverse
+	switch err := node.Decode(&conf); {
+	case err != nil:
+		log.Warn("读取反向Websocket配置失败 :", err)
+		fallthrough
+	case conf.Disabled:
+		return
+	}
+
 	c := &websocketClient{
 		bot:    b,
-		conf:   conf,
+		conf:   &conf,
 		token:  conf.AccessToken,
 		filter: conf.Filter,
 	}
