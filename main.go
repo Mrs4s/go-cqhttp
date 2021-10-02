@@ -5,13 +5,8 @@ import (
 	"crypto/md5"
 	"crypto/sha1"
 	"encoding/hex"
-	"flag"
-	"fmt"
 	"os"
-	"os/exec"
 	"path"
-	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 
@@ -48,11 +43,11 @@ func main() {
 	base.Parse()
 	switch {
 	case base.LittleH:
-		help()
+		base.Help()
 	case base.LittleD:
 		server.Daemon()
 	case base.LittleWD != "":
-		resetWorkDir()
+		base.ResetWorkingDir()
 	}
 	base.Init()
 
@@ -410,45 +405,6 @@ func PasswordHashDecrypt(encryptedPasswordHash string, key []byte) ([]byte, erro
 	cipher.Decrypt(result, ciphertext)
 
 	return result, nil
-}
-
-// help cli命令行-h的帮助提示
-func help() {
-	fmt.Printf(`go-cqhttp service
-version: %s
-
-Usage:
-
-server [OPTIONS]
-
-Options:
-`, base.Version)
-
-	flag.PrintDefaults()
-	os.Exit(0)
-}
-
-func resetWorkDir() {
-	wd := base.LittleWD
-	args := make([]string, 0, len(os.Args))
-	for i := 1; i < len(os.Args); i++ {
-		if os.Args[i] == "-w" {
-			i++ // skip value field
-		} else if !strings.HasPrefix(os.Args[i], "-w") {
-			args = append(args, os.Args[i])
-		}
-	}
-	p, _ := filepath.Abs(os.Args[0])
-	proc := exec.Command(p, args...)
-	proc.Stdin = os.Stdin
-	proc.Stdout = os.Stdout
-	proc.Stderr = os.Stderr
-	proc.Dir = wd
-	err := proc.Run()
-	if err != nil {
-		panic(err)
-	}
-	os.Exit(0)
 }
 
 func newClient() *client.QQClient {

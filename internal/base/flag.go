@@ -3,8 +3,12 @@ package base
 
 import (
 	"flag"
+	"fmt"
 	"os"
+	"os/exec"
 	"path"
+	"path/filepath"
+	"strings"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -17,7 +21,7 @@ import (
 var (
 	LittleC  string // config file
 	LittleD  bool   // daemon
-	LittleH  bool   // help
+	LittleH  bool   // Help
 	LittleWD string // working directory
 )
 
@@ -55,7 +59,7 @@ func Parse() {
 	dc := path.Join(wd, "config.yml")
 	flag.StringVar(&LittleC, "c", dc, "configuration filename")
 	flag.BoolVar(&LittleD, "d", false, "running as a daemon")
-	flag.BoolVar(&LittleH, "h", false, "this help")
+	flag.BoolVar(&LittleH, "h", false, "this Help")
 	flag.StringVar(&LittleWD, "w", "", "cover the working directory")
 	d := flag.Bool("D", false, "debug mode")
 	flag.Parse()
@@ -104,4 +108,41 @@ func Init() {
 			HeartbeatInterval = 0
 		}
 	}
+}
+
+// Help cli命令行-h的帮助提示
+func Help() {
+	fmt.Printf(`go-cqhttp service
+version: %s
+Usage:
+server [OPTIONS]
+Options:
+`, Version)
+
+	flag.PrintDefaults()
+	os.Exit(0)
+}
+
+// ResetWorkingDir 重设工作路径
+func ResetWorkingDir() {
+	wd := LittleWD
+	args := make([]string, 0, len(os.Args))
+	for i := 1; i < len(os.Args); i++ {
+		if os.Args[i] == "-w" {
+			i++ // skip value field
+		} else if !strings.HasPrefix(os.Args[i], "-w") {
+			args = append(args, os.Args[i])
+		}
+	}
+	p, _ := filepath.Abs(os.Args[0])
+	proc := exec.Command(p, args...)
+	proc.Stdin = os.Stdin
+	proc.Stdout = os.Stdout
+	proc.Stderr = os.Stderr
+	proc.Dir = wd
+	err := proc.Run()
+	if err != nil {
+		panic(err)
+	}
+	os.Exit(0)
 }
