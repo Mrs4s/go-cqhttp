@@ -1,3 +1,4 @@
+// Package cache impl the cache for gocq
 package cache
 
 import (
