@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	sha1Size        = 20 // md5 sha1
+	hashSize        = 16 // md5 hash
 	tableSize       = (1024 - 1) / int(unsafe.Sizeof(item{}))
 	cacheSlots      = 11 // prime
 	superSize       = int(unsafe.Sizeof(super{}))
@@ -19,7 +19,7 @@ const (
 )
 
 type item struct {
-	sha1   [sha1Size]byte
+	hash   [hashSize]byte
 	offset int64
 	child  int64
 }
@@ -46,10 +46,12 @@ type DB struct {
 	top     int64
 	freeTop int64
 	alloc   int64
-	cache   [23]cache
+	cache   [cacheSlots]cache
 
 	inAllocator  bool
 	deleteLarger bool
+	fqueue       [freeQueueLen]chunk
+	fqueueLen    int
 }
 
 func (d *DB) get(offset int64) *table {
@@ -163,10 +165,10 @@ func collapse(bt *DB, offset int64) int64 {
 	return ret
 }
 
-// split a table. The pivot item is stored to 'sha1' and 'offset'.
+// split a table. The pivot item is stored to 'hash' and 'offset'.
 // Returns offset to the new table.
 func (d *DB) split(t *table, hash *byte, offset *int64) int64 {
-	copysha1(hash, &t.items[tableSize/2].sha1[0])
+	copyhash(hash, &t.items[tableSize/2].hash[0])
 	*offset = t.items[tableSize/2].offset
 
 	ntable := new(table)
@@ -185,7 +187,7 @@ func (d *DB) split(t *table, hash *byte, offset *int64) int64 {
 }
 
 // takeSmallest find and remove the smallest item from the given table. The key of the item
-// is stored to 'sha1'. Returns offset to the item
+// is stored to 'hash'. Returns offset to the item
 func (d *DB) takeSmallest(toff int64, sha1 *byte) int64 {
 	table := d.get(toff)
 	assert(table.size > 0)
@@ -207,18 +209,18 @@ func (d *DB) takeSmallest(toff int64, sha1 *byte) int64 {
 }
 
 // takeLargest find and remove the largest item from the given table. The key of the item
-// is stored to 'sha1'. Returns offset to the item
-func (d *DB) takeLargest(toff int64, sha1 *byte) int64 {
+// is stored to 'hash'. Returns offset to the item
+func (d *DB) takeLargest(toff int64, hash *byte) int64 {
 	table := d.get(toff)
 	assert(table.size > 0)
 
 	var off int64
 	child := table.items[table.size].child
 	if child == 0 {
-		off = d.remove(table, table.size-1, sha1)
+		off = d.remove(table, table.size-1, hash)
 	} else {
 		/* recursion */
-		off = d.takeLargest(child, sha1)
+		off = d.takeLargest(child, hash)
 		table.items[table.size].child = collapse(d, child)
 	}
 	d.flush(table, toff)
@@ -229,12 +231,12 @@ func (d *DB) takeLargest(toff int64, sha1 *byte) int64 {
 }
 
 // remove an item in position 'i' from the given table. The key of the
-// removed item is stored to 'sha1'. Returns offset to the item.
-func (d *DB) remove(t *table, i int, sha1 *byte) int64 {
+// removed item is stored to 'hash'. Returns offset to the item.
+func (d *DB) remove(t *table, i int, hash *byte) int64 {
 	assert(i < t.size)
 
-	if sha1 != nil {
-		copysha1(sha1, &t.items[i].sha1[0])
+	if hash != nil {
+		copyhash(hash, &t.items[i].hash[0])
 	}
 
 	offset := t.items[i].offset
@@ -246,10 +248,10 @@ func (d *DB) remove(t *table, i int, sha1 *byte) int64 {
 		   child tables */
 		var noff int64
 		if rand.Int()&1 != 0 {
-			noff = d.takeLargest(lc, &t.items[i].sha1[0])
+			noff = d.takeLargest(lc, &t.items[i].hash[0])
 			t.items[i].child = collapse(d, lc)
 		} else {
-			noff = d.takeSmallest(rc, &t.items[i].sha1[0])
+			noff = d.takeSmallest(rc, &t.items[i].hash[0])
 			t.items[i+1].child = collapse(d, rc)
 		}
 		t.items[i].child = noff
@@ -268,14 +270,14 @@ func (d *DB) remove(t *table, i int, sha1 *byte) int64 {
 	return offset
 }
 
-func (d *DB) insert(toff int64, sha1 *byte, data []byte, size int) int64 {
+func (d *DB) insert(toff int64, hash *byte, data []byte, size int) int64 {
 	table := d.get(toff)
 	assert(table.size < tableSize-1)
 
 	left, right := 0, table.size
 	for left < right {
 		mid := (right-left)>>1 + left
-		switch cmp := cmp(sha1, &table.items[mid].sha1[0]); {
+		switch cmp := cmp(hash, &table.items[mid].hash[0]); {
 		case cmp == 0:
 			// already in the table
 			ret := table.items[mid].offset
@@ -293,7 +295,7 @@ func (d *DB) insert(toff int64, sha1 *byte, data []byte, size int) int64 {
 	lc := table.items[i].child
 	if lc != 0 {
 		/* recursion */
-		ret = d.insert(lc, sha1, data, size)
+		ret = d.insert(lc, hash, data, size)
 
 		/* check if we need to split */
 		child := d.get(lc)
@@ -304,7 +306,7 @@ func (d *DB) insert(toff int64, sha1 *byte, data []byte, size int) int64 {
 			return ret
 		}
 		/* overwrites SHA-1 */
-		rc = d.split(child, sha1, &off)
+		rc = d.split(child, hash, &off)
 		/* flush just in case changes happened */
 		d.flush(child, lc)
 
@@ -319,7 +321,7 @@ func (d *DB) insert(toff int64, sha1 *byte, data []byte, size int) int64 {
 	// memmove(&table->items[i + 1], &table->items[i],
 	//  (table->size - i) * sizeof(struct btree_item));
 	copy(table.items[i+1:], table.items[i:])
-	copysha1(&table.items[i].sha1[0], sha1)
+	copyhash(&table.items[i].hash[0], hash)
 	table.items[i].offset = off
 	table.items[i].child = lc
 	table.items[i+1].child = rc
@@ -351,9 +353,9 @@ func (d *DB) insertData(data []byte, size int) int64 {
 	return offset
 }
 
-// delete remove an item with key 'sha1' from the given table. The offset to the
+// delete remove an item with key 'hash' from the given table. The offset to the
 // removed item is returned.
-// Please note that 'sha1' is overwritten when called inside the allocator.
+// Please note that 'hash' is overwritten when called inside the allocator.
 func (d *DB) delete(offset int64, hash *byte) int64 {
 	if offset == 0 {
 		return 0
@@ -363,7 +365,7 @@ func (d *DB) delete(offset int64, hash *byte) int64 {
 	left, right := 0, table.size
 	for left < right {
 		i := (right-left)>>1 + left
-		switch cmp := cmp(hash, &table.items[i].sha1[0]); {
+		switch cmp := cmp(hash, &table.items[i].hash[0]); {
 		case cmp == 0:
 			// found
 			ret := d.remove(table, i, hash)
@@ -396,10 +398,10 @@ func (d *DB) delete(offset int64, hash *byte) int64 {
 	return ret
 }
 
-func (d *DB) insertTopLevel(toff *int64, sha1 *byte, data []byte, size int) int64 { // nolint:unparam
+func (d *DB) insertTopLevel(toff *int64, hash *byte, data []byte, size int) int64 { // nolint:unparam
 	var off, ret, rc int64
 	if *toff != 0 {
-		ret = d.insert(*toff, sha1, data, size)
+		ret = d.insert(*toff, hash, data, size)
 
 		/* check if we need to split */
 		table := d.get(*toff)
@@ -408,7 +410,7 @@ func (d *DB) insertTopLevel(toff *int64, sha1 *byte, data []byte, size int) int6
 			d.put(table, *toff)
 			return ret
 		}
-		rc = d.split(table, sha1, &off)
+		rc = d.split(table, hash, &off)
 		d.flush(table, *toff)
 	} else {
 		off = d.insertData(data, size)
@@ -418,7 +420,7 @@ func (d *DB) insertTopLevel(toff *int64, sha1 *byte, data []byte, size int) int6
 	/* create new top level table */
 	t := new(table)
 	t.size = 1
-	copysha1(&t.items[0].sha1[0], sha1)
+	copyhash(&t.items[0].hash[0], hash)
 	t.items[0].offset = off
 	t.items[0].child = *toff
 	t.items[1].child = rc
@@ -433,7 +435,7 @@ func (d *DB) insertTopLevel(toff *int64, sha1 *byte, data []byte, size int) int6
 	return ret
 }
 
-func (d *DB) lookup(toff int64, sha1 *byte) int64 {
+func (d *DB) lookup(toff int64, hash *byte) int64 {
 	if toff == 0 {
 		return 0
 	}
@@ -442,7 +444,7 @@ func (d *DB) lookup(toff int64, sha1 *byte) int64 {
 	left, right := 0, table.size
 	for left < right {
 		mid := (right-left)>>1 + left
-		switch cmp := cmp(sha1, &table.items[mid].sha1[0]); {
+		switch cmp := cmp(hash, &table.items[mid].hash[0]); {
 		case cmp == 0:
 			// found
 			ret := table.items[mid].offset
@@ -458,26 +460,26 @@ func (d *DB) lookup(toff int64, sha1 *byte) int64 {
 	i := left
 	child := table.items[i].child
 	d.put(table, toff)
-	return d.lookup(child, sha1)
+	return d.lookup(child, hash)
 }
 
-// Insert a new item with key 'sha1' with the contents in 'data' to the
+// Insert a new item with key 'hash' with the contents in 'data' to the
 // database file.
-func (d *DB) Insert(csha1 *byte, data []byte) {
+func (d *DB) Insert(chash *byte, data []byte) {
 	/* SHA-1 must be in writable memory */
-	var sha1 [sha1Size]byte
-	copysha1(&sha1[0], csha1)
+	var hash [hashSize]byte
+	copyhash(&hash[0], chash)
 
-	_ = d.insertTopLevel(&d.top, &sha1[0], data, len(data))
+	_ = d.insertTopLevel(&d.top, &hash[0], data, len(data))
 	freeQueued(d)
 	d.flushSuper()
 }
 
-// Get look up item with the given key 'sha1' in the database file. Length of the
+// Get look up item with the given key 'hash' in the database file. Length of the
 // item is stored in 'len'. Returns a pointer to the contents of the item.
 // The returned pointer should be released with free() after use.
-func (d *DB) Get(sha1 *byte) []byte {
-	off := d.lookup(d.top, sha1)
+func (d *DB) Get(hash *byte) []byte {
+	off := d.lookup(d.top, hash)
 	if off == 0 {
 		return nil
 	}
@@ -495,7 +497,7 @@ func (d *DB) Get(sha1 *byte) []byte {
 	return data[:n]
 }
 
-// Delete remove item with the given key 'sha1' from the database file.
+// Delete remove item with the given key 'hash' from the database file.
 func (d *DB) Delete(sha1 *byte) error {
 	return errors.New("impl me")
 }

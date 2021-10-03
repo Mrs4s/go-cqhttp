@@ -21,7 +21,7 @@ func power2(val int) int {
 	return i
 }
 
-// helpers for sha1
+// helpers for hash
 
 func cmp(a, b *byte) int64 {
 	pa, pb := unsafe.Pointer(a), unsafe.Pointer(b)
@@ -29,20 +29,17 @@ func cmp(a, b *byte) int64 {
 		return int64(*(*uint64)(pa) - *(*uint64)(pb))
 	}
 	pa, pb = unsafe.Add(pa, 8), unsafe.Add(pb, 8)
-	if *(*uint64)(pa) != *(*uint64)(pb) {
-		return int64(*(*uint64)(pa) - *(*uint64)(pb))
-	}
-	return int64(*(*uint32)(unsafe.Add(pa, 8)) - *(*uint32)(unsafe.Add(pb, 8)))
+	return int64(*(*uint64)(pa) - *(*uint64)(pb))
 }
 
-func copysha1(dst *byte, src *byte) {
+func copyhash(dst *byte, src *byte) {
 	pa, pb := unsafe.Pointer(dst), unsafe.Pointer(src)
-	*(*[sha1Size]byte)(pa) = *(*[sha1Size]byte)(pb)
+	*(*[hashSize]byte)(pa) = *(*[hashSize]byte)(pb)
 }
 
-func resetsha1(sha1 *byte) {
+func resethash(sha1 *byte) {
 	p := unsafe.Pointer(sha1)
-	*(*[sha1Size]byte)(p) = [sha1Size]byte{}
+	*(*[hashSize]byte)(p) = [hashSize]byte{}
 }
 
 // reading table

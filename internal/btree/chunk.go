@@ -12,18 +12,12 @@ type chunk struct {
 
 const freeQueueLen = 64
 
-// todo(wdvxdr): move this to btree?
-var (
-	fqueue    [freeQueueLen]chunk
-	fqueueLen = 0
-)
-
 func freeQueued(bt *DB) {
-	for i := 0; i < fqueueLen; i++ {
-		chunk := &fqueue[i]
+	for i := 0; i < bt.fqueueLen; i++ {
+		chunk := &bt.fqueue[i]
 		bt.freeChunk(chunk.offset, chunk.len)
 	}
-	fqueueLen = 0
+	bt.fqueueLen = 0
 }
 
 func (d *DB) allocChunk(size int) int64 {
@@ -36,10 +30,10 @@ func (d *DB) allocChunk(size int) int64 {
 		const i32s = unsafe.Sizeof(int32(0))
 
 		/* create fake size SHA-1 */
-		var sha1 [sha1Size]byte
+		var sha1 [hashSize]byte
 		p := unsafe.Pointer(&sha1[0])
-		*(*int32)(p) = -1                              // *(uint32_t *) sha1 = -1;
-		*(*uint32)(unsafe.Add(p, i32s)) = uint32(size) // ((__be32 *) sha1)[1] = to_be32(size);
+		*(*int32)(p) = -1                              // *(uint32_t *) hash = -1;
+		*(*uint32)(unsafe.Add(p, i32s)) = uint32(size) // ((__be32 *) hash)[1] = to_be32(size);
 
 		/* find free chunk with the larger or the same size/SHA-1 */
 		d.inAllocator = true
@@ -47,13 +41,13 @@ func (d *DB) allocChunk(size int) int64 {
 		offset = d.delete(d.freeTop, &sha1[0])
 		d.deleteLarger = false
 		if offset != 0 {
-			assert(*(*int32)(p) == -1)                   // assert(*(uint32_t *) sha1 == (uint32_t) -1)
-			flen := int(*(*uint32)(unsafe.Add(p, i32s))) // size_t free_len = from_be32(((__be32 *) sha1)[1])
+			assert(*(*int32)(p) == -1)                   // assert(*(uint32_t *) hash == (uint32_t) -1)
+			flen := int(*(*uint32)(unsafe.Add(p, i32s))) // size_t free_len = from_be32(((__be32 *) hash)[1])
 			assert(power2(flen) == flen)
 			assert(flen >= size)
 
 			/* delete buddy information */
-			resetsha1(&sha1[0])
+			resethash(&sha1[0])
 			*(*int64)(p) = offset
 			buddyLen := d.delete(d.freeTop, &sha1[0])
 			assert(buddyLen == int64(size))
@@ -95,28 +89,28 @@ func (d *DB) freeChunk(offset int64, size int) {
 	assert(offset&int64(size-1) == 0)
 
 	if d.inAllocator {
-		chunk := &fqueue[fqueueLen]
-		fqueueLen++
+		chunk := &d.fqueue[d.fqueueLen]
+		d.fqueueLen++
 		chunk.offset = offset
 		chunk.len = size
 		return
 	}
 
 	/* create fake offset SHA-1 for buddy allocation */
-	var sha1 [sha1Size]byte
+	var sha1 [hashSize]byte
 	p := unsafe.Pointer(&sha1[0])
 	d.inAllocator = true
 
 	const i32s = unsafe.Sizeof(int32(0))
 
 	/* add buddy information */
-	resetsha1(&sha1[0])
-	*(*int32)(p) = -1                                 // *(uint32_t *) sha1 = -1;
-	*(*uint32)(unsafe.Add(p, i32s)) = uint32(size)    // ((__be32 *) sha1)[1] = to_be32(size);
+	resethash(&sha1[0])
+	*(*int32)(p) = -1                                 // *(uint32_t *) hash = -1;
+	*(*uint32)(unsafe.Add(p, i32s)) = uint32(size)    // ((__be32 *) hash)[1] = to_be32(size);
 	*(*uint32)(unsafe.Add(p, i32s*2)) = rand.Uint32() /* to make SHA-1 unique */
 	*(*uint32)(unsafe.Add(p, i32s*3)) = rand.Uint32()
 
-	// insert_toplevel(btree, &btree->free_top, sha1, NULL, offset);
+	// insert_toplevel(btree, &btree->free_top, hash, NULL, offset);
 	_ = d.insertTopLevel(&d.freeTop, &sha1[0], nil, int(offset))
 	d.inAllocator = false
 

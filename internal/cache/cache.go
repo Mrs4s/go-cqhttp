@@ -28,15 +28,12 @@ type Cache struct {
 	db   *btree.DB
 }
 
-// TODO(wdvxdr): cache use md5 key, but btree use sha1 key,
-//               maybe we can unify to md5 to save some space.
-
 // Insert 添加媒体缓存
 func (c *Cache) Insert(md5, data []byte) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
-	var hash [20]byte
+	var hash [16]byte
 	copy(hash[:], md5)
 	c.db.Insert(&hash[0], data)
 }
@@ -46,7 +43,7 @@ func (c *Cache) Get(md5 []byte) []byte {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 
-	var hash [20]byte
+	var hash [16]byte
 	copy(hash[:], md5)
 	return c.db.Get(&hash[0])
 }
