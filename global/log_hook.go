@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/gookit/color"
+	"github.com/mattn/go-colorable"
 	"github.com/sirupsen/logrus"
 )
 
@@ -88,6 +88,8 @@ func (hook *LocalHook) SetFormatter(consoleFormatter, fileFormatter logrus.Forma
 	consoleFormatter = tryChangeFormatter(consoleFormatter)
 	fileFormatter = tryChangeFormatter(fileFormatter)
 
+	// 支持处理windows平台的console色彩
+	logrus.SetOutput(colorable.NewColorableStdout())
 	// 用于在console写出
 	logrus.SetFormatter(consoleFormatter)
 	// 用于写入文件
@@ -210,21 +212,28 @@ func (f LogFormat) Format(entry *logrus.Entry) ([]byte, error) {
 	buf.WriteString(" \n")
 
 	if f.EnableColor {
-		buf.WriteString(color.ResetSet)
+		buf.WriteString(ResetSet)
 	}
 
 	ret := append([]byte(nil), buf.Bytes()...) // copy buffer
 	return ret, nil
 }
 
+// 为了不引入新依赖，直接将对应库需要的部分复制过来了，具体可参考 github.com\gookit\color@v1.4.2\color.go
+const ResetSet = "\x1b[0m"
+
+const (
+	SettingTpl = "\x1b[%sm"
+)
+
 var (
-	colorCodePanic = fmt.Sprintf(color.SettingTpl, color.Style{color.Bold, color.Red}.String())
-	colorCodeFatal = fmt.Sprintf(color.SettingTpl, color.Style{color.Bold, color.Red}.String())
-	colorCodeError = fmt.Sprintf(color.SettingTpl, color.Style{color.Red}.String())
-	colorCodeWarn  = fmt.Sprintf(color.SettingTpl, color.Style{color.Yellow}.String())
-	colorCodeInfo  = fmt.Sprintf(color.SettingTpl, color.Style{color.Green}.String())
-	colorCodeDebug = fmt.Sprintf(color.SettingTpl, color.Style{color.White}.String())
-	colorCodeTrace = fmt.Sprintf(color.SettingTpl, color.Style{color.Cyan}.String())
+	colorCodePanic = fmt.Sprintf(SettingTpl, "1;31") // color.Style{color.Bold, color.Red}.String()
+	colorCodeFatal = fmt.Sprintf(SettingTpl, "1;31") // color.Style{color.Bold, color.Red}.String()
+	colorCodeError = fmt.Sprintf(SettingTpl, "31")   // color.Style{color.Red}.String()
+	colorCodeWarn  = fmt.Sprintf(SettingTpl, "33")   // color.Style{color.Yellow}.String()
+	colorCodeInfo  = fmt.Sprintf(SettingTpl, "32")   // color.Style{color.Green}.String()
+	colorCodeDebug = fmt.Sprintf(SettingTpl, "37")   // color.Style{color.White}.String()
+	colorCodeTrace = fmt.Sprintf(SettingTpl, "36")   // color.Style{color.Cyan}.String()
 )
 
 // GetLogLevelColorCode 获取日志等级对应色彩code
