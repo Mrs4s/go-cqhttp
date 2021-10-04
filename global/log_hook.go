@@ -220,9 +220,12 @@ func (f LogFormat) Format(entry *logrus.Entry) ([]byte, error) {
 }
 
 // 为了不引入新依赖，直接将对应库需要的部分复制过来了，具体可参考 github.com\gookit\color@v1.4.2\color.go
+
+// ResetSet 重置色彩 ansi code
 const ResetSet = "\x1b[0m"
 
 const (
+	// SettingTpl 开始色彩 ansi code
 	SettingTpl = "\x1b[%sm"
 )
 
