@@ -68,7 +68,10 @@ func main() {
 		log.Errorf("rotatelogs init err: %v", err)
 		panic(err)
 	}
-	log.AddHook(global.NewLocalHook(w, global.LogFormat{}, global.GetLogLevel(base.LogLevel)...))
+
+	consoleFormatter := global.LogFormat{EnableColor: true}
+	fileFormatter := global.LogFormat{EnableColor: false}
+	log.AddHook(global.NewLocalHook(w, consoleFormatter, fileFormatter, global.GetLogLevel(base.LogLevel)...))
 
 	mkCacheDir := func(path string, _type string) {
 		if !global.PathExists(path) {
