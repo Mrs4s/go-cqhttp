@@ -2,6 +2,7 @@
 package cache
 
 import (
+	"fmt"
 	"sync"
 
 	log "github.com/sirupsen/logrus"
@@ -18,8 +19,8 @@ var EnableCacheDB bool
 
 // Media Cache DBs
 var (
-	Image *Cache
-	Video *Cache
+	Image Cache
+	Video Cache
 	// todo: Voice?
 )
 
@@ -61,29 +62,24 @@ func Init() {
 	if err != nil {
 		log.Fatalf("failed to read cache config: %v", err)
 	}
-	if conf == nil {
-		conf = make(map[string]string)
-	}
-	if conf["image"] == "" {
-		conf["image"] = "data/image.db"
-	}
-	if conf["video"] == "" {
-		conf["video"] = "data/video.db"
-	}
 
-	var open = func(typ string, cache **Cache) {
-		if global.PathExists(conf[typ]) {
-			db, err := btree.Open(conf[typ])
+	var open = func(typ string, cache *Cache) {
+		file := conf[typ]
+		if file == "" {
+			file = fmt.Sprintf("data/%s.db", typ)
+		}
+		if global.PathExists(file) {
+			db, err := btree.Open(file)
 			if err != nil {
 				log.Fatalf("open %s cache failed: %v", typ, err)
 			}
-			*cache = &Cache{db: db}
+			cache.db = db
 		} else {
-			db, err := btree.Create(conf[typ])
+			db, err := btree.Create(file)
 			if err != nil {
 				log.Fatalf("create %s cache failed: %v", typ, err)
 			}
-			*cache = &Cache{db: db}
+			cache.db = db
 		}
 	}
 	open("image", &Image)
