@@ -5,7 +5,6 @@ import (
 	"context"
 	"os"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
@@ -76,7 +75,7 @@ func longPolling(bot *coolq.CQBot, maxSize int) handler {
 			return nil
 		}
 		var (
-			ok      int32
+			once    sync.Once
 			ch      = make(chan []interface{}, 1)
 			timeout = time.Duration(p.Get("timeout").Int()) * time.Second
 		)
@@ -87,7 +86,7 @@ func longPolling(bot *coolq.CQBot, maxSize int) handler {
 			if queue.Len() == 0 {
 				cond.Wait()
 			}
-			if atomic.CompareAndSwapInt32(&ok, 0, 1) {
+			once.Do(func() {
 				limit := int(p.Get("limit").Int())
 				if limit <= 0 || queue.Len() < limit {
 					limit = queue.Len()
@@ -97,12 +96,12 @@ func longPolling(bot *coolq.CQBot, maxSize int) handler {
 					ret[i] = queue.Remove(queue.Front())
 				}
 				ch <- ret
-			}
+			})
 		}()
 		if timeout != 0 {
 			select {
 			case <-time.After(timeout):
-				atomic.StoreInt32(&ok, 1)
+				once.Do(func() {})
 				return coolq.OK([]interface{}{})
 			case ret := <-ch:
 				return coolq.OK(ret)

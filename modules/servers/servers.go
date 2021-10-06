@@ -1,3 +1,4 @@
+// Package servers provide servers register
 package servers
 
 import (
