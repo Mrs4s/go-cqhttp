@@ -22,6 +22,8 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
+	"github.com/Mrs4s/go-cqhttp/global"
+	"github.com/Mrs4s/go-cqhttp/internal/base"
 	"github.com/Mrs4s/go-cqhttp/modules/config"
 )
 
@@ -115,14 +117,21 @@ func (s *httpServer) ServeHTTP(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	action := strings.TrimPrefix(request.URL.Path, "/")
-	action = strings.TrimSuffix(action, "_async")
-	log.Debugf("HTTPServer接收到API调用: %v", action)
-	ret := s.api.callAPI(action, &ctx)
+	var response global.MSG
+	if base.AcceptOneBotV12HTTPEndPoint && request.URL.Path == "/" {
+		action := strings.TrimSuffix(ctx.Get("action").Str, "_async")
+		log.Debugf("HTTPServer接收到API调用: %v", action)
+		response = s.api.callAPI(action, ctx.Get("params"))
+	} else {
+		action := strings.TrimPrefix(request.URL.Path, "/")
+		action = strings.TrimSuffix(action, "_async")
+		log.Debugf("HTTPServer接收到API调用: %v", action)
+		response = s.api.callAPI(action, &ctx)
+	}
 
 	writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 	writer.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(writer).Encode(ret)
+	_ = json.NewEncoder(writer).Encode(response)
 }
 
 func checkAuth(req *http.Request, token string) int {
