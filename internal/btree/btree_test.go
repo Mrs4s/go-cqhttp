@@ -9,7 +9,7 @@ import (
 )
 
 func tempfile(t *testing.T) string {
-	temp, err := os.CreateTemp("", "temp.*.db")
+	temp, err := os.CreateTemp(".", "temp.*.db")
 	assert2.NoError(t, temp.Close())
 	assert2.NoError(t, err)
 	return temp.Name()
@@ -48,9 +48,14 @@ func TestBtree(t *testing.T) {
 	for i, tt := range tests {
 		assert2.Equal(t, []byte(tt), bt.Get(sha[i]))
 	}
-	assert2.NoError(t, bt.Close())
-}
 
-func TestOpen(t *testing.T) {
-	println(tableSize)
+	for i := range tests {
+		assert2.NoError(t, bt.Delete(sha[i]))
+	}
+
+	for i := range tests {
+		assert2.Equal(t, []byte(nil), bt.Get(sha[i]))
+	}
+
+	assert2.NoError(t, bt.Close())
 }

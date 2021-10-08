@@ -50,6 +50,16 @@ func (c *Cache) Get(md5 []byte) []byte {
 	return c.db.Get(&hash[0])
 }
 
+// Delete 删除指定缓存
+func (c *Cache) Delete(md5 []byte) {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
+	var hash [16]byte
+	copy(hash[:], md5)
+	_ = c.db.Delete(&hash[0])
+}
+
 // Init 初始化 Cache
 func Init() {
 	node, ok := base.Database["cache"]

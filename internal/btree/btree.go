@@ -498,6 +498,27 @@ func (d *DB) Get(hash *byte) []byte {
 }
 
 // Delete remove item with the given key 'hash' from the database file.
-func (d *DB) Delete(sha1 *byte) error {
-	return errors.New("impl me")
+func (d *DB) Delete(hash *byte) error {
+	var h [hashSize]byte
+	copyhash(&h[0], hash)
+
+	off := d.delete(d.top, &h[0])
+	if off == 0 {
+		return nil // not found key
+	}
+
+	d.top = collapse(d, d.top)
+	freeQueued(d)
+	d.flushSuper()
+
+	d.fd.Seek(off, io.SeekStart)
+	length, err := read32(d.fd) // len: 0
+	if err != nil {
+		return errors.Wrap(err, "btree I/O error")
+	}
+
+	d.freeChunk(off, int(length+4))
+	freeQueued(d)
+	d.flushSuper()
+	return nil
 }
