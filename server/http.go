@@ -19,8 +19,11 @@ import (
 	"github.com/Mrs4s/MiraiGo/utils"
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
+	"gopkg.in/yaml.v3"
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
+	"github.com/Mrs4s/go-cqhttp/global"
+	"github.com/Mrs4s/go-cqhttp/internal/base"
 	"github.com/Mrs4s/go-cqhttp/modules/config"
 )
 
@@ -114,14 +117,21 @@ func (s *httpServer) ServeHTTP(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	action := strings.TrimPrefix(request.URL.Path, "/")
-	action = strings.TrimSuffix(action, "_async")
-	log.Debugf("HTTPServer接收到API调用: %v", action)
-	ret := s.api.callAPI(action, &ctx)
+	var response global.MSG
+	if base.AcceptOneBotV12HTTPEndPoint && request.URL.Path == "/" {
+		action := strings.TrimSuffix(ctx.Get("action").Str, "_async")
+		log.Debugf("HTTPServer接收到API调用: %v", action)
+		response = s.api.callAPI(action, ctx.Get("params"))
+	} else {
+		action := strings.TrimPrefix(request.URL.Path, "/")
+		action = strings.TrimSuffix(action, "_async")
+		log.Debugf("HTTPServer接收到API调用: %v", action)
+		response = s.api.callAPI(action, &ctx)
+	}
 
 	writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 	writer.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(writer).Encode(ret)
+	_ = json.NewEncoder(writer).Encode(response)
 }
 
 func checkAuth(req *http.Request, token string) int {
@@ -149,13 +159,19 @@ func checkAuth(req *http.Request, token string) int {
 	}
 }
 
-// RunHTTPServerAndClients 启动HTTP服务器与HTTP上报客户端
-func RunHTTPServerAndClients(bot *coolq.CQBot, conf *config.HTTPServer) {
-	var (
-		s    = new(httpServer)
-		addr string
-	)
-	s.accessToken = conf.AccessToken
+// runHTTP 启动HTTP服务器与HTTP上报客户端
+func runHTTP(bot *coolq.CQBot, node yaml.Node) {
+	var conf config.HTTPServer
+	switch err := node.Decode(&conf); {
+	case err != nil:
+		log.Warn("读取http配置失败 :", err)
+		fallthrough
+	case conf.Disabled:
+		return
+	}
+
+	var addr string
+	s := &httpServer{accessToken: conf.AccessToken}
 	if conf.Host == "" || conf.Port == 0 {
 		goto client
 	}

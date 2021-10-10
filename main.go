@@ -5,13 +5,8 @@ import (
 	"crypto/md5"
 	"crypto/sha1"
 	"encoding/hex"
-	"flag"
-	"fmt"
 	"os"
-	"os/exec"
 	"path"
-	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 
@@ -29,7 +24,7 @@ import (
 	"github.com/Mrs4s/go-cqhttp/internal/base"
 	"github.com/Mrs4s/go-cqhttp/internal/cache"
 	"github.com/Mrs4s/go-cqhttp/internal/selfupdate"
-	"github.com/Mrs4s/go-cqhttp/modules/config"
+	"github.com/Mrs4s/go-cqhttp/modules/servers"
 	"github.com/Mrs4s/go-cqhttp/server"
 
 	_ "github.com/Mrs4s/go-cqhttp/modules/mime" // mime检查模块
@@ -49,11 +44,11 @@ func main() {
 	base.Parse()
 	switch {
 	case base.LittleH:
-		help()
+		base.Help()
 	case base.LittleD:
 		server.Daemon()
 	case base.LittleWD != "":
-		resetWorkDir()
+		base.ResetWorkingDir()
 	}
 	base.Init()
 
@@ -332,49 +327,8 @@ func main() {
 		base.Account.Status = 0
 	}
 	cli.SetOnlineStatus(allowStatus[base.Account.Status])
-	bot := coolq.NewQQBot(cli)
-	for _, m := range base.Servers {
-		if h, ok := m["http"]; ok {
-			hc := new(config.HTTPServer)
-			if err := h.Decode(hc); err != nil {
-				log.Warn("读取http配置失败 :", err)
-			} else if !hc.Disabled {
-				go server.RunHTTPServerAndClients(bot, hc)
-			}
-		}
-		if s, ok := m["ws"]; ok {
-			sc := new(config.WebsocketServer)
-			if err := s.Decode(sc); err != nil {
-				log.Warn("读取正向Websocket配置失败 :", err)
-			} else if !sc.Disabled {
-				go server.RunWebSocketServer(bot, sc)
-			}
-		}
-		if c, ok := m["ws-reverse"]; ok {
-			rc := new(config.WebsocketReverse)
-			if err := c.Decode(rc); err != nil {
-				log.Warn("读取反向Websocket配置失败 :", err)
-			} else if !rc.Disabled {
-				go server.RunWebSocketClient(bot, rc)
-			}
-		}
-		if p, ok := m["pprof"]; ok {
-			pc := new(config.PprofServer)
-			if err := p.Decode(pc); err != nil {
-				log.Warn("读取pprof配置失败 :", err)
-			} else if !pc.Disabled {
-				go server.RunPprofServer(pc)
-			}
-		}
-		if p, ok := m["lambda"]; ok {
-			lc := new(config.LambdaServer)
-			if err := p.Decode(lc); err != nil {
-				log.Warn("读取pprof配置失败 :", err)
-			} else if !lc.Disabled {
-				go server.RunLambdaClient(bot, lc)
-			}
-		}
-	}
+
+	servers.Run(coolq.NewQQBot(cli))
 	log.Info("资源初始化完成, 开始处理信息.")
 	log.Info("アトリは、高性能ですから!")
 
@@ -412,45 +366,6 @@ func PasswordHashDecrypt(encryptedPasswordHash string, key []byte) ([]byte, erro
 	cipher.Decrypt(result, ciphertext)
 
 	return result, nil
-}
-
-// help cli命令行-h的帮助提示
-func help() {
-	fmt.Printf(`go-cqhttp service
-version: %s
-
-Usage:
-
-server [OPTIONS]
-
-Options:
-`, base.Version)
-
-	flag.PrintDefaults()
-	os.Exit(0)
-}
-
-func resetWorkDir() {
-	wd := base.LittleWD
-	args := make([]string, 0, len(os.Args))
-	for i := 1; i < len(os.Args); i++ {
-		if os.Args[i] == "-w" {
-			i++ // skip value field
-		} else if !strings.HasPrefix(os.Args[i], "-w") {
-			args = append(args, os.Args[i])
-		}
-	}
-	p, _ := filepath.Abs(os.Args[0])
-	proc := exec.Command(p, args...)
-	proc.Stdin = os.Stdin
-	proc.Stdout = os.Stdout
-	proc.Stderr = os.Stderr
-	proc.Dir = wd
-	err := proc.Run()
-	if err != nil {
-		panic(err)
-	}
-	os.Exit(0)
 }
 
 func newClient() *client.QQClient {

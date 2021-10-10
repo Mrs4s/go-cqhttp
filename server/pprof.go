@@ -8,12 +8,23 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v3"
 
+	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/modules/config"
 )
 
-// RunPprofServer 启动 pprof 性能分析服务器
-func RunPprofServer(conf *config.PprofServer) {
+// runPprof 启动 pprof 性能分析服务器
+func runPprof(_ *coolq.CQBot, node yaml.Node) {
+	var conf config.PprofServer
+	switch err := node.Decode(&conf); {
+	case err != nil:
+		log.Warn("读取pprof配置失败 :", err)
+		fallthrough
+	case conf.Disabled:
+		return
+	}
+
 	addr := fmt.Sprintf("%s:%d", conf.Host, conf.Port)
 	mux := http.NewServeMux()
 	mux.HandleFunc("/debug/pprof/", pprof.Index)
