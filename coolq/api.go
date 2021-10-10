@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/Mrs4s/go-cqhttp/db"
+	"github.com/Mrs4s/go-cqhttp/internal/cache"
 
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/client"
@@ -1025,10 +1026,21 @@ func (bot *CQBot) CQHandleQuickOperation(context, operation gjson.Result) global
 //
 // https://docs.go-cqhttp.org/api/#%E8%8E%B7%E5%8F%96%E5%9B%BE%E7%89%87%E4%BF%A1%E6%81%AF
 func (bot *CQBot) CQGetImage(file string) global.MSG {
-	if !global.PathExists(path.Join(global.ImagePath, file)) {
-		return Failed(100)
+	var b []byte
+	var err error
+	if cache.EnableCacheDB && strings.HasSuffix(file, ".image") {
+		var f []byte
+		f, err = hex.DecodeString(strings.TrimSuffix(file, ".image"))
+		b = cache.Image.Get(f)
 	}
-	b, err := os.ReadFile(path.Join(global.ImagePath, file))
+
+	if b == nil {
+		if !global.PathExists(path.Join(global.ImagePath, file)) {
+			return Failed(100)
+		}
+		b, err = os.ReadFile(path.Join(global.ImagePath, file))
+	}
+
 	if err == nil {
 		r := binary.NewReader(b)
 		r.ReadBytes(16)
