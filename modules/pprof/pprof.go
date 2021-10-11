@@ -1,3 +1,4 @@
+// Package pprof provide pprof server of go-cqhttp
 package pprof
 
 import (
