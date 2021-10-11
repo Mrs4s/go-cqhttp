@@ -8,6 +8,5 @@ func init() {
 	servers.Register("http", runHTTP)
 	servers.Register("ws", runWSServer)
 	servers.Register("ws-reverse", runWSClient)
-	servers.Register("pprof", runPprof)
 	servers.Register("lambda", runLambda)
 }
