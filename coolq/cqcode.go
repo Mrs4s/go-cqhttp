@@ -125,6 +125,9 @@ func ToArrayMessage(e []message.IMessageElement, groupID int64) (r []global.MSG)
 		if rid == 0 {
 			rid = replyElem.Sender
 		}
+		if replyElem.GroupID != 0 {
+			rid = replyElem.GroupID
+		}
 		if base.ExtraReplyData {
 			r = append(r, global.MSG{
 				"type": "reply",
@@ -266,6 +269,9 @@ func ToStringMessage(e []message.IMessageElement, groupID int64, isRaw ...bool) 
 		rid := groupID
 		if rid == 0 {
 			rid = replyElem.Sender
+		}
+		if replyElem.GroupID != 0 {
+			rid = replyElem.GroupID
 		}
 		if base.ExtraReplyData {
 			write("[CQ:reply,id=%d,seq=%d,qq=%d,time=%d,text=%s]",
