@@ -120,7 +120,7 @@ func runWSClient(b *coolq.CQBot, node yaml.Node) {
 func (c *websocketClient) connect(typ, url string, conptr **wsConn) {
 	log.Infof("开始尝试连接到反向WebSocket %s服务器: %v", typ, c.conf.API)
 	header := http.Header{
-		"X-Client-Role": []string{"API"},
+		"X-Client-Role": []string{typ},
 		"X-Self-ID":     []string{strconv.FormatInt(c.bot.Client.Uin, 10)},
 		"User-Agent":    []string{"CQHttp/4.15.0"},
 	}
