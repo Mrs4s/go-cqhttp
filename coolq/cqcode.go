@@ -748,8 +748,16 @@ func (bot *CQBot) ToElement(t string, d map[string]string, isGroup bool) (m inte
 			return nil, err
 		}
 		return message.NewFace(int32(id)), nil
+	case "mention":
+		if !base.AcceptOneBot12Message {
+			return nil, errors.New("unsupported onebot 12 style")
+		}
+		fallthrough
 	case "at":
 		qq := d["qq"]
+		if base.AcceptOneBot12Message && qq == "" {
+			qq = d["user_id"]
+		}
 		if qq == "all" {
 			return message.AtAll(), nil
 		}

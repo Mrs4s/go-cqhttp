@@ -118,7 +118,7 @@ func (s *httpServer) ServeHTTP(writer http.ResponseWriter, request *http.Request
 	}
 
 	var response global.MSG
-	if base.AcceptOneBotV12HTTPEndPoint && request.URL.Path == "/" {
+	if base.AcceptOneBot12HTTPEndPoint && request.URL.Path == "/" {
 		action := strings.TrimSuffix(ctx.Get("action").Str, "_async")
 		log.Debugf("HTTPServer接收到API调用: %v", action)
 		response = s.api.callAPI(action, ctx.Get("params"))
