@@ -70,7 +70,7 @@ func qrcodeLogin() error {
 		log.Infof("请使用手机QQ扫描二维码 (qrcode.png) : ")
 	}
 	time.Sleep(time.Second)
-	qrcodeTerminal.New().Get(fi.Content).Print()
+	qrcodeTerminal.New2(qrcodeTerminal.ConsoleColors.BrightBlack, qrcodeTerminal.ConsoleColors.BrightWhite, qrcodeTerminal.QRCodeRecoveryLevels.Low).Get(fi.Content).Print()
 	s, err := cli.QueryQRCodeStatus(rsp.Sig)
 	if err != nil {
 		return err
