@@ -61,8 +61,8 @@ func NetworkDiagnosis(c *client.QQClient) {
 	}
 }
 
-// DnsDiagnosis 诊断DNS状态并输出结果
-func DnsDiagnosis() {
+// DNSDiagnosis 诊断DNS状态并输出结果
+func DNSDiagnosis() {
 	// todo
 }
 
