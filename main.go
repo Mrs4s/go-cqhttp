@@ -5,6 +5,7 @@ import (
 	"crypto/md5"
 	"crypto/sha1"
 	"encoding/hex"
+	"github.com/Mrs4s/go-cqhttp/internal/selfdiagnosis"
 	"os"
 	"path"
 	"sync"
@@ -335,6 +336,7 @@ func main() {
 	log.Info("アトリは、高性能ですから!")
 
 	go selfupdate.CheckUpdate()
+	go selfdiagnosis.NetworkDiagnosis(cli)
 
 	<-global.SetupMainSignalHandler()
 }

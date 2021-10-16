@@ -7,7 +7,7 @@ replace github.com/willf/bitset v1.2.0 => github.com/bits-and-blooms/bitset v1.2
 require (
 	github.com/Baozisoftware/qrcode-terminal-go v0.0.0-20170407111555-c0650d8dff0f
 	github.com/Microsoft/go-winio v0.5.0
-	github.com/Mrs4s/MiraiGo v0.0.0-20211011130217-a3eacd706b29
+	github.com/Mrs4s/MiraiGo v0.0.0-20211016081331-010e34c37865
 	github.com/dustin/go-humanize v1.0.0
 	github.com/fumiama/go-hide-param v0.1.4
 	github.com/gabriel-vasile/mimetype v1.3.1
@@ -44,7 +44,8 @@ require (
 	github.com/tidwall/match v1.0.3 // indirect
 	github.com/tidwall/pretty v1.1.0 // indirect
 	github.com/willf/bitset v1.2.0 // indirect
-	golang.org/x/net v0.0.0-20210505024714-0287a6fb4125 // indirect
+	golang.org/x/image v0.0.0-20210628002857-a66eb6448b8d // indirect
+	golang.org/x/net v0.0.0-20211015210444-4f30a5c0130f // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
