@@ -12,6 +12,7 @@ require (
 	github.com/fumiama/go-hide-param v0.1.4
 	github.com/gabriel-vasile/mimetype v1.3.1
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0
+	github.com/klauspost/compress v1.13.6
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
 	github.com/mattn/go-colorable v0.1.8
 	github.com/pkg/errors v0.9.1
@@ -35,7 +36,6 @@ require (
 	github.com/google/uuid v1.1.1 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/jonboulle/clockwork v0.2.2 // indirect
-	github.com/klauspost/compress v1.10.3 // indirect
 	github.com/klauspost/cpuid/v2 v2.0.6 // indirect
 	github.com/lestrrat-go/strftime v1.0.5 // indirect
 	github.com/maruel/rs v0.0.0-20150922171536-2c81c4312fe4 // indirect

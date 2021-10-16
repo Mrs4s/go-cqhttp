@@ -1,13 +1,13 @@
 package selfupdate
 
 import (
-	"archive/zip"
 	"bytes"
 	"crypto/sha256"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
+
+	"github.com/klauspost/compress/zip"
 )
 
 // update go-cqhttp自我更新
@@ -33,7 +33,6 @@ func update(url string, sum []byte) error {
 		return err
 	}
 	err, _ = fromStream(file)
-	fmt.Println()
 	if err != nil {
 		return err
 	}

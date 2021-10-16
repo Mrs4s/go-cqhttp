@@ -6,12 +6,12 @@ package selfupdate
 import (
 	"archive/tar"
 	"bytes"
-	"compress/gzip"
 	"crypto/sha256"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
+
+	"github.com/klauspost/compress/gzip"
 )
 
 // update go-cqhttp自我更新
@@ -43,7 +43,6 @@ func update(url string, sum []byte) error {
 		}
 		if header.Name == "go-cqhttp" {
 			err, _ := fromStream(tr)
-			fmt.Println()
 			if err != nil {
 				return err
 			}
