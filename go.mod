@@ -26,7 +26,7 @@ require (
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
 	golang.org/x/term v0.0.0-20210615171337-6886f2dfbf5b
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac
-	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
+	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 	nhooyr.io/websocket v1.8.7
 )
 
