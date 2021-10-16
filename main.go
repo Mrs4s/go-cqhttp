@@ -5,11 +5,12 @@ import (
 	"crypto/md5"
 	"crypto/sha1"
 	"encoding/hex"
-	"github.com/Mrs4s/go-cqhttp/internal/selfdiagnosis"
 	"os"
 	"path"
 	"sync"
 	"time"
+
+	"github.com/Mrs4s/go-cqhttp/internal/selfdiagnosis"
 
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/client"
