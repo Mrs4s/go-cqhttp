@@ -1,3 +1,4 @@
+// Package selfdiagnosis 自我诊断相关
 package selfdiagnosis
 
 import (
