@@ -85,32 +85,12 @@ func (hook *LocalHook) SetFormatter(consoleFormatter, fileFormatter logrus.Forma
 	hook.lock.Lock()
 	defer hook.lock.Unlock()
 
-	consoleFormatter = tryChangeFormatter(consoleFormatter)
-	fileFormatter = tryChangeFormatter(fileFormatter)
-
 	// 支持处理windows平台的console色彩
 	logrus.SetOutput(colorable.NewColorableStdout())
 	// 用于在console写出
 	logrus.SetFormatter(consoleFormatter)
 	// 用于写入文件
 	hook.formatter = fileFormatter
-}
-
-func tryChangeFormatter(formatter logrus.Formatter) logrus.Formatter {
-	if formatter == nil {
-		// 用默认的
-		formatter = &logrus.TextFormatter{DisableColors: true}
-	} else {
-		switch f := formatter.(type) {
-		case *logrus.TextFormatter:
-			textFormatter := f
-			textFormatter.DisableColors = true
-		default:
-			// todo
-		}
-	}
-
-	return formatter
 }
 
 // SetWriter 设置Writer
@@ -212,31 +192,22 @@ func (f LogFormat) Format(entry *logrus.Entry) ([]byte, error) {
 	buf.WriteString(" \n")
 
 	if f.EnableColor {
-		buf.WriteString(ResetSet)
+		buf.WriteString(colorReset)
 	}
 
 	ret := append([]byte(nil), buf.Bytes()...) // copy buffer
 	return ret, nil
 }
 
-// 为了不引入新依赖，直接将对应库需要的部分复制过来了，具体可参考 github.com\gookit\color@v1.4.2\color.go
-
-// ResetSet 重置色彩 ansi code
-const ResetSet = "\x1b[0m"
-
 const (
-	// SettingTpl 开始色彩 ansi code
-	SettingTpl = "\x1b[%sm"
-)
-
-var (
-	colorCodePanic = fmt.Sprintf(SettingTpl, "1;31") // color.Style{color.Bold, color.Red}.String()
-	colorCodeFatal = fmt.Sprintf(SettingTpl, "1;31") // color.Style{color.Bold, color.Red}.String()
-	colorCodeError = fmt.Sprintf(SettingTpl, "31")   // color.Style{color.Red}.String()
-	colorCodeWarn  = fmt.Sprintf(SettingTpl, "33")   // color.Style{color.Yellow}.String()
-	colorCodeInfo  = fmt.Sprintf(SettingTpl, "32")   // color.Style{color.Green}.String()
-	colorCodeDebug = fmt.Sprintf(SettingTpl, "37")   // color.Style{color.White}.String()
-	colorCodeTrace = fmt.Sprintf(SettingTpl, "36")   // color.Style{color.Cyan}.String()
+	colorCodePanic = "\x1b[1;31m" // color.Style{color.Bold, color.Red}.String()
+	colorCodeFatal = "\x1b[1;31m" // color.Style{color.Bold, color.Red}.String()
+	colorCodeError = "\x1b[31m"   // color.Style{color.Red}.String()
+	colorCodeWarn  = "\x1b[33m"   // color.Style{color.Yellow}.String()
+	colorCodeInfo  = "\x1b[32m"   // color.Style{color.Green}.String()
+	colorCodeDebug = "\x1b[37m"   // color.Style{color.White}.String()
+	colorCodeTrace = "\x1b[36m"   // color.Style{color.Cyan}.String()
+	colorReset     = "\x1b[0m"
 )
 
 // GetLogLevelColorCode 获取日志等级对应色彩code
