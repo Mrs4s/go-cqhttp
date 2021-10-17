@@ -465,7 +465,7 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) globa
 		ts.Add(time.Second)
 		if e.Get("data.id").Exists() {
 			i := e.Get("data.id").Int()
-			m, _ := bot.db.GetGroupMessageByGlobalID(int32(i))
+			m, _ := db.GetGroupMessageByGlobalID(int32(i))
 			if m != nil {
 				return &message.ForwardNode{
 					SenderId:   m.Attribute.SenderUin,
@@ -781,7 +781,7 @@ func (bot *CQBot) CQProcessGroupRequest(flag, subType, reason string, approve bo
 //
 // https:// git.io/Jtz1y
 func (bot *CQBot) CQDeleteMessage(messageID int32) global.MSG {
-	msg, err := bot.db.GetMessageByGlobalID(messageID)
+	msg, err := db.GetMessageByGlobalID(messageID)
 	if err != nil {
 		log.Warnf("撤回消息时出现错误: %v", err)
 		return Failed(100, "MESSAGE_NOT_FOUND", "消息不存在")
@@ -1115,7 +1115,7 @@ func (bot *CQBot) CQGetForwardMessage(resID string) global.MSG {
 //
 // https://git.io/Jtz1b
 func (bot *CQBot) CQGetMessage(messageID int32) global.MSG {
-	msg, err := bot.db.GetMessageByGlobalID(messageID)
+	msg, err := db.GetMessageByGlobalID(messageID)
 	if err != nil {
 		log.Warnf("获取消息时出现错误: %v", err)
 		return Failed(100, "MSG_NOT_FOUND", "消息不存在")
@@ -1176,11 +1176,8 @@ func (bot *CQBot) CQGetGroupMessageHistory(groupID int64, seq int64) global.MSG 
 	}
 	ms := make([]global.MSG, 0, len(msg))
 	for _, m := range msg {
-		id := m.Id
 		bot.checkMedia(m.Elements)
-		if bot.db != nil {
-			id = bot.InsertGroupMessage(m)
-		}
+		id := bot.InsertGroupMessage(m)
 		t := bot.formatGroupMessage(m)
 		t["message_id"] = id
 		ms = append(ms, t)
@@ -1302,7 +1299,7 @@ func (bot *CQBot) CQGetStatus() global.MSG {
 //
 // https://docs.go-cqhttp.org/api/#%E8%AE%BE%E7%BD%AE%E7%B2%BE%E5%8D%8E%E6%B6%88%E6%81%AF
 func (bot *CQBot) CQSetEssenceMessage(messageID int32) global.MSG {
-	msg, err := bot.db.GetGroupMessageByGlobalID(messageID)
+	msg, err := db.GetGroupMessageByGlobalID(messageID)
 	if err != nil {
 		return Failed(100, "MESSAGE_NOT_FOUND", "消息不存在")
 	}
@@ -1317,7 +1314,7 @@ func (bot *CQBot) CQSetEssenceMessage(messageID int32) global.MSG {
 //
 // https://docs.go-cqhttp.org/api/#%E7%A7%BB%E5%87%BA%E7%B2%BE%E5%8D%8E%E6%B6%88%E6%81%AF
 func (bot *CQBot) CQDeleteEssenceMessage(messageID int32) global.MSG {
-	msg, err := bot.db.GetGroupMessageByGlobalID(messageID)
+	msg, err := db.GetGroupMessageByGlobalID(messageID)
 	if err != nil {
 		return Failed(100, "MESSAGE_NOT_FOUND", "消息不存在")
 	}
@@ -1436,7 +1433,7 @@ func (bot *CQBot) CQSetModelShow(modelName string, modelShow string) global.MSG 
 
 // CQMarkMessageAsRead 标记消息已读
 func (bot *CQBot) CQMarkMessageAsRead(msgID int32) global.MSG {
-	m, err := bot.db.GetMessageByGlobalID(msgID)
+	m, err := db.GetMessageByGlobalID(msgID)
 	if err != nil {
 		return Failed(100, "MSG_NOT_FOUND", "消息不存在")
 	}

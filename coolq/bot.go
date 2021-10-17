@@ -23,7 +23,6 @@ import (
 
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
-	"github.com/Mrs4s/go-cqhttp/modules/config"
 )
 
 // CQBot CQBot结构体,存储Bot实例相关配置
@@ -33,7 +32,6 @@ type CQBot struct {
 	lock   sync.RWMutex
 	events []func(*Event)
 
-	db               db.IDatabase
 	friendReqCache   sync.Map
 	tempSessionCache sync.Map
 }
@@ -71,30 +69,6 @@ func NewQQBot(cli *client.QQClient) *CQBot {
 	bot := &CQBot{
 		Client: cli,
 	}
-	levelNode, levelDB := base.Database["leveldb"]
-	mongoNode, mongoDB := base.Database["mongodb"]
-	multiDB := db.NewMultiDatabase()
-	if levelDB {
-		lconf := new(config.LevelDBConfig)
-		_ = levelNode.Decode(lconf)
-		if lconf.Enable {
-			multiDB.UseDB(db.UseLevelDB())
-		}
-	}
-	if mongoDB {
-		lconf := new(config.MongoDBConfig)
-		_ = mongoNode.Decode(lconf)
-		if lconf.Database == "" {
-			lconf.Database = "gocq-database"
-		}
-		if lconf.Enable {
-			multiDB.UseDB(db.UseMongoDB(lconf.URI, lconf.Database))
-		}
-	}
-	if err := multiDB.Open(); err != nil {
-		log.Fatalf("打开数据库失败: %v", err)
-	}
-	bot.db = multiDB
 	bot.Client.OnPrivateMessage(bot.privateMessageEvent)
 	bot.Client.OnGroupMessage(bot.groupMessageEvent)
 	if base.ReportSelfMessage {
@@ -384,7 +358,7 @@ func (bot *CQBot) InsertGroupMessage(m *message.GroupMessage) int32 {
 			QuotedContent: ToMessageContent(reply.Elements),
 		}
 	}
-	if err := bot.db.InsertGroupMessage(msg); err != nil {
+	if err := db.InsertGroupMessage(msg); err != nil {
 		log.Warnf("记录聊天数据时出现错误: %v", err)
 		return -1
 	}
@@ -427,7 +401,7 @@ func (bot *CQBot) InsertPrivateMessage(m *message.PrivateMessage) int32 {
 			QuotedContent: ToMessageContent(m.Elements),
 		}
 	}
-	if err := bot.db.InsertPrivateMessage(msg); err != nil {
+	if err := db.InsertPrivateMessage(msg); err != nil {
 		log.Warnf("记录聊天数据时出现错误: %v", err)
 		return -1
 	}

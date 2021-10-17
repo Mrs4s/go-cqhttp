@@ -479,7 +479,7 @@ func (bot *CQBot) ConvertStringMessage(raw string, isGroup bool) (r []message.IM
 			switch {
 			case customText != "":
 				var elem *message.ReplyElement
-				var org db.IStoredMessage
+				var org db.StoredMessage
 				sender, senderErr := strconv.ParseInt(d["qq"], 10, 64)
 				if senderErr != nil && err != nil {
 					log.Warnf("警告: 自定义 Reply 元素中必须包含 Uin 或 id")
@@ -491,7 +491,7 @@ func (bot *CQBot) ConvertStringMessage(raw string, isGroup bool) (r []message.IM
 				}
 				messageSeq, seqErr := strconv.ParseInt(d["seq"], 10, 64)
 				if err == nil {
-					org, _ = bot.db.GetMessageByGlobalID(int32(mid))
+					org, _ = db.GetMessageByGlobalID(int32(mid))
 				}
 				if org != nil {
 					elem = &message.ReplyElement{
@@ -519,7 +519,7 @@ func (bot *CQBot) ConvertStringMessage(raw string, isGroup bool) (r []message.IM
 				}
 				r = append([]message.IMessageElement{elem}, r...)
 			case err == nil:
-				org, err := bot.db.GetMessageByGlobalID(int32(mid))
+				org, err := db.GetMessageByGlobalID(int32(mid))
 				if err == nil {
 					r = append([]message.IMessageElement{
 						&message.ReplyElement{
@@ -651,7 +651,7 @@ func (bot *CQBot) ConvertObjectMessage(m gjson.Result, isGroup bool) (r []messag
 			switch {
 			case customText != "":
 				var elem *message.ReplyElement
-				var org db.IStoredMessage
+				var org db.StoredMessage
 				sender, senderErr := strconv.ParseInt(e.Get("data.[user_id,qq]").String(), 10, 64)
 				if senderErr != nil && err != nil {
 					log.Warnf("警告: 自定义 Reply 元素中必须包含 user_id 或 id")
@@ -663,7 +663,7 @@ func (bot *CQBot) ConvertObjectMessage(m gjson.Result, isGroup bool) (r []messag
 				}
 				messageSeq, seqErr := strconv.ParseInt(e.Get("data.seq").String(), 10, 64)
 				if err == nil {
-					org, _ = bot.db.GetMessageByGlobalID(int32(mid))
+					org, _ = db.GetMessageByGlobalID(int32(mid))
 				}
 				if org != nil {
 					elem = &message.ReplyElement{
@@ -691,7 +691,7 @@ func (bot *CQBot) ConvertObjectMessage(m gjson.Result, isGroup bool) (r []messag
 				}
 				r = append([]message.IMessageElement{elem}, r...)
 			case err == nil:
-				org, err := bot.db.GetMessageByGlobalID(int32(mid))
+				org, err := db.GetMessageByGlobalID(int32(mid))
 				if err == nil {
 					r = append([]message.IMessageElement{
 						&message.ReplyElement{

@@ -8,13 +8,13 @@ import (
 )
 
 type (
-	// IDatabase 数据库操作接口定义
-	IDatabase interface {
+	// Database 数据库操作接口定义
+	Database interface {
 		// Open 初始化数据库
 		Open() error
 
 		// GetMessageByGlobalID 通过 GlobalID 来获取消息
-		GetMessageByGlobalID(int32) (IStoredMessage, error)
+		GetMessageByGlobalID(int32) (StoredMessage, error)
 		// GetGroupMessageByGlobalID 通过 GlobalID 来获取群消息
 		GetGroupMessageByGlobalID(int32) (*StoredGroupMessage, error)
 		// GetPrivateMessageByGlobalID 通过 GlobalID 来获取私聊消息
@@ -26,7 +26,7 @@ type (
 		InsertPrivateMessage(*StoredPrivateMessage) error
 	}
 
-	IStoredMessage interface {
+	StoredMessage interface {
 		GetID() string
 		GetType() string
 		GetGlobalID() int32

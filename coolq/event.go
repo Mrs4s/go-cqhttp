@@ -33,10 +33,7 @@ func ToFormattedMessage(e []message.IMessageElement, groupID int64, isRaw ...boo
 func (bot *CQBot) privateMessageEvent(c *client.QQClient, m *message.PrivateMessage) {
 	bot.checkMedia(m.Elements)
 	cqm := ToStringMessage(m.Elements, 0, true)
-	id := m.Id
-	if bot.db != nil {
-		id = bot.InsertPrivateMessage(m)
-	}
+	id := bot.InsertPrivateMessage(m)
 	log.Infof("收到好友 %v(%v) 的消息: %v (%v)", m.Sender.DisplayName(), m.Sender.Uin, cqm, id)
 	fm := global.MSG{
 		"post_type": func() string {
@@ -89,10 +86,7 @@ func (bot *CQBot) groupMessageEvent(c *client.QQClient, m *message.GroupMessage)
 		}
 	}
 	cqm := ToStringMessage(m.Elements, m.GroupCode, true)
-	id := m.Id
-	if bot.db != nil {
-		id = bot.InsertGroupMessage(m)
-	}
+	id := bot.InsertGroupMessage(m)
 	log.Infof("收到群 %v(%v) 内 %v(%v) 的消息: %v (%v)", m.GroupName, m.GroupCode, m.Sender.DisplayName(), m.Sender.Uin, cqm, id)
 	gm := bot.formatGroupMessage(m)
 	if gm == nil {
@@ -108,10 +102,10 @@ func (bot *CQBot) tempMessageEvent(c *client.QQClient, e *client.TempMessageEven
 	cqm := ToStringMessage(m.Elements, 0, true)
 	bot.tempSessionCache.Store(m.Sender.Uin, e.Session)
 	id := m.Id
-	if bot.db != nil { // nolint
-		// todo(Mrs4s)
-		// id = bot.InsertTempMessage(m.Sender.Uin, m)
-	}
+	// todo(Mrs4s)
+	// if bot.db != nil { // nolint
+	// 		id = bot.InsertTempMessage(m.Sender.Uin, m)
+	// }
 	log.Infof("收到来自群 %v(%v) 内 %v(%v) 的临时会话消息: %v", m.GroupName, m.GroupCode, m.Sender.DisplayName(), m.Sender.Uin, cqm)
 	tm := global.MSG{
 		"post_type":    "message",

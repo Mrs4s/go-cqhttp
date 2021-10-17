@@ -58,20 +58,6 @@ linters:
     - revive
     - forbidigo
     - makezero
-    #- interfacer
-
-  # don't enable:
-  # - scopelint
-  # - gochecknoglobals
-  # - gocognit
-  # - godot
-  # - godox
-  # - goerr113
-  # - interfacer
-  # - maligned
-  # - nestif
-  # - testpackage
-  # - wsl
 
 run:
   # default concurrency is a available CPU number.

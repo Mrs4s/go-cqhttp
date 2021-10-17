@@ -19,6 +19,7 @@ import (
 	"golang.org/x/term"
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
+	"github.com/Mrs4s/go-cqhttp/db"
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/global/terminal"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
@@ -28,6 +29,7 @@ import (
 	"github.com/Mrs4s/go-cqhttp/modules/servers"
 	"github.com/Mrs4s/go-cqhttp/server"
 
+	_ "github.com/Mrs4s/go-cqhttp/db/leveldb"    // leveldb
 	_ "github.com/Mrs4s/go-cqhttp/modules/mime"  // mime检查模块
 	_ "github.com/Mrs4s/go-cqhttp/modules/pprof" // pprof 性能分析
 	_ "github.com/Mrs4s/go-cqhttp/modules/silk"  // silk编码模块
@@ -83,6 +85,11 @@ func main() {
 	mkCacheDir(global.VideoPath, "视频")
 	mkCacheDir(global.CachePath, "发送图片")
 	cache.Init()
+
+	db.Init()
+	if err := db.Open(); err != nil {
+		log.Fatalf("打开数据库失败: %v", err)
+	}
 
 	var byteKey []byte
 	arg := os.Args
