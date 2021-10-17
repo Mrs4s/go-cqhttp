@@ -14,6 +14,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Mrs4s/go-cqhttp/db"
+	"github.com/Mrs4s/go-cqhttp/internal/cache"
+
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/MiraiGo/message"
@@ -462,20 +465,19 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) globa
 		ts.Add(time.Second)
 		if e.Get("data.id").Exists() {
 			i := e.Get("data.id").Int()
-			m := bot.GetMessage(int32(i))
+			m, _ := bot.db.GetGroupMessageByGlobalID(int32(i))
 			if m != nil {
-				sender := m["sender"].(message.Sender)
 				return &message.ForwardNode{
-					SenderId:   sender.Uin,
-					SenderName: (&sender).DisplayName(),
+					SenderId:   m.Attribute.SenderUin,
+					SenderName: m.Attribute.SenderName,
 					Time: func() int32 {
-						msgTime := m["time"].(int32)
+						msgTime := m.Attribute.Timestamp
 						if hasCustom && msgTime == 0 {
 							return int32(ts.Unix())
 						}
-						return msgTime
+						return int32(msgTime)
 					}(),
-					Message: resolveElement(bot.ConvertStringMessage(m["message"].(string), true)),
+					Message: resolveElement(bot.ConvertContentMessage(m.Content, true)),
 				}
 			}
 			log.Warnf("警告: 引用消息 %v 错误或数据库未开启.", e.Get("data.id").Str)
@@ -779,29 +781,28 @@ func (bot *CQBot) CQProcessGroupRequest(flag, subType, reason string, approve bo
 //
 // https:// git.io/Jtz1y
 func (bot *CQBot) CQDeleteMessage(messageID int32) global.MSG {
-	msg := bot.GetMessage(messageID)
-	if msg == nil {
+	msg, err := bot.db.GetMessageByGlobalID(messageID)
+	if err != nil {
+		log.Warnf("撤回消息时出现错误: %v", err)
 		return Failed(100, "MESSAGE_NOT_FOUND", "消息不存在")
 	}
-	if _, ok := msg["group"]; ok {
-		if msg["internal-id"] == nil {
-			// TODO 撤回临时对话消息
-			log.Warnf("撤回 %v 失败: 无法撤回临时对话消息", messageID)
-			return Failed(100, "CANNOT_RECALL_TEMP_MSG", "无法撤回临时对话消息")
-		}
-		if err := bot.Client.RecallGroupMessage(msg["group"].(int64), msg["message-id"].(int32), msg["internal-id"].(int32)); err != nil {
+	switch o := msg.(type) {
+	case *db.StoredGroupMessage:
+		if err = bot.Client.RecallGroupMessage(o.GroupCode, o.Attribute.MessageSeq, o.Attribute.InternalID); err != nil {
 			log.Warnf("撤回 %v 失败: %v", messageID, err)
 			return Failed(100, "RECALL_API_ERROR", err.Error())
 		}
-	} else {
-		if msg["sender"].(message.Sender).Uin != bot.Client.Uin {
+	case *db.StoredPrivateMessage:
+		if o.Attribute.SenderUin != bot.Client.Uin {
 			log.Warnf("撤回 %v 失败: 好友会话无法撤回对方消息.", messageID)
 			return Failed(100, "CANNOT_RECALL_FRIEND_MSG", "无法撤回对方消息")
 		}
-		if err := bot.Client.RecallPrivateMessage(msg["target"].(int64), int64(msg["time"].(int32)), msg["message-id"].(int32), msg["internal-id"].(int32)); err != nil {
+		if err = bot.Client.RecallPrivateMessage(o.TargetUin, o.Attribute.Timestamp, o.Attribute.MessageSeq, o.Attribute.InternalID); err != nil {
 			log.Warnf("撤回 %v 失败: %v", messageID, err)
 			return Failed(100, "RECALL_API_ERROR", err.Error())
 		}
+	default:
+		return Failed(100, "UNKNOWN_ERROR")
 	}
 	return OK(nil)
 }
@@ -1025,10 +1026,21 @@ func (bot *CQBot) CQHandleQuickOperation(context, operation gjson.Result) global
 //
 // https://docs.go-cqhttp.org/api/#%E8%8E%B7%E5%8F%96%E5%9B%BE%E7%89%87%E4%BF%A1%E6%81%AF
 func (bot *CQBot) CQGetImage(file string) global.MSG {
-	if !global.PathExists(path.Join(global.ImagePath, file)) {
-		return Failed(100)
+	var b []byte
+	var err error
+	if cache.EnableCacheDB && strings.HasSuffix(file, ".image") {
+		var f []byte
+		f, err = hex.DecodeString(strings.TrimSuffix(file, ".image"))
+		b = cache.Image.Get(f)
 	}
-	b, err := os.ReadFile(path.Join(global.ImagePath, file))
+
+	if b == nil {
+		if !global.PathExists(path.Join(global.ImagePath, file)) {
+			return Failed(100)
+		}
+		b, err = os.ReadFile(path.Join(global.ImagePath, file))
+	}
+
 	if err == nil {
 		r := binary.NewReader(b)
 		r.ReadBytes(16)
@@ -1103,38 +1115,32 @@ func (bot *CQBot) CQGetForwardMessage(resID string) global.MSG {
 //
 // https://git.io/Jtz1b
 func (bot *CQBot) CQGetMessage(messageID int32) global.MSG {
-	msg := bot.GetMessage(messageID)
-	if msg == nil {
+	msg, err := bot.db.GetMessageByGlobalID(messageID)
+	if err != nil {
+		log.Warnf("获取消息时出现错误: %v", err)
 		return Failed(100, "MSG_NOT_FOUND", "消息不存在")
 	}
-	sender := msg["sender"].(message.Sender)
-	gid, isGroup := msg["group"]
-	raw := msg["message"].(string)
-	return OK(global.MSG{
-		"message_id":  messageID,
-		"real_id":     msg["message-id"],
-		"message_seq": msg["message-id"],
-		"group":       isGroup,
-		"group_id":    gid,
-		"message_type": func() string {
-			if isGroup {
-				return "group"
-			}
-			return "private"
-		}(),
+	m := global.MSG{
+		"message_id":    msg.GetGlobalID(),
+		"message_id_v2": msg.GetID(),
+		"message_type":  msg.GetType(),
+		"real_id":       msg.GetAttribute().MessageSeq,
+		"message_seq":   msg.GetAttribute().MessageSeq,
+		"group":         msg.GetType() == "group",
 		"sender": global.MSG{
-			"user_id":  sender.Uin,
-			"nickname": sender.Nickname,
+			"user_id":  msg.GetAttribute().SenderUin,
+			"nickname": msg.GetAttribute().SenderName,
 		},
-		"time":        msg["time"],
-		"raw_message": raw,
-		"message": ToFormattedMessage(bot.ConvertStringMessage(raw, isGroup), func() int64 {
-			if isGroup {
-				return gid.(int64)
-			}
-			return 0
-		}(), false),
-	})
+		"time": msg.GetAttribute().Timestamp,
+	}
+	switch o := msg.(type) {
+	case *db.StoredGroupMessage:
+		m["group_id"] = o.GroupCode
+		m["message"] = ToFormattedMessage(bot.ConvertContentMessage(o.Content, true), o.GroupCode, false)
+	case *db.StoredPrivateMessage:
+		m["message"] = ToFormattedMessage(bot.ConvertContentMessage(o.Content, false), 0, false)
+	}
+	return OK(m)
 }
 
 // CQGetGroupSystemMessages 扩展API-获取群文件系统消息
@@ -1296,18 +1302,13 @@ func (bot *CQBot) CQGetStatus() global.MSG {
 //
 // https://docs.go-cqhttp.org/api/#%E8%AE%BE%E7%BD%AE%E7%B2%BE%E5%8D%8E%E6%B6%88%E6%81%AF
 func (bot *CQBot) CQSetEssenceMessage(messageID int32) global.MSG {
-	msg := bot.GetMessage(messageID)
-	if msg == nil {
+	msg, err := bot.db.GetGroupMessageByGlobalID(messageID)
+	if err != nil {
 		return Failed(100, "MESSAGE_NOT_FOUND", "消息不存在")
 	}
-	if _, ok := msg["group"]; ok {
-		if err := bot.Client.SetEssenceMessage(msg["group"].(int64), msg["message-id"].(int32), msg["internal-id"].(int32)); err != nil {
-			log.Warnf("设置精华消息 %v 失败: %v", messageID, err)
-			return Failed(100, "SET_ESSENCE_MSG_ERROR", err.Error())
-		}
-	} else {
-		log.Warnf("设置精华消息 %v 失败: 非群聊", messageID)
-		return Failed(100, "SET_ESSENCE_MSG_ERROR", "非群聊")
+	if err := bot.Client.SetEssenceMessage(msg.GroupCode, msg.Attribute.MessageSeq, msg.Attribute.InternalID); err != nil {
+		log.Warnf("设置精华消息 %v 失败: %v", messageID, err)
+		return Failed(100, "SET_ESSENCE_MSG_ERROR", err.Error())
 	}
 	return OK(nil)
 }
@@ -1316,18 +1317,13 @@ func (bot *CQBot) CQSetEssenceMessage(messageID int32) global.MSG {
 //
 // https://docs.go-cqhttp.org/api/#%E7%A7%BB%E5%87%BA%E7%B2%BE%E5%8D%8E%E6%B6%88%E6%81%AF
 func (bot *CQBot) CQDeleteEssenceMessage(messageID int32) global.MSG {
-	msg := bot.GetMessage(messageID)
-	if msg == nil {
+	msg, err := bot.db.GetGroupMessageByGlobalID(messageID)
+	if err != nil {
 		return Failed(100, "MESSAGE_NOT_FOUND", "消息不存在")
 	}
-	if _, ok := msg["group"]; ok {
-		if err := bot.Client.DeleteEssenceMessage(msg["group"].(int64), msg["message-id"].(int32), msg["internal-id"].(int32)); err != nil {
-			log.Warnf("移出精华消息 %v 失败: %v", messageID, err)
-			return Failed(100, "DEL_ESSENCE_MSG_ERROR", err.Error())
-		}
-	} else {
-		log.Warnf("移出精华消息 %v 失败: 非群聊", messageID)
-		return Failed(100, "DEL_ESSENCE_MSG_ERROR", "非群聊")
+	if err := bot.Client.DeleteEssenceMessage(msg.GroupCode, msg.Attribute.MessageSeq, msg.Attribute.InternalID); err != nil {
+		log.Warnf("删除精华消息 %v 失败: %v", messageID, err)
+		return Failed(100, "SET_ESSENCE_MSG_ERROR", err.Error())
 	}
 	return OK(nil)
 }
@@ -1354,7 +1350,7 @@ func (bot *CQBot) CQGetEssenceMessageList(groupCode int64) global.MSG {
 			"sender_id":     m.SenderUin,
 			"operator_id":   m.AddDigestUin,
 		}
-		msg["message_id"] = toGlobalID(groupCode, int32(m.MessageID))
+		msg["message_id"] = db.ToGlobalID(groupCode, int32(m.MessageID))
 		list = append(list, msg)
 	}
 	return OK(list)
@@ -1440,18 +1436,17 @@ func (bot *CQBot) CQSetModelShow(modelName string, modelShow string) global.MSG 
 
 // CQMarkMessageAsRead 标记消息已读
 func (bot *CQBot) CQMarkMessageAsRead(msgID int32) global.MSG {
-	m := bot.GetMessage(msgID)
-	if m == nil {
+	m, err := bot.db.GetMessageByGlobalID(msgID)
+	if err != nil {
 		return Failed(100, "MSG_NOT_FOUND", "消息不存在")
 	}
-	if _, ok := m["group"]; ok {
-		bot.Client.MarkGroupMessageReaded(m["group"].(int64), int64(m["message-id"].(int32)))
+	switch o := m.(type) {
+	case *db.StoredGroupMessage:
+		bot.Client.MarkGroupMessageReaded(o.GroupCode, int64(o.Attribute.MessageSeq))
 		return OK(nil)
+	case *db.StoredPrivateMessage:
+		bot.Client.MarkPrivateMessageReaded(o.SessionUin, o.Attribute.Timestamp)
 	}
-	if _, ok := m["from-group"]; ok {
-		return Failed(100, "MSG_TYPE_ERROR", "不支持标记临时会话")
-	}
-	bot.Client.MarkPrivateMessageReaded(m["sender"].(message.Sender).Uin, int64(m["time"].(int32)))
 	return OK(nil)
 }
 

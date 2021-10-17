@@ -2,11 +2,9 @@ package coolq
 
 import (
 	"bytes"
-	"encoding/gob"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"hash/crc32"
 	"io"
 	"os"
 	"path"
@@ -14,14 +12,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Mrs4s/go-cqhttp/db"
+
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/Mrs4s/MiraiGo/utils"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"github.com/syndtr/goleveldb/leveldb"
-	"github.com/syndtr/goleveldb/leveldb/opt"
 
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
@@ -35,7 +33,7 @@ type CQBot struct {
 	lock   sync.RWMutex
 	events []func(*Event)
 
-	db               *leveldb.DB
+	db               db.IDatabase
 	friendReqCache   sync.Map
 	tempSessionCache sync.Map
 }
@@ -73,27 +71,30 @@ func NewQQBot(cli *client.QQClient) *CQBot {
 	bot := &CQBot{
 		Client: cli,
 	}
-	enableLevelDB := false
-	node, ok := base.Database["leveldb"]
-	if ok {
+	levelNode, levelDB := base.Database["leveldb"]
+	mongoNode, mongoDB := base.Database["mongodb"]
+	multiDB := db.NewMultiDatabase()
+	if levelDB {
 		lconf := new(config.LevelDBConfig)
-		_ = node.Decode(lconf)
-		enableLevelDB = lconf.Enable
-	}
-	if enableLevelDB {
-		p := path.Join("data", "leveldb")
-		db, err := leveldb.OpenFile(p, &opt.Options{
-			WriteBuffer: 128 * opt.KiB,
-		})
-		if err != nil {
-			log.Fatalf("打开数据库失败, 如果频繁遇到此问题请清理 data/leveldb 文件夹或关闭数据库功能。")
+		_ = levelNode.Decode(lconf)
+		if lconf.Enable {
+			multiDB.UseDB(db.UseLevelDB())
 		}
-		bot.db = db
-		gob.Register(message.Sender{})
-		log.Info("信息数据库初始化完成.")
-	} else {
-		log.Warn("警告: 信息数据库已关闭，将无法使用 [回复/撤回] 等功能。")
 	}
+	if mongoDB {
+		lconf := new(config.MongoDBConfig)
+		_ = mongoNode.Decode(lconf)
+		if lconf.Database == "" {
+			lconf.Database = "gocq-database"
+		}
+		if lconf.Enable {
+			multiDB.UseDB(db.UseMongoDB(lconf.URI, lconf.Database))
+		}
+	}
+	if err := multiDB.Open(); err != nil {
+		log.Fatalf("打开数据库失败: %v", err)
+	}
+	bot.db = multiDB
 	bot.Client.OnPrivateMessage(bot.privateMessageEvent)
 	bot.Client.OnGroupMessage(bot.groupMessageEvent)
 	if base.ReportSelfMessage {
@@ -146,22 +147,6 @@ func (bot *CQBot) OnEventPush(f func(e *Event)) {
 	bot.lock.Lock()
 	bot.events = append(bot.events, f)
 	bot.lock.Unlock()
-}
-
-// GetMessage 获取给定消息id对应的消息
-func (bot *CQBot) GetMessage(mid int32) global.MSG {
-	if bot.db != nil {
-		m := global.MSG{}
-		data, err := bot.db.Get(binary.ToBytes(mid), nil)
-		if err == nil {
-			err = gob.NewDecoder(bytes.NewReader(data)).Decode(&m)
-			if err == nil {
-				return m
-			}
-		}
-		log.Warnf("获取信息时出现错误: %v id: %v", err, mid)
-	}
-	return nil
 }
 
 // UploadLocalImageAsGroup 上传本地图片至群聊
@@ -332,8 +317,9 @@ func (bot *CQBot) SendPrivateMessage(target int64, groupID int64, m *message.Sen
 		default:
 			if session == nil && groupID != 0 {
 				msg := bot.Client.SendGroupTempMessage(groupID, target, m)
-				if msg != nil {
-					id = bot.InsertTempMessage(target, msg)
+				if msg != nil { // nolint
+					// todo(Mrs4s)
+					// id = bot.InsertTempMessage(target, msg)
 				}
 				break
 			}
@@ -342,8 +328,9 @@ func (bot *CQBot) SendPrivateMessage(target int64, groupID int64, m *message.Sen
 				log.Errorf("发送临时会话消息失败: %v", err)
 				break
 			}
-			if msg != nil {
-				id = bot.InsertTempMessage(target, msg)
+			if msg != nil { // nolint
+				// todo(Mrs4s)
+				// id = bot.InsertTempMessage(target, msg)
 			}
 		}
 	case unidirectionalFriendExists(): // 单向好友
@@ -363,57 +350,91 @@ func (bot *CQBot) SendPrivateMessage(target int64, groupID int64, m *message.Sen
 
 // InsertGroupMessage 群聊消息入数据库
 func (bot *CQBot) InsertGroupMessage(m *message.GroupMessage) int32 {
-	val := global.MSG{
-		"message-id":  m.Id,
-		"internal-id": m.InternalId,
-		"group":       m.GroupCode,
-		"group-name":  m.GroupName,
-		"sender":      m.Sender,
-		"time":        m.Time,
-		"message":     ToStringMessage(m.Elements, m.GroupCode, true),
+	t := &message.SendingMessage{Elements: m.Elements}
+	replyElem := t.FirstOrNil(func(e message.IMessageElement) bool {
+		_, ok := e.(*message.ReplyElement)
+		return ok
+	})
+	msg := &db.StoredGroupMessage{
+		ID:       encodeMessageID(m.GroupCode, m.Id),
+		GlobalID: db.ToGlobalID(m.GroupCode, m.Id),
+		SubType:  "normal",
+		Attribute: &db.StoredMessageAttribute{
+			MessageSeq: m.Id,
+			InternalID: m.InternalId,
+			SenderUin:  m.Sender.Uin,
+			SenderName: m.Sender.DisplayName(),
+			Timestamp:  int64(m.Time),
+		},
+		GroupCode: m.GroupCode,
+		AnonymousID: func() string {
+			if m.Sender.IsAnonymous() {
+				return m.Sender.AnonymousInfo.AnonymousId
+			}
+			return ""
+		}(),
+		Content: ToMessageContent(m.Elements),
 	}
-	id := toGlobalID(m.GroupCode, m.Id)
-	if bot.db != nil {
-		buf := global.NewBuffer()
-		defer global.PutBuffer(buf)
-		if err := gob.NewEncoder(buf).Encode(val); err != nil {
-			log.Warnf("记录聊天数据时出现错误: %v", err)
-			return -1
-		}
-		if err := bot.db.Put(binary.ToBytes(id), buf.Bytes(), nil); err != nil {
-			log.Warnf("记录聊天数据时出现错误: %v", err)
-			return -1
+	if replyElem != nil {
+		reply := replyElem.(*message.ReplyElement)
+		msg.SubType = "quote"
+		msg.QuotedInfo = &db.QuotedInfo{
+			PrevID:        encodeMessageID(m.GroupCode, reply.ReplySeq),
+			PrevGlobalID:  db.ToGlobalID(m.GroupCode, reply.ReplySeq),
+			QuotedContent: ToMessageContent(reply.Elements),
 		}
 	}
-	return id
+	if err := bot.db.InsertGroupMessage(msg); err != nil {
+		log.Warnf("记录聊天数据时出现错误: %v", err)
+		return -1
+	}
+	return msg.GlobalID
 }
 
 // InsertPrivateMessage 私聊消息入数据库
 func (bot *CQBot) InsertPrivateMessage(m *message.PrivateMessage) int32 {
-	val := global.MSG{
-		"message-id":  m.Id,
-		"internal-id": m.InternalId,
-		"target":      m.Target,
-		"sender":      m.Sender,
-		"time":        m.Time,
-		"message":     ToStringMessage(m.Elements, 0, true),
+	t := &message.SendingMessage{Elements: m.Elements}
+	replyElem := t.FirstOrNil(func(e message.IMessageElement) bool {
+		_, ok := e.(*message.ReplyElement)
+		return ok
+	})
+	msg := &db.StoredPrivateMessage{
+		ID:       encodeMessageID(m.Sender.Uin, m.Id),
+		GlobalID: db.ToGlobalID(m.Sender.Uin, m.Id),
+		SubType:  "normal",
+		Attribute: &db.StoredMessageAttribute{
+			MessageSeq: m.Id,
+			InternalID: m.InternalId,
+			SenderUin:  m.Sender.Uin,
+			SenderName: m.Sender.DisplayName(),
+			Timestamp:  int64(m.Time),
+		},
+		SessionUin: func() int64 {
+			if m.Sender.Uin == m.Self {
+				return m.Target
+			}
+			return m.Sender.Uin
+		}(),
+		TargetUin: m.Target,
+		Content:   ToMessageContent(m.Elements),
 	}
-	id := toGlobalID(m.Sender.Uin, m.Id)
-	if bot.db != nil {
-		buf := global.NewBuffer()
-		defer global.PutBuffer(buf)
-		if err := gob.NewEncoder(buf).Encode(val); err != nil {
-			log.Warnf("记录聊天数据时出现错误: %v", err)
-			return -1
-		}
-		if err := bot.db.Put(binary.ToBytes(id), buf.Bytes(), nil); err != nil {
-			log.Warnf("记录聊天数据时出现错误: %v", err)
-			return -1
+	if replyElem != nil {
+		reply := replyElem.(*message.ReplyElement)
+		msg.SubType = "quote"
+		msg.QuotedInfo = &db.QuotedInfo{
+			PrevID:        encodeMessageID(reply.Sender, reply.ReplySeq),
+			PrevGlobalID:  db.ToGlobalID(reply.Sender, reply.ReplySeq),
+			QuotedContent: ToMessageContent(m.Elements),
 		}
 	}
-	return id
+	if err := bot.db.InsertPrivateMessage(msg); err != nil {
+		log.Warnf("记录聊天数据时出现错误: %v", err)
+		return -1
+	}
+	return msg.GlobalID
 }
 
+/*
 // InsertTempMessage 临时消息入数据库
 func (bot *CQBot) InsertTempMessage(target int64, m *message.TempMessage) int32 {
 	val := global.MSG{
@@ -426,7 +447,7 @@ func (bot *CQBot) InsertTempMessage(target int64, m *message.TempMessage) int32 
 		"time":       int32(time.Now().Unix()),
 		"message":    ToStringMessage(m.Elements, 0, true),
 	}
-	id := toGlobalID(m.Sender.Uin, m.Id)
+	id := db.ToGlobalID(m.Sender.Uin, m.Id)
 	if bot.db != nil {
 		buf := global.NewBuffer()
 		defer global.PutBuffer(buf)
@@ -441,17 +462,11 @@ func (bot *CQBot) InsertTempMessage(target int64, m *message.TempMessage) int32 
 	}
 	return id
 }
-
-// toGlobalID 构建`code`-`msgID`的字符串并返回其CRC32 Checksum的值
-func toGlobalID(code int64, msgID int32) int32 {
-	return int32(crc32.ChecksumIEEE([]byte(fmt.Sprintf("%d-%d", code, msgID))))
-}
+*/
 
 // Release 释放Bot实例
 func (bot *CQBot) Release() {
-	if bot.db != nil {
-		_ = bot.db.Close()
-	}
+
 }
 
 func (bot *CQBot) dispatchEventMessage(m global.MSG) {
@@ -579,4 +594,12 @@ func (bot *CQBot) uploadMedia(raw message.IMessageElement, target int64, group b
 		return bot.UploadLocalVideo(target, m)
 	}
 	return nil, errors.New("unsupported message element type")
+}
+
+// encodeMessageID 临时先这样, 暂时用不上
+func encodeMessageID(target int64, seq int32) string {
+	return hex.EncodeToString(binary.NewWriterF(func(w *binary.Writer) {
+		w.WriteUInt64(uint64(target))
+		w.WriteUInt32(uint32(seq))
+	}))
 }

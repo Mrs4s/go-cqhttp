@@ -137,6 +137,13 @@ type LevelDBConfig struct {
 	Enable bool `yaml:"enable"`
 }
 
+// MongoDBConfig mongodb 相关配置
+type MongoDBConfig struct {
+	Enable   bool   `yaml:"enable"`
+	URI      string `yaml:"uri"`
+	Database string `yaml:"database"`
+}
+
 // Parse 从默认配置文件路径中获取
 func Parse(path string) *Config {
 	fromEnv := os.Getenv("GCQ_UIN") != ""

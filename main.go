@@ -10,8 +10,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Mrs4s/go-cqhttp/internal/selfdiagnosis"
-
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/client"
 	para "github.com/fumiama/go-hide-param"
@@ -24,6 +22,8 @@ import (
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/global/terminal"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
+	"github.com/Mrs4s/go-cqhttp/internal/cache"
+	"github.com/Mrs4s/go-cqhttp/internal/selfdiagnosis"
 	"github.com/Mrs4s/go-cqhttp/internal/selfupdate"
 	"github.com/Mrs4s/go-cqhttp/modules/servers"
 	"github.com/Mrs4s/go-cqhttp/server"
@@ -82,6 +82,7 @@ func main() {
 	mkCacheDir(global.VoicePath, "语音")
 	mkCacheDir(global.VideoPath, "视频")
 	mkCacheDir(global.CachePath, "发送图片")
+	cache.Init()
 
 	var byteKey []byte
 	arg := os.Args
