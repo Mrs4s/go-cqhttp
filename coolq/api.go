@@ -1057,7 +1057,7 @@ func (bot *CQBot) CQGetImage(file string) global.MSG {
 				_ = body.Close()
 				f.Close()
 			} else {
-				log.Warnf("下载图片 %v 时出现错误", msg["url"], err)
+				log.Warnf("下载图片 %v 时出现错误: %v", msg["url"], err)
 				return Failed(100, "DOWNLOAD_IMAGE_ERROR", err.Error())
 			}
 		}
