@@ -1069,10 +1069,6 @@ func (bot *CQBot) ToElement(t string, d map[string]string, isGroup bool) (m inte
 		}
 		return bot.makeShowPic(img, source, brief, icon, minWidth, minHeight, maxWidth, maxHeight, isGroup)
 	case "video":
-		cache := d["cache"]
-		if cache == "" {
-			cache = "1"
-		}
 		file, err := bot.makeImageOrVideoElem(d, true, isGroup)
 		if err != nil {
 			return nil, err
@@ -1086,7 +1082,7 @@ func (bot *CQBot) ToElement(t string, d map[string]string, isGroup bool) (m inte
 		}
 		var data []byte
 		if cover, ok := d["cover"]; ok {
-			data, _ = global.FindFile(cover, cache, global.ImagePath)
+			data, _ = global.FindFile(cover, d["cache"], global.ImagePath)
 		} else {
 			_ = global.ExtractCover(v.File, v.File+".jpg")
 			data, _ = os.ReadFile(v.File + ".jpg")
@@ -1107,7 +1103,7 @@ func (bot *CQBot) ToElement(t string, d map[string]string, isGroup bool) (m inte
 			_, _ = video.Seek(0, io.SeekStart)
 			hash, _ := utils.ComputeMd5AndLength(video)
 			cacheFile := path.Join(global.CachePath, hex.EncodeToString(hash)+".mp4")
-			if global.PathExists(cacheFile) && cache == "1" {
+			if global.PathExists(cacheFile) && (d["cache"] == "" || d["cache"] == "1") {
 				goto ok
 			}
 			err = global.EncodeMP4(v.File, cacheFile)
@@ -1230,23 +1226,16 @@ func CQCodeUnescapeValue(content string) string {
 func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video, group bool) (message.IMessageElement, error) {
 	f := d["file"]
 	if strings.HasPrefix(f, "http") {
-		cache := d["cache"]
-		c := d["c"]
-		if cache == "" {
-			cache = "1"
-		}
 		hash := md5.Sum([]byte(f))
 		cacheFile := path.Join(global.CachePath, hex.EncodeToString(hash[:])+".cache")
-		maxSize := func() int64 {
-			if video {
-				return maxVideoSize
-			}
-			return maxImageSize
-		}()
-		thread, _ := strconv.Atoi(c)
+		maxSize := int64(maxImageSize)
+		if video {
+			maxSize = maxVideoSize
+		}
+		thread, _ := strconv.Atoi(d["c"])
 		exist := global.PathExists(cacheFile)
-		if exist && cache == "1" {
-			goto hasCacheFile
+		if exist && (d["cache"] == "" || d["cache"] == "1") {
+			goto useCacheFile
 		}
 		if exist {
 			_ = os.Remove(cacheFile)
@@ -1254,7 +1243,7 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video, group bool) (
 		if err := global.DownloadFileMultiThreading(f, cacheFile, maxSize, thread, nil); err != nil {
 			return nil, err
 		}
-	hasCacheFile:
+	useCacheFile:
 		if video {
 			return &LocalVideoElement{File: cacheFile}, nil
 		}

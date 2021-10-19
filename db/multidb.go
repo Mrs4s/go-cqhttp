@@ -15,6 +15,9 @@ var backends []Database
 // drivers 多数据库启动
 var drivers = make(map[string]func(node yaml.Node) Database)
 
+// DatabaseDisabledError 没有可用的db
+var DatabaseDisabledError = errors.New("database disabled")
+
 // Register 添加数据库后端
 func Register(name string, init func(yaml.Node) Database) {
 	if _, ok := drivers[name]; ok {
@@ -47,21 +50,21 @@ func Open() error {
 
 func GetMessageByGlobalID(id int32) (StoredMessage, error) {
 	if len(backends) == 0 {
-		return nil, errors.New("database disabled")
+		return nil, DatabaseDisabledError
 	}
 	return backends[0].GetMessageByGlobalID(id)
 }
 
 func GetGroupMessageByGlobalID(id int32) (*StoredGroupMessage, error) {
 	if len(backends) == 0 {
-		return nil, errors.New("database disabled")
+		return nil, DatabaseDisabledError
 	}
 	return backends[0].GetGroupMessageByGlobalID(id)
 }
 
 func GetPrivateMessageByGlobalID(id int32) (*StoredPrivateMessage, error) {
 	if len(backends) == 0 {
-		return nil, errors.New("database disabled")
+		return nil, DatabaseDisabledError
 	}
 	return backends[0].GetPrivateMessageByGlobalID(id)
 }
