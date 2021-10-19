@@ -345,7 +345,10 @@ func main() {
 	log.Info("アトリは、高性能ですから!")
 
 	go selfupdate.CheckUpdate()
-	go selfdiagnosis.NetworkDiagnosis(cli)
+	go func() {
+		time.Sleep(5 * time.Second)
+		go selfdiagnosis.NetworkDiagnosis(cli)
+	}()
 
 	<-global.SetupMainSignalHandler()
 }
