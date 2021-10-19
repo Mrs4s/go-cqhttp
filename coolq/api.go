@@ -1051,12 +1051,15 @@ func (bot *CQBot) CQGetImage(file string) global.MSG {
 		}
 		local := path.Join(global.CachePath, file+"."+path.Ext(msg["filename"].(string)))
 		if !global.PathExists(local) {
-			f, _ := os.OpenFile(local, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o0644)
 			if body, err := global.HTTPGetReadCloser(msg["url"].(string)); err == nil {
+				f, _ := os.OpenFile(local, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o0644)
 				_, _ = f.ReadFrom(body)
 				_ = body.Close()
+				f.Close()
+			} else {
+				log.Warnf("下载图片 %v 时出现错误: %v", msg["url"], err)
+				return Failed(100, "DOWNLOAD_IMAGE_ERROR", err.Error())
 			}
-			f.Close()
 		}
 		msg["file"] = local
 		return OK(msg)
