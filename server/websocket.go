@@ -12,16 +12,17 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Mrs4s/MiraiGo/utils"
+	log "github.com/sirupsen/logrus"
+	"github.com/tidwall/gjson"
 	"gopkg.in/yaml.v3"
 	"nhooyr.io/websocket"
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
+	"github.com/Mrs4s/go-cqhttp/modules/api"
 	"github.com/Mrs4s/go-cqhttp/modules/config"
-
-	"github.com/Mrs4s/MiraiGo/utils"
-	log "github.com/sirupsen/logrus"
-	"github.com/tidwall/gjson"
+	"github.com/Mrs4s/go-cqhttp/modules/filter"
 )
 
 type webSocketServer struct {
@@ -51,7 +52,7 @@ type websocketClient struct {
 
 type wsConn struct {
 	*websocket.Conn
-	apiCaller *apiCaller
+	apiCaller *api.Caller
 }
 
 // runWSServer 运行一个正向WS server
@@ -71,7 +72,7 @@ func runWSServer(b *coolq.CQBot, node yaml.Node) {
 		token:  conf.AccessToken,
 		filter: conf.Filter,
 	}
-	addFilter(s.filter)
+	filter.Add(s.filter)
 	addr := fmt.Sprintf("%s:%d", conf.Host, conf.Port)
 	s.handshake = fmt.Sprintf(`{"_post_method":2,"meta_event_type":"lifecycle","post_type":"meta_event","self_id":%d,"sub_type":"connect","time":%d}`,
 		b.Client.Uin, time.Now().Unix())
@@ -103,7 +104,7 @@ func runWSClient(b *coolq.CQBot, node yaml.Node) {
 		token:  conf.AccessToken,
 		filter: conf.Filter,
 	}
-	addFilter(c.filter)
+	filter.Add(c.filter)
 	if c.conf.Universal != "" {
 		c.connect("Universal", conf.Universal, &c.universal)
 	} else {
@@ -147,9 +148,9 @@ func (c *websocketClient) connect(typ, url string, conptr **wsConn) {
 	}
 
 	log.Infof("已连接到反向WebSocket %s服务器 %v", typ, c.conf.API)
-	wrappedConn := &wsConn{Conn: conn, apiCaller: newAPICaller(c.bot)}
+	wrappedConn := &wsConn{Conn: conn, apiCaller: api.NewCaller(c.bot)}
 	if c.conf.RateLimit.Enabled {
-		wrappedConn.apiCaller.use(rateLimit(c.conf.RateLimit.Frequency, c.conf.RateLimit.Bucket))
+		wrappedConn.apiCaller.Use(rateLimit(c.conf.RateLimit.Frequency, c.conf.RateLimit.Bucket))
 	}
 
 	if conptr != nil {
@@ -196,7 +197,7 @@ func (c *websocketClient) listenAPI(conn *wsConn, u bool) {
 }
 
 func (c *websocketClient) onBotPushEvent(e *coolq.Event) {
-	filter := findFilter(c.filter)
+	filter := filter.Find(c.filter)
 	if filter != nil && !filter.Eval(gjson.Parse(e.JSONString())) {
 		log.Debugf("上报Event %s 到 WS服务器 时被过滤.", e.JSONBytes())
 		return
@@ -253,7 +254,7 @@ func (s *webSocketServer) event(w http.ResponseWriter, r *http.Request) {
 
 	log.Infof("接受 WebSocket 连接: %v (/event)", r.RemoteAddr)
 
-	conn := &wsConn{Conn: c, apiCaller: newAPICaller(s.bot)}
+	conn := &wsConn{Conn: c, apiCaller: api.NewCaller(s.bot)}
 
 	s.mu.Lock()
 	s.eventConn = append(s.eventConn, conn)
@@ -273,9 +274,9 @@ func (s *webSocketServer) api(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Infof("接受 WebSocket 连接: %v (/api)", r.RemoteAddr)
-	conn := &wsConn{Conn: c, apiCaller: newAPICaller(s.bot)}
+	conn := &wsConn{Conn: c, apiCaller: api.NewCaller(s.bot)}
 	if s.conf.RateLimit.Enabled {
-		conn.apiCaller.use(rateLimit(s.conf.RateLimit.Frequency, s.conf.RateLimit.Bucket))
+		conn.apiCaller.Use(rateLimit(s.conf.RateLimit.Frequency, s.conf.RateLimit.Bucket))
 	}
 	go s.listenAPI(conn)
 }
@@ -299,9 +300,9 @@ func (s *webSocketServer) any(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Infof("接受 WebSocket 连接: %v (/)", r.RemoteAddr)
-	conn := &wsConn{Conn: c, apiCaller: newAPICaller(s.bot)}
+	conn := &wsConn{Conn: c, apiCaller: api.NewCaller(s.bot)}
 	if s.conf.RateLimit.Enabled {
-		conn.apiCaller.use(rateLimit(s.conf.RateLimit.Frequency, s.conf.RateLimit.Bucket))
+		conn.apiCaller.Use(rateLimit(s.conf.RateLimit.Frequency, s.conf.RateLimit.Bucket))
 	}
 	s.mu.Lock()
 	s.eventConn = append(s.eventConn, conn)
@@ -343,7 +344,7 @@ func (c *wsConn) handleRequest(_ *coolq.CQBot, payload []byte) {
 	j := gjson.Parse(utils.B2S(payload))
 	t := strings.TrimSuffix(j.Get("action").Str, "_async")
 	log.Debugf("WS接收到API调用: %v 参数: %v", t, j.Get("params").Raw)
-	ret := c.apiCaller.callAPI(t, j.Get("params"))
+	ret := c.apiCaller.Call(t, j.Get("params"))
 	if j.Get("echo").Exists() {
 		ret["echo"] = j.Get("echo").Value()
 	}
@@ -353,7 +354,7 @@ func (c *wsConn) handleRequest(_ *coolq.CQBot, payload []byte) {
 }
 
 func (s *webSocketServer) onBotPushEvent(e *coolq.Event) {
-	filter := findFilter(s.filter)
+	filter := filter.Find(s.filter)
 	if filter != nil && !filter.Eval(gjson.Parse(e.JSONString())) {
 		log.Debugf("上报Event %s 到 WS客户端 时被过滤.", e.JSONBytes())
 		return
@@ -373,7 +374,7 @@ func (s *webSocketServer) onBotPushEvent(e *coolq.Event) {
 		}
 		if i != j {
 			// i != j means that some connection has been closed.
-			// use a in-place removal to avoid copying.
+			// use an in-place removal to avoid copying.
 			s.eventConn[j] = conn
 		}
 		j++

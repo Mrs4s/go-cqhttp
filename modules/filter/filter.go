@@ -1,4 +1,5 @@
-package global
+// Package filter implements an event filter for go-cqhttp
+package filter
 
 import (
 	"regexp"
@@ -54,14 +55,14 @@ func newAndOp(argument gjson.Result) Filter {
 			opKey := key.Str[1:]
 			op.operands = append(op.operands, operationNode{"", Generate(opKey, value)})
 		case value.IsObject():
-			// is an normal key with an object as the value
+			// is a normal key with an object as the value
 			//   "foo": {
 			//       ".bar": "baz"
 			//   }
 			opKey := key.String()
 			op.operands = append(op.operands, operationNode{opKey, Generate("and", value)})
 		default:
-			// is an normal key with a non-object as the value
+			// is a normal key with a non-object as the value
 			//   "foo": "bar"
 			opKey := key.String()
 			op.operands = append(op.operands, operationNode{opKey, Generate("eq", value)})
@@ -79,7 +80,7 @@ func (op *andOperator) Eval(payload gjson.Result) bool {
 			// is an operator
 			res = res && operand.filter.Eval(payload)
 		} else {
-			// is an normal key
+			// is a normal key
 			val := payload.Get(operand.key)
 			res = res && operand.filter.Eval(val)
 		}

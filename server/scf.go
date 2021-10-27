@@ -17,6 +17,7 @@ import (
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
+	api2 "github.com/Mrs4s/go-cqhttp/modules/api"
 	"github.com/Mrs4s/go-cqhttp/modules/config"
 )
 
@@ -115,9 +116,9 @@ func runLambda(bot *coolq.CQBot, node yaml.Node) {
 		log.Fatal("unknown lambda type:", conf.Type)
 	}
 
-	api := newAPICaller(bot)
+	api := api2.NewCaller(bot)
 	if conf.RateLimit.Enabled {
-		api.use(rateLimit(conf.RateLimit.Frequency, conf.RateLimit.Bucket))
+		api.Use(rateLimit(conf.RateLimit.Frequency, conf.RateLimit.Bucket))
 	}
 	server := &httpServer{
 		api:         api,

@@ -24,12 +24,14 @@ import (
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
+	"github.com/Mrs4s/go-cqhttp/modules/api"
 	"github.com/Mrs4s/go-cqhttp/modules/config"
+	"github.com/Mrs4s/go-cqhttp/modules/filter"
 )
 
 type httpServer struct {
 	HTTP        *http.Server
-	api         *apiCaller
+	api         *api.Caller
 	accessToken string
 }
 
@@ -121,12 +123,12 @@ func (s *httpServer) ServeHTTP(writer http.ResponseWriter, request *http.Request
 	if base.AcceptOneBot12HTTPEndPoint && request.URL.Path == "/" {
 		action := strings.TrimSuffix(ctx.Get("action").Str, "_async")
 		log.Debugf("HTTPServer接收到API调用: %v", action)
-		response = s.api.callAPI(action, ctx.Get("params"))
+		response = s.api.Call(action, ctx.Get("params"))
 	} else {
 		action := strings.TrimPrefix(request.URL.Path, "/")
 		action = strings.TrimSuffix(action, "_async")
 		log.Debugf("HTTPServer接收到API调用: %v", action)
-		response = s.api.callAPI(action, &ctx)
+		response = s.api.Call(action, &ctx)
 	}
 
 	writer.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -176,12 +178,12 @@ func runHTTP(bot *coolq.CQBot, node yaml.Node) {
 		goto client
 	}
 	addr = fmt.Sprintf("%s:%d", conf.Host, conf.Port)
-	s.api = newAPICaller(bot)
+	s.api = api.NewCaller(bot)
 	if conf.RateLimit.Enabled {
-		s.api.use(rateLimit(conf.RateLimit.Frequency, conf.RateLimit.Bucket))
+		s.api.Use(rateLimit(conf.RateLimit.Frequency, conf.RateLimit.Bucket))
 	}
 	if conf.LongPolling.Enabled {
-		s.api.use(longPolling(bot, conf.LongPolling.MaxQueueSize))
+		s.api.Use(longPolling(bot, conf.LongPolling.MaxQueueSize))
 	}
 
 	go func() {
@@ -215,7 +217,7 @@ client:
 
 // Run 运行反向HTTP服务
 func (c HTTPClient) Run() {
-	addFilter(c.filter)
+	filter.Add(c.filter)
 	if c.timeout < 5 {
 		c.timeout = 5
 	}
@@ -225,7 +227,7 @@ func (c HTTPClient) Run() {
 
 func (c *HTTPClient) onBotPushEvent(e *coolq.Event) {
 	if c.filter != "" {
-		filter := findFilter(c.filter)
+		filter := filter.Find(c.filter)
 		if filter != nil && !filter.Eval(gjson.Parse(e.JSONString())) {
 			log.Debugf("上报Event %v 到 HTTP 服务器 %s 时被过滤.", c.addr, e.JSONBytes())
 			return

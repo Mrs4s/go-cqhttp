@@ -3,61 +3,25 @@ package server
 import (
 	"container/list"
 	"context"
-	"os"
 	"sync"
 	"time"
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
+	"github.com/Mrs4s/go-cqhttp/modules/api"
 
-	log "github.com/sirupsen/logrus"
-	"github.com/tidwall/gjson"
 	"golang.org/x/time/rate"
 )
 
-var (
-	filters     = make(map[string]global.Filter)
-	filterMutex sync.RWMutex
-)
-
-func rateLimit(frequency float64, bucketSize int) handler {
+func rateLimit(frequency float64, bucketSize int) api.Handler {
 	limiter := rate.NewLimiter(rate.Limit(frequency), bucketSize)
-	return func(_ string, _ resultGetter) global.MSG {
+	return func(_ string, _ api.Getter) global.MSG {
 		_ = limiter.Wait(context.Background())
 		return nil
 	}
 }
 
-func addFilter(file string) {
-	if file == "" {
-		return
-	}
-	bs, err := os.ReadFile(file)
-	if err != nil {
-		log.Error("init filter error: ", err)
-		return
-	}
-	defer func() {
-		if err := recover(); err != nil {
-			log.Error("init filter error: ", err)
-		}
-	}()
-	filter := global.Generate("and", gjson.ParseBytes(bs))
-	filterMutex.Lock()
-	filters[file] = filter
-	filterMutex.Unlock()
-}
-
-func findFilter(file string) global.Filter {
-	if file == "" {
-		return nil
-	}
-	filterMutex.RLock()
-	defer filterMutex.RUnlock()
-	return filters[file]
-}
-
-func longPolling(bot *coolq.CQBot, maxSize int) handler {
+func longPolling(bot *coolq.CQBot, maxSize int) api.Handler {
 	var mutex sync.Mutex
 	cond := sync.NewCond(&mutex)
 	queue := list.New()
@@ -70,7 +34,7 @@ func longPolling(bot *coolq.CQBot, maxSize int) handler {
 		}
 		cond.Signal()
 	})
-	return func(action string, p resultGetter) global.MSG {
+	return func(action string, p api.Getter) global.MSG {
 		if action != "get_updates" {
 			return nil
 		}
