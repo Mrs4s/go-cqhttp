@@ -66,6 +66,7 @@ run:
   issues-exit-code: 1
   skip-dirs:
     - db
+    - cmd/api-generator
   tests: true
 
 # output configuration options
