@@ -138,20 +138,24 @@ func main() {
 				case "":
 					continue
 				case "route":
-					router.Path = args["path"]
-					if args["alias"] != "" {
-						router.Aliases = append(router.Aliases, args["alias"])
+					router.Path = args
+				case "alias":
+					router.Aliases = append(router.Aliases, args)
+				case "default":
+					for name, value := range parseMap(args, "=") {
+						for i, p := range router.Params {
+							if p.Name == name {
+								router.Params[i].Default = convDefault(value, p.Type)
+							}
+						}
 					}
-				case "param":
-					i, err := strconv.Atoi(args["index"])
-					if err != nil {
-						continue
-					}
-					if args["name"] != "" {
-						router.Params[i].Name = args["name"]
-					}
-					if args["default"] != "" {
-						router.Params[i].Default = convDefault(args["default"], router.Params[i].Type)
+				case "rename":
+					for name, value := range parseMap(args, "->") {
+						for i, p := range router.Params {
+							if p.Name == name {
+								router.Params[i].Name = value
+							}
+						}
 					}
 				}
 			}
@@ -180,34 +184,42 @@ func main() {
 	}
 }
 
-func match(text string) (string, map[string]string) {
+func unquote(s string) string {
+	switch s[0] {
+	case '"':
+		s, _ = strconv.Unquote(s)
+	case '`':
+		s = strings.Trim(s, "`")
+	}
+	return s
+}
+
+func parseMap(input string, sep string) map[string]string {
+	out := make(map[string]string)
+	for _, arg := range strings.Split(input, ",") {
+		k, v, ok := cut(arg, sep)
+		if !ok {
+			out[k] = "true"
+		}
+		k = strings.TrimSpace(k)
+		v = unquote(strings.TrimSpace(v))
+		out[k] = v
+	}
+	return out
+}
+
+func match(text string) (string, string) {
 	text = strings.TrimPrefix(text, "//")
 	text = strings.TrimSpace(text)
 	if !strings.HasPrefix(text, "@") || !strings.HasSuffix(text, ")") {
-		return "", nil
+		return "", ""
 	}
 	text = strings.Trim(text, "@)")
 	cmd, args, ok := cut(text, "(")
 	if !ok {
-		return "", nil
+		return "", ""
 	}
-	params := make(map[string]string)
-	for _, arg := range strings.Split(args, ",") {
-		k, v, ok := cut(arg, "=")
-		if !ok {
-			params[k] = "true"
-		}
-		k = strings.TrimSpace(k)
-		v = strings.TrimSpace(v)
-		switch v[0] {
-		case '"':
-			v, _ = strconv.Unquote(v)
-		case '`':
-			v = strings.Trim(v, "`")
-		}
-		params[k] = v
-	}
-	return cmd, params
+	return cmd, unquote(args)
 }
 
 func cut(s, sep string) (before, after string, found bool) {
