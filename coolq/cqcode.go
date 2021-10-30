@@ -227,6 +227,11 @@ func ToArrayMessage(e []message.IMessageElement, groupID int64) (r []global.MSG)
 				"type": "image",
 				"data": data,
 			}
+		case *message.DiceElement:
+			m = global.MSG{
+				"type": "dice",
+				"data": map[string]string{"value": fmt.Sprint(o.Value)},
+			}
 		case *message.ServiceElement:
 			if isOk := strings.Contains(o.Content, "<?xml"); isOk {
 				m = global.MSG{
@@ -342,6 +347,8 @@ func ToStringMessage(e []message.IMessageElement, groupID int64, isRaw ...bool) 
 			} else {
 				write("[CQ:image,file=%s,url=%s%s]", hex.EncodeToString(o.Md5)+".image", CQCodeEscapeValue(o.Url), arg)
 			}
+		case *message.DiceElement:
+			write("[CQ:dice,value=%v]", o.Value)
 		case *message.ServiceElement:
 			if isOk := strings.Contains(o.Content, "<?xml"); isOk {
 				write(`[CQ:xml,data=%s,resid=%d]`, CQCodeEscapeValue(o.Content), o.Id)
@@ -439,6 +446,8 @@ func ToMessageContent(e []message.IMessageElement) (r []global.MSG) {
 				"type": "image",
 				"data": data,
 			}
+		case *message.DiceElement:
+			m = global.MSG{"type": "dice", "data": global.MSG{"value": o.Value}}
 		case *message.ServiceElement:
 			if isOk := strings.Contains(o.Content, "<?xml"); isOk {
 				m = global.MSG{
@@ -1031,6 +1040,13 @@ func (bot *CQBot) ToElement(t string, d map[string]string, isGroup bool) (m inte
 			}, nil
 		}
 		return nil, errors.New("unsupported music type: " + d["type"])
+	case "dice":
+		value := d["value"]
+		i, _ := strconv.ParseInt(value, 10, 64)
+		if i < 0 || i > 6 {
+			return nil, errors.New("invalid dice value " + value)
+		}
+		return message.NewDice(int32(i)), nil
 	case "xml":
 		resID := d["resid"]
 		template := CQCodeEscapeValue(d["data"])
