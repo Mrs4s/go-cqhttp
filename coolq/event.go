@@ -542,13 +542,13 @@ func (bot *CQBot) groupDecrease(groupCode, userUin int64, operator *client.Group
 	}
 }
 
-func (bot *CQBot) checkMedia(e []message.IMessageElement, sourceId int64) {
+func (bot *CQBot) checkMedia(e []message.IMessageElement, sourceID int64) {
 	// TODO(wdvxdr): remove these old cache file in v1.0.0
 	for _, elem := range e {
 		switch i := elem.(type) {
 		case *message.GroupImageElement:
-			if i.Flash && sourceId != 0 {
-				u, err := bot.Client.GetGroupImageDownloadUrl(i.FileId, sourceId, i.Md5)
+			if i.Flash && sourceID != 0 {
+				u, err := bot.Client.GetGroupImageDownloadUrl(i.FileId, sourceID, i.Md5)
 				if err != nil {
 					log.Warnf("获取闪照地址时出现错误: %v", err)
 				} else {
