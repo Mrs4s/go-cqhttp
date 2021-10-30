@@ -232,6 +232,11 @@ func ToArrayMessage(e []message.IMessageElement, groupID int64) (r []global.MSG)
 				"type": "dice",
 				"data": map[string]string{"value": fmt.Sprint(o.Value)},
 			}
+		case *message.MarketFaceElement:
+			m = global.MSG{
+				"type": "text",
+				"data": map[string]string{"text": o.Name},
+			}
 		case *message.ServiceElement:
 			if isOk := strings.Contains(o.Content, "<?xml"); isOk {
 				m = global.MSG{
@@ -349,6 +354,8 @@ func ToStringMessage(e []message.IMessageElement, groupID int64, isRaw ...bool) 
 			}
 		case *message.DiceElement:
 			write("[CQ:dice,value=%v]", o.Value)
+		case *message.MarketFaceElement:
+			sb.WriteString(o.Name)
 		case *message.ServiceElement:
 			if isOk := strings.Contains(o.Content, "<?xml"); isOk {
 				write(`[CQ:xml,data=%s,resid=%d]`, CQCodeEscapeValue(o.Content), o.Id)
@@ -448,6 +455,8 @@ func ToMessageContent(e []message.IMessageElement) (r []global.MSG) {
 			}
 		case *message.DiceElement:
 			m = global.MSG{"type": "dice", "data": global.MSG{"value": o.Value}}
+		case *message.MarketFaceElement:
+			m = global.MSG{"type": "text", "data": global.MSG{"text": o.Name}}
 		case *message.ServiceElement:
 			if isOk := strings.Contains(o.Content, "<?xml"); isOk {
 				m = global.MSG{
