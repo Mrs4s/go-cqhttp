@@ -1123,7 +1123,7 @@ func (bot *CQBot) CQGetImage(file string) global.MSG {
 				f, _ := os.OpenFile(local, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o0644)
 				_, _ = f.ReadFrom(body)
 				_ = body.Close()
-				f.Close()
+				_ = f.Close()
 			} else {
 				log.Warnf("下载图片 %v 时出现错误: %v", msg["url"], err)
 				return Failed(100, "DOWNLOAD_IMAGE_ERROR", err.Error())
@@ -1189,7 +1189,7 @@ func (bot *CQBot) CQGetForwardMessage(resID string) global.MSG {
 	}
 	r := make([]global.MSG, 0, len(m.Nodes))
 	for _, n := range m.Nodes {
-		bot.checkMedia(n.Message)
+		bot.checkMedia(n.Message, 0)
 		r = append(r, global.MSG{
 			"sender": global.MSG{
 				"user_id":  n.SenderId,
@@ -1273,7 +1273,7 @@ func (bot *CQBot) CQGetGroupMessageHistory(groupID int64, seq int64) global.MSG 
 	}
 	ms := make([]global.MSG, 0, len(msg))
 	for _, m := range msg {
-		bot.checkMedia(m.Elements)
+		bot.checkMedia(m.Elements, groupID)
 		id := bot.InsertGroupMessage(m)
 		t := bot.formatGroupMessage(m)
 		t["message_id"] = id

@@ -150,7 +150,7 @@ func (bot *CQBot) UploadLocalVideo(target int64, v *LocalVideoElement) (*message
 	if err != nil {
 		return nil, err
 	}
-	defer video.Close()
+	defer func() { _ = video.Close() }()
 	hash, _ := utils.ComputeMd5AndLength(io.MultiReader(video, v.thumb))
 	cacheFile := path.Join(global.CachePath, hex.EncodeToString(hash)+".cache")
 	_, _ = video.Seek(0, io.SeekStart)
@@ -220,7 +220,7 @@ func (bot *CQBot) SendGroupMessage(groupID int64, m *message.SendingMessage) int
 		return -1
 	}
 	m.Elements = newElem
-	bot.checkMedia(newElem)
+	bot.checkMedia(newElem, groupID)
 	ret := bot.Client.SendGroupMessage(groupID, m, base.ForceFragmented)
 	if ret == nil || ret.Id == -1 {
 		log.Warnf("群消息发送失败: 账号可能被风控.")
@@ -255,7 +255,7 @@ func (bot *CQBot) SendPrivateMessage(target int64, groupID int64, m *message.Sen
 		return -1
 	}
 	m.Elements = newElem
-	bot.checkMedia(newElem)
+	bot.checkMedia(newElem, bot.Client.Uin)
 
 	// 单向好友是否存在
 	unidirectionalFriendExists := func() bool {

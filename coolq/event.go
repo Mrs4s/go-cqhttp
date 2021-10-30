@@ -31,7 +31,7 @@ func ToFormattedMessage(e []message.IMessageElement, groupID int64, isRaw ...boo
 }
 
 func (bot *CQBot) privateMessageEvent(c *client.QQClient, m *message.PrivateMessage) {
-	bot.checkMedia(m.Elements)
+	bot.checkMedia(m.Elements, m.Sender.Uin)
 	cqm := ToStringMessage(m.Elements, 0, true)
 	id := bot.InsertPrivateMessage(m)
 	log.Infof("收到好友 %v(%v) 的消息: %v (%v)", m.Sender.DisplayName(), m.Sender.Uin, cqm, id)
@@ -63,7 +63,7 @@ func (bot *CQBot) privateMessageEvent(c *client.QQClient, m *message.PrivateMess
 }
 
 func (bot *CQBot) groupMessageEvent(c *client.QQClient, m *message.GroupMessage) {
-	bot.checkMedia(m.Elements)
+	bot.checkMedia(m.Elements, m.GroupCode)
 	for _, elem := range m.Elements {
 		if file, ok := elem.(*message.GroupFileElement); ok {
 			log.Infof("群 %v(%v) 内 %v(%v) 上传了文件: %v", m.GroupName, m.GroupCode, m.Sender.DisplayName(), m.Sender.Uin, file.Name)
@@ -98,7 +98,7 @@ func (bot *CQBot) groupMessageEvent(c *client.QQClient, m *message.GroupMessage)
 
 func (bot *CQBot) tempMessageEvent(c *client.QQClient, e *client.TempMessageEvent) {
 	m := e.Message
-	bot.checkMedia(m.Elements)
+	bot.checkMedia(m.Elements, m.Sender.Uin)
 	cqm := ToStringMessage(m.Elements, 0, true)
 	bot.tempSessionCache.Store(m.Sender.Uin, e.Session)
 	id := m.Id
@@ -542,11 +542,19 @@ func (bot *CQBot) groupDecrease(groupCode, userUin int64, operator *client.Group
 	}
 }
 
-func (bot *CQBot) checkMedia(e []message.IMessageElement) {
+func (bot *CQBot) checkMedia(e []message.IMessageElement, sourceId int64) {
 	// TODO(wdvxdr): remove these old cache file in v1.0.0
 	for _, elem := range e {
 		switch i := elem.(type) {
 		case *message.GroupImageElement:
+			if i.Flash && sourceId != 0 {
+				u, err := bot.Client.GetGroupImageDownloadUrl(i.FileId, sourceId, i.Md5)
+				if err != nil {
+					log.Warnf("获取闪照地址时出现错误: %v", err)
+				} else {
+					i.Url = u
+				}
+			}
 			data := binary.NewWriterF(func(w *binary.Writer) {
 				w.Write(i.Md5)
 				w.WriteUInt32(uint32(i.Size))
