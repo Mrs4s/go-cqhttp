@@ -50,6 +50,16 @@ func (bot *CQBot) CQGetQiDianAccountInfo() global.MSG {
 	})
 }
 
+// CQGetGuildServiceProfile 获取频道系统个人资料
+// @route(get_guild_service_profile)
+func (bot *CQBot) CQGetGuildServiceProfile() global.MSG {
+	return OK(global.MSG{
+		"nickname":   bot.Client.GuildService.Nickname,
+		"tiny_id":    bot.Client.GuildService.TinyId,
+		"avatar_url": bot.Client.GuildService.AvatarUrl,
+	})
+}
+
 // CQGetFriendList 获取好友列表
 //
 // https://git.io/Jtz1L
