@@ -123,6 +123,8 @@ func (c *Caller) call(action string, p Getter) global.MSG {
 		return c.bot.CQGetGroupRootFiles(p0)
 	case "get_group_system_msg":
 		return c.bot.CQGetGroupSystemMessages()
+	case "get_guild_list":
+		return c.bot.CQGetGuildList()
 	case "get_guild_service_profile":
 		return c.bot.CQGetGuildServiceProfile()
 	case "get_image":

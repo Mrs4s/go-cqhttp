@@ -60,6 +60,29 @@ func (bot *CQBot) CQGetGuildServiceProfile() global.MSG {
 	})
 }
 
+// CQGetGuildList 获取已加入的频道列表
+// @route(get_guild_list)
+func (bot *CQBot) CQGetGuildList() global.MSG {
+	fs := make([]global.MSG, 0, len(bot.Client.GuildService.Guilds))
+	for _, info := range bot.Client.GuildService.Guilds {
+		channels := make([]global.MSG, len(info.Channels))
+		for _, channel := range info.Channels {
+			channels = append(channels, global.MSG{
+				"channel_id":   channel.ChannelId,
+				"channel_name": channel.ChannelName,
+				"channel_type": channel.ChannelType,
+			})
+		}
+		fs = append(fs, global.MSG{
+			"guild_id":         info.GuildId,
+			"guild_name":       info.GuildName,
+			"guild_display_id": info.GuildCode,
+			"channels":         channels,
+		})
+	}
+	return OK(fs)
+}
+
 // CQGetFriendList 获取好友列表
 //
 // https://git.io/Jtz1L
