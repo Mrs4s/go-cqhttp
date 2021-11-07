@@ -125,6 +125,9 @@ func (c *Caller) call(action string, p Getter) global.MSG {
 		return c.bot.CQGetGroupSystemMessages()
 	case "get_guild_list":
 		return c.bot.CQGetGuildList()
+	case "get_guild_meta_by_guest":
+		p0 := p.Get("guild_id").Int()
+		return c.bot.CQGetGuildMetaByGuest(p0)
 	case "get_guild_service_profile":
 		return c.bot.CQGetGuildServiceProfile()
 	case "get_image":

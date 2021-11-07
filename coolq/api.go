@@ -65,7 +65,7 @@ func (bot *CQBot) CQGetGuildServiceProfile() global.MSG {
 func (bot *CQBot) CQGetGuildList() global.MSG {
 	fs := make([]global.MSG, 0, len(bot.Client.GuildService.Guilds))
 	for _, info := range bot.Client.GuildService.Guilds {
-		channels := make([]global.MSG, len(info.Channels))
+		channels := make([]global.MSG, 0, len(info.Channels))
 		for _, channel := range info.Channels {
 			channels = append(channels, global.MSG{
 				"channel_id":   channel.ChannelId,
@@ -81,6 +81,28 @@ func (bot *CQBot) CQGetGuildList() global.MSG {
 		})
 	}
 	return OK(fs)
+}
+
+// CQGetGuildMetaByGuest 通过访客权限获取频道元数据
+// @route(get_guild_meta_by_guest)
+// @rename(guildId->guild_id)
+func (bot *CQBot) CQGetGuildMetaByGuest(guildId int64) global.MSG {
+	meta, err := bot.Client.GuildService.FetchGuestGuild(uint64(guildId))
+	if err != nil {
+		log.Errorf("获取频道元数据时出现错误: %v", err)
+		return Failed(100, "API_ERROR", err.Error())
+	}
+	return OK(global.MSG{
+		"guild_id":         meta.GuildId,
+		"guild_name":       meta.GuildName,
+		"guild_profile":    meta.GuildProfile,
+		"create_time":      meta.CreateTime,
+		"max_member_count": meta.MaxMemberCount,
+		"max_robot_count":  meta.MaxRobotCount,
+		"max_admin_count":  meta.MaxAdminCount,
+		"member_count":     meta.MemberCount,
+		"owner_id":         meta.OwnerId,
+	})
 }
 
 // CQGetFriendList 获取好友列表
