@@ -94,6 +94,8 @@ func conv(v, t string) string {
 		return v + ".String()"
 	case "int32", "uint32", "int":
 		return t + "(" + v + ".Int())"
+	case "uint64":
+		return t + ".Uint()"
 	}
 }
 
