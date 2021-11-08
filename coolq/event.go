@@ -2,6 +2,7 @@ package coolq
 
 import (
 	"encoding/hex"
+	"fmt"
 	"os"
 	"path"
 	"strconv"
@@ -128,6 +129,73 @@ func (bot *CQBot) tempMessageEvent(c *client.QQClient, e *client.TempMessageEven
 		},
 	}
 	bot.dispatchEventMessage(tm)
+}
+
+func (bot *CQBot) guildChannelMessageEvent(c *client.QQClient, m *message.GuildChannelMessage) {
+	bot.checkMedia(m.Elements, int64(m.Sender.TinyId))
+	guild := c.GuildService.FindGuild(m.GuildId)
+	if guild == nil {
+		return
+	}
+	var channel *client.ChannelInfo
+	for _, c := range guild.Channels {
+		if c.ChannelId == m.ChannelId {
+			channel = c
+		}
+	}
+	log.Infof("收到来自频道 %v(%v) 子频道 %v(%v) 内 %v(%v) 的消息: %v", guild.GuildName, guild.GuildId, channel.ChannelName, m.ChannelId, m.Sender.Nickname, m.Sender.TinyId, ToStringMessage(m.Elements, 0, true))
+	// todo: 数据库支持
+	bot.dispatchEventMessage(global.MSG{
+		"post_type":    "message",
+		"message_type": "guild",
+		"sub_type":     "channel",
+		"guild_id":     m.GuildId,
+		"channel_id":   m.ChannelId,
+		"message_id":   fmt.Sprintf("%v-%v", m.Id, m.InternalId),
+		"user_id":      m.Sender.TinyId,
+		"message":      ToFormattedMessage(m.Elements, 0, false), // todo: 增加对频道消息 Reply 的支持
+		"self_id":      bot.Client.Uin,
+		"self_tiny_id": bot.Client.GuildService.TinyId,
+		"time":         m.Time,
+		"sender": global.MSG{
+			"user_id":  m.Sender.TinyId,
+			"nickname": m.Sender.Nickname,
+		},
+	})
+}
+
+func (bot *CQBot) guildMessageReactionsUpdated(c *client.QQClient, e *client.GuildMessageReactionsUpdatedEvent) {
+	guild := c.GuildService.FindGuild(e.GuildId)
+	if guild == nil {
+		return
+	}
+	str := fmt.Sprintf("频道 %v(%v) 消息 %v 表情贴片已更新: ", guild.GuildName, guild.GuildId, e.MessageId)
+	var currentReactions []global.MSG
+	for _, r := range e.CurrentReactions {
+		str += fmt.Sprintf("%v*%v ", r.Face.Name, r.Count)
+		currentReactions = append(currentReactions, global.MSG{
+			"emoji_id":    r.EmojiId,
+			"emoji_index": r.Face.Index,
+			"emoji_type":  r.EmojiType,
+			"emoji_name":  r.Face.Name,
+			"count":       r.Count,
+			"clicked":     r.Clicked,
+		})
+	}
+	if len(e.CurrentReactions) == 0 {
+		str += "无任何表情"
+	}
+	log.Infof(str)
+	bot.dispatchEventMessage(global.MSG{
+		"post_type":          "notice",
+		"notice_type":        "message_reactions_updated",
+		"message_sender_uin": e.MessageSenderUin,
+		"guild_id":           e.GuildId,
+		"channel_id":         e.ChannelId,
+		"message_id":         fmt.Sprint(e.MessageId), // todo: 支持数据库后转换为数据库id
+		"operator_id":        e.OperatorId,
+		"current_reactions":  currentReactions,
+	})
 }
 
 func (bot *CQBot) groupMutedEvent(c *client.QQClient, e *client.GroupMuteEvent) {

@@ -76,6 +76,8 @@ func NewQQBot(cli *client.QQClient) *CQBot {
 		bot.Client.OnSelfGroupMessage(bot.groupMessageEvent)
 	}
 	bot.Client.OnTempMessage(bot.tempMessageEvent)
+	bot.Client.GuildService.OnGuildChannelMessage(bot.guildChannelMessageEvent)
+	bot.Client.GuildService.OnGuildMessageReactionsUpdated(bot.guildMessageReactionsUpdated)
 	bot.Client.OnGroupMuted(bot.groupMutedEvent)
 	bot.Client.OnGroupMessageRecalled(bot.groupRecallEvent)
 	bot.Client.OnGroupNotify(bot.groupNotifyEvent)
