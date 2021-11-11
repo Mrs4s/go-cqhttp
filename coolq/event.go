@@ -652,6 +652,19 @@ func (bot *CQBot) checkMedia(e []message.IMessageElement, sourceID int64) {
 			} else if !global.PathExists(path.Join(global.ImagePath, filename)) {
 				_ = os.WriteFile(path.Join(global.ImagePath, filename), data, 0o644)
 			}
+		case *message.GuildImageElement:
+			data := binary.NewWriterF(func(w *binary.Writer) {
+				w.Write(i.Md5)
+				w.WriteUInt32(uint32(i.Size))
+				w.WriteString(i.DownloadIndex)
+				w.WriteString(i.Url)
+			})
+			filename := hex.EncodeToString(i.Md5) + ".image"
+			if cache.EnableCacheDB {
+				cache.Image.Insert(i.Md5, data)
+			} else if !global.PathExists(path.Join(global.ImagePath, filename)) {
+				_ = os.WriteFile(path.Join(global.ImagePath, filename), data, 0o644)
+			}
 		case *message.FriendImageElement:
 			data := binary.NewWriterF(func(w *binary.Writer) {
 				w.Write(i.Md5)

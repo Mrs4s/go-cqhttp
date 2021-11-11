@@ -181,6 +181,22 @@ func (bot *CQBot) UploadLocalImageAsPrivate(userID int64, img *LocalImageElement
 	return
 }
 
+// UploadLocalImageAsGuildChannel 上传本地图片至频道
+func (bot *CQBot) UploadLocalImageAsGuildChannel(guildId, channelId uint64, img *LocalImageElement) (*message.GuildImageElement, error) {
+	if img.File != "" {
+		f, err := os.Open(img.File)
+		if err != nil {
+			return nil, errors.Wrap(err, "open image error")
+		}
+		defer func() { _ = f.Close() }()
+		img.Stream = f
+	}
+	if lawful, mime := base.IsLawfulImage(img.Stream); !lawful {
+		return nil, errors.New("image type error: " + mime)
+	}
+	return bot.Client.GuildService.UploadGuildImage(guildId, channelId, img.Stream)
+}
+
 // SendGroupMessage 发送群消息
 func (bot *CQBot) SendGroupMessage(groupID int64, m *message.SendingMessage) int32 {
 	newElem := make([]message.IMessageElement, 0, len(m.Elements))
@@ -323,6 +339,39 @@ func (bot *CQBot) SendPrivateMessage(target int64, groupID int64, m *message.Sen
 		log.Errorf("错误: 请先添加 %v(%v) 为好友", nickname, target)
 	}
 	return id
+}
+
+// SendGuildChannelMessage 发送频道消息
+func (bot *CQBot) SendGuildChannelMessage(guildID, channelID uint64, m *message.SendingMessage) string {
+	newElem := make([]message.IMessageElement, 0, len(m.Elements))
+	for _, e := range m.Elements {
+		switch i := e.(type) {
+		case *LocalImageElement:
+			n, err := bot.UploadLocalImageAsGuildChannel(guildID, channelID, i)
+			if err != nil {
+				log.Warnf("警告: 频道 %d 消息%s上传失败: %v", channelID, e.Type().String(), err)
+				continue
+			}
+			e = n
+		case *LocalVideoElement, *LocalVoiceElement, *PokeElement, *message.MusicShareElement, *GiftElement:
+			log.Warnf("警告: 频道暂不支持发送 %v 消息", i.Type().String())
+			continue
+		}
+		newElem = append(newElem, e)
+	}
+	if len(newElem) == 0 {
+		log.Warnf("频道消息发送失败: 消息为空.")
+		return ""
+	}
+	m.Elements = newElem
+	bot.checkMedia(newElem, bot.Client.Uin)
+	ret, err := bot.Client.GuildService.SendGuildChannelMessage(guildID, channelID, m)
+	if err != nil {
+		log.Warnf("频道消息发送失败: %v", err)
+		return ""
+	}
+	// todo: insert db
+	return fmt.Sprintf("%v-%v", ret.Id, ret.InternalId)
 }
 
 // InsertGroupMessage 群聊消息入数据库

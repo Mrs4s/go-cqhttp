@@ -562,6 +562,47 @@ func (bot *CQBot) CQSendGroupMessage(groupID int64, m gjson.Result, autoEscape b
 	return OK(global.MSG{"message_id": mid})
 }
 
+// CQSendGuildChannelMessage 发送频道消息
+//
+// @route(send_guild_channel_msg)
+// @rename(m->message)
+func (bot *CQBot) CQSendGuildChannelMessage(guildID, channelID uint64, m gjson.Result, autoEscape bool) global.MSG {
+	guild := bot.Client.GuildService.FindGuild(guildID)
+	if guild == nil {
+		return Failed(100, "GUILD_NOT_FOUND", "频道不存在")
+	}
+	channel := guild.FindChannel(channelID)
+	if channel == nil {
+		return Failed(100, "CHANNEL_NOT_FOUND", "子频道不存在")
+	}
+	if channel.ChannelType != client.ChannelTypeText {
+		log.Warnf("无法发送频道信息: 频道类型错误, 不接受文件信息")
+		return Failed(100, "CHANNEL_NOT_SUPPORTED_TEXT_MSG", "子频道类型错误, 无法发送文本信息")
+	}
+	var elem []message.IMessageElement
+	// todo: 将 converter 适配频道或者为频道单独写一个
+	if m.Type == gjson.JSON {
+		elem = bot.ConvertObjectMessage(m, true)
+	} else {
+		str := m.String()
+		if str == "" {
+			log.Warn("群消息发送失败: 信息为空.")
+			return Failed(100, "EMPTY_MSG_ERROR", "消息为空")
+		}
+		if autoEscape {
+			elem = []message.IMessageElement{message.NewText(str)}
+		} else {
+			elem = bot.ConvertStringMessage(str, true)
+		}
+	}
+	mid := bot.SendGuildChannelMessage(guildID, channelID, &message.SendingMessage{Elements: elem})
+	if mid == "" {
+		return Failed(100, "SEND_MSG_API_ERROR", "请参考 go-cqhttp 端输出")
+	}
+	log.Infof("发送频道 %v(%v) 子频道 %v(%v) 的消息: %v (%v)", guild.GuildName, guild.GuildId, channel.ChannelName, channel.ChannelId, limitedString(m.String()), mid)
+	return OK(global.MSG{"message_id": mid})
+}
+
 // CQSendGroupForwardMessage 扩展API-发送合并转发(群)
 //
 // https://docs.go-cqhttp.org/api/#%E5%8F%91%E9%80%81%E5%90%88%E5%B9%B6%E8%BD%AC%E5%8F%91-%E7%BE%A4
