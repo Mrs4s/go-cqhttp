@@ -164,7 +164,7 @@ func (bot *CQBot) guildChannelMessageEvent(c *client.QQClient, m *message.GuildC
 	})
 }
 
-func (bot *CQBot) guildMessageReactionsUpdated(c *client.QQClient, e *client.GuildMessageReactionsUpdatedEvent) {
+func (bot *CQBot) guildMessageReactionsUpdatedEvent(c *client.QQClient, e *client.GuildMessageReactionsUpdatedEvent) {
 	guild := c.GuildService.FindGuild(e.GuildId)
 	if guild == nil {
 		return
@@ -195,6 +195,23 @@ func (bot *CQBot) guildMessageReactionsUpdated(c *client.QQClient, e *client.Gui
 		"message_id":         fmt.Sprint(e.MessageId), // todo: 支持数据库后转换为数据库id
 		"operator_id":        e.OperatorId,
 		"current_reactions":  currentReactions,
+	})
+}
+
+func (bot *CQBot) guildChannelUpdatedEvent(c *client.QQClient, e *client.GuildChannelUpdatedEvent) {
+	guild := c.GuildService.FindGuild(e.GuildId)
+	if guild == nil {
+		return
+	}
+	log.Infof("频道 %v(%v) 子频道 %v(%v) 信息已更新", guild.GuildName, guild.GuildId, e.NewChannelInfo.ChannelName, e.NewChannelInfo.ChannelId)
+	bot.dispatchEventMessage(global.MSG{
+		"post_type":   "notice",
+		"notice_type": "channel_updated",
+		"guild_id":    e.GuildId,
+		"channel_id":  e.ChannelId,
+		"operator_id": e.OperatorId,
+		"old_info":    convertChannelInfo(e.OldChannelInfo),
+		"new_info":    convertChannelInfo(e.NewChannelInfo),
 	})
 }
 
