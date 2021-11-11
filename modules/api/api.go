@@ -123,6 +123,10 @@ func (c *Caller) call(action string, p Getter) global.MSG {
 		return c.bot.CQGetGroupRootFiles(p0)
 	case "get_group_system_msg":
 		return c.bot.CQGetGroupSystemMessages()
+	case "get_guild_channel_list":
+		p0 := p.Get("guild_id").Uint()
+		p1 := p.Get("no_cache").Bool()
+		return c.bot.CQGetGuildChannelList(p0, p1)
 	case "get_guild_list":
 		return c.bot.CQGetGuildList()
 	case "get_guild_members":

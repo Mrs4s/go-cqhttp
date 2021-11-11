@@ -65,6 +65,7 @@ func (bot *CQBot) CQGetGuildServiceProfile() global.MSG {
 func (bot *CQBot) CQGetGuildList() global.MSG {
 	fs := make([]global.MSG, 0, len(bot.Client.GuildService.Guilds))
 	for _, info := range bot.Client.GuildService.Guilds {
+		/* 做成单独的 api 可能会好些?
 		channels := make([]global.MSG, 0, len(info.Channels))
 		for _, channel := range info.Channels {
 			channels = append(channels, global.MSG{
@@ -73,11 +74,12 @@ func (bot *CQBot) CQGetGuildList() global.MSG {
 				"channel_type": channel.ChannelType,
 			})
 		}
+		*/
 		fs = append(fs, global.MSG{
 			"guild_id":         info.GuildId,
 			"guild_name":       info.GuildName,
 			"guild_display_id": info.GuildCode,
-			"channels":         channels,
+			// "channels":         channels,
 		})
 	}
 	return OK(fs)
@@ -85,9 +87,8 @@ func (bot *CQBot) CQGetGuildList() global.MSG {
 
 // CQGetGuildMetaByGuest 通过访客权限获取频道元数据
 // @route(get_guild_meta_by_guest)
-// @rename(guildId->guild_id)
-func (bot *CQBot) CQGetGuildMetaByGuest(guildId uint64) global.MSG {
-	meta, err := bot.Client.GuildService.FetchGuestGuild(guildId)
+func (bot *CQBot) CQGetGuildMetaByGuest(guildID uint64) global.MSG {
+	meta, err := bot.Client.GuildService.FetchGuestGuild(guildID)
 	if err != nil {
 		log.Errorf("获取频道元数据时出现错误: %v", err)
 		return Failed(100, "API_ERROR", err.Error())
@@ -105,11 +106,53 @@ func (bot *CQBot) CQGetGuildMetaByGuest(guildId uint64) global.MSG {
 	})
 }
 
+// CQGetGuildChannelList 获取频道列表
+// @route(get_guild_channel_list)
+func (bot *CQBot) CQGetGuildChannelList(guildID uint64, noCache bool) global.MSG {
+	guild := bot.Client.GuildService.FindGuild(guildID)
+	if guild == nil {
+		return Failed(100, "GUILD_NOT_FOUND")
+	}
+	if noCache {
+		channels, err := bot.Client.GuildService.FetchChannelList(guildID)
+		if err != nil {
+			log.Errorf("获取频道 %v 子频道列表时出现错误: %v", guildID, err)
+			return Failed(100, "API_ERROR", err.Error())
+		}
+		guild.Channels = channels
+	}
+	channels := make([]global.MSG, 0, len(guild.Channels))
+	for _, c := range guild.Channels {
+		slowModes := make([]global.MSG, 0, len(c.Meta.SlowModes))
+		for _, mode := range c.Meta.SlowModes {
+			slowModes = append(slowModes, global.MSG{
+				"slow_mode_key":    mode.SlowModeKey,
+				"slow_mode_text":   mode.SlowModeText,
+				"speak_frequency":  mode.SpeakFrequency,
+				"slow_mode_circle": mode.SlowModeCircle,
+			})
+		}
+		channels = append(channels, global.MSG{
+			"channel_id":        c.ChannelId,
+			"channel_type":      c.ChannelType,
+			"channel_name":      c.ChannelName,
+			"owner_guild_id":    c.Meta.GuildId,
+			"creator_id":        c.Meta.CreatorUin,
+			"creator_tiny_id":   c.Meta.CreatorTinyId,
+			"create_time":       c.Meta.CreateTime,
+			"current_slow_mode": c.Meta.CurrentSlowMode,
+			"talk_permission":   c.Meta.TalkPermission,
+			"visible_type":      c.Meta.VisibleType,
+			"slow_modes":        slowModes,
+		})
+	}
+	return OK(channels)
+}
+
 // CQGetGuildMembers 获取频道成员列表
 // @route(get_guild_members)
-// @rename(guildId->guild_id)
-func (bot *CQBot) CQGetGuildMembers(guildId uint64) global.MSG {
-	guild := bot.Client.GuildService.FindGuild(guildId)
+func (bot *CQBot) CQGetGuildMembers(guildID uint64) global.MSG {
+	guild := bot.Client.GuildService.FindGuild(guildID)
 	if guild == nil {
 		return Failed(100, "GUILD_NOT_FOUND")
 	}
