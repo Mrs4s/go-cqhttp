@@ -86,8 +86,8 @@ func (bot *CQBot) CQGetGuildList() global.MSG {
 // CQGetGuildMetaByGuest 通过访客权限获取频道元数据
 // @route(get_guild_meta_by_guest)
 // @rename(guildId->guild_id)
-func (bot *CQBot) CQGetGuildMetaByGuest(guildId int64) global.MSG {
-	meta, err := bot.Client.GuildService.FetchGuestGuild(uint64(guildId))
+func (bot *CQBot) CQGetGuildMetaByGuest(guildId uint64) global.MSG {
+	meta, err := bot.Client.GuildService.FetchGuestGuild(guildId)
 	if err != nil {
 		log.Errorf("获取频道元数据时出现错误: %v", err)
 		return Failed(100, "API_ERROR", err.Error())
@@ -102,6 +102,31 @@ func (bot *CQBot) CQGetGuildMetaByGuest(guildId int64) global.MSG {
 		"max_admin_count":  meta.MaxAdminCount,
 		"member_count":     meta.MemberCount,
 		"owner_id":         meta.OwnerId,
+	})
+}
+
+// CQGetGuildMembers 获取频道成员列表
+// @route(get_guild_members)
+// @rename(guildId->guild_id)
+func (bot *CQBot) CQGetGuildMembers(guildId uint64) global.MSG {
+	guild := bot.Client.GuildService.FindGuild(guildId)
+	if guild == nil {
+		return Failed(100, "GUILD_NOT_FOUND")
+	}
+	var members, bots, admins []global.MSG
+	for _, m := range guild.Members {
+		members = append(members, convertGuildMemberInfo(m))
+	}
+	for _, m := range guild.Bots {
+		bots = append(bots, convertGuildMemberInfo(m))
+	}
+	for _, m := range guild.Admins {
+		admins = append(admins, convertGuildMemberInfo(m))
+	}
+	return OK(global.MSG{
+		"members": members,
+		"bots":    bots,
+		"admins":  admins,
 	})
 }
 
@@ -1681,6 +1706,15 @@ func convertGroupMemberInfo(groupID int64, m *client.GroupMemberInfo) global.MSG
 		"title":             m.SpecialTitle,
 		"title_expire_time": m.SpecialTitleExpireTime,
 		"card_changeable":   false,
+	}
+}
+
+func convertGuildMemberInfo(m *client.GuildMemberInfo) global.MSG {
+	return global.MSG{
+		"tiny_id":  m.TinyId,
+		"title":    m.Title,
+		"nickname": m.Nickname,
+		"role":     m.Role,
 	}
 }
 
