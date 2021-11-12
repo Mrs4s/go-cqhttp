@@ -22,18 +22,22 @@ import (
 )
 
 // ToFormattedMessage 将给定[]message.IMessageElement转换为通过coolq.SetMessageFormat所定义的消息上报格式
-func ToFormattedMessage(e []message.IMessageElement, groupID int64, isRaw ...bool) (r interface{}) {
+func ToFormattedMessage(e []message.IMessageElement, source MessageSource, isRaw ...bool) (r interface{}) {
 	if base.PostFormat == "string" {
-		r = ToStringMessage(e, groupID, isRaw...)
+		r = ToStringMessage(e, source, isRaw...)
 	} else if base.PostFormat == "array" {
-		r = ToArrayMessage(e, groupID)
+		r = ToArrayMessage(e, source)
 	}
 	return
 }
 
 func (bot *CQBot) privateMessageEvent(c *client.QQClient, m *message.PrivateMessage) {
 	bot.checkMedia(m.Elements, m.Sender.Uin)
-	cqm := ToStringMessage(m.Elements, 0, true)
+	source := MessageSource{
+		SourceType: MessageSourcePrivate,
+		PrimaryID:  uint64(m.Sender.Uin),
+	}
+	cqm := ToStringMessage(m.Elements, source, true)
 	id := bot.InsertPrivateMessage(m)
 	log.Infof("收到好友 %v(%v) 的消息: %v (%v)", m.Sender.DisplayName(), m.Sender.Uin, cqm, id)
 	fm := global.MSG{
@@ -48,7 +52,7 @@ func (bot *CQBot) privateMessageEvent(c *client.QQClient, m *message.PrivateMess
 		"message_id":   id,
 		"user_id":      m.Sender.Uin,
 		"target_id":    m.Target,
-		"message":      ToFormattedMessage(m.Elements, 0, false),
+		"message":      ToFormattedMessage(m.Elements, source, false),
 		"raw_message":  cqm,
 		"font":         0,
 		"self_id":      c.Uin,
@@ -86,7 +90,11 @@ func (bot *CQBot) groupMessageEvent(c *client.QQClient, m *message.GroupMessage)
 			return
 		}
 	}
-	cqm := ToStringMessage(m.Elements, m.GroupCode, true)
+	source := MessageSource{
+		SourceType: MessageSourceGroup,
+		PrimaryID:  uint64(m.GroupCode),
+	}
+	cqm := ToStringMessage(m.Elements, source, true)
 	id := bot.InsertGroupMessage(m)
 	log.Infof("收到群 %v(%v) 内 %v(%v) 的消息: %v (%v)", m.GroupName, m.GroupCode, m.Sender.DisplayName(), m.Sender.Uin, cqm, id)
 	gm := bot.formatGroupMessage(m)
@@ -100,7 +108,11 @@ func (bot *CQBot) groupMessageEvent(c *client.QQClient, m *message.GroupMessage)
 func (bot *CQBot) tempMessageEvent(c *client.QQClient, e *client.TempMessageEvent) {
 	m := e.Message
 	bot.checkMedia(m.Elements, m.Sender.Uin)
-	cqm := ToStringMessage(m.Elements, 0, true)
+	source := MessageSource{
+		SourceType: MessageSourcePrivate,
+		PrimaryID:  uint64(e.Session.Sender),
+	}
+	cqm := ToStringMessage(m.Elements, source, true)
 	bot.tempSessionCache.Store(m.Sender.Uin, e.Session)
 	id := m.Id
 	// todo(Mrs4s)
@@ -115,7 +127,7 @@ func (bot *CQBot) tempMessageEvent(c *client.QQClient, e *client.TempMessageEven
 		"temp_source":  e.Session.Source,
 		"message_id":   id,
 		"user_id":      m.Sender.Uin,
-		"message":      ToFormattedMessage(m.Elements, 0, false),
+		"message":      ToFormattedMessage(m.Elements, source, false),
 		"raw_message":  cqm,
 		"font":         0,
 		"self_id":      c.Uin,
@@ -143,7 +155,12 @@ func (bot *CQBot) guildChannelMessageEvent(c *client.QQClient, m *message.GuildC
 			channel = c
 		}
 	}
-	log.Infof("收到来自频道 %v(%v) 子频道 %v(%v) 内 %v(%v) 的消息: %v", guild.GuildName, guild.GuildId, channel.ChannelName, m.ChannelId, m.Sender.Nickname, m.Sender.TinyId, ToStringMessage(m.Elements, 0, true))
+	source := MessageSource{
+		SourceType: MessageSourceGuildChannel,
+		PrimaryID:  m.GuildId,
+		SubID:      m.ChannelId,
+	}
+	log.Infof("收到来自频道 %v(%v) 子频道 %v(%v) 内 %v(%v) 的消息: %v", guild.GuildName, guild.GuildId, channel.ChannelName, m.ChannelId, m.Sender.Nickname, m.Sender.TinyId, ToStringMessage(m.Elements, source, true))
 	// todo: 数据库支持
 	bot.dispatchEventMessage(global.MSG{
 		"post_type":    "message",
@@ -153,7 +170,7 @@ func (bot *CQBot) guildChannelMessageEvent(c *client.QQClient, m *message.GuildC
 		"channel_id":   m.ChannelId,
 		"message_id":   fmt.Sprintf("%v-%v", m.Id, m.InternalId),
 		"user_id":      m.Sender.TinyId,
-		"message":      ToFormattedMessage(m.Elements, 0, false), // todo: 增加对频道消息 Reply 的支持
+		"message":      ToFormattedMessage(m.Elements, source, false), // todo: 增加对频道消息 Reply 的支持
 		"self_id":      bot.Client.Uin,
 		"self_tiny_id": bot.Client.GuildService.TinyId,
 		"time":         m.Time,
@@ -664,6 +681,12 @@ func (bot *CQBot) checkMedia(e []message.IMessageElement, sourceID int64) {
 				cache.Image.Insert(i.Md5, data)
 			} else if !global.PathExists(path.Join(global.ImagePath, filename)) {
 				_ = os.WriteFile(path.Join(global.ImagePath, filename), data, 0o644)
+			}
+
+			if i.Url != "" && !global.PathExists(path.Join(global.ImagePath, "guild-images", filename)) {
+				if err := global.DownloadFile(i.Url, path.Join(global.ImagePath, "guild-images", filename), -1, map[string]string{}); err != nil {
+					log.Warnf("下载频道图片时出现错误: %v", err)
+				}
 			}
 		case *message.FriendImageElement:
 			data := binary.NewWriterF(func(w *binary.Writer) {

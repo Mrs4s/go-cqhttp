@@ -84,6 +84,7 @@ func main() {
 	mkCacheDir(global.VoicePath, "语音")
 	mkCacheDir(global.VideoPath, "视频")
 	mkCacheDir(global.CachePath, "发送图片")
+	mkCacheDir(path.Join(global.ImagePath, "guild-images"), "频道图片缓存")
 	cache.Init()
 
 	db.Init()
