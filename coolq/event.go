@@ -212,6 +212,9 @@ func (bot *CQBot) guildMessageReactionsUpdatedEvent(c *client.QQClient, e *clien
 		"message_id":         fmt.Sprint(e.MessageId), // todo: 支持数据库后转换为数据库id
 		"operator_id":        e.OperatorId,
 		"current_reactions":  currentReactions,
+		"time":               time.Now().Unix(),
+		"self_id":            c.Uin,
+		"user_id":            e.OperatorId,
 	})
 }
 
@@ -227,6 +230,9 @@ func (bot *CQBot) guildChannelUpdatedEvent(c *client.QQClient, e *client.GuildCh
 		"guild_id":    e.GuildId,
 		"channel_id":  e.ChannelId,
 		"operator_id": e.OperatorId,
+		"time":        time.Now().Unix(),
+		"self_id":     c.Uin,
+		"user_id":     e.OperatorId,
 		"old_info":    convertChannelInfo(e.OldChannelInfo),
 		"new_info":    convertChannelInfo(e.NewChannelInfo),
 	})
