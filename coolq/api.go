@@ -576,7 +576,7 @@ func (bot *CQBot) CQSendGuildChannelMessage(guildID, channelID uint64, m gjson.R
 		return Failed(100, "CHANNEL_NOT_FOUND", "子频道不存在")
 	}
 	if channel.ChannelType != client.ChannelTypeText {
-		log.Warnf("无法发送频道信息: 频道类型错误, 不接受文件信息")
+		log.Warnf("无法发送频道信息: 频道类型错误, 不接受文本信息")
 		return Failed(100, "CHANNEL_NOT_SUPPORTED_TEXT_MSG", "子频道类型错误, 无法发送文本信息")
 	}
 	var elem []message.IMessageElement
@@ -586,7 +586,7 @@ func (bot *CQBot) CQSendGuildChannelMessage(guildID, channelID uint64, m gjson.R
 	} else {
 		str := m.String()
 		if str == "" {
-			log.Warn("群消息发送失败: 信息为空.")
+			log.Warn("频道发送失败: 信息为空.")
 			return Failed(100, "EMPTY_MSG_ERROR", "消息为空")
 		}
 		if autoEscape {
