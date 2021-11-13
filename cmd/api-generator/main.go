@@ -231,9 +231,6 @@ func cut(s, sep string) (before, after string, found bool) {
 	return s, "", false
 }
 
-func isASCIIDigit(c byte) bool { return '0' <= c && c <= '9' }
-func isASCIILower(c byte) bool { return 'a' <= c && c <= 'z' }
-
 // some abbreviations need translation before transforming ro snake case
 var replacer = strings.NewReplacer("ID", "Id")
 
@@ -241,11 +238,12 @@ func snakecase(s string) string {
 	s = replacer.Replace(s)
 	t := make([]byte, 0, 32)
 	for i := 0; i < len(s); i++ {
-		if isASCIILower(s[i]) || isASCIIDigit(s[i]) {
-			t = append(t, s[i])
+		c := s[i]
+		if ('a' <= c && c <= 'z') || ('0' <= c && c <= '9') {
+			t = append(t, c)
 		} else {
 			t = append(t, '_')
-			t = append(t, s[i]^0x20)
+			t = append(t, c^0x20)
 		}
 	}
 	return string(t)

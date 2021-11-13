@@ -167,6 +167,7 @@ func (c *websocketClient) connect(typ, url string, conptr **wsConn) {
 
 func (c *websocketClient) listenAPI(conn *wsConn, u bool) {
 	defer func() { _ = conn.Close(websocket.StatusNormalClosure, "") }()
+	conn.Conn.SetReadLimit(1024 * 1024 * 128)
 	for {
 		buffer := global.NewBuffer()
 		t, reader, err := conn.Conn.Reader(context.Background())
