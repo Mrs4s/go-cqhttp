@@ -80,13 +80,16 @@ type MessageSource struct {
 // MessageSourceType 消息来源类型
 type MessageSourceType int32
 
+// MessageSourceType 常量
 const (
-	maxImageSize = 1024 * 1024 * 30  // 30MB
-	maxVideoSize = 1024 * 1024 * 100 // 100MB
-
 	MessageSourcePrivate      MessageSourceType = 0
 	MessageSourceGroup        MessageSourceType = 1
 	MessageSourceGuildChannel MessageSourceType = 2
+)
+
+const (
+	maxImageSize = 1024 * 1024 * 30  // 30MB
+	maxVideoSize = 1024 * 1024 * 100 // 100MB
 )
 
 // Type implements the message.IMessageElement.
@@ -1414,6 +1417,7 @@ func (bot *CQBot) readImageCache(b []byte, sourceType MessageSourceType) (messag
 	if sourceType == MessageSourceGuildChannel {
 		if len(bot.Client.GuildService.Guilds) == 0 {
 			err = errors.New("cannot query guild image: not any joined guild")
+			goto ok
 		}
 		guild := bot.Client.GuildService.Guilds[0]
 		rsp, err = bot.Client.GuildService.QueryImage(guild.GuildId, guild.Channels[0].ChannelId, hash, uint64(size))

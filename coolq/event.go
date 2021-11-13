@@ -187,17 +187,17 @@ func (bot *CQBot) guildMessageReactionsUpdatedEvent(c *client.QQClient, e *clien
 		return
 	}
 	str := fmt.Sprintf("频道 %v(%v) 消息 %v 表情贴片已更新: ", guild.GuildName, guild.GuildId, e.MessageId)
-	var currentReactions []global.MSG
-	for _, r := range e.CurrentReactions {
+	currentReactions := make([]global.MSG, len(e.CurrentReactions))
+	for i, r := range e.CurrentReactions {
 		str += fmt.Sprintf("%v*%v ", r.Face.Name, r.Count)
-		currentReactions = append(currentReactions, global.MSG{
+		currentReactions[i] = global.MSG{
 			"emoji_id":    r.EmojiId,
 			"emoji_index": r.Face.Index,
 			"emoji_type":  r.EmojiType,
 			"emoji_name":  r.Face.Name,
 			"count":       r.Count,
 			"clicked":     r.Clicked,
-		})
+		}
 	}
 	if len(e.CurrentReactions) == 0 {
 		str += "无任何表情"

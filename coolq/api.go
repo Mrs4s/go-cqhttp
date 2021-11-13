@@ -135,15 +135,17 @@ func (bot *CQBot) CQGetGuildMembers(guildID uint64) global.MSG {
 	if guild == nil {
 		return Failed(100, "GUILD_NOT_FOUND")
 	}
-	var members, bots, admins []global.MSG
-	for _, m := range guild.Members {
-		members = append(members, convertGuildMemberInfo(m))
+	members := make([]global.MSG, len(guild.Members))
+	bots := make([]global.MSG, len(guild.Bots))
+	admins := make([]global.MSG, len(guild.Admins))
+	for i, m := range guild.Members {
+		members[i] = convertGuildMemberInfo(m)
 	}
-	for _, m := range guild.Bots {
-		bots = append(bots, convertGuildMemberInfo(m))
+	for i, m := range guild.Bots {
+		bots[i] = convertGuildMemberInfo(m)
 	}
-	for _, m := range guild.Admins {
-		admins = append(admins, convertGuildMemberInfo(m))
+	for i, m := range guild.Admins {
+		admins[i] = convertGuildMemberInfo(m)
 	}
 	return OK(global.MSG{
 		"members": members,

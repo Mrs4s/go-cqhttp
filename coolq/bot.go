@@ -182,7 +182,7 @@ func (bot *CQBot) UploadLocalImageAsPrivate(userID int64, img *LocalImageElement
 }
 
 // UploadLocalImageAsGuildChannel 上传本地图片至频道
-func (bot *CQBot) UploadLocalImageAsGuildChannel(guildId, channelId uint64, img *LocalImageElement) (*message.GuildImageElement, error) {
+func (bot *CQBot) UploadLocalImageAsGuildChannel(guildID, channelID uint64, img *LocalImageElement) (*message.GuildImageElement, error) {
 	if img.File != "" {
 		f, err := os.Open(img.File)
 		if err != nil {
@@ -194,7 +194,7 @@ func (bot *CQBot) UploadLocalImageAsGuildChannel(guildId, channelId uint64, img 
 	if lawful, mime := base.IsLawfulImage(img.Stream); !lawful {
 		return nil, errors.New("image type error: " + mime)
 	}
-	return bot.Client.GuildService.UploadGuildImage(guildId, channelId, img.Stream)
+	return bot.Client.GuildService.UploadGuildImage(guildID, channelID, img.Stream)
 }
 
 // SendGroupMessage 发送群消息
