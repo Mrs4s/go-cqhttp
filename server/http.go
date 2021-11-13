@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"crypto/hmac"
 	"crypto/sha1"
@@ -227,15 +228,15 @@ func (c HTTPClient) Run() {
 
 func (c *HTTPClient) onBotPushEvent(e *coolq.Event) {
 	if c.filter != "" {
-		filter := filter.Find(c.filter)
-		if filter != nil && !filter.Eval(gjson.Parse(e.JSONString())) {
+		flt := filter.Find(c.filter)
+		if flt != nil && !flt.Eval(gjson.Parse(e.JSONString())) {
 			log.Debugf("上报Event %v 到 HTTP 服务器 %s 时被过滤.", c.addr, e.JSONBytes())
 			return
 		}
 	}
 
 	client := http.Client{Timeout: time.Second * time.Duration(c.timeout)}
-	req, _ := http.NewRequest("POST", c.addr, nil)
+	req, _ := http.NewRequest("POST", c.addr, bytes.NewReader(e.JSONBytes()))
 	req.Header.Set("X-Self-ID", strconv.FormatInt(c.bot.Client.Uin, 10))
 	req.Header.Set("User-Agent", "CQHttp/4.15.0")
 	if c.secret != "" {
