@@ -313,6 +313,7 @@ func (s *webSocketServer) any(w http.ResponseWriter, r *http.Request) {
 
 func (s *webSocketServer) listenAPI(c *wsConn) {
 	defer func() { _ = c.Close(websocket.StatusNormalClosure, "") }()
+	c.Conn.SetReadLimit(1024 * 1024 * 128)
 	for {
 		buffer := global.NewBuffer()
 		t, reader, err := c.Reader(context.Background())
