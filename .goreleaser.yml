@@ -12,17 +12,17 @@ builds:
       - linux
       - darwin
     goarch:
-      - 386
+      - '386'
       - amd64
       - arm
       - arm64
     goarm:
-      - 7
+      - '7'
     ignore:
       - goos: darwin
         goarch: arm
       - goos: darwin
-        goarch: 386
+        goarch: '386'
     mod_timestamp: "{{ .CommitTimestamp }}"
     flags:
       - -trimpath
@@ -35,17 +35,17 @@ builds:
     goos:
       - windows
     goarch:
-      - 386
+      - '386'
       - amd64
       - arm
       - arm64
     goarm:
-      - 7
+      - '7'
     mod_timestamp: "{{ .CommitTimestamp }}"
     flags:
       - -trimpath
     ldflags:
-      - -s -w -X github.com/Mrs4s/go-cqhttp/coolq.Version=v{{.Version}}
+      - -s -w -X github.com/Mrs4s/go-cqhttp/internal/base.Version=v{{.Version}}
 
 checksum:
   name_template: "{{ .ProjectName }}_checksums.txt"
