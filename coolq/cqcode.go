@@ -234,6 +234,12 @@ func ToArrayMessage(e []message.IMessageElement, source MessageSource) (r []glob
 				"type": "image",
 				"data": data,
 			}
+		case *message.GuildImageElement:
+			data := map[string]string{"file": hex.EncodeToString(o.Md5) + ".image", "url": o.Url}
+			m = global.MSG{
+				"type": "image",
+				"data": data,
+			}
 		case *message.FriendImageElement:
 			data := map[string]string{"file": hex.EncodeToString(o.Md5) + ".image", "url": o.Url}
 			if o.Flash {
