@@ -241,7 +241,8 @@ func (s *webSocketServer) event(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(status)
 		return
 	}
-	c, err := websocket.Accept(w, r, nil)
+	opts := &websocket.AcceptOptions{InsecureSkipVerify: true}
+	c, err := websocket.Accept(w, r, opts)
 	if err != nil {
 		log.Warnf("处理 WebSocket 请求时出现错误: %v", err)
 		return
@@ -269,7 +270,8 @@ func (s *webSocketServer) api(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(status)
 		return
 	}
-	c, err := websocket.Accept(w, r, nil)
+	opts := &websocket.AcceptOptions{InsecureSkipVerify: true}
+	c, err := websocket.Accept(w, r, opts)
 	if err != nil {
 		log.Warnf("处理 WebSocket 请求时出现错误: %v", err)
 		return
@@ -289,7 +291,8 @@ func (s *webSocketServer) any(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(status)
 		return
 	}
-	c, err := websocket.Accept(w, r, nil)
+	opts := &websocket.AcceptOptions{InsecureSkipVerify: true}
+	c, err := websocket.Accept(w, r, opts)
 	if err != nil {
 		log.Warnf("处理 WebSocket 请求时出现错误: %v", err)
 		return
