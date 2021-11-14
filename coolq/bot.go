@@ -219,9 +219,6 @@ func (bot *CQBot) SendGroupMessage(groupID int64, m *message.SendingMessage) int
 				}
 			}
 			return 0
-		case *GiftElement:
-			bot.Client.SendGroupGift(uint64(groupID), uint64(i.Target), i.GiftID)
-			return 0
 		case *message.MusicShareElement:
 			ret, err := bot.Client.SendGroupMusicShare(groupID, i)
 			if err != nil {
@@ -355,7 +352,7 @@ func (bot *CQBot) SendGuildChannelMessage(guildID, channelID uint64, m *message.
 				continue
 			}
 			e = n
-		case *LocalVideoElement, *LocalVoiceElement, *PokeElement, *message.MusicShareElement, *GiftElement:
+		case *LocalVideoElement, *LocalVoiceElement, *PokeElement, *message.MusicShareElement:
 			log.Warnf("警告: 频道暂不支持发送 %v 消息", i.Type().String())
 			continue
 		}

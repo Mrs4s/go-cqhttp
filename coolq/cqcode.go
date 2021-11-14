@@ -41,12 +41,6 @@ type PokeElement struct {
 	Target int64
 }
 
-// GiftElement 礼物
-type GiftElement struct {
-	Target int64
-	GiftID message.GroupGift
-}
-
 // LocalImageElement 本地图片
 type LocalImageElement struct {
 	Stream io.ReadSeeker
@@ -97,33 +91,9 @@ func (e *LocalImageElement) Type() message.ElementType {
 	return message.Image
 }
 
-// Type 获取元素类型ID
-func (e *GiftElement) Type() message.ElementType {
-	// Make message.IMessageElement Happy
-	return message.At
-}
-
 // Type impl message.IMessageElement
 func (e *LocalVideoElement) Type() message.ElementType {
 	return message.Video
-}
-
-// GiftID 礼物ID数组
-var GiftID = [...]message.GroupGift{
-	message.SweetWink,
-	message.HappyCola,
-	message.LuckyBracelet,
-	message.Cappuccino,
-	message.CatWatch,
-	message.FleeceGloves,
-	message.RainbowCandy,
-	message.Stronger,
-	message.LoveMicrophone,
-	message.HoldingYourHand,
-	message.CuteCat,
-	message.MysteryMask,
-	message.ImBusy,
-	message.LoveMask,
 }
 
 // Type 获取元素类型ID
@@ -918,16 +888,6 @@ func (bot *CQBot) ToElement(t string, d map[string]string, sourceType MessageSou
 	case "poke":
 		t, _ := strconv.ParseInt(d["qq"], 10, 64)
 		return &PokeElement{Target: t}, nil
-	case "gift":
-		if sourceType != MessageSourceGroup {
-			return nil, errors.New("private gift unsupported") // no free private gift
-		}
-		t, _ := strconv.ParseInt(d["qq"], 10, 64)
-		id, _ := strconv.Atoi(d["id"])
-		if id < 0 || id >= 14 {
-			return nil, errors.New("invalid gift id")
-		}
-		return &GiftElement{Target: t, GiftID: GiftID[id]}, nil
 	case "tts":
 		defer func() {
 			if r := recover(); r != nil {

@@ -106,7 +106,6 @@ go-cqhttp 兼容 [OneBot-v11](https://github.com/botuniverse/onebot-11) 绝大�
 | [CQ:image]     | [图片]                            |
 | [CQ:redbag]    | [红包]                            |
 | [CQ:poke]      | [戳一戳]                          |
-| [CQ:gift]      | [礼物]                            |
 | [CQ:node]      | [合并转发消息节点]                |
 | [CQ:cardimage] | [一种 xml 的图片消息（装逼大图）] |
 | [CQ:tts]       | [文本转语音]                      |
@@ -114,7 +113,6 @@ go-cqhttp 兼容 [OneBot-v11](https://github.com/botuniverse/onebot-11) 绝大�
 [图片]: https://docs.go-cqhttp.org/cqcode/#%E5%9B%BE%E7%89%87
 [红包]: https://docs.go-cqhttp.org/cqcode/#%E7%BA%A2%E5%8C%85
 [戳一戳]: https://docs.go-cqhttp.org/cqcode/#%E6%88%B3%E4%B8%80%E6%88%B3
-[礼物]: https://docs.go-cqhttp.org/cqcode/#%E7%A4%BC%E7%89%A9
 [合并转发消息节点]: https://docs.go-cqhttp.org/cqcode/#%E5%90%88%E5%B9%B6%E8%BD%AC%E5%8F%91%E6%B6%88%E6%81%AF%E8%8A%82%E7%82%B9
 [一种 xml 的图片消息（装逼大图）]: https://docs.go-cqhttp.org/cqcode/#cardimage
 [文本转语音]: https://docs.go-cqhttp.org/cqcode/#%E6%96%87%E6%9C%AC%E8%BD%AC%E8%AF%AD%E9%9F%B3
