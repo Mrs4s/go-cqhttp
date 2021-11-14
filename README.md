@@ -44,7 +44,7 @@ _✨ 基于 [Mirai](https://github.com/mamoe/mirai) 以及 [MiraiGo](https://git
 
 
 ## 兼容性
-go-cqhttp 兼容 [OneBot-v11](https://github.com/howmanybots/onebot/tree/master/v11/specs) 绝大多数内容，并在其基础上做了一些扩展，详情请看 go-cqhttp 的文档。
+go-cqhttp 兼容 [OneBot-v11](https://github.com/botuniverse/onebot-11) 绝大多数内容，并在其基础上做了一些扩展，详情请看 go-cqhttp 的文档。
 
 ### 接口
 
