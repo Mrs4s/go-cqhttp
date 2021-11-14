@@ -37,9 +37,17 @@ func NetworkDiagnosis(c *client.QQClient) {
 
 	if qualityInfo.LongMessageServerLatency > 1000 {
 		if qualityInfo.LongMessageServerLatency == 9999 {
-			log.Errorf("错误: 长消息服务器延迟测试失败, %v", longMessageServerErrorMessage)
+			log.Errorf("错误: 长消息服务器延迟测试失败, %v 如果您使用的腾讯云服务器, 请修改DNS到114.114.114.114", longMessageServerErrorMessage)
 		} else {
 			log.Warnf("警告: 长消息延迟为 %vms, 大于 1000ms, %v", qualityInfo.LongMessageServerLatency, longMessageServerErrorMessage)
+		}
+	}
+
+	if qualityInfo.LongMessageServerResponseLatency > 2000 {
+		if qualityInfo.LongMessageServerResponseLatency == 9999 {
+			log.Errorf("错误: 长消息服务器响应延迟测试失败, %v 如果您使用的腾讯云服务器, 请修改DNS到114.114.114.114", longMessageServerErrorMessage)
+		} else {
+			log.Warnf("警告: 长消息响应延迟为 %vms, 大于 1000ms, %v", qualityInfo.LongMessageServerResponseLatency, longMessageServerErrorMessage)
 		}
 	}
 
