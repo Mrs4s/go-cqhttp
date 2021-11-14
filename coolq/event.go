@@ -213,7 +213,8 @@ func (bot *CQBot) guildMessageReactionsUpdatedEvent(c *client.QQClient, e *clien
 		"operator_id":        e.OperatorId,
 		"current_reactions":  currentReactions,
 		"time":               time.Now().Unix(),
-		"self_id":            c.Uin,
+		"self_id":            bot.Client.Uin,
+		"self_tiny_id":       bot.Client.GuildService.TinyId,
 		"user_id":            e.OperatorId,
 	})
 }
@@ -225,16 +226,65 @@ func (bot *CQBot) guildChannelUpdatedEvent(c *client.QQClient, e *client.GuildCh
 	}
 	log.Infof("频道 %v(%v) 子频道 %v(%v) 信息已更新", guild.GuildName, guild.GuildId, e.NewChannelInfo.ChannelName, e.NewChannelInfo.ChannelId)
 	bot.dispatchEventMessage(global.MSG{
-		"post_type":   "notice",
-		"notice_type": "channel_updated",
-		"guild_id":    e.GuildId,
-		"channel_id":  e.ChannelId,
-		"operator_id": e.OperatorId,
-		"time":        time.Now().Unix(),
-		"self_id":     c.Uin,
-		"user_id":     e.OperatorId,
-		"old_info":    convertChannelInfo(e.OldChannelInfo),
-		"new_info":    convertChannelInfo(e.NewChannelInfo),
+		"post_type":    "notice",
+		"notice_type":  "channel_updated",
+		"guild_id":     e.GuildId,
+		"channel_id":   e.ChannelId,
+		"operator_id":  e.OperatorId,
+		"time":         time.Now().Unix(),
+		"self_id":      bot.Client.Uin,
+		"self_tiny_id": bot.Client.GuildService.TinyId,
+		"user_id":      e.OperatorId,
+		"old_info":     convertChannelInfo(e.OldChannelInfo),
+		"new_info":     convertChannelInfo(e.NewChannelInfo),
+	})
+}
+
+func (bot *CQBot) guildChannelCreatedEvent(c *client.QQClient, e *client.GuildChannelOperationEvent) {
+	guild := c.GuildService.FindGuild(e.GuildId)
+	if guild == nil {
+		return
+	}
+	member := guild.FindMember(e.OperatorId)
+	if member == nil {
+		member = &client.GuildMemberInfo{Nickname: "未知"}
+	}
+	log.Infof("频道 %v(%v) 内用户 %v(%v) 创建了子频道 %v(%v)", guild.GuildName, guild.GuildId, member.Nickname, member.TinyId, e.ChannelInfo.ChannelName, e.ChannelInfo.ChannelId)
+	bot.dispatchEventMessage(global.MSG{
+		"post_type":    "notice",
+		"notice_type":  "channel_created",
+		"guild_id":     e.GuildId,
+		"channel_id":   e.ChannelInfo.ChannelId,
+		"operator_id":  e.OperatorId,
+		"self_id":      bot.Client.Uin,
+		"self_tiny_id": bot.Client.GuildService.TinyId,
+		"user_id":      e.OperatorId,
+		"time":         time.Now().Unix(),
+		"channel_info": convertChannelInfo(e.ChannelInfo),
+	})
+}
+
+func (bot *CQBot) guildChannelDestroyedEvent(c *client.QQClient, e *client.GuildChannelOperationEvent) {
+	guild := c.GuildService.FindGuild(e.GuildId)
+	if guild == nil {
+		return
+	}
+	member := guild.FindMember(e.OperatorId)
+	if member == nil {
+		member = &client.GuildMemberInfo{Nickname: "未知"}
+	}
+	log.Infof("频道 %v(%v) 内用户 %v(%v) 删除了子频道 %v(%v)", guild.GuildName, guild.GuildId, member.Nickname, member.TinyId, e.ChannelInfo.ChannelName, e.ChannelInfo.ChannelId)
+	bot.dispatchEventMessage(global.MSG{
+		"post_type":    "notice",
+		"notice_type":  "channel_destroyed",
+		"guild_id":     e.GuildId,
+		"channel_id":   e.ChannelInfo.ChannelId,
+		"operator_id":  e.OperatorId,
+		"self_id":      bot.Client.Uin,
+		"self_tiny_id": bot.Client.GuildService.TinyId,
+		"user_id":      e.OperatorId,
+		"time":         time.Now().Unix(),
+		"channel_info": convertChannelInfo(e.ChannelInfo),
 	})
 }
 
