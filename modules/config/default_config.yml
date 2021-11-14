@@ -49,6 +49,8 @@ output:
   log-aging: 15
   # 是否在每次启动时强制创建全新的文件储存日志. 为 false 的情况下将会在上次启动时创建的日志文件续写
   log-force-new: true
+  # 是否启用日志颜色
+  log-colorful: true
   # 是否启用 DEBUG
   debug: false # 开启调试模式
 

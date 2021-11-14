@@ -37,6 +37,7 @@ var (
 	ReportSelfMessage   bool // 是否上报自身消息
 	UseSSOAddress       bool // 是否使用服务器下发的新地址进行重连
 	LogForceNew         bool // 是否在每次启动时强制创建全新的文件储存日志
+	LogColorful         bool // 是否启用日志颜色
 	FastStart           bool // 是否为快速启动
 
 	PostFormat        string                 // 上报格式 string or array
@@ -92,6 +93,7 @@ func Init() {
 		Servers = conf.Servers
 		Database = conf.Database
 		LogLevel = conf.Output.LogLevel
+		LogColorful = conf.Output.LogColorful == nil || *conf.Output.LogColorful
 		if conf.Message.PostFormat != "string" && conf.Message.PostFormat != "array" {
 			log.Warnf("post-format 配置错误, 将自动使用 string")
 			PostFormat = "string"
