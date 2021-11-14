@@ -123,7 +123,6 @@ func main() {
 		}
 	}
 
-
 	if (base.Account.Uin == 0 || (base.Account.Password == "" && !base.Account.Encrypt)) && !global.PathExists("session.token") {
 		log.Warn("账号密码未配置, 将使用二维码登录.")
 		if !base.FastStart {
