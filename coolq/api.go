@@ -581,6 +581,19 @@ func (bot *CQBot) CQSendGuildChannelMessage(guildID, channelID uint64, m gjson.R
 		log.Warnf("无法发送频道信息: 频道类型错误, 不接受文本信息")
 		return Failed(100, "CHANNEL_NOT_SUPPORTED_TEXT_MSG", "子频道类型错误, 无法发送文本信息")
 	}
+	fixAt := func(elem []message.IMessageElement) {
+		for _, e := range elem {
+			if at, ok := e.(*message.AtElement); ok && at.Target != 0 && at.Display == "" {
+				mem := guild.FindMember(uint64(at.Target))
+				if mem != nil {
+					at.Display = "@" + mem.Nickname
+				} else {
+					at.Display = "@" + strconv.FormatInt(at.Target, 10)
+				}
+			}
+		}
+	}
+
 	var elem []message.IMessageElement
 	if m.Type == gjson.JSON {
 		elem = bot.ConvertObjectMessage(m, MessageSourceGuildChannel)
@@ -596,6 +609,7 @@ func (bot *CQBot) CQSendGuildChannelMessage(guildID, channelID uint64, m gjson.R
 			elem = bot.ConvertStringMessage(str, MessageSourceGuildChannel)
 		}
 	}
+	fixAt(elem)
 	mid := bot.SendGuildChannelMessage(guildID, channelID, &message.SendingMessage{Elements: elem})
 	if mid == "" {
 		return Failed(100, "SEND_MSG_API_ERROR", "请参考 go-cqhttp 端输出")
