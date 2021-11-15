@@ -204,8 +204,8 @@ const (
 	colorCodeFatal = "\x1b[1;31m" // color.Style{color.Bold, color.Red}.String()
 	colorCodeError = "\x1b[31m"   // color.Style{color.Red}.String()
 	colorCodeWarn  = "\x1b[33m"   // color.Style{color.Yellow}.String()
-	colorCodeInfo  = "\x1b[32m"   // color.Style{color.Green}.String()
-	colorCodeDebug = "\x1b[37m"   // color.Style{color.White}.String()
+	colorCodeInfo  = "\x1b[37m"   // color.Style{color.White}.String()
+	colorCodeDebug = "\x1b[32m"   // color.Style{color.Green}.String()
 	colorCodeTrace = "\x1b[36m"   // color.Style{color.Cyan}.String()
 	colorReset     = "\x1b[0m"
 )

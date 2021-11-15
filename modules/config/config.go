@@ -61,6 +61,7 @@ type Config struct {
 		LogLevel    string `yaml:"log-level"`
 		LogAging    int    `yaml:"log-aging"`
 		LogForceNew bool   `yaml:"log-force-new"`
+		LogColorful *bool  `yaml:"log-colorful"`
 		Debug       bool   `yaml:"debug"`
 	} `yaml:"output"`
 
