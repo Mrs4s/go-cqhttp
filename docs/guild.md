@@ -25,7 +25,8 @@ API以及字段相关命名均为参考QQ官方命名或相似产品命名规则
 - 由于无法通过 `GlobalID` 放下频道消息的ID, 所以所有频道消息的 `message_id` 均为 `string` 类型
 - `send_msg` API将无法发送频道消息
 - `get_msg` API暂时无法获取频道消息
-- `at` `reply` 等消息暂不支持解析
+- `reply` 等消息类型暂不支持解析
+- `at` 消息的 `target` 依然使用 `qq` 字段, 以保证一致性. 但内容为 `tiny_id`
 - 所有事件的 `self_id` 均为 BOT 的QQ号. `tiny_id` 将放在 `self_tiny_id` 字段
 - 遵循我们一贯的原则, 将不会支持主动加频道/主动拉人/红包相关消息类型
 
@@ -220,3 +221,46 @@ ReactionInfo:
 | `emoji_name` | string | 表情名字 |
 | `count` | int32 | 当前表情被贴数量 |
 | `clicked` | bool | BOT是否点击 |
+
+### 子频道信息更新
+
+**上报数据**
+
+| 字段          | 类型   | 可能的值       | 说明           |
+| ------------- | ------ | -------------- | -------------- |
+| `post_type`   | string | `notice`       | 上报类型       |
+| `notice_type` | string | `channel_updated` | 消息类型       |
+| `guild_id`    | uint64  |                | 频道ID           |
+| `channel_id`    | uint64  |                | 子频道ID           |
+| `user_id`     | uint64  |                | 操作者ID  |
+| `operator_id`     | uint64  |                | 操作者ID  |
+| `old_info`     | ChannelInfo  |        | 更新前的频道信息  |
+| `new_info`     | ChannelInfo  |        | 更新后的频道信息  |
+
+### 子频道创建
+
+**上报数据**
+
+| 字段          | 类型   | 可能的值       | 说明           |
+| ------------- | ------ | -------------- | -------------- |
+| `post_type`   | string | `notice`       | 上报类型       |
+| `notice_type` | string | `channel_created` | 消息类型       |
+| `guild_id`    | uint64  |                | 频道ID           |
+| `channel_id`    | uint64  |                | 子频道ID           |
+| `user_id`     | uint64  |                | 操作者ID  |
+| `operator_id`     | uint64  |                | 操作者ID  |
+| `channel_info`     | ChannelInfo  |        | 频道信息  |
+
+### 子频道删除
+
+**上报数据**
+
+| 字段          | 类型   | 可能的值       | 说明           |
+| ------------- | ------ | -------------- | -------------- |
+| `post_type`   | string | `notice`       | 上报类型       |
+| `notice_type` | string | `channel_destroyed` | 消息类型       |
+| `guild_id`    | uint64  |                | 频道ID           |
+| `channel_id`    | uint64  |                | 子频道ID           |
+| `user_id`     | uint64  |                | 操作者ID  |
+| `operator_id`     | uint64  |                | 操作者ID  |
+| `channel_info`     | ChannelInfo  |        | 频道信息  |
