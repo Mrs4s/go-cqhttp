@@ -450,7 +450,7 @@ func (bot *CQBot) InsertPrivateMessage(m *message.PrivateMessage) int32 {
 		msg.QuotedInfo = &db.QuotedInfo{
 			PrevID:        encodeMessageID(reply.Sender, reply.ReplySeq),
 			PrevGlobalID:  db.ToGlobalID(reply.Sender, reply.ReplySeq),
-			QuotedContent: ToMessageContent(m.Elements),
+			QuotedContent: ToMessageContent(reply.Elements),
 		}
 	}
 	if err := db.InsertPrivateMessage(msg); err != nil {
