@@ -239,6 +239,7 @@ func (c *HTTPClient) onBotPushEvent(e *coolq.Event) {
 	req, _ := http.NewRequest("POST", c.addr, bytes.NewReader(e.JSONBytes()))
 	req.Header.Set("X-Self-ID", strconv.FormatInt(c.bot.Client.Uin, 10))
 	req.Header.Set("User-Agent", "CQHttp/4.15.0")
+	req.Header.Set("Content-Type", "application/json")
 	if c.secret != "" {
 		mac := hmac.New(sha1.New, []byte(c.secret))
 		_, _ = mac.Write(e.JSONBytes())
