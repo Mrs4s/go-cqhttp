@@ -24,7 +24,6 @@ import (
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
-	"github.com/Mrs4s/go-cqhttp/internal/base"
 	"github.com/Mrs4s/go-cqhttp/modules/api"
 	"github.com/Mrs4s/go-cqhttp/modules/config"
 	"github.com/Mrs4s/go-cqhttp/modules/filter"
@@ -121,7 +120,7 @@ func (s *httpServer) ServeHTTP(writer http.ResponseWriter, request *http.Request
 	}
 
 	var response global.MSG
-	if base.AcceptOneBot12HTTPEndPoint && request.URL.Path == "/" {
+	if request.URL.Path == "/" {
 		action := strings.TrimSuffix(ctx.Get("action").Str, "_async")
 		log.Debugf("HTTPServer接收到API调用: %v", action)
 		response = s.api.Call(action, ctx.Get("params"))
@@ -236,26 +235,17 @@ func (c *HTTPClient) onBotPushEvent(e *coolq.Event) {
 	}
 
 	client := http.Client{Timeout: time.Second * time.Duration(c.timeout)}
-
-	// see https://stackoverflow.com/questions/31337891/net-http-http-contentlength-222-with-body-length-0
-	// we should create a new request for every single post trial
-	createRequest := func() (*http.Request, error) {
-		req, err := http.NewRequest("POST", c.addr, bytes.NewReader(e.JSONBytes()))
-		if err != nil {
-			return nil, err
-		}
-		req.Header.Set("X-Self-ID", strconv.FormatInt(c.bot.Client.Uin, 10))
-		req.Header.Set("User-Agent", "CQHttp/4.15.0")
-		req.Header.Set("Content-Type", "application/json")
-		if c.secret != "" {
-			mac := hmac.New(sha1.New, []byte(c.secret))
-			_, _ = mac.Write(e.JSONBytes())
-			req.Header.Set("X-Signature", "sha1="+hex.EncodeToString(mac.Sum(nil)))
-		}
-		if c.apiPort != 0 {
-			req.Header.Set("X-API-Port", strconv.FormatInt(int64(c.apiPort), 10))
-		}
-		return req, nil
+	header := make(http.Header)
+	header.Set("X-Self-ID", strconv.FormatInt(c.bot.Client.Uin, 10))
+	header.Set("User-Agent", "CQHttp/4.15.0")
+	header.Set("Content-Type", "application/json")
+	if c.secret != "" {
+		mac := hmac.New(sha1.New, []byte(c.secret))
+		_, _ = mac.Write(e.JSONBytes())
+		header.Set("X-Signature", "sha1="+hex.EncodeToString(mac.Sum(nil)))
+	}
+	if c.apiPort != 0 {
+		header.Set("X-API-Port", strconv.FormatInt(int64(c.apiPort), 10))
 	}
 
 	var res *http.Response
@@ -263,11 +253,14 @@ func (c *HTTPClient) onBotPushEvent(e *coolq.Event) {
 	const maxAttemptTimes = 5
 
 	for i := 0; i <= maxAttemptTimes; i++ {
-		req, err := createRequest()
+		// see https://stackoverflow.com/questions/31337891/net-http-http-contentlength-222-with-body-length-0
+		// we should create a new request for every single post trial
+		req, err := http.NewRequest("POST", c.addr, bytes.NewReader(e.JSONBytes()))
 		if err != nil {
 			log.Warnf("上报 Event 数据到 %v 时创建请求失败: %v", c.addr, err)
 			return
 		}
+		req.Header = header
 
 		res, err = client.Do(req)
 		if err == nil {
