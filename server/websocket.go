@@ -162,7 +162,9 @@ func (c *websocketClient) connect(typ, url string, conptr **wsConn) {
 		*conptr = wrappedConn
 	}
 
-	go c.listenAPI(typ, url, wrappedConn)
+	if typ != "Event" {
+		go c.listenAPI(typ, url, wrappedConn)
+	}
 }
 
 func (c *websocketClient) listenAPI(typ, url string, conn *wsConn) {
@@ -347,8 +349,8 @@ func (c *wsConn) handleRequest(_ *coolq.CQBot, payload []byte) {
 }
 
 func (s *webSocketServer) onBotPushEvent(e *coolq.Event) {
-	filter := filter.Find(s.filter)
-	if filter != nil && !filter.Eval(gjson.Parse(e.JSONString())) {
+	flt := filter.Find(s.filter)
+	if flt != nil && !flt.Eval(gjson.Parse(e.JSONString())) {
 		log.Debugf("上报Event %s 到 WS客户端 时被过滤.", e.JSONBytes())
 		return
 	}
