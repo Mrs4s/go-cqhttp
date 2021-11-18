@@ -5,11 +5,12 @@ go 1.17
 require (
 	github.com/Baozisoftware/qrcode-terminal-go v0.0.0-20170407111555-c0650d8dff0f
 	github.com/Microsoft/go-winio v0.5.1
-	github.com/Mrs4s/MiraiGo v0.0.0-20211114170854-511e8c41edd2
+	github.com/Mrs4s/MiraiGo v0.0.0-20211118132817-19e205000410
 	github.com/dustin/go-humanize v1.0.0
 	github.com/fumiama/go-hide-param v0.1.4
 	github.com/gabriel-vasile/mimetype v1.4.0
 	github.com/gocq/qrcode v0.0.0-20211114040510-366b953fcd98
+	github.com/gorilla/websocket v1.4.2
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0
 	github.com/klauspost/compress v1.13.6
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
@@ -26,7 +27,6 @@ require (
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
-	nhooyr.io/websocket v1.8.7
 )
 
 require (
@@ -35,7 +35,6 @@ require (
 	github.com/gocq/rs v1.0.1 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/uuid v1.3.0 // indirect
-	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/jonboulle/clockwork v0.2.2 // indirect
 	github.com/klauspost/cpuid/v2 v2.0.9 // indirect
 	github.com/lestrrat-go/strftime v1.0.5 // indirect
@@ -49,7 +48,6 @@ require (
 	github.com/xdg-go/scram v1.0.2 // indirect
 	github.com/xdg-go/stringprep v1.0.2 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a // indirect
-	golang.org/x/image v0.0.0-20211028202545-6944b10bf410 // indirect
 	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/sys v0.0.0-20211113001501-0c823b97ae02 // indirect

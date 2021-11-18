@@ -199,6 +199,18 @@ func (bot *CQBot) UploadLocalImageAsGuildChannel(guildID, channelID uint64, img 
 	return bot.Client.GuildService.UploadGuildImage(guildID, channelID, img.Stream)
 }
 
+func (bot *CQBot) uploadGuildVideo(i *LocalVideoElement, guildID, channelID uint64) (*message.ShortVideoElement, error) {
+	video, err := os.Open(i.File)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = video.Close() }()
+	_, _ = video.Seek(0, io.SeekStart)
+	_, _ = i.thumb.Seek(0, io.SeekStart)
+	n, err := bot.Client.UploadGuildShortVideo(guildID, channelID, video, i.thumb)
+	return n, err
+}
+
 // SendGroupMessage 发送群消息
 func (bot *CQBot) SendGroupMessage(groupID int64, m *message.SendingMessage) int32 {
 	newElem := make([]message.IMessageElement, 0, len(m.Elements))
@@ -352,7 +364,16 @@ func (bot *CQBot) SendGuildChannelMessage(guildID, channelID uint64, m *message.
 				continue
 			}
 			e = n
-		case *LocalVideoElement, *LocalVoiceElement, *PokeElement, *message.MusicShareElement:
+
+		case *LocalVideoElement:
+			n, err := bot.uploadGuildVideo(i, guildID, channelID)
+			if err != nil {
+				log.Warnf("警告: 频道 %d 消息%s上传失败: %v", channelID, e.Type().String(), err)
+				continue
+			}
+			e = n
+
+		case *LocalVoiceElement, *PokeElement, *message.MusicShareElement:
 			log.Warnf("警告: 频道暂不支持发送 %v 消息", i.Type().String())
 			continue
 		}
