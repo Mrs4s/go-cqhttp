@@ -262,7 +262,7 @@ func (c *Caller) call(action string, p Getter) global.MSG {
 	case "set_group_special_title":
 		p0 := p.Get("group_id").Int()
 		p1 := p.Get("user_id").Int()
-		p2 := p.Get("title").String()
+		p2 := p.Get("special_title").String()
 		return c.bot.CQSetGroupSpecialTitle(p0, p1, p2)
 	case "set_group_whole_ban":
 		p0 := p.Get("group_id").Int()

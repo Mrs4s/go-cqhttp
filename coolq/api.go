@@ -797,6 +797,7 @@ func (bot *CQBot) CQSetGroupCard(groupID, userID int64, card string) global.MSG 
 //
 // https://git.io/Jtz10
 // @route(set_group_special_title)
+// @rename(title->special_title)
 func (bot *CQBot) CQSetGroupSpecialTitle(groupID, userID int64, title string) global.MSG {
 	if g := bot.Client.FindGroup(groupID); g != nil {
 		if m := g.FindMember(userID); m != nil {
