@@ -244,6 +244,11 @@ func ToArrayMessage(e []message.IMessageElement, source MessageSource) (r []glob
 					"data": map[string]string{"data": o.Content, "resid": strconv.FormatInt(int64(o.Id), 10)},
 				}
 			}
+		case *message.AnimatedSticker:
+			m = global.MSG{
+				"type": "sticker",
+				"data": map[string]string{"id": strconv.FormatInt(int64(o.ID), 10)},
+			}
 		default:
 			continue
 		}
@@ -361,6 +366,8 @@ func ToStringMessage(e []message.IMessageElement, source MessageSource, isRaw ..
 			}
 		case *message.LightAppElement:
 			write(`[CQ:json,data=%s]`, CQCodeEscapeValue(o.Content))
+		case *message.AnimatedSticker:
+			write(`[CQ:sticker,id=%d]`, o.ID)
 		}
 	}
 	r = sb.String() // 内部已拷贝
@@ -465,6 +472,11 @@ func ToMessageContent(e []message.IMessageElement) (r []global.MSG) {
 					"type": "json",
 					"data": global.MSG{"data": o.Content, "resid": o.Id},
 				}
+			}
+		case *message.AnimatedSticker:
+			m = global.MSG{
+				"type": "sticker",
+				"data": global.MSG{"id": o.ID},
 			}
 		default:
 			continue
@@ -922,6 +934,12 @@ func (bot *CQBot) ToElement(t string, d map[string]string, sourceType MessageSou
 			}
 		}
 		return &message.VoiceElement{Data: data}, nil
+	case "sticker":
+		id, err := strconv.Atoi(d["id"])
+		if err != nil {
+			return nil, err
+		}
+		return &message.AnimatedSticker{ID: int32(id)}, nil
 	case "face":
 		id, err := strconv.Atoi(d["id"])
 		if err != nil {
