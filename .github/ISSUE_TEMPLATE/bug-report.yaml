@@ -94,7 +94,7 @@ body:
       label: 运行架构
       description: (可选) 选择运行 go-cqhttp 的系统架构
       options:
-        - AMD
+        - AMD64
         - x86
         - ARM [32] (别名：AArch32 / ARMv7）
         - ARM [64] (别名：AArch64 / ARMv8）
