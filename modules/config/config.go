@@ -296,7 +296,7 @@ const httpDefault = `  # HTTP 通信设置
       post:
       #- url: '' # 地址
       #  secret: ''           # 密钥
-      #- url: 127.0.0.1:5701 # 地址
+      #- url: http://127.0.0.1:5701/ # 地址
       #  secret: ''          # 密钥
 `
 

@@ -1,0 +1,177 @@
+name: 回报错误
+description: 在使用 go-cqhttp 的过程中遇到了错误
+title: '[Bug]: '
+labels: [ "bug?" ]
+
+body:
+  # User's README and agreement
+  - type: markdown
+    attributes:
+      value: |
+        ## 感谢您愿意填写错误回报！
+        ## 以下是一些注意事项，请务必阅读让我们能够更容易处理
+
+        ### ❗ | 确定没有相同问题的ISSUE已被提出. (教程: https://github.com/Mrs4s/go-cqhttp/issues/633)
+        ### 🌎| 请准确填写环境信息
+        ### ❔ | 打开DEBUG模式复现，并提供出现问题前后至少 10 秒的完整日志内容。请自行删除日志内存在的个人信息及敏感内容。
+        ### ⚠ | 如果涉及内存泄漏/CPU占用异常请打开DEBUG模式并下载pprof性能分析.
+
+        ## 如果您不知道如何有效、精准地表述，我们建议您先阅读《提问的智慧》
+        链接: [《提问的智慧》](https://github.com/ryanhanwu/How-To-Ask-Questions-The-Smart-Way/blob/main/README-zh_CN.md)
+        ---
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: 请确保您已阅读以上注意事项，并勾选下方的确认框。
+      options:
+        - label: "我已经仔细阅读上述教程和 [\"提问前需知\"](https://github.com/Mrs4s/go-cqhttp/issues/633)"
+          required: true
+        - label: 我已知晓并同意，如果我不遵循以下格式提交 Issue，或者我使用的并非最新版本，或者我没有提供足够的环境信息，我的 Issue 可能会被无条件自动关闭或/并锁定。
+          required: true
+        - label: 我已知晓并同意，此处仅用于汇报程序中存在的问题。若这个 Issue 是关于其他非程序本身问题，则我的 Issue 可能会被无条件自动关闭或/并锁定。（这些问题应当在 Discussion 板块提出。）
+          required: true
+
+  # User's data
+  - type: markdown
+    attributes:
+      value: |
+        ## 环境信息
+        请根据实际使用环境修改以下信息。
+
+  # Env | go-cqhttp Version
+  - type: dropdown
+    id: env-gocq-ver
+    attributes:
+      label: go-cqhttp 版本
+      description: 选择正在使用的版本 (未列出的版本为已不支持，请更新到最新版本。)
+      options:
+        - v1.0.0-beta8-fix1
+        - v1.0.0-beta8
+        - v1.0.0-beta7-fix2
+        - v1.0.0-beta7-fix1
+        - v1.0.0-beta7
+        - v1.0.0-beta6
+        - v1.0.0-beta5
+        - v1.0.0-beta4
+        - v1.0.0-beta3
+        - v1.0.0-beta2
+        - v1.0.0-beta1
+        - 更老的版本
+    validations:
+      required: true
+
+  # Env | VM Version
+  - type: dropdown
+    id: env-vm-ver
+    attributes:
+      label: 运行环境
+      description: 选择运行 go-cqhttp 的系统版本
+      options:
+        - Windows (64)
+        - Windows (32/x84)
+        - MacOS
+        - Linux
+        - Ubuntu
+        - CentOS
+        - ArchLinux
+        - UNIX (Android)
+        - 其它（请在下方说明）
+    validations:
+      required: true
+
+  # Env | VM Arch
+  - type: dropdown
+    id: env-vm-arch
+    attributes:
+      label: 运行架构
+      description: (可选) 选择运行 go-cqhttp 的系统架构
+      options:
+        - AMD64
+        - x86
+        - ARM [32] (别名：AArch32 / ARMv7）
+        - ARM [64] (别名：AArch64 / ARMv8）
+        - 其它
+
+  # Env | Connection type
+  - type: dropdown
+    id: env-conn-type
+    attributes:
+      label: 连接方式
+      description: 选择对接机器人的连接方式
+      options:
+        - HTTP
+        - WebSocket (正向)
+        - WebSocket (反向)
+        - LambdaServer
+    validations:
+      required: true
+
+  # Env | Protocol
+  - type: dropdown
+    id: env-protocol
+    attributes:
+      label: 使用协议
+      description: 选择使用的协议
+      options:
+        - 0 | iPad
+        - 1 | Android Phone
+        - 2 | Android Watch
+        - 3 | MacOS
+        - 4 | 企点
+    validations:
+      required: true
+
+  # Optional | Reproduce possible
+  - type: checkboxes
+    id: reproduce-possible
+    attributes:
+      label: 在最新的 Release 版本中能否复现
+      options:
+        - label: 能
+
+  # Input | Reproduce
+  - type: textarea
+    id: reproduce-steps
+    attributes:
+      label: 重现步骤
+      description: |
+        我们需要执行哪些操作才能让 bug 出现？
+        简洁清晰的重现步骤能够帮助我们更迅速地定位问题所在。
+    validations:
+      required: true
+
+  # Input | Expected result
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望的结果是什么？
+    validations:
+      required: true
+
+  # Input | Actual result
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际的结果是什么？
+    validations:
+      required: true
+
+  # Optional | Reproduce code
+  - type: textarea
+    id: reproduce-code
+    attributes:
+      label: 简单的复现代码/链接（可选）
+      render: golang
+
+  # Optional | Logging
+  - type: textarea
+    id: logging
+    attributes:
+      label: 日志记录（可选）
+      render: golang
+
+  # Optional | Extra description
+  - type: textarea
+    id: extra-desc
+    attributes:
+      label: 补充说明（可选）
