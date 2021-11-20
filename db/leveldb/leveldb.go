@@ -48,7 +48,7 @@ func (ldb *LevelDBImpl) Open() error {
 		WriteBuffer: 128 * opt.KiB,
 	})
 	if err != nil {
-		return errors.Wrap(err, "open level ldb error")
+		return errors.Wrap(err, "open leveldb error")
 	}
 	ldb.db = d
 	return nil
