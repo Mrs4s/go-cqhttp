@@ -56,13 +56,9 @@ body:
         - v1.0.0-beta3
         - v1.0.0-beta2
         - v1.0.0-beta1
-        - 更老的版本（请在下面填写）
+        - 更老的版本
     validations:
       required: true
-  - type: input
-    id: env-gocq-ver-other
-    attributes:
-      label: 旧的 go-cqhttp 版本 (请注意，我们对更低版本的 go-cqhttp 不提供完全支持；您的 Issue 有可能会被关闭。)
 
   # Env | VM Version
   - type: dropdown
@@ -79,13 +75,9 @@ body:
         - CentOS
         - ArchLinux
         - UNIX (Android)
-        - 其它（请在下面填写）
+        - 其它（请在下方说明）
     validations:
       required: true
-  - type: input
-    id: env-vm-ver-other
-    attributes:
-      label: 其它系统版本
 
   # Env | VM Arch
   - type: dropdown
@@ -98,11 +90,7 @@ body:
         - x86
         - ARM [32] (别名：AArch32 / ARMv7）
         - ARM [64] (别名：AArch64 / ARMv8）
-        - 其它（请在下面填写）
-  - type: input
-    id: env-vm-arch-other
-    attributes:
-      label: 其它系统架构
+        - 其它
 
   # Env | Connection type
   - type: dropdown
