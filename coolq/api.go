@@ -154,6 +154,77 @@ func (bot *CQBot) CQGetGuildMembers(guildID uint64) global.MSG {
 	})
 }
 
+// CQGetGuildRoles 获取频道角色列表
+// @route(get_guild_roles)
+func (bot *CQBot) CQGetGuildRoles(guildID uint64) global.MSG {
+	roles, err := bot.Client.GuildService.GetGuildRoles(guildID)
+	if err != nil {
+		log.Errorf("获取频道 %v 角色列表时出现错误: %v", guildID, err)
+		return Failed(100, "API_ERROR", err.Error())
+	}
+	return OK(global.MSG{
+		"roles": roles,
+	})
+}
+
+// CQCreateGuildRole 创建频道角色
+// @route(create_guild_role)
+func (bot *CQBot) CQCreateGuildRole(guildID uint64, name string, color uint32, independent bool, initialUsers gjson.Result) global.MSG {
+	userSlice := []uint64{}
+	if initialUsers.IsArray() {
+		for _, user := range initialUsers.Array() {
+			userSlice = append(userSlice, user.Uint())
+		}
+	}
+	role, err := bot.Client.GuildService.CreateGuildRole(guildID, name, color, independent, userSlice)
+	if err != nil {
+		log.Errorf("创建频道 %v 角色时出现错误: %v", guildID, err)
+		return Failed(100, "API_ERROR", err.Error())
+	}
+	return OK(global.MSG{
+		"role": role,
+	})
+}
+
+// CQDeleteGuildRole 删除频道角色
+// @route(delete_guild_role)
+func (bot *CQBot) CQDeleteGuildRole(guildID uint64, roleID uint64) global.MSG {
+	err := bot.Client.GuildService.DeleteGuildRole(guildID, roleID)
+	if err != nil {
+		log.Errorf("删除频道 %v 角色时出现错误: %v", guildID, err)
+		return Failed(100, "API_ERROR", err.Error())
+	}
+	return OK(nil)
+}
+
+// CQSetGuildMemberRole 设置用户在频道中的角色
+// @route(set_guild_member_role)
+func (bot *CQBot) CQSetGuildMemberRole(guildID uint64, set bool, roleID uint64, users gjson.Result) global.MSG {
+	userSlice := []uint64{}
+	if users.IsArray() {
+		for _, user := range users.Array() {
+			userSlice = append(userSlice, user.Uint())
+		}
+	}
+	err := bot.Client.GuildService.SetUserRoleInGuild(guildID, set, roleID, userSlice)
+	if err != nil {
+		log.Errorf("设置用户在频道 %v 中的角色时出现错误: %v", guildID, err)
+		return Failed(100, "API_ERROR", err.Error())
+	}
+	return OK(nil)
+}
+
+// CQModifyRoleInGuild 修改频道角色
+// @route(modify_role_in_guild)
+func (bot *CQBot) CQModifyRoleInGuild(guildID uint64, roleID uint64, name string, color uint32, indepedent bool) global.MSG {
+	err := bot.Client.GuildService.ModifyRoleInGuild(guildID, roleID, name, color, indepedent)
+	if err != nil {
+		log.Errorf("修改频道 %v 角色时出现错误: %v", guildID, err)
+		return Failed(100, "API_ERROR", err.Error())
+	}
+	return OK(nil)
+}
+
 // CQGetFriendList 获取好友列表
 //
 // https://git.io/Jtz1L
