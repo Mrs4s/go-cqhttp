@@ -52,7 +52,7 @@ func convertGroupMemberInfo(groupID int64, m *client.GroupMemberInfo) global.MSG
 
 func convertGuildMemberInfo(m *client.GuildMemberInfo) global.MSG {
 	return global.MSG{
-		"tiny_id":  m.TinyId,
+		"tiny_id":  fU64(m.TinyId),
 		"title":    m.Title,
 		"nickname": m.Nickname,
 		"role":     m.Role,
@@ -144,16 +144,25 @@ func convertChannelInfo(c *client.ChannelInfo) global.MSG {
 		})
 	}
 	return global.MSG{
-		"channel_id":        c.ChannelId,
+		"channel_id":        fU64(c.ChannelId),
 		"channel_type":      c.ChannelType,
 		"channel_name":      c.ChannelName,
-		"owner_guild_id":    c.Meta.GuildId,
+		"owner_guild_id":    fU64(c.Meta.GuildId),
 		"creator_id":        c.Meta.CreatorUin,
-		"creator_tiny_id":   c.Meta.CreatorTinyId,
+		"creator_tiny_id":   fU64(c.Meta.CreatorTinyId),
 		"create_time":       c.Meta.CreateTime,
 		"current_slow_mode": c.Meta.CurrentSlowMode,
 		"talk_permission":   c.Meta.TalkPermission,
 		"visible_type":      c.Meta.VisibleType,
 		"slow_modes":        slowModes,
 	}
+}
+
+func fU64(v uint64) string {
+	return strconv.FormatUint(v, 10)
+}
+
+func sU64(v string) uint64 {
+	r, _ := strconv.ParseUint(v, 10, 64)
+	return r
 }

@@ -166,7 +166,7 @@ func ToArrayMessage(e []message.IMessageElement, source MessageSource) (r []glob
 			} else {
 				m = global.MSG{
 					"type": "at",
-					"data": map[string]string{"qq": strconv.FormatInt(o.Target, 10)},
+					"data": map[string]string{"qq": strconv.FormatUint(uint64(o.Target), 10)},
 				}
 			}
 		case *message.RedBagElement:
@@ -310,7 +310,7 @@ func ToStringMessage(e []message.IMessageElement, source MessageSource, isRaw ..
 				write("[CQ:at,qq=all]")
 				continue
 			}
-			write("[CQ:at,qq=%d]", o.Target)
+			write("[CQ:at,qq=%d]", uint64(o.Target))
 		case *message.RedBagElement:
 			write("[CQ:redbag,title=%s]", o.Title)
 		case *message.ForwardElement:
