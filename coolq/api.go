@@ -55,7 +55,7 @@ func (bot *CQBot) CQGetQiDianAccountInfo() global.MSG {
 func (bot *CQBot) CQGetGuildServiceProfile() global.MSG {
 	return OK(global.MSG{
 		"nickname":   bot.Client.GuildService.Nickname,
-		"tiny_id":    bot.Client.GuildService.TinyId,
+		"tiny_id":    fU64(bot.Client.GuildService.TinyId),
 		"avatar_url": bot.Client.GuildService.AvatarUrl,
 	})
 }
@@ -76,9 +76,9 @@ func (bot *CQBot) CQGetGuildList() global.MSG {
 		}
 		*/
 		fs = append(fs, global.MSG{
-			"guild_id":         info.GuildId,
+			"guild_id":         fU64(info.GuildId),
 			"guild_name":       info.GuildName,
-			"guild_display_id": info.GuildCode,
+			"guild_display_id": fU64(info.GuildCode),
 			// "channels":         channels,
 		})
 	}
@@ -94,7 +94,7 @@ func (bot *CQBot) CQGetGuildMetaByGuest(guildID uint64) global.MSG {
 		return Failed(100, "API_ERROR", err.Error())
 	}
 	return OK(global.MSG{
-		"guild_id":         meta.GuildId,
+		"guild_id":         fU64(meta.GuildId),
 		"guild_name":       meta.GuildName,
 		"guild_profile":    meta.GuildProfile,
 		"create_time":      meta.CreateTime,
@@ -102,7 +102,7 @@ func (bot *CQBot) CQGetGuildMetaByGuest(guildID uint64) global.MSG {
 		"max_robot_count":  meta.MaxRobotCount,
 		"max_admin_count":  meta.MaxAdminCount,
 		"member_count":     meta.MemberCount,
-		"owner_id":         meta.OwnerId,
+		"owner_id":         fU64(meta.OwnerId),
 	})
 }
 
