@@ -157,14 +157,25 @@ func (bot *CQBot) CQGetGuildMembers(guildID uint64) global.MSG {
 // CQGetGuildRoles 获取频道角色列表
 // @route(get_guild_roles)
 func (bot *CQBot) CQGetGuildRoles(guildID uint64) global.MSG {
-	roles, err := bot.Client.GuildService.GetGuildRoles(guildID)
+	r, err := bot.Client.GuildService.GetGuildRoles(guildID)
 	if err != nil {
 		log.Errorf("获取频道 %v 角色列表时出现错误: %v", guildID, err)
 		return Failed(100, "API_ERROR", err.Error())
 	}
-	return OK(global.MSG{
-		"roles": roles,
-	})
+	roles := make([]global.MSG, len(r))
+	for i, role := range r {
+		roles[i] = global.MSG{
+			"role_id":      fU64(role.RoleId),
+			"role_name":    role.RoleName,
+			"argb_color":   role.ArgbColor,
+			"independent":  role.Independent,
+			"member_count": role.Num,
+			"max_count":    role.MaxNum,
+			"owned":        role.Owned,
+			"disabled":     role.Disabled,
+		}
+	}
+	return OK(roles)
 }
 
 // CQCreateGuildRole 创建频道角色
@@ -182,7 +193,7 @@ func (bot *CQBot) CQCreateGuildRole(guildID uint64, name string, color uint32, i
 		return Failed(100, "API_ERROR", err.Error())
 	}
 	return OK(global.MSG{
-		"role": role,
+		"role_id": fU64(role),
 	})
 }
 
@@ -215,7 +226,7 @@ func (bot *CQBot) CQSetGuildMemberRole(guildID uint64, set bool, roleID uint64, 
 }
 
 // CQModifyRoleInGuild 修改频道角色
-// @route(modify_role_in_guild)
+// @route(update_guild_role)
 func (bot *CQBot) CQModifyRoleInGuild(guildID uint64, roleID uint64, name string, color uint32, indepedent bool) global.MSG {
 	err := bot.Client.GuildService.ModifyRoleInGuild(guildID, roleID, name, color, indepedent)
 	if err != nil {
