@@ -236,6 +236,32 @@ func (bot *CQBot) CQModifyRoleInGuild(guildID uint64, roleID uint64, name string
 	return OK(nil)
 }
 
+// CQGetTopicChannelFeeds 获取话题频道帖子列表
+// @route(get_topic_channel_feeds)
+func (bot *CQBot) CQGetTopicChannelFeeds(guildID, channelID uint64) global.MSG {
+	guild := bot.Client.GuildService.FindGuild(guildID)
+	if guild == nil {
+		return Failed(100, "GUILD_NOT_FOUND")
+	}
+	channel := guild.FindChannel(channelID)
+	if channel == nil {
+		return Failed(100, "CHANNEL_NOT_FOUND")
+	}
+	if channel.ChannelType != client.ChannelTypeTopic {
+		return Failed(100, "CHANNEL_TYPE_ERROR")
+	}
+	feeds, err := bot.Client.GuildService.GetTopicChannelFeeds(guildID, channelID)
+	if err != nil {
+		log.Errorf("获取频道 %v 帖子时出现错误: %v", channelID, err)
+		return Failed(100, "API_ERROR", err.Error())
+	}
+	c := make([]global.MSG, 0, len(feeds))
+	for _, feed := range feeds {
+		c = append(c, convertChannelFeedInfo(feed))
+	}
+	return OK(c)
+}
+
 // CQGetFriendList 获取好友列表
 //
 // https://git.io/Jtz1L

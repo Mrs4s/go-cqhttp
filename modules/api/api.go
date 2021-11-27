@@ -167,6 +167,10 @@ func (c *Caller) call(action string, p Getter) global.MSG {
 	case "get_stranger_info":
 		p0 := p.Get("user_id").Int()
 		return c.bot.CQGetStrangerInfo(p0)
+	case "get_topic_channel_feeds":
+		p0 := p.Get("guild_id").Uint()
+		p1 := p.Get("channel_id").Uint()
+		return c.bot.CQGetTopicChannelFeeds(p0, p1)
 	case "get_unidirectional_friend_list":
 		return c.bot.CQGetUnidirectionalFriendList()
 	case "get_version_info":

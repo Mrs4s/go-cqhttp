@@ -1,6 +1,7 @@
 package coolq
 
 import (
+	"github.com/Mrs4s/MiraiGo/topic"
 	"strconv"
 
 	"github.com/Mrs4s/MiraiGo/client"
@@ -156,6 +157,48 @@ func convertChannelInfo(c *client.ChannelInfo) global.MSG {
 		"visible_type":      c.Meta.VisibleType,
 		"slow_modes":        slowModes,
 	}
+}
+
+func convertChannelFeedInfo(f *topic.Feed) global.MSG {
+	m := global.MSG{
+		"id":          f.Id,
+		"title":       f.Title,
+		"sub_title":   f.SubTitle,
+		"create_time": f.CreateTime,
+		"guild_id":    fU64(f.GuildId),
+		"channel_id":  fU64(f.ChannelId),
+		"poster_info": global.MSG{
+			"tiny_id":  f.Poster.TinyIdStr,
+			"nickname": f.Poster.Nickname,
+			"icon_url": f.Poster.IconUrl,
+		},
+		"contents": FeedContentsToArrayMessage(f.Contents),
+	}
+	images := make([]global.MSG, 0, len(f.Images))
+	videos := make([]global.MSG, 0, len(f.Videos))
+	for _, image := range f.Images {
+		images = append(images, global.MSG{
+			"file_id":    image.FileId,
+			"pattern_id": image.PatternId,
+			"url":        image.Url,
+			"width":      image.Width,
+			"height":     image.Height,
+		})
+	}
+	for _, video := range f.Videos {
+		videos = append(videos, global.MSG{
+			"file_id":    video.FileId,
+			"pattern_id": video.PatternId,
+			"url":        video.Url,
+			"width":      video.Width,
+			"height":     video.Height,
+		})
+	}
+	m["resource"] = global.MSG{
+		"images": images,
+		"videos": videos,
+	}
+	return m
 }
 
 func fU64(v uint64) string {
