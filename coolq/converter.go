@@ -1,8 +1,9 @@
 package coolq
 
 import (
-	"github.com/Mrs4s/MiraiGo/topic"
 	"strconv"
+
+	"github.com/Mrs4s/MiraiGo/topic"
 
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/MiraiGo/message"
