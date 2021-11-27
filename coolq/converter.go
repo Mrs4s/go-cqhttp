@@ -204,8 +204,3 @@ func convertChannelFeedInfo(f *topic.Feed) global.MSG {
 func fU64(v uint64) string {
 	return strconv.FormatUint(v, 10)
 }
-
-func sU64(v string) uint64 {
-	r, _ := strconv.ParseUint(v, 10, 64)
-	return r
-}
