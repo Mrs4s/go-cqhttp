@@ -1384,7 +1384,7 @@ func (bot *CQBot) CQGetImage(file string) global.MSG {
 			"filename": r.ReadString(),
 			"url":      r.ReadString(),
 		}
-		local := path.Join(global.CachePath, file+"."+path.Ext(msg["filename"].(string)))
+		local := path.Join(global.CachePath, file+path.Ext(msg["filename"].(string)))
 		if !global.PathExists(local) {
 			if body, err := global.HTTPGetReadCloser(msg["url"].(string)); err == nil {
 				f, _ := os.OpenFile(local, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o0644)
