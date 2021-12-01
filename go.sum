@@ -3,8 +3,8 @@ github.com/Baozisoftware/qrcode-terminal-go v0.0.0-20170407111555-c0650d8dff0f/g
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/Microsoft/go-winio v0.5.1 h1:aPJp2QD7OOrhO5tQXqQoGSJc+DjDtWTGLOmNyAm6FgY=
 github.com/Microsoft/go-winio v0.5.1/go.mod h1:JPGBdM1cNvN/6ISo+n8V5iA4v8pBzdOpzfwIujj1a84=
-github.com/Mrs4s/MiraiGo v0.0.0-20211126180457-5c5e61d27903 h1:09DWaPpfF9u/qwRNW8wmieCaySeXZmYLnfSbrow4Cbs=
-github.com/Mrs4s/MiraiGo v0.0.0-20211126180457-5c5e61d27903/go.mod h1:ET7ZfE/OgwdZUBF+kdYlKUCAw+HavEet/5D4+lq/8Xc=
+github.com/Mrs4s/MiraiGo v0.0.0-20211201170411-c0713ba75d7f h1:kiNClkzBUTj7z0INLxyN8pRXuPSy0gPGv/dXpSKVfmE=
+github.com/Mrs4s/MiraiGo v0.0.0-20211201170411-c0713ba75d7f/go.mod h1:xh9dqJAblNEQnZQSrMj216jF3GkrkoWOzkpBjGoZiiY=
 github.com/RomiChan/protobuf v0.0.0-20211126015646-ee3d29b19e08 h1:VAR3nNyBAc+oPlLKihkLTP0GXf8bQi085y2pSrNzAF0=
 github.com/RomiChan/protobuf v0.0.0-20211126015646-ee3d29b19e08/go.mod h1:lM1Te2wqdBLPSF7QLaskSn1fGW3Tw2l0iFGsTHTxqIg=
 github.com/bits-and-blooms/bitset v1.2.1 h1:M+/hrU9xlMp7t4TyTDQW97d3tRPVuKFC6zBEK16QnXY=
@@ -108,6 +108,8 @@ github.com/onsi/ginkgo v1.7.0/go.mod h1:lLunBs/Ym6LB5Z9jYTR76FiuTmxDTDusOGeTQH+W
 github.com/onsi/gomega v1.4.3 h1:RE1xgDvH7imwFD45h+u2SgIfERHlS2yNG4DObb5BSKU=
 github.com/onsi/gomega v1.4.3/go.mod h1:ex+gbHU/CVuBBDIJjb2X0qEXbFg53c61hWP/1CpauHY=
 github.com/pelletier/go-toml v1.7.0/go.mod h1:vwGMzjaWMwyfHwgIBhI2YUM4fB6nL6lVAvS1LBMMhTE=
+github.com/pierrec/lz4/v4 v4.1.11 h1:LVs17FAZJFOjgmJXl9Tf13WfLUvZq7/RjfEJrnwZ9OE=
+github.com/pierrec/lz4/v4 v4.1.11/go.mod h1:gZWDp/Ze/IJXGXf23ltt2EXimqmTUXEy0GFuRQyBid4=
 github.com/pkg/errors v0.8.0/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
