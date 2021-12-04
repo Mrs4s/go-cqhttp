@@ -10,5 +10,5 @@ import (
 )
 
 func main() {
-	gocq.Boot()
+	gocq.Main()
 }

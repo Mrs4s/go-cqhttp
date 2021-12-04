@@ -40,8 +40,8 @@ var allowStatus = [...]client.UserOnlineStatus{
 	client.StatusGaming, client.StatusVacationing, client.StatusWatchingTV, client.StatusFitness,
 }
 
-// Boot 启动主程序
-func Boot() {
+// Main 启动主程序
+func Main() {
 	base.Parse()
 	if !base.FastStart && terminal.RunningByDoubleClick() {
 		err := terminal.NoMoreDoubleClick()
