@@ -8,7 +8,10 @@ import (
 	"github.com/Mrs4s/go-cqhttp/internal/base"
 )
 
-var svr = make(map[string]func(*coolq.CQBot, yaml.Node))
+var (
+	svr      = make(map[string]func(*coolq.CQBot, yaml.Node))
+	nocfgsvr = make(map[string]func(*coolq.CQBot))
+)
 
 // Register 注册 Server
 func Register(name string, proc func(*coolq.CQBot, yaml.Node)) {
@@ -19,6 +22,15 @@ func Register(name string, proc func(*coolq.CQBot, yaml.Node)) {
 	svr[name] = proc
 }
 
+// RegisterCustom 注册无需 config 的自定义 Server
+func RegisterCustom(name string, proc func(*coolq.CQBot)) {
+	_, ok := nocfgsvr[name]
+	if ok {
+		panic(name + " server has existed")
+	}
+	nocfgsvr[name] = proc
+}
+
 // Run 运行所有svr
 func Run(bot *coolq.CQBot) {
 	for _, l := range base.Servers {
@@ -27,5 +39,8 @@ func Run(bot *coolq.CQBot) {
 				go fn(bot, conf)
 			}
 		}
+	}
+	for _, fn := range nocfgsvr {
+		go fn(bot)
 	}
 }
