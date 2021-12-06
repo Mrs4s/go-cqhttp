@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"runtime/debug"
 	"strconv"
 	"strings"
@@ -19,6 +20,7 @@ import (
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
+	"github.com/Mrs4s/go-cqhttp/internal/param"
 	"github.com/Mrs4s/go-cqhttp/modules/api"
 	"github.com/Mrs4s/go-cqhttp/modules/config"
 	"github.com/Mrs4s/go-cqhttp/modules/filter"
@@ -26,7 +28,7 @@ import (
 
 type webSocketServer struct {
 	bot  *coolq.CQBot
-	conf *config.WebsocketServer
+	conf *WebsocketServer
 
 	mu        sync.Mutex
 	eventConn []*wsConn
@@ -60,9 +62,107 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
+const wsDefault = `  # 正向WS设置
+  - ws:
+      # 正向WS服务器监听地址
+      host: 127.0.0.1
+      # 正向WS服务器监听端口
+      port: 6700
+      middlewares:
+        <<: *default # 引用默认中间件
+`
+
+const wsReverseDefault = `  # 反向WS设置
+  - ws-reverse:
+      # 反向WS Universal 地址
+      # 注意 设置了此项地址后下面两项将会被忽略
+      universal: ws://your_websocket_universal.server
+      # 反向WS API 地址
+      api: ws://your_websocket_api.server
+      # 反向WS Event 地址
+      event: ws://your_websocket_event.server
+      # 重连间隔 单位毫秒
+      reconnect-interval: 3000
+      middlewares:
+        <<: *default # 引用默认中间件
+`
+
+// WebsocketServer 正向WS相关配置
+type WebsocketServer struct {
+	Disabled bool   `yaml:"disabled"`
+	Host     string `yaml:"host"`
+	Port     int    `yaml:"port"`
+
+	MiddleWares `yaml:"middlewares"`
+}
+
+// WebsocketReverse 反向WS相关配置
+type WebsocketReverse struct {
+	Disabled          bool   `yaml:"disabled"`
+	Universal         string `yaml:"universal"`
+	API               string `yaml:"api"`
+	Event             string `yaml:"event"`
+	ReconnectInterval int    `yaml:"reconnect-interval"`
+
+	MiddleWares `yaml:"middlewares"`
+}
+
+func init() {
+	config.AddServer(&config.Server{
+		Brief:   "正向 Websocket 通信",
+		Default: wsDefault,
+		ParseEnv: func() (string, *yaml.Node) {
+			if os.Getenv("GCQ_WS_PORT") != "" {
+				// type convert tools
+				toInt64 := func(str string) int64 {
+					i, _ := strconv.ParseInt(str, 10, 64)
+					return i
+				}
+				accessTokenEnv := os.Getenv("GCQ_ACCESS_TOKEN")
+				node := &yaml.Node{}
+				wsServerConf := &WebsocketServer{
+					Host: "0.0.0.0",
+					Port: 6700,
+					MiddleWares: MiddleWares{
+						AccessToken: accessTokenEnv,
+					},
+				}
+				param.SetExcludeDefault(&wsServerConf.Disabled, param.EnsureBool(os.Getenv("GCQ_WS_DISABLE"), false), false)
+				param.SetExcludeDefault(&wsServerConf.Host, os.Getenv("GCQ_WS_HOST"), "")
+				param.SetExcludeDefault(&wsServerConf.Port, int(toInt64(os.Getenv("GCQ_WS_PORT"))), 0)
+				_ = node.Encode(wsServerConf)
+				return "ws", node
+			}
+			return "", nil
+		},
+	})
+	config.AddServer(&config.Server{
+		Brief:   "反向 Websocket 通信",
+		Default: wsReverseDefault,
+		ParseEnv: func() (string, *yaml.Node) {
+			if os.Getenv("GCQ_RWS_API") != "" || os.Getenv("GCQ_RWS_EVENT") != "" || os.Getenv("GCQ_RWS_UNIVERSAL") != "" {
+				accessTokenEnv := os.Getenv("GCQ_ACCESS_TOKEN")
+				node := &yaml.Node{}
+				rwsConf := &WebsocketReverse{
+					MiddleWares: MiddleWares{
+						AccessToken: accessTokenEnv,
+					},
+				}
+				param.SetExcludeDefault(&rwsConf.Disabled, param.EnsureBool(os.Getenv("GCQ_RWS_DISABLE"), false), false)
+				param.SetExcludeDefault(&rwsConf.API, os.Getenv("GCQ_RWS_API"), "")
+				param.SetExcludeDefault(&rwsConf.Event, os.Getenv("GCQ_RWS_EVENT"), "")
+				param.SetExcludeDefault(&rwsConf.Universal, os.Getenv("GCQ_RWS_UNIVERSAL"), "")
+				_ = node.Encode(rwsConf)
+				return "ws-reverse", node
+			}
+			return "", nil
+		},
+	})
+}
+
 // runWSServer 运行一个正向WS server
 func runWSServer(b *coolq.CQBot, node yaml.Node) {
-	var conf config.WebsocketServer
+	var conf WebsocketServer
 	switch err := node.Decode(&conf); {
 	case err != nil:
 		log.Warn("读取正向Websocket配置失败 :", err)
@@ -92,7 +192,7 @@ func runWSServer(b *coolq.CQBot, node yaml.Node) {
 
 // runWSClient 运行一个反向向WS client
 func runWSClient(b *coolq.CQBot, node yaml.Node) {
-	var conf config.WebsocketReverse
+	var conf WebsocketReverse
 	switch err := node.Decode(&conf); {
 	case err != nil:
 		log.Warn("读取反向Websocket配置失败 :", err)

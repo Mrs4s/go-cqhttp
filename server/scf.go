@@ -81,7 +81,7 @@ var cli *lambdaClient
 
 // runLambda  type: [scf,aws]
 func runLambda(bot *coolq.CQBot, node yaml.Node) {
-	var conf config.LambdaServer
+	var conf LambdaServer
 	switch err := node.Decode(&conf); {
 	case err != nil:
 		log.Warn("读取lambda配置失败 :", err)
@@ -153,6 +153,28 @@ type lambdaInvoke struct {
 	RequestContext struct {
 		Path string `json:"path"`
 	} `json:"requestContext"`
+}
+
+const lambdaDefault = `  # LambdaServer 配置
+  - lambda:
+      type: scf # scf: 腾讯云函数 aws: aws Lambda
+      middlewares:
+        <<: *default # 引用默认中间件
+`
+
+// LambdaServer 云函数配置
+type LambdaServer struct {
+	Disabled bool   `yaml:"disabled"`
+	Type     string `yaml:"type"`
+
+	MiddleWares `yaml:"middlewares"`
+}
+
+func init() {
+	config.AddServer(&config.Server{
+		Brief:   "云函数服务",
+		Default: lambdaDefault,
+	})
 }
 
 func (c *lambdaClient) next() *http.Request {

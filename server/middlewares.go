@@ -13,6 +13,17 @@ import (
 	"golang.org/x/time/rate"
 )
 
+// MiddleWares 通信中间件
+type MiddleWares struct {
+	AccessToken string `yaml:"access-token"`
+	Filter      string `yaml:"filter"`
+	RateLimit   struct {
+		Enabled   bool    `yaml:"enabled"`
+		Frequency float64 `yaml:"frequency"`
+		Bucket    int     `yaml:"bucket"`
+	} `yaml:"rate-limit"`
+}
+
 func rateLimit(frequency float64, bucketSize int) api.Handler {
 	limiter := rate.NewLimiter(rate.Limit(frequency), bucketSize)
 	return func(_ string, _ api.Getter) global.MSG {
