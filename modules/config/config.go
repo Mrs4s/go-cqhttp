@@ -129,9 +129,11 @@ func Parse(path string) *Config {
 		}()
 
 		for _, s := range serverconfs {
-			name, node := s.ParseEnv()
-			if node != nil {
-				config.Servers = append(config.Servers, map[string]yaml.Node{name: *node})
+			if s.ParseEnv != nil {
+				name, node := s.ParseEnv()
+				if node != nil {
+					config.Servers = append(config.Servers, map[string]yaml.Node{name: *node})
+				}
 			}
 		}
 	}
