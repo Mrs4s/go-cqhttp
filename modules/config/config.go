@@ -141,6 +141,7 @@ func Parse(path string) *Config {
 var serverconfs []*Server
 var mu sync.Mutex
 
+// AddServer 添加该服务的简介和默认配置
 func AddServer(s *Server) {
 	mu.Lock()
 	serverconfs = append(serverconfs, s)
