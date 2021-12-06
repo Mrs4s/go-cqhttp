@@ -7,6 +7,8 @@ github.com/Mrs4s/MiraiGo v0.0.0-20211201170411-c0713ba75d7f h1:kiNClkzBUTj7z0INL
 github.com/Mrs4s/MiraiGo v0.0.0-20211201170411-c0713ba75d7f/go.mod h1:xh9dqJAblNEQnZQSrMj216jF3GkrkoWOzkpBjGoZiiY=
 github.com/RomiChan/protobuf v0.0.0-20211126015646-ee3d29b19e08 h1:VAR3nNyBAc+oPlLKihkLTP0GXf8bQi085y2pSrNzAF0=
 github.com/RomiChan/protobuf v0.0.0-20211126015646-ee3d29b19e08/go.mod h1:lM1Te2wqdBLPSF7QLaskSn1fGW3Tw2l0iFGsTHTxqIg=
+github.com/RomiChan/protobuf v0.0.0-20211204042931-ff4f35848737 h1:p4o7/eSoP39jwnGZz08N1IpH/mNzg9SdCn7kPM9A9BE=
+github.com/RomiChan/protobuf v0.0.0-20211204042931-ff4f35848737/go.mod h1:CKKOWC7mBxd36zxsCB1V8DTrwlTNRQvkSVbYqyUiGEE=
 github.com/bits-and-blooms/bitset v1.2.1 h1:M+/hrU9xlMp7t4TyTDQW97d3tRPVuKFC6zBEK16QnXY=
 github.com/bits-and-blooms/bitset v1.2.1/go.mod h1:gIdJ4wp64HaoK2YrL1Q5/N7Y16edYb8uY+O0FJTyyDA=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

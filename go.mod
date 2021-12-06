@@ -30,7 +30,7 @@ require (
 )
 
 require (
-	github.com/RomiChan/protobuf v0.0.0-20211126015646-ee3d29b19e08 // indirect
+	github.com/RomiChan/protobuf v0.0.0-20211204042931-ff4f35848737 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-stack/stack v1.8.1 // indirect
 	github.com/gocq/rs v1.0.1 // indirect
