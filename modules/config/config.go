@@ -159,8 +159,9 @@ func generateConfig() {
 	for i, s := range serverconfs {
 		hint += fmt.Sprintf("\n> %d: %s", i, s.Brief)
 	}
-	hint += `请输入你需要的编号，可输入多个，同一编号也可输入多个(如: 233)
-	您的选择是:`
+	hint += `
+请输入你需要的编号，可输入多个，同一编号也可输入多个(如: 233)
+您的选择是:`
 	fmt.Print(hint)
 	input := bufio.NewReader(os.Stdin)
 	readString, err := input.ReadString('\n')
