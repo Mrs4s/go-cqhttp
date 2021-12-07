@@ -93,11 +93,11 @@ type MongoDBConfig struct {
 func Parse(path string) *Config {
 	fromEnv := os.Getenv("GCQ_UIN") != ""
 
-	file, err := os.Open(path)
+	file, err := os.ReadFile(path)
 	config := &Config{}
 	if err == nil {
-		defer func() { _ = file.Close() }()
-		if err = yaml.NewDecoder(file).Decode(config); err != nil && !fromEnv {
+		err = yaml.NewDecoder(strings.NewReader(os.ExpandEnv(string(file)))).Decode(config)
+		if err != nil && !fromEnv {
 			log.Fatal("配置文件不合法!", err)
 		}
 	} else if !fromEnv {

@@ -148,12 +148,7 @@ func (bot *CQBot) guildChannelMessageEvent(c *client.QQClient, m *message.GuildC
 	if guild == nil {
 		return
 	}
-	var channel *client.ChannelInfo
-	for _, c := range guild.Channels {
-		if c.ChannelId == m.ChannelId {
-			channel = c
-		}
-	}
+	channel := guild.FindChannel(m.ChannelId)
 	source := MessageSource{
 		SourceType: MessageSourceGuildChannel,
 		PrimaryID:  m.GuildId,
@@ -244,9 +239,9 @@ func (bot *CQBot) guildChannelCreatedEvent(c *client.QQClient, e *client.GuildCh
 	if guild == nil {
 		return
 	}
-	member := guild.FindMember(e.OperatorId)
+	member, _ := c.GuildService.GetGuildMemberProfileInfo(e.GuildId, e.OperatorId)
 	if member == nil {
-		member = &client.GuildMemberInfo{Nickname: "未知"}
+		member = &client.GuildUserProfile{Nickname: "未知"}
 	}
 	log.Infof("频道 %v(%v) 内用户 %v(%v) 创建了子频道 %v(%v)", guild.GuildName, guild.GuildId, member.Nickname, member.TinyId, e.ChannelInfo.ChannelName, e.ChannelInfo.ChannelId)
 	bot.dispatchEventMessage(global.MSG{
@@ -268,9 +263,9 @@ func (bot *CQBot) guildChannelDestroyedEvent(c *client.QQClient, e *client.Guild
 	if guild == nil {
 		return
 	}
-	member := guild.FindMember(e.OperatorId)
+	member, _ := c.GuildService.GetGuildMemberProfileInfo(e.GuildId, e.OperatorId)
 	if member == nil {
-		member = &client.GuildMemberInfo{Nickname: "未知"}
+		member = &client.GuildUserProfile{Nickname: "未知"}
 	}
 	log.Infof("频道 %v(%v) 内用户 %v(%v) 删除了子频道 %v(%v)", guild.GuildName, guild.GuildId, member.Nickname, member.TinyId, e.ChannelInfo.ChannelName, e.ChannelInfo.ChannelId)
 	bot.dispatchEventMessage(global.MSG{
