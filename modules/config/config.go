@@ -160,7 +160,7 @@ func generateConfig() {
 		hint += fmt.Sprintf("\n> %d: %s", i, s.Brief)
 	}
 	hint += `
-请输入你需要的编号，可输入多个，同一编号也可输入多个(如: 233)
+请输入你需要的编号(0-9)，可输入多个，同一编号也可输入多个(如: 233)
 您的选择是:`
 	fmt.Print(hint)
 	input := bufio.NewReader(os.Stdin)
@@ -168,9 +168,13 @@ func generateConfig() {
 	if err != nil {
 		log.Fatal("输入不合法: ", err)
 	}
+	rmax := len(serverconfs)
+	if rmax > 10 {
+		rmax = 10
+	}
 	for _, r := range readString {
 		r -= '0'
-		if r >= 0 && r < 10 {
+		if r >= 0 && r < rune(rmax) {
 			sb.WriteString(serverconfs[r].Default)
 		}
 	}
