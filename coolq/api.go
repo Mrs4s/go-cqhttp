@@ -135,23 +135,7 @@ func (bot *CQBot) CQGetGuildMembers(guildID uint64) global.MSG {
 	if guild == nil {
 		return Failed(100, "GUILD_NOT_FOUND")
 	}
-	members := make([]global.MSG, len(guild.Members))
-	bots := make([]global.MSG, len(guild.Bots))
-	admins := make([]global.MSG, len(guild.Admins))
-	for i, m := range guild.Members {
-		members[i] = convertGuildMemberInfo(m)
-	}
-	for i, m := range guild.Bots {
-		bots[i] = convertGuildMemberInfo(m)
-	}
-	for i, m := range guild.Admins {
-		admins[i] = convertGuildMemberInfo(m)
-	}
-	return OK(global.MSG{
-		"members": members,
-		"bots":    bots,
-		"admins":  admins,
-	})
+	return OK(nil) // todo
 }
 
 // CQGetGuildRoles 获取频道角色列表
@@ -692,7 +676,7 @@ func (bot *CQBot) CQSendGuildChannelMessage(guildID, channelID uint64, m gjson.R
 	fixAt := func(elem []message.IMessageElement) {
 		for _, e := range elem {
 			if at, ok := e.(*message.AtElement); ok && at.Target != 0 && at.Display == "" {
-				mem := guild.FindMember(uint64(at.Target))
+				mem, _ := bot.Client.GuildService.GetGuildMemberProfileInfo(guildID, uint64(at.Target))
 				if mem != nil {
 					at.Display = "@" + mem.Nickname
 				} else {
