@@ -128,6 +128,7 @@ func (bot *CQBot) CQGetGuildChannelList(guildID uint64, noCache bool) global.MSG
 	return OK(channels)
 }
 
+/*
 // CQGetGuildMembers 获取频道成员列表
 // @route(get_guild_members)
 func (bot *CQBot) CQGetGuildMembers(guildID uint64) global.MSG {
@@ -137,6 +138,7 @@ func (bot *CQBot) CQGetGuildMembers(guildID uint64) global.MSG {
 	}
 	return OK(nil) // todo
 }
+*/
 
 // CQGetGuildRoles 获取频道角色列表
 // @route(get_guild_roles)
