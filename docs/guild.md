@@ -108,7 +108,7 @@ ChannelInfo:
 | `owner_guild_id`    | string | 所属频道ID      |
 | `channel_id`     | string | 子频道ID   |
 | `channel_type`     | int32 | 子频道类型   |
-| `channel_name`  | string | 之频道名称  |
+| `channel_name`  | string | 子频道名称  |
 | `create_time`  | int64 | 创建时间  |
 | `creator_tiny_id`  | string | 创建者ID  |
 | `talk_permission`  | int32 | 发言权限类型  |
