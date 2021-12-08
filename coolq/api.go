@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/segmentio/asm/base64"
 	"math"
 	"os"
 	"path"
@@ -28,6 +29,19 @@ import (
 	"github.com/Mrs4s/go-cqhttp/internal/param"
 	"github.com/Mrs4s/go-cqhttp/modules/filter"
 )
+
+type guildMemberPageToken struct {
+	guildID        uint64
+	nextIndex      uint32
+	nextRoleID     uint64
+	nextQueryParam string
+}
+
+var defaultPageToken = &guildMemberPageToken{
+	guildID:    0,
+	nextIndex:  0,
+	nextRoleID: 2,
+}
 
 // CQGetLoginInfo 获取登录号信息
 //
@@ -128,17 +142,49 @@ func (bot *CQBot) CQGetGuildChannelList(guildID uint64, noCache bool) global.MSG
 	return OK(channels)
 }
 
-/*
 // CQGetGuildMembers 获取频道成员列表
-// @route(get_guild_members)
-func (bot *CQBot) CQGetGuildMembers(guildID uint64) global.MSG {
+// @route(get_guild_member_list)
+func (bot *CQBot) CQGetGuildMembers(guildID uint64, nextToken string) global.MSG {
 	guild := bot.Client.GuildService.FindGuild(guildID)
 	if guild == nil {
 		return Failed(100, "GUILD_NOT_FOUND")
 	}
-	return OK(nil) // todo
+	token := defaultPageToken
+	if nextToken != "" {
+		i, exists := bot.nextTokenCache.Get(nextToken)
+		if !exists {
+			return Failed(100, "NEXT_TOKEN_NOT_EXISTS")
+		}
+		token = i.(*guildMemberPageToken)
+		if token.guildID != guildID {
+			return Failed(100, "GUILD_NOT_MATCH")
+		}
+	}
+	ret, err := bot.Client.GuildService.FetchGuildMemberListWithRole(guildID, 0, token.nextIndex, token.nextRoleID, token.nextQueryParam)
+	if err != nil {
+		return Failed(100, "API_ERROR", err.Error())
+	}
+	res := global.MSG{
+		"members":    convertGuildMemberInfo(ret.Members),
+		"finished":   ret.Finished,
+		"next_token": nil,
+	}
+	if !ret.Finished {
+		next := &guildMemberPageToken{
+			guildID:        guildID,
+			nextIndex:      ret.NextIndex,
+			nextRoleID:     ret.NextRoleId,
+			nextQueryParam: ret.NextQueryParam,
+		}
+		id := base64.StdEncoding.EncodeToString(binary.NewWriterF(func(w *binary.Writer) {
+			w.WriteUInt64(uint64(time.Now().UnixNano()))
+			w.WriteString(utils.RandomString(5))
+		}))
+		bot.nextTokenCache.Add(id, next, time.Minute*10)
+		res["next_token"] = id
+	}
+	return OK(res)
 }
-*/
 
 // CQGetGuildRoles 获取频道角色列表
 // @route(get_guild_roles)

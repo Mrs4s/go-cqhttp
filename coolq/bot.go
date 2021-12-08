@@ -34,6 +34,7 @@ type CQBot struct {
 
 	friendReqCache   sync.Map
 	tempSessionCache sync.Map
+	nextTokenCache   *utils.Cache
 }
 
 // Event 事件
@@ -67,7 +68,8 @@ func (e *Event) JSONString() string {
 // NewQQBot 初始化一个QQBot实例
 func NewQQBot(cli *client.QQClient) *CQBot {
 	bot := &CQBot{
-		Client: cli,
+		Client:         cli,
+		nextTokenCache: utils.NewCache(time.Second * 10),
 	}
 	bot.Client.OnPrivateMessage(bot.privateMessageEvent)
 	bot.Client.OnGroupMessage(bot.groupMessageEvent)
