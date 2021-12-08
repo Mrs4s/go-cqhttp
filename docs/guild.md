@@ -29,6 +29,8 @@ API以及字段相关命名均为参考QQ官方命名或相似产品命名规则
 - `at` 消息的 `target` 依然使用 `qq` 字段, 以保证一致性. 但内容为 `tiny_id`
 - 所有事件的 `self_id` 均为 BOT 的QQ号. `tiny_id` 将放在 `self_tiny_id` 字段
 - 遵循我们一贯的原则, 将不会支持主动加频道/主动拉人/红包相关消息类型
+- 频道相关的API仅能在 `Android Phone` 和 `iPad` 协议上使用.
+- 由于频道相关ID的数据类型均为 `uint64` , 为保证不超过某些语言的安全值范围, 所以ID相关数据均转换为 `string` 类型, API调用两种类型均可接受.
 
 ## API
 
@@ -41,7 +43,7 @@ API以及字段相关命名均为参考QQ官方命名或相似产品命名规则
 | 字段          | 类型  | 说明       |
 | ------------- | ----- | ---------- |
 | `nickname`    | string | 昵称      |
-| `tiny_id`     | uint64 | 自身的ID   |
+| `tiny_id`     | string | 自身的ID   |
 | `avatar_url`  | string | 头像链接   |
 
 ### 获取频道列表
@@ -56,7 +58,7 @@ GuildInfo:
 
 | 字段          | 类型  | 说明       |
 | ------------- | ----- | ---------- |
-| `guild_id`    | uint64 | 频道ID      |
+| `guild_id`    | string | 频道ID      |
 | `guild_name`     | string | 频道名称   |
 | `guild_display_id`  | int64 | 频道显示ID, 公测后可能作为搜索ID使用  |
 
@@ -68,13 +70,13 @@ GuildInfo:
 
 | 字段       | 类型  | 说明 |
 | ---------- | ----- | ---- |
-| `guild_id` | uint64 | 频道ID |
+| `guild_id` | string | 频道ID |
 
 **响应数据**
 
 | 字段          | 类型  | 说明       |
 | ------------- | ----- | ---------- |
-| `guild_id`    | uint64 | 频道ID      |
+| `guild_id`    | string | 频道ID      |
 | `guild_name`     | string | 频道名称   |
 | `guild_profile`  | string | 频道简介  |
 | `create_time`  | int64 | 创建时间  |
@@ -82,7 +84,7 @@ GuildInfo:
 | `max_robot_count`  | int64 | 频道BOT数上限  |
 | `max_admin_count`  | int64 | 频道管理员人数上限  |
 | `member_count`  | int64 | 已加入人数  |
-| `owner_id`  | uint64 | 创建者ID  |
+| `owner_id`  | string | 创建者ID  |
 
 ### 获取子频道列表
 
@@ -92,7 +94,7 @@ GuildInfo:
 
 | 字段       | 类型  | 说明 |
 | ---------- | ----- | ---- |
-| `guild_id` | uint64 | 频道ID |
+| `guild_id` | string | 频道ID |
 | `no_cache` | bool  | 是否无视缓存 |
 
 **响应数据**
@@ -103,13 +105,12 @@ ChannelInfo:
 
 | 字段          | 类型  | 说明       |
 | ------------- | ----- | ---------- |
-| `owner_guild_id`    | uint64 | 所属频道ID      |
-| `channel_id`     | uint64 | 子频道ID   |
+| `owner_guild_id`    | string | 所属频道ID      |
+| `channel_id`     | string | 子频道ID   |
 | `channel_type`     | int32 | 子频道类型   |
 | `channel_name`  | string | 之频道名称  |
 | `create_time`  | int64 | 创建时间  |
-| `creator_id`  | int64 | 创建者QQ号  |
-| `creator_tiny_id`  | uint64 | 创建者ID  |
+| `creator_tiny_id`  | string | 创建者ID  |
 | `talk_permission`  | int32 | 发言权限类型  |
 | `visible_type`  | int32 | 可视性类型  |
 | `current_slow_mode`  | int32 | 当前启用的慢速模式Key  |
@@ -131,35 +132,24 @@ SlowModeInfo:
 | 1    | 文字频道  |
 | 2     | 语音频道  |
 | 5  |  直播频道  |
+| 7  |  主题频道  |
 
 ### 获取频道成员列表
 
-终结点: `/get_guild_members`
+终结点: `/get_guild_member_list`
 
 **参数**
 
 | 字段       | 类型  | 说明 |
 | ---------- | ----- | ---- |
-| `guild_id` | uint64 | 频道ID |
+| `guild_id` | string | 频道ID |
+| `next_token` | string | 翻页Token |
 
-**响应数据**
+> `next_token` 为空的话即返回第一页数据
+> 
+> 由于频道人数太多(数万), 请尽量不要全量拉取成员列表, 这可能会导致严重的性能问题
 
-> 注意: 类型内无任何成员将返回 `null`
 
-| 字段          | 类型  | 说明       |
-| ------------- | ----- | ---------- |
-| `members`    | []GuildMemberInfo | 普通成员列表      |
-| `bots`     | []GuildMemberInfo | 机器人列表  |
-| `admins`  | []GuildMemberInfo | 管理员列表  |
-
-GuildMemberInfo:
-
-| 字段          | 类型  | 说明       |
-| ------------- | ----- | ---------- |
-| `tiny_id`    | uint64 | 成员ID      |
-| `title`     | string | 成员头衔 |
-| `nickname`  | string | 成员昵称  |
-| `role`  | int32 | 成员权限  |
 
 ### 发送信息到子频道
 
@@ -169,8 +159,8 @@ GuildMemberInfo:
 
 | 字段       | 类型  | 说明 |
 | ---------- | ----- | ---- |
-| `guild_id` | uint64 | 频道ID |
-| `channel_id` | uint64 | 子频道ID |
+| `guild_id` | string | 频道ID |
+| `channel_id` | string | 子频道ID |
 | `message` | Message | 消息, 与原有消息类型相同 |
 
 **响应数据**
@@ -190,9 +180,9 @@ GuildMemberInfo:
 | `post_type`   | string | `message`       | 上报类型       |
 | `message_type` | string | `guild` | 消息类型       |
 | `sub_type` | string | `channel` | 消息子类型       |
-| `guild_id`    | uint64  |                | 频道ID           |
-| `channel_id`    | uint64  |                | 子频道ID           |
-| `user_id`     | uint64  |                | 消息发送者ID   |
+| `guild_id`    | string  |                | 频道ID           |
+| `channel_id`    | string  |                | 子频道ID           |
+| `user_id`     | string  |                | 消息发送者ID   |
 | `message_id`     | string  |                | 消息ID  |
 | `sender`     | Sender  |                | 发送者  |
 | `message`     | Message  |                | 消息内容  |
@@ -205,9 +195,9 @@ GuildMemberInfo:
 | ------------- | ------ | -------------- | -------------- |
 | `post_type`   | string | `notice`       | 上报类型       |
 | `notice_type` | string | `message_reactions_updated` | 消息类型       |
-| `guild_id`    | uint64  |                | 频道ID           |
-| `channel_id`    | uint64  |                | 子频道ID           |
-| `user_id`     | uint64  |                | 操作者ID  |
+| `guild_id`    | string  |                | 频道ID           |
+| `channel_id`    | string  |                | 子频道ID           |
+| `user_id`     | string  |                | 操作者ID  |
 | `message_id`     | string  |                | 消息ID  |
 | `current_reactions`     | []ReactionInfo  |                | 当前消息被贴表情列表  |
 
@@ -230,10 +220,10 @@ ReactionInfo:
 | ------------- | ------ | -------------- | -------------- |
 | `post_type`   | string | `notice`       | 上报类型       |
 | `notice_type` | string | `channel_updated` | 消息类型       |
-| `guild_id`    | uint64  |                | 频道ID           |
-| `channel_id`    | uint64  |                | 子频道ID           |
-| `user_id`     | uint64  |                | 操作者ID  |
-| `operator_id`     | uint64  |                | 操作者ID  |
+| `guild_id`    | string  |                | 频道ID           |
+| `channel_id`    | string  |                | 子频道ID           |
+| `user_id`     | string  |                | 操作者ID  |
+| `operator_id`     | string  |                | 操作者ID  |
 | `old_info`     | ChannelInfo  |        | 更新前的频道信息  |
 | `new_info`     | ChannelInfo  |        | 更新后的频道信息  |
 
@@ -245,10 +235,10 @@ ReactionInfo:
 | ------------- | ------ | -------------- | -------------- |
 | `post_type`   | string | `notice`       | 上报类型       |
 | `notice_type` | string | `channel_created` | 消息类型       |
-| `guild_id`    | uint64  |                | 频道ID           |
-| `channel_id`    | uint64  |                | 子频道ID           |
-| `user_id`     | uint64  |                | 操作者ID  |
-| `operator_id`     | uint64  |                | 操作者ID  |
+| `guild_id`    | string  |                | 频道ID           |
+| `channel_id`    | string  |                | 子频道ID           |
+| `user_id`     | string  |                | 操作者ID  |
+| `operator_id`     | string  |                | 操作者ID  |
 | `channel_info`     | ChannelInfo  |        | 频道信息  |
 
 ### 子频道删除
@@ -259,8 +249,8 @@ ReactionInfo:
 | ------------- | ------ | -------------- | -------------- |
 | `post_type`   | string | `notice`       | 上报类型       |
 | `notice_type` | string | `channel_destroyed` | 消息类型       |
-| `guild_id`    | uint64  |                | 频道ID           |
-| `channel_id`    | uint64  |                | 子频道ID           |
-| `user_id`     | uint64  |                | 操作者ID  |
-| `operator_id`     | uint64  |                | 操作者ID  |
+| `guild_id`    | string  |                | 频道ID           |
+| `channel_id`    | string  |                | 子频道ID           |
+| `user_id`     | string  |                | 操作者ID  |
+| `operator_id`     | string  |                | 操作者ID  |
 | `channel_info`     | ChannelInfo  |        | 频道信息  |
