@@ -6,6 +6,7 @@ import (
 	_ "embed" // embed the default config file
 	"fmt"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -96,7 +97,7 @@ func Parse(path string) *Config {
 	file, err := os.ReadFile(path)
 	config := &Config{}
 	if err == nil {
-		err = yaml.NewDecoder(strings.NewReader(os.ExpandEnv(string(file)))).Decode(config)
+		err = yaml.NewDecoder(strings.NewReader(expand(string(file), os.Getenv))).Decode(config)
 		if err != nil && !fromEnv {
 			log.Fatal("配置文件不合法!", err)
 		}
@@ -181,4 +182,18 @@ func generateConfig() {
 	_ = os.WriteFile("config.yml", []byte(sb.String()), 0o644)
 	fmt.Println("默认配置文件已生成，请修改 config.yml 后重新启动!")
 	_, _ = input.ReadString('\n')
+}
+
+func expand(s string, mapping func(string) string) string {
+	r, err := regexp.Compile(`\${(.*?)}`)
+	if err != nil {
+		return s
+	}
+	re := r.FindAllStringSubmatch(s, -1)
+	for _, i := range re {
+		if len(i) == 2 {
+			s = strings.ReplaceAll(s, i[0], mapping(i[1]))
+		}
+	}
+	return s
 }
