@@ -138,6 +138,8 @@ SlowModeInfo:
 
 终结点: `/get_guild_member_list`
 
+> 由于频道人数较多(数万), 请尽量不要全量拉取成员列表, 这将会导致严重的性能问题
+
 **参数**
 
 | 字段       | 类型  | 说明 |
@@ -145,11 +147,27 @@ SlowModeInfo:
 | `guild_id` | string | 频道ID |
 | `next_token` | string | 翻页Token |
 
-> `next_token` 为空的话即返回第一页数据
-> 
-> 由于频道人数太多(数万), 请尽量不要全量拉取成员列表, 这可能会导致严重的性能问题
+> `next_token` 为空的情况下, 将返回第一页的数据, 并在返回值附带下一页的 `token`
 
+**响应数据**
 
+| 字段          | 类型  | 说明       |
+| ------------- | ----- | ---------- |
+| `members`    | []GuildMemberInfo | 成员列表   |
+| `finished`    | bool | 是否最终页   |
+| `next_token`    | string | 翻页Token   |
+
+GuildMemberInfo:
+
+| 字段          | 类型  | 说明       |
+| ------------- | ----- | ---------- |
+| `tiny_id`    | string | 成员ID   |
+| `title`    | string | 成员头衔   |
+| `nickname`    | string | 成员昵称   |
+| `role_id`    | string | 所在权限组ID   |
+| `role_name`    | string | 所在权限组名称   |
+
+> 默认情况下频道管理员的权限组ID为 `2`, 部分频道可能会另行创建, 需手动判断
 
 ### 发送信息到子频道
 
