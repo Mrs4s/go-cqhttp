@@ -184,8 +184,11 @@ func generateConfig() {
 	_, _ = input.ReadString('\n')
 }
 
+// expand 使用正则进行环境变量展开
+// os.ExpandEnv 字符 $ 无法逃逸
+// https://github.com/golang/go/issues/43482
 func expand(s string, mapping func(string) string) string {
-	r := regexp.MustCompile(`\${(.*?)}`)
+	r := regexp.MustCompile(`\${([a-zA-Z_]+[a-zA-Z0-9_]*)}`)
 	re := r.FindAllStringSubmatch(s, -1)
 	for _, i := range re {
 		if len(i) == 2 {
