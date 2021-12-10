@@ -154,7 +154,6 @@ func convertChannelInfo(c *client.ChannelInfo) global.MSG {
 		"channel_type":      c.ChannelType,
 		"channel_name":      c.ChannelName,
 		"owner_guild_id":    fU64(c.Meta.GuildId),
-		"creator_id":        c.Meta.CreatorUin,
 		"creator_tiny_id":   fU64(c.Meta.CreatorTinyId),
 		"create_time":       c.Meta.CreateTime,
 		"current_slow_mode": c.Meta.CurrentSlowMode,

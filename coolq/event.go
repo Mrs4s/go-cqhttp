@@ -239,7 +239,7 @@ func (bot *CQBot) guildChannelCreatedEvent(c *client.QQClient, e *client.GuildCh
 	if guild == nil {
 		return
 	}
-	member, _ := c.GuildService.GetGuildMemberProfileInfo(e.GuildId, e.OperatorId)
+	member, _ := c.GuildService.FetchGuildMemberProfileInfo(e.GuildId, e.OperatorId)
 	if member == nil {
 		member = &client.GuildUserProfile{Nickname: "未知"}
 	}
@@ -263,7 +263,7 @@ func (bot *CQBot) guildChannelDestroyedEvent(c *client.QQClient, e *client.Guild
 	if guild == nil {
 		return
 	}
-	member, _ := c.GuildService.GetGuildMemberProfileInfo(e.GuildId, e.OperatorId)
+	member, _ := c.GuildService.FetchGuildMemberProfileInfo(e.GuildId, e.OperatorId)
 	if member == nil {
 		member = &client.GuildUserProfile{Nickname: "未知"}
 	}

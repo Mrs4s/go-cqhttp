@@ -3,8 +3,8 @@ github.com/Baozisoftware/qrcode-terminal-go v0.0.0-20170407111555-c0650d8dff0f/g
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/Microsoft/go-winio v0.5.1 h1:aPJp2QD7OOrhO5tQXqQoGSJc+DjDtWTGLOmNyAm6FgY=
 github.com/Microsoft/go-winio v0.5.1/go.mod h1:JPGBdM1cNvN/6ISo+n8V5iA4v8pBzdOpzfwIujj1a84=
-github.com/Mrs4s/MiraiGo v0.0.0-20211208132533-8cd25e02fcf3 h1:w42Z7gE+HjBcjXDjVZ8o5rzNgAzt7nhuL84HOYpIhRE=
-github.com/Mrs4s/MiraiGo v0.0.0-20211208132533-8cd25e02fcf3/go.mod h1:YD9gBKkxC9lPPtx3doYXRG26VBkK6YXjrS76cv01C5w=
+github.com/Mrs4s/MiraiGo v0.0.0-20211210183655-416a6c17bee3 h1:IWZEA6yZOwXCEg5a4kuZkzfy3NghjsRtVIbJ4SBpzU0=
+github.com/Mrs4s/MiraiGo v0.0.0-20211210183655-416a6c17bee3/go.mod h1:YD9gBKkxC9lPPtx3doYXRG26VBkK6YXjrS76cv01C5w=
 github.com/RomiChan/protobuf v0.0.0-20211204042931-ff4f35848737 h1:p4o7/eSoP39jwnGZz08N1IpH/mNzg9SdCn7kPM9A9BE=
 github.com/RomiChan/protobuf v0.0.0-20211204042931-ff4f35848737/go.mod h1:CKKOWC7mBxd36zxsCB1V8DTrwlTNRQvkSVbYqyUiGEE=
 github.com/bits-and-blooms/bitset v1.2.1 h1:M+/hrU9xlMp7t4TyTDQW97d3tRPVuKFC6zBEK16QnXY=

@@ -187,6 +187,33 @@ func (bot *CQBot) CQGetGuildMembers(guildID uint64, nextToken string) global.MSG
 	return OK(res)
 }
 
+// CQGetGuildMemberProfile 获取频道成员资料
+// @route(get_guild_member_profile)
+func (bot *CQBot) CQGetGuildMemberProfile(guildID, userID uint64) global.MSG {
+	if bot.Client.GuildService.FindGuild(guildID) == nil {
+		return Failed(100, "GUILD_NOT_FOUND")
+	}
+	profile, err := bot.Client.GuildService.FetchGuildMemberProfileInfo(guildID, userID)
+	if err != nil {
+		log.Errorf("获取频道 %v 成员 %v 资料时出现错误: %v", guildID, userID, err)
+		return Failed(100, "API_ERROR", err.Error())
+	}
+	roles := make([]global.MSG, 0, len(profile.Roles))
+	for _, role := range profile.Roles {
+		roles = append(roles, global.MSG{
+			"role_id":   fU64(role.RoleId),
+			"role_name": role.RoleName,
+		})
+	}
+	return OK(global.MSG{
+		"tiny_id":    fU64(profile.TinyId),
+		"nickname":   profile.Nickname,
+		"avatar_url": profile.AvatarUrl,
+		"join_time":  profile.JoinTime,
+		"roles":      roles,
+	})
+}
+
 // CQGetGuildRoles 获取频道角色列表
 // @route(get_guild_roles)
 func (bot *CQBot) CQGetGuildRoles(guildID uint64) global.MSG {
@@ -725,7 +752,7 @@ func (bot *CQBot) CQSendGuildChannelMessage(guildID, channelID uint64, m gjson.R
 	fixAt := func(elem []message.IMessageElement) {
 		for _, e := range elem {
 			if at, ok := e.(*message.AtElement); ok && at.Target != 0 && at.Display == "" {
-				mem, _ := bot.Client.GuildService.GetGuildMemberProfileInfo(guildID, uint64(at.Target))
+				mem, _ := bot.Client.GuildService.FetchGuildMemberProfileInfo(guildID, uint64(at.Target))
 				if mem != nil {
 					at.Display = "@" + mem.Nickname
 				} else {
