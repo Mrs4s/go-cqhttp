@@ -5,13 +5,14 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/segmentio/asm/base64"
 	"io"
 	"os"
 	"path"
 	"runtime/debug"
 	"sync"
 	"time"
+
+	"github.com/segmentio/asm/base64"
 
 	"github.com/Mrs4s/go-cqhttp/db"
 
