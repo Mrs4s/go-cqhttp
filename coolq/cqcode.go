@@ -448,6 +448,11 @@ func ToMessageContent(e []message.IMessageElement) (r []global.MSG) {
 				"type": "image",
 				"data": data,
 			}
+		case *message.GuildImageElement:
+			m = global.MSG{
+				"type": "image",
+				"data": global.MSG{"file": hex.EncodeToString(o.Md5) + ".image", "url": o.Url},
+			}
 		case *message.FriendImageElement:
 			data := global.MSG{"file": hex.EncodeToString(o.Md5) + ".image", "url": o.Url}
 			if o.Flash {

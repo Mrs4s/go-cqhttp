@@ -155,14 +155,14 @@ func (bot *CQBot) guildChannelMessageEvent(c *client.QQClient, m *message.GuildC
 		SubID:      m.ChannelId,
 	}
 	log.Infof("收到来自频道 %v(%v) 子频道 %v(%v) 内 %v(%v) 的消息: %v", guild.GuildName, guild.GuildId, channel.ChannelName, m.ChannelId, m.Sender.Nickname, m.Sender.TinyId, ToStringMessage(m.Elements, source, true))
-	// todo: 数据库支持
+	id := bot.InsertGuildChannelMessage(m)
 	bot.dispatchEventMessage(global.MSG{
 		"post_type":    "message",
 		"message_type": "guild",
 		"sub_type":     "channel",
 		"guild_id":     fU64(m.GuildId),
 		"channel_id":   fU64(m.ChannelId),
-		"message_id":   fmt.Sprintf("%v-%v", m.Id, m.InternalId),
+		"message_id":   id,
 		"user_id":      fU64(m.Sender.TinyId),
 		"message":      ToFormattedMessage(m.Elements, source, false), // todo: 增加对频道消息 Reply 的支持
 		"self_id":      bot.Client.Uin,
