@@ -519,7 +519,6 @@ func (bot *CQBot) InsertGuildChannelMessage(m *message.GuildChannelMessage) stri
 		w.WriteUInt64(m.GuildId)
 		w.WriteUInt64(m.ChannelId)
 		w.WriteUInt64(m.Id)
-		w.WriteUInt64(m.InternalId)
 	}))
 	msg := &db.StoredGuildChannelMessage{
 		ID: id,
