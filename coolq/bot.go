@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/segmentio/asm/base64"
 	"io"
 	"os"
 	"path"
@@ -511,6 +512,34 @@ func (bot *CQBot) InsertTempMessage(target int64, m *message.TempMessage) int32 
 	return id
 }
 */
+
+// InsertGuildChannelMessage 频道消息入数据库
+func (bot *CQBot) InsertGuildChannelMessage(m *message.GuildChannelMessage) string {
+	id := base64.StdEncoding.EncodeToString(binary.NewWriterF(func(w *binary.Writer) {
+		w.WriteUInt64(m.GuildId)
+		w.WriteUInt64(m.ChannelId)
+		w.WriteUInt64(m.Id)
+		w.WriteUInt64(m.InternalId)
+	}))
+	msg := &db.StoredGuildChannelMessage{
+		ID: id,
+		Attribute: &db.StoredGuildMessageAttribute{
+			MessageSeq:   m.Id,
+			InternalID:   m.InternalId,
+			SenderTinyID: m.Sender.TinyId,
+			SenderName:   m.Sender.Nickname,
+			Timestamp:    m.Time,
+		},
+		GuildID:   m.GuildId,
+		ChannelID: m.ChannelId,
+		Content:   ToMessageContent(m.Elements),
+	}
+	if err := db.InsertGuildChannelMessage(msg); err != nil {
+		log.Warnf("记录聊天数据时出现错误: %v", err)
+		return ""
+	}
+	return msg.ID
+}
 
 // Release 释放Bot实例
 func (bot *CQBot) Release() {

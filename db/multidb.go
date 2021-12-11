@@ -86,3 +86,12 @@ func InsertPrivateMessage(m *StoredPrivateMessage) error {
 	}
 	return nil
 }
+
+func InsertGuildChannelMessage(m *StoredGuildChannelMessage) error {
+	for _, b := range backends {
+		if err := b.InsertGuildChannelMessage(m); err != nil {
+			return errors.Wrap(err, "insert message to backend error")
+		}
+	}
+	return nil
+}
