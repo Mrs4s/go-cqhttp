@@ -1564,6 +1564,30 @@ func (bot *CQBot) CQGetMessage(messageID int32) global.MSG {
 	return OK(m)
 }
 
+// CQGetGuildMessage 获取频道消息
+// @route(get_guild_msg)
+func (bot *CQBot) CQGetGuildMessage(messageID string) global.MSG {
+	msg, err := db.GetGuildChannelMessageByID(messageID)
+	if err != nil {
+		log.Warnf("获取消息时出现错误: %v", err)
+		return Failed(100, "MSG_NOT_FOUND", "消息不存在")
+	}
+	m := global.MSG{
+		"message_id":     msg.ID,
+		"message_source": "channel",
+		"guild_id":       fU64(msg.GuildID),
+		"channel_id":     fU64(msg.ChannelID),
+		"message_seq":    msg.Attribute.MessageSeq,
+		"sender": global.MSG{
+			"user_id":  fU64(msg.Attribute.SenderTinyID),
+			"nickname": msg.Attribute.SenderName,
+		},
+		"time":    msg.Attribute.Timestamp,
+		"message": ToFormattedMessage(bot.ConvertContentMessage(msg.Content, MessageSourceGuildChannel), MessageSource{SourceType: MessageSourceGuildChannel, PrimaryID: msg.GuildID, SubID: msg.ChannelID}),
+	}
+	return OK(m)
+}
+
 // CQGetGroupSystemMessages 扩展API-获取群文件系统消息
 //
 // https://docs.go-cqhttp.org/api/#%E8%8E%B7%E5%8F%96%E7%BE%A4%E7%B3%BB%E7%BB%9F%E6%B6%88%E6%81%AF
