@@ -518,11 +518,7 @@ func (bot *CQBot) InsertTempMessage(target int64, m *message.TempMessage) int32 
 
 // InsertGuildChannelMessage 频道消息入数据库
 func (bot *CQBot) InsertGuildChannelMessage(m *message.GuildChannelMessage) string {
-	id := base64.StdEncoding.EncodeToString(binary.NewWriterF(func(w *binary.Writer) {
-		w.WriteUInt64(m.GuildId)
-		w.WriteUInt64(m.ChannelId)
-		w.WriteUInt64(m.Id)
-	}))
+	id := encodeGuildMessageID(m.GuildId, m.ChannelId, m.Id)
 	msg := &db.StoredGuildChannelMessage{
 		ID: id,
 		Attribute: &db.StoredGuildMessageAttribute{
@@ -610,5 +606,13 @@ func encodeMessageID(target int64, seq int32) string {
 	return hex.EncodeToString(binary.NewWriterF(func(w *binary.Writer) {
 		w.WriteUInt64(uint64(target))
 		w.WriteUInt32(uint32(seq))
+	}))
+}
+
+func encodeGuildMessageID(guildID, channelID, seq uint64) string {
+	return base64.StdEncoding.EncodeToString(binary.NewWriterF(func(w *binary.Writer) {
+		w.WriteUInt64(guildID)
+		w.WriteUInt64(channelID)
+		w.WriteUInt64(seq)
 	}))
 }

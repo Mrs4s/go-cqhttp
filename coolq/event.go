@@ -180,7 +180,8 @@ func (bot *CQBot) guildMessageReactionsUpdatedEvent(c *client.QQClient, e *clien
 	if guild == nil {
 		return
 	}
-	str := fmt.Sprintf("频道 %v(%v) 消息 %v 表情贴片已更新: ", guild.GuildName, guild.GuildId, e.MessageId)
+	msgID := encodeGuildMessageID(e.GuildId, e.ChannelId, e.MessageId)
+	str := fmt.Sprintf("频道 %v(%v) 消息 %v 表情贴片已更新: ", guild.GuildName, guild.GuildId, msgID)
 	currentReactions := make([]global.MSG, len(e.CurrentReactions))
 	for i, r := range e.CurrentReactions {
 		str += fmt.Sprintf("%v*%v ", r.Face.Name, r.Count)
@@ -203,13 +204,43 @@ func (bot *CQBot) guildMessageReactionsUpdatedEvent(c *client.QQClient, e *clien
 		"message_sender_uin": e.MessageSenderUin,
 		"guild_id":           fU64(e.GuildId),
 		"channel_id":         fU64(e.ChannelId),
-		"message_id":         fmt.Sprint(e.MessageId), // todo: 支持数据库后转换为数据库id
+		"message_id":         msgID,
 		"operator_id":        fU64(e.OperatorId),
 		"current_reactions":  currentReactions,
 		"time":               time.Now().Unix(),
 		"self_id":            bot.Client.Uin,
 		"self_tiny_id":       fU64(bot.Client.GuildService.TinyId),
 		"user_id":            e.OperatorId,
+	})
+}
+
+func (bot *CQBot) guildChannelMessageRecalledEvent(c *client.QQClient, e *client.GuildMessageRecalledEvent) {
+	guild := c.GuildService.FindGuild(e.GuildId)
+	if guild == nil {
+		return
+	}
+	channel := guild.FindChannel(e.ChannelId)
+	if channel == nil {
+		return
+	}
+	operator, err := c.GuildService.FetchGuildMemberProfileInfo(e.GuildId, e.OperatorId)
+	if err != nil {
+		log.Errorf("处理频道撤回事件时出现错误: 获取操作者资料时出现错误 %v", err)
+		return
+	}
+	msgID := encodeGuildMessageID(e.GuildId, e.ChannelId, e.MessageId)
+	log.Infof("用户 %v(%v) 撤回了频道 %v(%v) 子频道 %v(%v) 的消息 %v", operator.Nickname, operator.TinyId, guild.GuildName, guild.GuildId, channel.ChannelName, channel.ChannelId, msgID)
+	bot.dispatchEventMessage(global.MSG{
+		"post_type":    "notice",
+		"notice_type":  "guild_channel_recall",
+		"guild_id":     fU64(e.GuildId),
+		"channel_id":   fU64(e.ChannelId),
+		"operator_id":  fU64(e.OperatorId),
+		"message_id":   msgID,
+		"time":         time.Now().Unix(),
+		"self_id":      bot.Client.Uin,
+		"self_tiny_id": fU64(bot.Client.GuildService.TinyId),
+		"user_id":      e.OperatorId,
 	})
 }
 
