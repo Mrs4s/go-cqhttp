@@ -12,17 +12,15 @@ import (
 	"sync"
 	"time"
 
-	"github.com/segmentio/asm/base64"
-
-	"github.com/Mrs4s/go-cqhttp/db"
-
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/Mrs4s/MiraiGo/utils"
 	"github.com/pkg/errors"
+	"github.com/segmentio/asm/base64"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/Mrs4s/go-cqhttp/db"
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
 )
@@ -377,7 +375,11 @@ func (bot *CQBot) SendGuildChannelMessage(guildID, channelID uint64, m *message.
 			}
 			e = n
 
-		case *LocalVoiceElement, *PokeElement, *message.MusicShareElement:
+		case *message.MusicShareElement:
+			bot.Client.SendGuildMusicShare(guildID, channelID, i)
+			return "-1" // todo: fix this
+
+		case *LocalVoiceElement, *PokeElement:
 			log.Warnf("警告: 频道暂不支持发送 %v 消息", i.Type().String())
 			continue
 		}
