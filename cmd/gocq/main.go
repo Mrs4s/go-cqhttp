@@ -43,14 +43,6 @@ var allowStatus = [...]client.UserOnlineStatus{
 // Main 启动主程序
 func Main() {
 	base.Parse()
-	if !base.FastStart && terminal.RunningByDoubleClick() {
-		err := terminal.NoMoreDoubleClick()
-		if err != nil {
-			log.Errorf("遇到错误: %v", err)
-			time.Sleep(time.Second * 5)
-		}
-		return
-	}
 	switch {
 	case base.LittleH:
 		base.Help()
@@ -118,6 +110,14 @@ func Main() {
 				base.FastStart = true
 			}
 		}
+	}
+	if !base.FastStart && terminal.RunningByDoubleClick() {
+		err := terminal.NoMoreDoubleClick()
+		if err != nil {
+			log.Errorf("遇到错误: %v", err)
+			time.Sleep(time.Second * 5)
+		}
+		return
 	}
 
 	if (base.Account.Uin == 0 || (base.Account.Password == "" && !base.Account.Encrypt)) && !global.PathExists("session.token") {
