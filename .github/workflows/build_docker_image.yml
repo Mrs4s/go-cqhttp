@@ -7,9 +7,7 @@ on:
     # Sequence of patterns matched against refs/tags
     tags:
       - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
-  schedule:
-    # 每晚十点生成 nightly 镜像
-    - cron: '00 14 * * *' # GMT 14:00 => 北京时间 22:00
+
   workflow_dispatch:
 
 jobs:
