@@ -153,7 +153,8 @@ func (c *Caller) call(action string, p Getter) global.MSG {
 		return c.bot.CQGetGuildMetaByGuest(p0)
 	case "get_guild_msg":
 		p0 := p.Get("message_id").String()
-		return c.bot.CQGetGuildMessage(p0)
+		p1 := p.Get("no_cache").Bool()
+		return c.bot.CQGetGuildMessage(p0, p1)
 	case "get_guild_roles":
 		p0 := p.Get("guild_id").Uint()
 		return c.bot.CQGetGuildRoles(p0)

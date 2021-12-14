@@ -205,6 +205,21 @@ func convertChannelFeedInfo(f *topic.Feed) global.MSG {
 	return m
 }
 
+func convertReactions(reactions []*message.GuildMessageEmojiReaction) (r []global.MSG) {
+	r = make([]global.MSG, len(reactions))
+	for i, re := range reactions {
+		r[i] = global.MSG{
+			"emoji_id":    re.EmojiId,
+			"emoji_index": re.Face.Index,
+			"emoji_type":  re.EmojiType,
+			"emoji_name":  re.Face.Name,
+			"count":       re.Count,
+			"clicked":     re.Clicked,
+		}
+	}
+	return
+}
+
 func fU64(v uint64) string {
 	return strconv.FormatUint(v, 10)
 }

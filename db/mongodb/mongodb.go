@@ -84,18 +84,18 @@ func (m *MongoDBImpl) GetGuildChannelMessageByID(id string) (*db.StoredGuildChan
 
 func (m *MongoDBImpl) InsertGroupMessage(msg *db.StoredGroupMessage) error {
 	coll := m.mongo.Collection(MongoGroupMessageCollection)
-	_, err := coll.InsertOne(context.Background(), msg)
+	_, err := coll.UpdateOne(context.Background(), bson.D{{"_id", msg.ID}}, bson.D{{"$set", msg}}, options.Update().SetUpsert(true))
 	return errors.Wrap(err, "insert error")
 }
 
 func (m *MongoDBImpl) InsertPrivateMessage(msg *db.StoredPrivateMessage) error {
 	coll := m.mongo.Collection(MongoPrivateMessageCollection)
-	_, err := coll.InsertOne(context.Background(), msg)
+	_, err := coll.UpdateOne(context.Background(), bson.D{{"_id", msg.ID}}, bson.D{{"$set", msg}}, options.Update().SetUpsert(true))
 	return errors.Wrap(err, "insert error")
 }
 
 func (m *MongoDBImpl) InsertGuildChannelMessage(msg *db.StoredGuildChannelMessage) error {
 	coll := m.mongo.Collection(MongoGuildChannelMessageCollection)
-	_, err := coll.InsertOne(context.Background(), msg)
+	_, err := coll.UpdateOne(context.Background(), bson.D{{"_id", msg.ID}}, bson.D{{"$set", msg}}, options.Update().SetUpsert(true))
 	return errors.Wrap(err, "insert error")
 }

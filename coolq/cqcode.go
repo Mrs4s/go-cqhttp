@@ -72,13 +72,14 @@ type MessageSource struct {
 }
 
 // MessageSourceType 消息来源类型
-type MessageSourceType int32
+type MessageSourceType byte
 
 // MessageSourceType 常量
 const (
 	MessageSourcePrivate      MessageSourceType = 0
 	MessageSourceGroup        MessageSourceType = 1
 	MessageSourceGuildChannel MessageSourceType = 2
+	MessageSourceGuildDirect  MessageSourceType = 3
 )
 
 const (

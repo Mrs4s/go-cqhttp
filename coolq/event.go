@@ -169,7 +169,8 @@ func (bot *CQBot) guildChannelMessageEvent(c *client.QQClient, m *message.GuildC
 		"self_tiny_id": fU64(bot.Client.GuildService.TinyId),
 		"time":         m.Time,
 		"sender": global.MSG{
-			"user_id":  fU64(m.Sender.TinyId),
+			"user_id":  m.Sender.TinyId,
+			"tiny_id":  fU64(m.Sender.TinyId),
 			"nickname": m.Sender.Nickname,
 		},
 	})
@@ -180,7 +181,7 @@ func (bot *CQBot) guildMessageReactionsUpdatedEvent(c *client.QQClient, e *clien
 	if guild == nil {
 		return
 	}
-	msgID := encodeGuildMessageID(e.GuildId, e.ChannelId, e.MessageId)
+	msgID := encodeGuildMessageID(e.GuildId, e.ChannelId, e.MessageId, MessageSourceGuildChannel)
 	str := fmt.Sprintf("频道 %v(%v) 消息 %v 表情贴片已更新: ", guild.GuildName, guild.GuildId, msgID)
 	currentReactions := make([]global.MSG, len(e.CurrentReactions))
 	for i, r := range e.CurrentReactions {
@@ -199,18 +200,17 @@ func (bot *CQBot) guildMessageReactionsUpdatedEvent(c *client.QQClient, e *clien
 	}
 	log.Infof(str)
 	bot.dispatchEventMessage(global.MSG{
-		"post_type":          "notice",
-		"notice_type":        "message_reactions_updated",
-		"message_sender_uin": e.MessageSenderUin,
-		"guild_id":           fU64(e.GuildId),
-		"channel_id":         fU64(e.ChannelId),
-		"message_id":         msgID,
-		"operator_id":        fU64(e.OperatorId),
-		"current_reactions":  currentReactions,
-		"time":               time.Now().Unix(),
-		"self_id":            bot.Client.Uin,
-		"self_tiny_id":       fU64(bot.Client.GuildService.TinyId),
-		"user_id":            e.OperatorId,
+		"post_type":         "notice",
+		"notice_type":       "message_reactions_updated",
+		"guild_id":          fU64(e.GuildId),
+		"channel_id":        fU64(e.ChannelId),
+		"message_id":        msgID,
+		"operator_id":       fU64(e.OperatorId),
+		"current_reactions": currentReactions,
+		"time":              time.Now().Unix(),
+		"self_id":           bot.Client.Uin,
+		"self_tiny_id":      fU64(bot.Client.GuildService.TinyId),
+		"user_id":           e.OperatorId,
 	})
 }
 
@@ -228,7 +228,7 @@ func (bot *CQBot) guildChannelMessageRecalledEvent(c *client.QQClient, e *client
 		log.Errorf("处理频道撤回事件时出现错误: 获取操作者资料时出现错误 %v", err)
 		return
 	}
-	msgID := encodeGuildMessageID(e.GuildId, e.ChannelId, e.MessageId)
+	msgID := encodeGuildMessageID(e.GuildId, e.ChannelId, e.MessageId, MessageSourceGuildChannel)
 	log.Infof("用户 %v(%v) 撤回了频道 %v(%v) 子频道 %v(%v) 的消息 %v", operator.Nickname, operator.TinyId, guild.GuildName, guild.GuildId, channel.ChannelName, channel.ChannelId, msgID)
 	bot.dispatchEventMessage(global.MSG{
 		"post_type":    "notice",

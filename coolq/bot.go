@@ -519,7 +519,7 @@ func (bot *CQBot) InsertTempMessage(target int64, m *message.TempMessage) int32 
 
 // InsertGuildChannelMessage 频道消息入数据库
 func (bot *CQBot) InsertGuildChannelMessage(m *message.GuildChannelMessage) string {
-	id := encodeGuildMessageID(m.GuildId, m.ChannelId, m.Id)
+	id := encodeGuildMessageID(m.GuildId, m.ChannelId, m.Id, MessageSourceGuildChannel)
 	msg := &db.StoredGuildChannelMessage{
 		ID: id,
 		Attribute: &db.StoredGuildMessageAttribute{
@@ -610,10 +610,29 @@ func encodeMessageID(target int64, seq int32) string {
 	}))
 }
 
-func encodeGuildMessageID(guildID, channelID, seq uint64) string {
+// encodeGuildMessageID 将频道信息编码为字符串
+// 当信息来源为 Channel 时 primaryID 为 guildID , subID 为 channelID
+// 当信息来源为 Direct 时 primaryID 为 guildID , subID 为 tinyID
+func encodeGuildMessageID(primaryID, subID, seq uint64, source MessageSourceType) string {
 	return base64.StdEncoding.EncodeToString(binary.NewWriterF(func(w *binary.Writer) {
-		w.WriteUInt64(guildID)
-		w.WriteUInt64(channelID)
+		w.WriteByte(byte(source))
+		w.WriteUInt64(primaryID)
+		w.WriteUInt64(subID)
 		w.WriteUInt64(seq)
 	}))
+}
+
+func decodeGuildMessageID(id string) (source *MessageSource, seq uint64) {
+	b, _ := base64.StdEncoding.DecodeString(id)
+	if len(b) < 25 {
+		return
+	}
+	r := binary.NewReader(b)
+	source = &MessageSource{
+		SourceType: MessageSourceType(r.ReadByte()),
+		PrimaryID:  uint64(r.ReadInt64()),
+		SubID:      uint64(r.ReadInt64()),
+	}
+	seq = uint64(r.ReadInt64())
+	return
 }

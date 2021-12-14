@@ -238,6 +238,8 @@ RoleInfo:
 | `sender`     | Sender  |                | 发送者  |
 | `message`     | Message  |                | 消息内容  |
 
+> 注: 此处的 `Sender` 对象为保证一致性, `user_id` 为 `uint64` 类型, 并添加了 `string` 类型的 `tiny_id` 字段
+
 ### 频道消息表情贴更新
 
 **上报数据**
