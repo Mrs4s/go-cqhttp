@@ -68,6 +68,16 @@ func Parse() {
 	if *d {
 		Debug = true
 	}
+
+	// 在检查windows双击之前解析 faststart 标记
+	arg := os.Args
+	if len(arg) > 1 {
+		for i := range arg {
+			if arg[i] == "faststart" {
+				FastStart = true
+			}
+		}
+	}
 }
 
 // Init read config from yml file
