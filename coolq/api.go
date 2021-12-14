@@ -1606,7 +1606,6 @@ func (bot *CQBot) CQGetGuildMessage(messageID string, noCache bool) global.MSG {
 			m["message"] = ToFormattedMessage(pull[0].Elements, *source, false)
 			m["reactions"] = convertReactions(pull[0].Reactions)
 			bot.InsertGuildChannelMessage(pull[0])
-			return OK(m)
 		} else {
 			channelMsgByDB, err := db.GetGuildChannelMessageByID(messageID)
 			if err != nil {
