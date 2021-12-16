@@ -32,6 +32,8 @@ const (
 	VideoPath = "data/videos"
 	// CachePath go-cqhttp使用的缓存目录
 	CachePath = "data/cache"
+	// DumpsPath go-cqhttp使用错误转储目录
+	DumpsPath = "dumps"
 )
 
 var (

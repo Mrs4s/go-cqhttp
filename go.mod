@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/Baozisoftware/qrcode-terminal-go v0.0.0-20170407111555-c0650d8dff0f
 	github.com/Microsoft/go-winio v0.5.1
-	github.com/Mrs4s/MiraiGo v0.0.0-20211214084325-ed979508cf8a
+	github.com/Mrs4s/MiraiGo v0.0.0-20211216072607-5a59cc656c48
 	github.com/dustin/go-humanize v1.0.0
 	github.com/fumiama/go-hide-param v0.1.4
 	github.com/gabriel-vasile/mimetype v1.4.0
