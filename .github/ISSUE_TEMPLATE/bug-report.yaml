@@ -121,14 +121,6 @@ body:
     validations:
       required: true
 
-  # Optional | Reproduce possible
-  - type: checkboxes
-    id: reproduce-possible
-    attributes:
-      label: 在最新的 Release 版本中能否复现
-      options:
-        - label: 能
-
   # Input | Reproduce
   - type: textarea
     id: reproduce-steps
