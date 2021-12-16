@@ -61,7 +61,7 @@ func (c *Caller) call(action string, p Getter) global.MSG {
 	case "delete_group_file":
 		p0 := p.Get("group_id").Int()
 		p1 := p.Get("file_id").String()
-		p2 := int32(p.Get("bus_id").Int())
+		p2 := int32(p.Get("busid").Int())
 		return c.bot.CQGroupFileDeleteFile(p0, p1, p2)
 	case "delete_group_folder":
 		p0 := p.Get("group_id").Int()
@@ -99,7 +99,7 @@ func (c *Caller) call(action string, p Getter) global.MSG {
 	case "get_group_file_url":
 		p0 := p.Get("group_id").Int()
 		p1 := p.Get("file_id").String()
-		p2 := int32(p.Get("bus_id").Int())
+		p2 := int32(p.Get("busid").Int())
 		return c.bot.CQGetGroupFileURL(p0, p1, p2)
 	case "get_group_files_by_folder":
 		p0 := p.Get("group_id").Int()
