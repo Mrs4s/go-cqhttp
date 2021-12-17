@@ -1799,8 +1799,8 @@ func (bot *CQBot) CQGetStatus() global.MSG {
 		"app_enabled":     true,
 		"plugins_good":    nil,
 		"app_good":        true,
-		"online":          bot.Client.Online,
-		"good":            bot.Client.Online,
+		"online":          bot.Client.Online.Load(),
+		"good":            bot.Client.Online.Load(),
 		"stat":            bot.Client.GetStatistics(),
 	})
 }
