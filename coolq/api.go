@@ -1515,20 +1515,31 @@ func (bot *CQBot) CQGetForwardMessage(resID string) global.MSG {
 	if m == nil {
 		return Failed(100, "MSG_NOT_FOUND", "消息不存在")
 	}
-	r := make([]global.MSG, 0, len(m.Nodes))
-	for _, n := range m.Nodes {
-		bot.checkMedia(n.Message, 0)
-		r = append(r, global.MSG{
-			"sender": global.MSG{
-				"user_id":  n.SenderId,
-				"nickname": n.SenderName,
-			},
-			"time":    n.Time,
-			"content": ToFormattedMessage(n.Message, MessageSource{SourceType: MessageSourceGroup}, false),
-		})
+
+	var transformNodes func(nodes []*message.ForwardNode) []global.MSG
+	transformNodes = func(nodes []*message.ForwardNode) []global.MSG {
+		r := make([]global.MSG, len(nodes))
+		for i, n := range nodes {
+			bot.checkMedia(n.Message, 0)
+			content := ToFormattedMessage(n.Message, MessageSource{SourceType: MessageSourceGroup}, false)
+			if len(n.Message) == 1 {
+				if forward, ok := n.Message[0].(*message.ForwardMessage); ok {
+					content = transformNodes(forward.Nodes)
+				}
+			}
+			r[i] = global.MSG{
+				"sender": global.MSG{
+					"user_id":  n.SenderId,
+					"nickname": n.SenderName,
+				},
+				"time":    n.Time,
+				"content": content,
+			}
+		}
+		return r
 	}
 	return OK(global.MSG{
-		"messages": r,
+		"messages": transformNodes(m.Nodes),
 	})
 }
 
