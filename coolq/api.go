@@ -1596,6 +1596,7 @@ func (bot *CQBot) CQGetGuildMessage(messageID string, noCache bool) global.MSG {
 		"guild_id":    fU64(source.PrimaryID),
 		"reactions":   []int{},
 	}
+	// nolint: exhaustive
 	switch source.SourceType {
 	case MessageSourceGuildChannel:
 		m["channel_id"] = fU64(source.SubID)
