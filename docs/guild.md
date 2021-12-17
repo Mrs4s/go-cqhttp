@@ -220,6 +220,108 @@ RoleInfo:
 | ------------- | ----- | ---------- |
 | `message_id`    | string | 消息ID     |
 
+### 获取话题频道帖子
+
+终结点: `/get_topic_channel_feeds`
+
+**参数**
+
+| 字段       | 类型  | 说明 |
+| ---------- | ----- | ---- |
+| `guild_id` | string | 频道ID |
+| `channel_id` | string | 子频道ID |
+
+**响应数据**
+
+返回 `FeedInfo` 数组
+
+FeedInfo:
+
+| 字段          | 类型  | 说明       |
+| ------------- | ----- | ---------- |
+| `id`   | string | 帖子ID     |
+| `channel_id`    | string | 子频道ID     |
+| `guild_id`   | string | 频道ID     |
+| `create_time`   | int64 | 发帖时间     |
+| `title`   | string | 帖子标题     |
+| `sub_title`   | string | 帖子副标题  |
+| `poster_info`   | PosterInfo | 发帖人信息  |
+| `resource`   | ResourceInfo | 媒体资源信息  |
+| `resource.images`   | []FeedMedia | 帖子附带的图片列表 |
+| `resource.videos`   | []FeedMedia | 帖子附带的视频列表 |
+| `contents`   | []FeedContent | 帖子内容 |
+
+PosterInfo:
+
+| 字段          | 类型  | 说明       |
+| ------------- | ----- | ---------- |
+| `tiny_id`   | string | 发帖人ID     |
+| `nickname`    | string | 发帖人昵称     |
+| `icon_url`   | string | 发帖人头像链接   |
+
+FeedMedia:
+
+| 字段          | 类型  | 说明       |
+| ------------- | ----- | ---------- |
+| `file_id`   | string | 媒体ID     |
+| `pattern_id`    | string |   控件ID?(不确定)   |
+| `url`   | string | 媒体链接   |
+| `height`   | int32 | 媒体高度  |
+| `width`   | int32 | 媒体宽度  |
+
+FeedContent:
+
+| 字段          | 类型  | 说明       |
+| ------------- | ----- | ---------- |
+| `type`   | string |  内容类型    |
+| `data`    | Data |   内容数据   |
+
+#### 内容类型列表:
+
+|  类型  | 说明       |
+|  ----- | ---------- |
+| `text` |  文本   |
+| `face` |  表情   |
+| `at` |  At  |
+| `url_quote` |  链接引用   |
+| `channel_quote` |  子频道引用  |
+
+#### 内容类型对应数据列表:  
+
+- `text`
+
+| 字段          | 类型  | 说明       |
+| ------------- | ----- | ---------- |
+| `text`   | string |  文本内容    |
+
+- `face`
+
+| 字段          | 类型  | 说明       |
+| ------------- | ----- | ---------- |
+| `id`   | string |  表情ID    |
+
+- `at`
+
+| 字段          | 类型  | 说明       |
+| ------------- | ----- | ---------- |
+| `id`   | string |  目标ID    |
+| `qq`   | string |  目标ID, 为确保和 `array message` 的一致性保留    |
+
+- `url_quote`
+
+| 字段          | 类型  | 说明       |
+| ------------- | ----- | ---------- |
+| `display_text`   | string |  显示文本    |
+| `url`   | string |  链接    |
+
+- `channel_quote`
+
+| 字段          | 类型  | 说明       |
+| ------------- | ----- | ---------- |
+| `display_text`   | string |  显示文本    |
+| `guild_id`   | string |  频道ID    |
+| `channel_id`   | string |  子频道ID    |
+
 ## 事件
 
 ### 收到频道消息
