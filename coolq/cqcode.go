@@ -76,10 +76,10 @@ type MessageSourceType byte
 
 // MessageSourceType 常量
 const (
-	MessageSourcePrivate      MessageSourceType = 0
-	MessageSourceGroup        MessageSourceType = 1
-	MessageSourceGuildChannel MessageSourceType = 2
-	MessageSourceGuildDirect  MessageSourceType = 3
+	MessageSourcePrivate MessageSourceType = 1 << iota
+	MessageSourceGroup
+	MessageSourceGuildChannel
+	MessageSourceGuildDirect
 )
 
 const (
@@ -111,7 +111,7 @@ func ToArrayMessage(e []message.IMessageElement, source MessageSource) (r []glob
 		_, ok := e.(*message.ReplyElement)
 		return ok
 	})
-	if reply != nil && source.SourceType == MessageSourceGroup {
+	if reply != nil && source.SourceType&(MessageSourceGroup|MessageSourcePrivate) != 0 {
 		replyElem := reply.(*message.ReplyElement)
 		rid := int64(source.PrimaryID)
 		if rid == 0 {
@@ -277,7 +277,7 @@ func ToStringMessage(e []message.IMessageElement, source MessageSource, isRaw ..
 		_, ok := e.(*message.ReplyElement)
 		return ok
 	})
-	if reply != nil && source.SourceType == MessageSourceGroup {
+	if reply != nil && source.SourceType&(MessageSourceGroup|MessageSourcePrivate) != 0 {
 		replyElem := reply.(*message.ReplyElement)
 		rid := int64(source.PrimaryID)
 		if rid == 0 {
@@ -672,7 +672,7 @@ func (bot *CQBot) ConvertObjectMessage(m gjson.Result, sourceType MessageSourceT
 	d := make(map[string]string)
 	convertElem := func(e gjson.Result) {
 		t := e.Get("type").Str
-		if t == "reply" && sourceType == MessageSourceGroup {
+		if t == "reply" && sourceType&(MessageSourceGroup|MessageSourcePrivate) != 0 {
 			if len(r) > 0 {
 				if _, ok := r[0].(*message.ReplyElement); ok {
 					log.Warnf("警告: 一条信息只能包含一个 Reply 元素.")
