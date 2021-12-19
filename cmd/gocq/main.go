@@ -206,21 +206,7 @@ func Main() {
 		time.Sleep(time.Second * 5)
 	}
 	log.Info("开始尝试登录并同步消息...")
-	log.Infof("使用协议: %v", func() string {
-		switch client.SystemDeviceInfo.Protocol {
-		case client.IPad:
-			return "iPad"
-		case client.AndroidPhone:
-			return "Android Phone"
-		case client.AndroidWatch:
-			return "Android Watch"
-		case client.MacOS:
-			return "MacOS"
-		case client.QiDian:
-			return "企点"
-		}
-		return "未知"
-	}())
+	log.Infof("使用协议: %s", client.SystemDeviceInfo.Protocol)
 	cli = newClient()
 	isQRCodeLogin := (base.Account.Uin == 0 || len(base.Account.Password) == 0) && !base.Account.Encrypt
 	isTokenLogin := false
