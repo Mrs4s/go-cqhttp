@@ -1898,7 +1898,7 @@ func (bot *CQBot) CQGetVersionInfo() global.MSG {
 		"version":                    base.Version,
 		"protocol": func() int {
 			switch client.SystemDeviceInfo.Protocol {
-			case client.IPad:
+			case client.Unset, client.IPad:
 				return 0
 			case client.AndroidPhone:
 				return 1
