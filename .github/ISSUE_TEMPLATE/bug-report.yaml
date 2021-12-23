@@ -45,6 +45,7 @@ body:
       label: go-cqhttp 版本
       description: 选择正在使用的版本 (未列出的版本为已不支持，请更新到最新版本。)
       options:
+        - v1.0.0-beta8-fix2
         - v1.0.0-beta8-fix1
         - v1.0.0-beta8
         - v1.0.0-beta7-fix2
