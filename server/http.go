@@ -365,8 +365,10 @@ func (c *HTTPClient) onBotPushEvent(e *coolq.Event) {
 		req.Header = header
 
 		res, err = client.Do(req)
-		//goland:noinspection GoDeferInLoop
-		defer res.Body.Close()
+		if res != nil {
+			//goland:noinspection GoDeferInLoop
+			defer res.Body.Close()
+		}
 		if err == nil {
 			break
 		}
