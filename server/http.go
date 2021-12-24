@@ -105,7 +105,6 @@ func nilParseUint(s string, base int, bitSize int) *uint64 {
 }
 
 func readEnvConfig() (string, *yaml.Node) {
-
 	if s, ok := os.LookupEnv("GCQ_HTTP_PORT"); !ok || s == "" {
 		return "", nil
 	}
