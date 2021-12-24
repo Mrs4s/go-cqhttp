@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/Mrs4s/go-cqhttp/global"
 
@@ -40,6 +41,10 @@ func Daemon() {
 	if pidErr != nil {
 		log.Errorf("save pid file error: %v", pidErr)
 	}
+
+	// 防止使用 go run 直接执行时在子进程完全启动前
+	// 就退出，从而使可执行文件过早被删除导致启动失败
+	time.Sleep(time.Second)
 
 	os.Exit(0)
 }

@@ -3,7 +3,6 @@ package gocq
 
 import (
 	"crypto/aes"
-	"crypto/md5"
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
@@ -14,22 +13,15 @@ import (
 
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/client"
-	para "github.com/fumiama/go-hide-param"
-	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/pbkdf2"
-	"golang.org/x/term"
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
-	"github.com/Mrs4s/go-cqhttp/db"
 	"github.com/Mrs4s/go-cqhttp/global"
-	"github.com/Mrs4s/go-cqhttp/global/terminal"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
-	"github.com/Mrs4s/go-cqhttp/internal/cache"
 	"github.com/Mrs4s/go-cqhttp/internal/selfdiagnosis"
 	"github.com/Mrs4s/go-cqhttp/internal/selfupdate"
 	"github.com/Mrs4s/go-cqhttp/modules/servers"
-	"github.com/Mrs4s/go-cqhttp/server"
 )
 
 // 允许通过配置文件设置的状态列表
@@ -43,164 +35,6 @@ var allowStatus = [...]client.UserOnlineStatus{
 
 // Main 启动主程序
 func Main() {
-	base.Parse()
-	if !base.FastStart && terminal.RunningByDoubleClick() {
-		err := terminal.NoMoreDoubleClick()
-		if err != nil {
-			log.Errorf("遇到错误: %v", err)
-			time.Sleep(time.Second * 5)
-		}
-		return
-	}
-	switch {
-	case base.LittleH:
-		base.Help()
-	case base.LittleD:
-		server.Daemon()
-	case base.LittleWD != "":
-		base.ResetWorkingDir()
-	}
-	base.Init()
-
-	rotateOptions := []rotatelogs.Option{
-		rotatelogs.WithRotationTime(time.Hour * 24),
-	}
-	rotateOptions = append(rotateOptions, rotatelogs.WithMaxAge(base.LogAging))
-	if base.LogForceNew {
-		rotateOptions = append(rotateOptions, rotatelogs.ForceNewFile())
-	}
-	w, err := rotatelogs.New(path.Join("logs", "%Y-%m-%d.log"), rotateOptions...)
-	if err != nil {
-		log.Errorf("rotatelogs init err: %v", err)
-		panic(err)
-	}
-
-	consoleFormatter := global.LogFormat{EnableColor: base.LogColorful}
-	fileFormatter := global.LogFormat{EnableColor: false}
-	log.AddHook(global.NewLocalHook(w, consoleFormatter, fileFormatter, global.GetLogLevel(base.LogLevel)...))
-
-	mkCacheDir := func(path string, _type string) {
-		if !global.PathExists(path) {
-			if err := os.MkdirAll(path, 0o755); err != nil {
-				log.Fatalf("创建%s缓存文件夹失败: %v", _type, err)
-			}
-		}
-	}
-	mkCacheDir(global.ImagePath, "图片")
-	mkCacheDir(global.VoicePath, "语音")
-	mkCacheDir(global.VideoPath, "视频")
-	mkCacheDir(global.CachePath, "发送图片")
-	mkCacheDir(path.Join(global.ImagePath, "guild-images"), "频道图片缓存")
-	cache.Init()
-
-	db.Init()
-	if err := db.Open(); err != nil {
-		log.Fatalf("打开数据库失败: %v", err)
-	}
-
-	var byteKey []byte
-	arg := os.Args
-	if len(arg) > 1 {
-		for i := range arg {
-			switch arg[i] {
-			case "update":
-				if len(arg) > i+1 {
-					selfupdate.SelfUpdate(arg[i+1])
-				} else {
-					selfupdate.SelfUpdate("")
-				}
-			case "key":
-				p := i + 1
-				if len(arg) > p {
-					byteKey = []byte(arg[p])
-					para.Hide(p)
-				}
-			case "faststart":
-				base.FastStart = true
-			}
-		}
-	}
-
-	if (base.Account.Uin == 0 || (base.Account.Password == "" && !base.Account.Encrypt)) && !global.PathExists("session.token") {
-		log.Warn("账号密码未配置, 将使用二维码登录.")
-		if !base.FastStart {
-			log.Warn("将在 5秒 后继续.")
-			time.Sleep(time.Second * 5)
-		}
-	}
-
-	log.Info("当前版本:", base.Version)
-	if base.Debug {
-		log.SetLevel(log.DebugLevel)
-		log.SetReportCaller(true)
-		log.Warnf("已开启Debug模式.")
-		log.Debugf("开发交流群: 192548878")
-	}
-	log.Info("用户交流群: 721829413")
-	if !global.PathExists("device.json") {
-		log.Warn("虚拟设备信息不存在, 将自动生成随机设备.")
-		client.GenRandomDevice()
-		_ = os.WriteFile("device.json", client.SystemDeviceInfo.ToJson(), 0o644)
-		log.Info("已生成设备信息并保存到 device.json 文件.")
-	} else {
-		log.Info("将使用 device.json 内的设备信息运行Bot.")
-		if err := client.SystemDeviceInfo.ReadJson([]byte(global.ReadAllText("device.json"))); err != nil {
-			log.Fatalf("加载设备信息失败: %v", err)
-		}
-	}
-
-	if base.Account.Encrypt {
-		if !global.PathExists("password.encrypt") {
-			if base.Account.Password == "" {
-				log.Error("无法进行加密，请在配置文件中的添加密码后重新启动.")
-				readLine()
-				os.Exit(0)
-			}
-			log.Infof("密码加密已启用, 请输入Key对密码进行加密: (Enter 提交)")
-			byteKey, _ = term.ReadPassword(int(os.Stdin.Fd()))
-			base.PasswordHash = md5.Sum([]byte(base.Account.Password))
-			_ = os.WriteFile("password.encrypt", []byte(PasswordHashEncrypt(base.PasswordHash[:], byteKey)), 0o644)
-			log.Info("密码已加密，为了您的账号安全，请删除配置文件中的密码后重新启动.")
-			readLine()
-			os.Exit(0)
-		} else {
-			if base.Account.Password != "" {
-				log.Error("密码已加密，为了您的账号安全，请删除配置文件中的密码后重新启动.")
-				readLine()
-				os.Exit(0)
-			}
-
-			if len(byteKey) == 0 {
-				log.Infof("密码加密已启用, 请输入Key对密码进行解密以继续: (Enter 提交)")
-				cancel := make(chan struct{}, 1)
-				state, _ := term.GetState(int(os.Stdin.Fd()))
-				go func() {
-					select {
-					case <-cancel:
-						return
-					case <-time.After(time.Second * 45):
-						log.Infof("解密key输入超时")
-						time.Sleep(3 * time.Second)
-						_ = term.Restore(int(os.Stdin.Fd()), state)
-						os.Exit(0)
-					}
-				}()
-				byteKey, _ = term.ReadPassword(int(os.Stdin.Fd()))
-				cancel <- struct{}{}
-			} else {
-				log.Infof("密码加密已启用, 使用运行时传递的参数进行解密，按 Ctrl+C 取消.")
-			}
-
-			encrypt, _ := os.ReadFile("password.encrypt")
-			ph, err := PasswordHashDecrypt(string(encrypt), byteKey)
-			if err != nil {
-				log.Fatalf("加密存储的密码损坏，请尝试重新配置密码")
-			}
-			copy(base.PasswordHash[:], ph)
-		}
-	} else if len(base.Account.Password) > 0 {
-		base.PasswordHash = md5.Sum([]byte(base.Account.Password))
-	}
 	if !base.FastStart {
 		log.Info("Bot将在5秒后登录并开始信息处理, 按 Ctrl+C 取消.")
 		time.Sleep(time.Second * 5)

@@ -10,5 +10,13 @@ import (
 )
 
 func main() {
+	gocq.InitBase()
+	gocq.InitLog()
+	gocq.CheckDoubleClick()
+	gocq.InitCache()
+	gocq.InitDB()
+	gocq.PrintBanner()
+	gocq.CheckKey(gocq.ParseCommand())
+	gocq.LoadDevice()
 	gocq.Main()
 }
