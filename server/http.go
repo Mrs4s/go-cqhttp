@@ -75,29 +75,25 @@ type httpCtx struct {
 	postForm url.Values
 }
 
-const httpDefault = `  # HTTP 通信设置
-  - http:
-      # 服务端监听地址
-      host: 127.0.0.1
-      # 服务端监听端口
-      port: 5700
-      # 反向HTTP超时时间, 单位秒
-      # 最小值为5，小于5将会忽略本项设置
-      timeout: 5
-      # 长轮询拓展
-      long-polling:
-        # 是否开启
-        enabled: false
-        # 消息队列大小，0 表示不限制队列大小，谨慎使用
-        max-queue-size: 2000
+const httpDefault = `
+  - http: # HTTP 通信设置
+      host: 127.0.0.1 # 服务端监听地址
+      port: 5700      # 服务端监听端口
+      timeout: 5      # 反向 HTTP 超时时间, 单位秒，<5 时将被忽略
+      long-polling:   # 长轮询拓展
+        enabled: false       # 是否开启
+        max-queue-size: 2000 # 消息队列大小，0 表示不限制队列大小，谨慎使用
       middlewares:
         <<: *default # 引用默认中间件
-      # 反向HTTP POST地址列表
-      post:
-      #- url: '' # 地址
-      #  secret: ''           # 密钥
+      post:           # 反向HTTP POST地址列表
+      #- url: ''                # 地址
+      #  secret: ''             # 密钥
+	  #  max-retries: 3         # 最大重试，0 时禁用
+      #  retries-interval: 1500 # 重试时间，单位毫秒，0 时立即
       #- url: http://127.0.0.1:5701/ # 地址
-      #  secret: ''          # 密钥
+      #  secret: ''                  # 密钥
+	  #  max-retries: 10             # 最大重试，0 时禁用
+      #  retries-interval: 1000      # 重试时间，单位毫秒，0 时立即
 `
 
 func nilParseUint(s string, base int, bitSize int) *uint64 {
