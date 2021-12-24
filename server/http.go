@@ -39,12 +39,12 @@ type HTTPServer struct {
 		Enabled      bool `yaml:"enabled"`
 		MaxQueueSize int  `yaml:"max-queue-size"`
 	} `yaml:"long-polling"`
-	Post []HTTPServerPost `yaml:"post"`
+	Post []httpServerPost `yaml:"post"`
 
 	MiddleWares `yaml:"middlewares"`
 }
 
-type HTTPServerPost struct {
+type httpServerPost struct {
 	URL             string  `yaml:"url"`
 	Secret          string  `yaml:"secret"`
 	MaxRetries      *uint64 `yaml:"max-retries"`
@@ -132,7 +132,7 @@ func readEnvConfig() (string, *yaml.Node) {
 	param.SetExcludeDefault(&httpConf.Host, os.Getenv("GCQ_HTTP_HOST"), "")
 	param.SetExcludeDefault(&httpConf.Port, int(toInt64(os.Getenv("GCQ_HTTP_PORT"))), 0)
 	if os.Getenv("GCQ_HTTP_POST_URL") != "" {
-		httpConf.Post = append(httpConf.Post, HTTPServerPost{
+		httpConf.Post = append(httpConf.Post, httpServerPost{
 			os.Getenv("GCQ_HTTP_POST_URL"),
 			os.Getenv("GCQ_HTTP_POST_SECRET"),
 			nilParseUint(os.Getenv("GCQ_HTTP_POST_MAXRETRIES"), 10, 64),
