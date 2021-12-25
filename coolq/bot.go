@@ -570,7 +570,9 @@ func (bot *CQBot) dispatchEventMessage(m global.MSG) {
 		}(f)
 	}
 	wg.Wait()
-	global.PutBuffer(event.buffer)
+	if event.buffer != nil {
+		global.PutBuffer(event.buffer)
+	}
 }
 
 func formatGroupName(group *client.GroupInfo) string {
