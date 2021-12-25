@@ -83,7 +83,6 @@ func (hook *LocalHook) Fire(entry *logrus.Entry) error {
 // SetFormatter 设置日志格式
 func (hook *LocalHook) SetFormatter(consoleFormatter, fileFormatter logrus.Formatter) {
 	hook.lock.Lock()
-	defer hook.lock.Unlock()
 
 	// 支持处理windows平台的console色彩
 	logrus.SetOutput(colorable.NewColorableStdout())
@@ -91,20 +90,22 @@ func (hook *LocalHook) SetFormatter(consoleFormatter, fileFormatter logrus.Forma
 	logrus.SetFormatter(consoleFormatter)
 	// 用于写入文件
 	hook.formatter = fileFormatter
+
+	hook.lock.Unlock()
 }
 
 // SetWriter 设置Writer
 func (hook *LocalHook) SetWriter(writer io.Writer) {
 	hook.lock.Lock()
-	defer hook.lock.Unlock()
 	hook.writer = writer
+	hook.lock.Unlock()
 }
 
 // SetPath 设置日志写入路径
 func (hook *LocalHook) SetPath(path string) {
 	hook.lock.Lock()
-	defer hook.lock.Unlock()
 	hook.path = path
+	hook.lock.Unlock()
 }
 
 // NewLocalHook 初始化本地日志钩子实现
@@ -184,7 +185,8 @@ func (f LogFormat) Format(entry *logrus.Entry) ([]byte, error) {
 	}
 
 	buf.WriteByte('[')
-	buf.WriteString(entry.Time.Format("2006-01-02 15:04:05"))
+	// 日志文件本身分日期记录，无需再在每一条日志记录年月日
+	buf.WriteString(entry.Time.Format("15:04:05"))
 	buf.WriteString("] [")
 	buf.WriteString(strings.ToUpper(entry.Level.String()))
 	buf.WriteString("]: ")
