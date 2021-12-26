@@ -813,8 +813,7 @@ func (bot *CQBot) uploadForwardElement(m gjson.Result, groupID int64) *message.F
 		return elems
 	}
 
-	var convert func(e gjson.Result) *message.ForwardNode
-	convert = func(e gjson.Result) *message.ForwardNode {
+	convert := func(e gjson.Result) *message.ForwardNode {
 		if e.Get("type").Str != "node" {
 			return nil
 		}
