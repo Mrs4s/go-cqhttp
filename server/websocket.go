@@ -60,6 +60,7 @@ type wsConn struct {
 func (c *wsConn) WriteText(b []byte) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	_ = c.conn.SetWriteDeadline(time.Now().Add(time.Second * 15))
 	return c.conn.WriteMessage(websocket.TextMessage, b)
 }
 
@@ -460,6 +461,7 @@ func (c *wsConn) handleRequest(_ *coolq.CQBot, payload []byte) {
 
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	_ = c.conn.SetWriteDeadline(time.Now().Add(time.Second * 15))
 	writer, _ := c.conn.NextWriter(websocket.TextMessage)
 	_ = json.NewEncoder(writer).Encode(ret)
 	_ = writer.Close()
