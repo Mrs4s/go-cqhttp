@@ -12,6 +12,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/segmentio/asm/base64"
@@ -787,36 +788,26 @@ func (bot *CQBot) CQSendGuildChannelMessage(guildID, channelID uint64, m gjson.R
 	return OK(global.MSG{"message_id": mid})
 }
 
-// CQSendGroupForwardMessage 扩展API-发送合并转发(群)
-//
-// https://docs.go-cqhttp.org/api/#%E5%8F%91%E9%80%81%E5%90%88%E5%B9%B6%E8%BD%AC%E5%8F%91-%E7%BE%A4
-// @route(send_group_forward_msg)
-// @rename(m->messages)
-func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) global.MSG {
-	if m.Type != gjson.JSON {
-		return Failed(100)
-	}
-	fm := message.NewForwardMessage()
+func (bot *CQBot) uploadForwardElement(m gjson.Result, groupID int64) *message.ForwardElement {
 	ts := time.Now().Add(-time.Minute * 5)
-	hasCustom := false
-	m.ForEach(func(_, item gjson.Result) bool {
-		if item.Get("data.uin").Exists() || item.Get("data.user_id").Exists() {
-			hasCustom = true
-			return false
-		}
-		return true
-	})
+	fm := message.NewForwardMessage()
 
+	var lazyUpload []func()
+	var wg sync.WaitGroup
 	resolveElement := func(elems []message.IMessageElement) []message.IMessageElement {
 		for i, elem := range elems {
 			switch elem.(type) {
 			case *LocalImageElement, *LocalVideoElement:
-				gm, err := bot.uploadMedia(elem, groupID, true)
-				if err != nil {
-					log.Warnf("警告: 群 %d %s上传失败: %v", groupID, elem.Type().String(), err)
-					continue
-				}
-				elems[i] = gm
+				wg.Add(1)
+				lazyUpload = append(lazyUpload, func() {
+					defer wg.Done()
+					gm, err := bot.uploadMedia(elem, groupID, true)
+					if err != nil {
+						log.Warnf("警告: 群 %d %s上传失败: %v", groupID, elem.Type().String(), err)
+					} else {
+						elems[i] = gm
+					}
+				})
 			}
 		}
 		return elems
@@ -837,7 +828,7 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) globa
 					SenderName: m.Attribute.SenderName,
 					Time: func() int32 {
 						msgTime := m.Attribute.Timestamp
-						if hasCustom && msgTime == 0 {
+						if msgTime == 0 {
 							return int32(ts.Unix())
 						}
 						return int32(msgTime)
@@ -865,19 +856,12 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) globa
 				return true
 			})
 			if nested { // 处理嵌套
-				nest := message.NewForwardMessage()
-				for _, item := range c.Array() {
-					node := convert(item)
-					if node != nil {
-						nest.AddNode(node)
-					}
-				}
-				elem := bot.Client.UploadGroupForwardMessage(groupID, nest)
+				fe := bot.uploadForwardElement(c, groupID)
 				return &message.ForwardNode{
 					SenderId:   uin,
 					SenderName: name,
 					Time:       int32(msgTime),
-					Message:    []message.IMessageElement{elem},
+					Message:    []message.IMessageElement{fe},
 				}
 			}
 		}
@@ -893,6 +877,7 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) globa
 		log.Warnf("警告: 非法 Forward node 将跳过. uin: %v name: %v content count: %v", uin, name, len(content))
 		return nil
 	}
+
 	if m.IsArray() {
 		for _, item := range m.Array() {
 			node := convert(item)
@@ -906,8 +891,27 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) globa
 			fm.AddNode(node)
 		}
 	}
-	if fm.Length() > 0 {
-		fe := bot.Client.UploadGroupForwardMessage(groupID, fm)
+
+	for _, upload := range lazyUpload {
+		go upload()
+	}
+	wg.Wait()
+
+	return bot.Client.UploadGroupForwardMessage(groupID, fm)
+}
+
+// CQSendGroupForwardMessage 扩展API-发送合并转发(群)
+//
+// https://docs.go-cqhttp.org/api/#%E5%8F%91%E9%80%81%E5%90%88%E5%B9%B6%E8%BD%AC%E5%8F%91-%E7%BE%A4
+// @route(send_group_forward_msg)
+// @rename(m->messages)
+func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) global.MSG {
+	if m.Type != gjson.JSON {
+		return Failed(100)
+	}
+
+	fe := bot.uploadForwardElement(m, groupID)
+	if fe != nil {
 		ret := bot.Client.SendGroupForwardMessage(groupID, fe)
 		if ret == nil || ret.Id == -1 {
 			log.Warnf("合并转发(群)消息发送失败: 账号可能被风控.")
