@@ -270,13 +270,21 @@ func (c *websocketClient) connect(typ, url string, conptr **wsConn) {
 	}
 
 	log.Infof("已连接到反向WebSocket %s服务器 %v", typ, url)
-	wrappedConn := &wsConn{conn: conn, apiCaller: api.NewCaller(c.bot)}
-	if c.limiter != nil {
-		wrappedConn.apiCaller.Use(c.limiter)
+
+	var wrappedConn *wsConn
+	if conptr != nil && *conptr != nil {
+		wrappedConn = *conptr
+	} else {
+		wrappedConn = new(wsConn)
+		if conptr != nil {
+			*conptr = wrappedConn
+		}
 	}
 
-	if conptr != nil {
-		*conptr = wrappedConn
+	wrappedConn.conn = conn
+	wrappedConn.apiCaller = api.NewCaller(c.bot)
+	if c.limiter != nil {
+		wrappedConn.apiCaller.Use(c.limiter)
 	}
 
 	if typ != "Event" {
