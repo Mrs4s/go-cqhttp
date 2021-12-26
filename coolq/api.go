@@ -1403,7 +1403,7 @@ func (bot *CQBot) CQCleanCache() global.MSG {
 		if info.IsDir() {
 			return nil
 		}
-		if filepath.Dir(path) == CleanPath+"\\leveldb-v2" || filepath.Dir(path) == CleanPath+"/leveldb-v2" || filepath.Dir(path) == CleanPath+"\\leveldb" || filepath.Dir(path) == CleanPath +"/leveldb" {
+		if filepath.Dir(path) == filepath.Join(CleanPath,"leveldb-v2") || filepath.Dir(path) == filepath.Join(CleanPath,"leveldb") {
 			return nil
 		}
 		err =os.Remove(path)

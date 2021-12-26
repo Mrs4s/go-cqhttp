@@ -40,6 +40,8 @@ func (c *Caller) call(action string, p Getter) global.MSG {
 	case "check_url_safely":
 		p0 := p.Get("url").String()
 		return c.bot.CQCheckURLSafely(p0)
+	case "clean_cache":
+		return c.bot.CQCleanCache()
 	case "create_group_file_folder":
 		p0 := p.Get("group_id").Int()
 		p1 := p.Get("parent_id").String()
@@ -82,8 +84,6 @@ func (c *Caller) call(action string, p Getter) global.MSG {
 		p1 := p.Get("headers")
 		p2 := int(p.Get("thread_count").Int())
 		return c.bot.CQDownloadFile(p0, p1, p2)
-	case "clean_cache":
-		return c.bot.CQCleanCache()
 	case "get_essence_msg_list":
 		p0 := p.Get("group_id").Int()
 		return c.bot.CQGetEssenceMessageList(p0)
