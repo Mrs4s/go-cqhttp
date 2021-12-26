@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"math"
 	"os"
 	"path"
@@ -1386,6 +1387,32 @@ func (bot *CQBot) CQGetImage(file string) global.MSG {
 		return OK(msg)
 	}
 	return Failed(100, "LOAD_FILE_ERROR", err.Error())
+}
+
+// CQCleanCache 扩展API-清理缓存目录
+//
+// https://docs.go-cqhttp.org/api/#%E6%B8%85%E7%90%86%E7%BC%93%E5%AD%98
+// @route(clean_cache)
+func (bot *CQBot) CQCleanCache() global.MSG {
+	//检查缓存文件夹是否存在
+	CleanPath,_ := filepath.Abs("data")
+	if !global.PathExists(CleanPath) {
+		return OK(nil)
+	}
+	err:=filepath.Walk(CleanPath, func(path string, info fs.FileInfo, err error) error {
+		if info.IsDir() {
+			return nil
+		}
+		if filepath.Dir(path) == CleanPath+"\\leveldb-v2" || filepath.Dir(path) == CleanPath+"/leveldb-v2" || filepath.Dir(path) == CleanPath+"\\leveldb" || filepath.Dir(path) == CleanPath +"/leveldb" {
+			return nil
+		}
+		err =os.Remove(path)
+		return err
+	})
+	if err!=nil{
+		return Failed(100,"CLEAN_FILE_ERROR",err.Error())
+	}
+	return OK(nil)
 }
 
 // CQDownloadFile 扩展API-下载文件到缓存目录
