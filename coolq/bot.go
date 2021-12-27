@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"go.uber.org/atomic"
 	"io"
 	"os"
 	"path"
@@ -35,6 +36,13 @@ type CQBot struct {
 	friendReqCache   sync.Map
 	tempSessionCache sync.Map
 	nextTokenCache   *utils.Cache
+	msgStat          MsgStat
+}
+
+type MsgStat struct {
+	MessageReceived atomic.Uint64
+	MessageSent     atomic.Uint64
+	LastMessageTime atomic.Int64
 }
 
 // Event 事件
@@ -71,38 +79,38 @@ func NewQQBot(cli *client.QQClient) *CQBot {
 		Client:         cli,
 		nextTokenCache: utils.NewCache(time.Second * 10),
 	}
-	bot.Client.OnPrivateMessage(bot.privateMessageEvent)
-	bot.Client.OnGroupMessage(bot.groupMessageEvent)
+	cli.EventHandler.PrivateMessageHandler = bot.privateMessageEvent
+	cli.EventHandler.GroupMessageHandler = bot.groupMessageEvent
 	if base.ReportSelfMessage {
-		bot.Client.OnSelfPrivateMessage(bot.privateMessageEvent)
-		bot.Client.OnSelfGroupMessage(bot.groupMessageEvent)
+		cli.EventHandler.SelfPrivateMessageHandler = bot.privateMessageEvent
+		cli.EventHandler.SelfGroupMessageHandler = bot.groupMessageEvent
 	}
-	bot.Client.OnTempMessage(bot.tempMessageEvent)
-	bot.Client.GuildService.OnGuildChannelMessage(bot.guildChannelMessageEvent)
-	bot.Client.GuildService.OnGuildMessageReactionsUpdated(bot.guildMessageReactionsUpdatedEvent)
-	bot.Client.GuildService.OnGuildMessageRecalled(bot.guildChannelMessageRecalledEvent)
-	bot.Client.GuildService.OnGuildChannelUpdated(bot.guildChannelUpdatedEvent)
-	bot.Client.GuildService.OnGuildChannelCreated(bot.guildChannelCreatedEvent)
-	bot.Client.GuildService.OnGuildChannelDestroyed(bot.guildChannelDestroyedEvent)
-	bot.Client.OnGroupMuted(bot.groupMutedEvent)
-	bot.Client.OnGroupMessageRecalled(bot.groupRecallEvent)
-	bot.Client.OnGroupNotify(bot.groupNotifyEvent)
-	bot.Client.OnFriendNotify(bot.friendNotifyEvent)
-	bot.Client.OnMemberSpecialTitleUpdated(bot.memberTitleUpdatedEvent)
-	bot.Client.OnFriendMessageRecalled(bot.friendRecallEvent)
-	bot.Client.OnReceivedOfflineFile(bot.offlineFileEvent)
-	bot.Client.OnJoinGroup(bot.joinGroupEvent)
-	bot.Client.OnLeaveGroup(bot.leaveGroupEvent)
-	bot.Client.OnGroupMemberJoined(bot.memberJoinEvent)
-	bot.Client.OnGroupMemberLeaved(bot.memberLeaveEvent)
-	bot.Client.OnGroupMemberPermissionChanged(bot.memberPermissionChangedEvent)
-	bot.Client.OnGroupMemberCardUpdated(bot.memberCardUpdatedEvent)
-	bot.Client.OnNewFriendRequest(bot.friendRequestEvent)
-	bot.Client.OnNewFriendAdded(bot.friendAddedEvent)
-	bot.Client.OnGroupInvited(bot.groupInvitedEvent)
-	bot.Client.OnUserWantJoinGroup(bot.groupJoinReqEvent)
-	bot.Client.OnOtherClientStatusChanged(bot.otherClientStatusChangedEvent)
-	bot.Client.OnGroupDigest(bot.groupEssenceMsg)
+	cli.EventHandler.TempMessageHandler = bot.tempMessageEvent
+	cli.EventHandler.GuildChannelMessageHandler = bot.guildChannelMessageEvent
+	cli.EventHandler.GuildMessageReactionsUpdatedHandler = bot.guildMessageReactionsUpdatedEvent
+	cli.EventHandler.GuildMessageRecalledHandler = bot.guildChannelMessageRecalledEvent
+	cli.EventHandler.GuildChannelUpdatedHandler = bot.guildChannelUpdatedEvent
+	cli.EventHandler.GuildChannelCreatedHandler = bot.guildChannelCreatedEvent
+	cli.EventHandler.GuildChannelDestroyedHandler = bot.guildChannelDestroyedEvent
+	cli.EventHandler.GroupMuteEventHandler = bot.groupMutedEvent
+	cli.EventHandler.GroupRecalledHandler = bot.groupRecallEvent
+	cli.EventHandler.GroupNotifyHandler = bot.groupNotifyEvent
+	cli.EventHandler.FriendNotifyHandler = bot.friendNotifyEvent
+	cli.EventHandler.MemberTitleUpdatedHandler = bot.memberTitleUpdatedEvent
+	cli.EventHandler.FriendRecalledHandler = bot.friendRecallEvent
+	cli.EventHandler.OfflineFileHandler = bot.offlineFileEvent
+	cli.EventHandler.JoinGroupHandler = bot.joinGroupEvent
+	cli.EventHandler.LeaveGroupHandler = bot.leaveGroupEvent
+	cli.EventHandler.MemberJoinedHandler = bot.memberJoinEvent
+	cli.EventHandler.MemberLeavedHandler = bot.memberLeaveEvent
+	cli.EventHandler.PermissionChangedHandler = bot.memberPermissionChangedEvent
+	cli.EventHandler.MemberCardUpdatedHandler = bot.memberCardUpdatedEvent
+	cli.EventHandler.FriendRequestHandler = bot.friendRequestEvent
+	cli.EventHandler.NewFriendHandler = bot.friendAddedEvent
+	cli.EventHandler.GroupInvitedHandler = bot.groupInvitedEvent
+	cli.EventHandler.JoinRequestHandler = bot.groupJoinReqEvent
+	cli.EventHandler.OtherClientStatusChangedHandler = bot.otherClientStatusChangedEvent
+	cli.EventHandler.GroupDigestHandler = bot.groupEssenceMsg
 	go func() {
 		if base.HeartbeatInterval == 0 {
 			log.Warn("警告: 心跳功能已关闭，若非预期，请检查配置文件。")
@@ -259,6 +267,7 @@ func (bot *CQBot) SendGroupMessage(groupID int64, m *message.SendingMessage) int
 		log.Warnf("群消息发送失败: 账号可能被风控.")
 		return -1
 	}
+	bot.msgStat.MessageSent.Add(1)
 	return bot.InsertGroupMessage(ret)
 }
 
@@ -308,11 +317,6 @@ func (bot *CQBot) SendPrivateMessage(target int64, groupID int64, m *message.Sen
 	var id int32 = -1
 
 	switch {
-	case bot.Client.FindFriend(target) != nil: // 双向好友
-		msg := bot.Client.SendPrivateMessage(target, m)
-		if msg != nil {
-			id = bot.InsertPrivateMessage(msg)
-		}
 	case ok || groupID != 0: // 临时会话
 		switch {
 		case groupID != 0 && bot.Client.FindGroup(groupID) == nil:
@@ -325,6 +329,7 @@ func (bot *CQBot) SendPrivateMessage(target int64, groupID int64, m *message.Sen
 			if session == nil && groupID != 0 {
 				msg := bot.Client.SendGroupTempMessage(groupID, target, m)
 				if msg != nil { // nolint
+					bot.msgStat.MessageSent.Add(1)
 					// todo(Mrs4s)
 					// id = bot.InsertTempMessage(target, msg)
 				}
@@ -336,13 +341,17 @@ func (bot *CQBot) SendPrivateMessage(target int64, groupID int64, m *message.Sen
 				break
 			}
 			if msg != nil { // nolint
+				bot.msgStat.MessageSent.Add(1)
 				// todo(Mrs4s)
 				// id = bot.InsertTempMessage(target, msg)
 			}
 		}
+	case bot.Client.FindFriend(target) != nil: // 双向好友
+		fallthrough
 	case unidirectionalFriendExists(): // 单向好友
 		msg := bot.Client.SendPrivateMessage(target, m)
 		if msg != nil {
+			bot.msgStat.MessageSent.Add(1)
 			id = bot.InsertPrivateMessage(msg)
 		}
 	default:

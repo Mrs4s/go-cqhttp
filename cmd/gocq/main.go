@@ -6,7 +6,7 @@ import (
 	"crypto/md5"
 	"crypto/sha1"
 	"encoding/hex"
-	"fmt"
+	"github.com/Mrs4s/go-cqhttp/modules"
 	"os"
 	"path"
 	"sync"
@@ -238,7 +238,7 @@ func Main() {
 				log.Warnf("恢复会话失败: %v , 尝试使用正常流程登录.", err)
 				time.Sleep(time.Second)
 				cli.Disconnect()
-				cli.Release()
+				//cli.Release()
 				cli = newClient()
 			} else {
 				isTokenLogin = true
@@ -262,7 +262,7 @@ func Main() {
 	}
 	var times uint = 1 // 重试次数
 	var reLoginLock sync.Mutex
-	cli.OnDisconnected(func(q *client.QQClient, e *client.ClientDisconnectedEvent) {
+	cli.EventHandler.DisconnectHandler = func(q *client.QQClient, e *client.ClientDisconnectedEvent) {
 		reLoginLock.Lock()
 		defer reLoginLock.Unlock()
 		times = 1
@@ -309,7 +309,7 @@ func Main() {
 				break
 			}
 		}
-	})
+	}
 	saveToken()
 	cli.AllowSlider = true
 	log.Infof("登录成功 欢迎使用: %v", cli.Nickname)
@@ -370,14 +370,14 @@ func PasswordHashDecrypt(encryptedPasswordHash string, key []byte) ([]byte, erro
 
 func newClient() *client.QQClient {
 	c := client.NewClientEmpty()
-	c.OnServerUpdated(func(bot *client.QQClient, e *client.ServerUpdatedEvent) bool {
+	c.EventHandler.ServerUpdatedHandler = func(bot *client.QQClient, e *client.ServerUpdatedEvent) bool {
 		if !base.UseSSOAddress {
 			log.Infof("收到服务器地址更新通知, 根据配置文件已忽略.")
 			return false
 		}
 		log.Infof("收到服务器地址更新通知, 将在下一次重连时应用. ")
 		return true
-	})
+	}
 	if global.PathExists("address.txt") {
 		log.Infof("检测到 address.txt 文件. 将覆盖目标IP.")
 		addr := global.ReadAddrFile("address.txt")
@@ -386,22 +386,23 @@ func newClient() *client.QQClient {
 		}
 		log.Infof("读取到 %v 个自定义地址.", len(addr))
 	}
-	c.OnLog(func(c *client.QQClient, e *client.LogEvent) {
-		switch e.Type {
-		case "INFO":
-			log.Info("Protocol -> " + e.Message)
-		case "ERROR":
-			log.Error("Protocol -> " + e.Message)
-		case "DEBUG":
-			log.Debug("Protocol -> " + e.Message)
-		case "DUMP":
-			if !global.PathExists(global.DumpsPath) {
-				_ = os.MkdirAll(global.DumpsPath, 0o755)
-			}
-			dumpFile := path.Join(global.DumpsPath, fmt.Sprintf("%v.dump", time.Now().Unix()))
-			log.Errorf("出现错误 %v. 详细信息已转储至文件 %v 请连同日志提交给开发者处理", e.Message, dumpFile)
-			_ = os.WriteFile(dumpFile, e.Dump, 0o644)
-		}
-	})
+	c.Logger = new(modules.Logger)
+	//c.OnLog(func(c *client.QQClient, e *client.LogEvent) {
+	//	switch e.Type {
+	//	case "INFO":
+	//		log.Info("Protocol -> " + e.Message)
+	//	case "ERROR":
+	//		log.Error("Protocol -> " + e.Message)
+	//	case "DEBUG":
+	//		log.Debug("Protocol -> " + e.Message)
+	//	case "DUMP":
+	//		if !global.PathExists(global.DumpsPath) {
+	//			_ = os.MkdirAll(global.DumpsPath, 0o755)
+	//		}
+	//		dumpFile := path.Join(global.DumpsPath, fmt.Sprintf("%v.dump", time.Now().Unix()))
+	//		log.Errorf("出现错误 %v. 详细信息已转储至文件 %v 请连同日志提交给开发者处理", e.Message, dumpFile)
+	//		_ = os.WriteFile(dumpFile, e.Dump, 0o644)
+	//	}
+	//})
 	return c
 }

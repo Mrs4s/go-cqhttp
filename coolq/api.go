@@ -1797,6 +1797,28 @@ func (bot *CQBot) CQSetGroupAnonymousBan(groupID int64, flag string, duration in
 // https://git.io/JtzMe
 // @route(get_status)
 func (bot *CQBot) CQGetStatus() global.MSG {
+	type statistics struct {
+		PacketReceived  uint64
+		PacketSent      uint64
+		PacketLost      uint64
+		DisconnectTimes uint32
+		LostTimes       uint32
+		MessageReceived uint64
+		MessageSent     uint64
+		LastMessageTime int64
+	}
+	netStat := bot.Client.GetClientStatistics()
+
+	stat := statistics{
+		PacketReceived:  netStat.PacketReceived.Load(),
+		PacketSent:      netStat.PacketSent.Load(),
+		PacketLost:      netStat.PacketLost.Load(),
+		DisconnectTimes: netStat.DisconnectTimes.Load(),
+		LostTimes:       netStat.LostTimes.Load(),
+		MessageReceived: bot.msgStat.MessageReceived.Load(),
+		MessageSent:     bot.msgStat.MessageSent.Load(),
+		LastMessageTime: bot.msgStat.LastMessageTime.Load(),
+	}
 	return OK(global.MSG{
 		"app_initialized": true,
 		"app_enabled":     true,
@@ -1804,7 +1826,7 @@ func (bot *CQBot) CQGetStatus() global.MSG {
 		"app_good":        true,
 		"online":          bot.Client.Online.Load(),
 		"good":            bot.Client.Online.Load(),
-		"stat":            bot.Client.GetStatistics(),
+		"stat":            stat,
 	})
 }
 

@@ -31,6 +31,7 @@ func ToFormattedMessage(e []message.IMessageElement, source MessageSource, isRaw
 }
 
 func (bot *CQBot) privateMessageEvent(c *client.QQClient, m *message.PrivateMessage) {
+	bot.msgStat.MessageReceived.Add(1)
 	bot.checkMedia(m.Elements, m.Sender.Uin)
 	source := MessageSource{
 		SourceType: MessageSourcePrivate,
@@ -67,6 +68,7 @@ func (bot *CQBot) privateMessageEvent(c *client.QQClient, m *message.PrivateMess
 }
 
 func (bot *CQBot) groupMessageEvent(c *client.QQClient, m *message.GroupMessage) {
+	bot.msgStat.MessageReceived.Add(1)
 	bot.checkMedia(m.Elements, m.GroupCode)
 	for _, elem := range m.Elements {
 		if file, ok := elem.(*message.GroupFileElement); ok {
@@ -105,6 +107,7 @@ func (bot *CQBot) groupMessageEvent(c *client.QQClient, m *message.GroupMessage)
 }
 
 func (bot *CQBot) tempMessageEvent(c *client.QQClient, e *client.TempMessageEvent) {
+	bot.msgStat.MessageReceived.Add(1)
 	m := e.Message
 	bot.checkMedia(m.Elements, m.Sender.Uin)
 	source := MessageSource{
