@@ -3,13 +3,14 @@ package gocq
 import (
 	"bufio"
 	"bytes"
+	"github.com/Mrs4s/go-cqhttp/global/terminal"
+	"image"
+	"image/png"
 	"os"
 	"strings"
 	"time"
 
-	qrcodeTerminal "github.com/Baozisoftware/qrcode-terminal-go"
 	"github.com/Mrs4s/MiraiGo/client"
-	"github.com/gocq/qrcode"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
@@ -54,14 +55,14 @@ func commonLogin() error {
 }
 
 func qrcodeLogin() error {
-	rsp, err := cli.FetchQRCode()
+	rsp, err := cli.FetchQRCodeCustomSize(1, 2, 1)
 	if err != nil {
 		return err
 	}
-	fi, err := qrcode.Decode(bytes.NewReader(rsp.ImageData))
-	if err != nil {
-		return err
-	}
+	//fi, err := qrcode.Decode(bytes.NewReader(rsp.ImageData))
+	//if err != nil {
+	//	return err
+	//}
 	_ = os.WriteFile("qrcode.png", rsp.ImageData, 0o644)
 	defer func() { _ = os.Remove("qrcode.png") }()
 	if cli.Uin != 0 {
@@ -70,7 +71,28 @@ func qrcodeLogin() error {
 		log.Infof("请使用手机QQ扫描二维码 (qrcode.png) : ")
 	}
 	time.Sleep(time.Second)
-	qrcodeTerminal.New2(qrcodeTerminal.ConsoleColors.BrightBlack, qrcodeTerminal.ConsoleColors.BrightWhite, qrcodeTerminal.QRCodeRecoveryLevels.Low).Get(fi.Content).Print()
+	img, err := png.Decode(bytes.NewReader(rsp.ImageData))
+	if err != nil {
+		log.Panic(img)
+	}
+	data := img.(*image.Gray).Pix
+	bound := img.Bounds().Max.X
+	buf := make([]byte, 0, (bound*4+1)*(bound))
+	i := 0
+	for y := 0; y < bound; y++ {
+		i = y * bound
+		for x := 0; x < bound; x++ {
+			if data[i] != 255 {
+				buf = append(buf, "  "...)
+			} else {
+				buf = append(buf, terminal.WhiteChar...)
+			}
+			i++
+		}
+		buf = append(buf, '\n')
+	}
+	os.Stdout.Write(buf)
+	//qrcodeTerminal.New2(qrcodeTerminal.ConsoleColors.BrightBlack, qrcodeTerminal.ConsoleColors.BrightWhite, qrcodeTerminal.QRCodeRecoveryLevels.Low).Get(fi.Content).Print()
 	s, err := cli.QueryQRCodeStatus(rsp.Sig)
 	if err != nil {
 		return err
