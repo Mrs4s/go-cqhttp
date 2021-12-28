@@ -18,6 +18,9 @@ func (c *Caller) call(action string, p Getter) global.MSG {
 		p0 := p.Get("context")
 		p1 := p.Get("operation")
 		return c.bot.CQHandleQuickOperation(p0, p1)
+	case ".ocr_image", "ocr_image":
+		p0 := p.Get("image").String()
+		return c.bot.CQOcrImage(p0)
 	case "_get_model_show":
 		p0 := p.Get("model").String()
 		return c.bot.CQGetModelShow(p0)
@@ -48,7 +51,7 @@ func (c *Caller) call(action string, p Getter) global.MSG {
 	case "create_guild_role":
 		p0 := p.Get("guild_id").Uint()
 		p1 := p.Get("name").String()
-		p2 := uint32(p.Get("color").Int())
+		p2 := uint32(p.Get("color").Uint())
 		p3 := p.Get("independent").Bool()
 		p4 := p.Get("initial_users")
 		return c.bot.CQCreateGuildRole(p0, p1, p2, p3, p4)
@@ -187,9 +190,6 @@ func (c *Caller) call(action string, p Getter) global.MSG {
 	case "mark_msg_as_read":
 		p0 := int32(p.Get("message_id").Int())
 		return c.bot.CQMarkMessageAsRead(p0)
-	case "ocr_image", ".ocr_image":
-		p0 := p.Get("image").String()
-		return c.bot.CQOcrImage(p0)
 	case "qidian_get_account_info":
 		return c.bot.CQGetQiDianAccountInfo()
 	case "reload_event_filter":
@@ -260,7 +260,7 @@ func (c *Caller) call(action string, p Getter) global.MSG {
 		p1 := p.Get("user_id").Int()
 		p2 := uint32(1800)
 		if pt := p.Get("duration"); pt.Exists() {
-			p2 = uint32(pt.Int())
+			p2 = uint32(pt.Uint())
 		}
 		return c.bot.CQSetGroupBan(p0, p1, p2)
 	case "set_group_card":
@@ -308,7 +308,7 @@ func (c *Caller) call(action string, p Getter) global.MSG {
 		p0 := p.Get("guild_id").Uint()
 		p1 := p.Get("role_id").Uint()
 		p2 := p.Get("name").String()
-		p3 := uint32(p.Get("color").Int())
+		p3 := uint32(p.Get("color").Uint())
 		p4 := p.Get("indepedent").Bool()
 		return c.bot.CQModifyRoleInGuild(p0, p1, p2, p3, p4)
 	case "upload_group_file":

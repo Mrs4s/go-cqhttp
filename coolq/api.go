@@ -1733,8 +1733,7 @@ func (bot *CQBot) CQCanSendRecord() global.MSG {
 // CQOcrImage 扩展API-图片OCR
 //
 // https://docs.go-cqhttp.org/api/#%E5%9B%BE%E7%89%87-ocr
-// @route(ocr_image)
-// @alias(.ocr_image)
+// @route(ocr_image,".ocr_image")
 // @rename(image_id->image)
 func (bot *CQBot) CQOcrImage(imageID string) global.MSG {
 	img, err := bot.makeImageOrVideoElem(map[string]string{"file": imageID}, false, MessageSourceGroup)
