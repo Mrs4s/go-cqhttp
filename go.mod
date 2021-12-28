@@ -2,6 +2,8 @@ module github.com/Mrs4s/go-cqhttp
 
 go 1.17
 
+replace github.com/Mrs4s/MiraiGo v0.0.0-20211219072930-afb81a32aa75 => github.com/LXY1226/MiraiGo v0.0.0-20211228001639-a08bfa28e14b
+
 require (
 	github.com/Microsoft/go-winio v0.5.1
 	github.com/Mrs4s/MiraiGo v0.0.0-20211219072930-afb81a32aa75

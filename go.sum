@@ -1,4 +1,6 @@
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
+github.com/LXY1226/MiraiGo v0.0.0-20211228001639-a08bfa28e14b h1:smxr5fz0uPvtr4VeYo9mJ3uhSJJeCkYtf1vgbdU7Kk8=
+github.com/LXY1226/MiraiGo v0.0.0-20211228001639-a08bfa28e14b/go.mod h1:VrmhZC9o+uKB9AKRy5bZZxE5EJwJhAmo7Xn/c2tzkZI=
 github.com/Microsoft/go-winio v0.5.1 h1:aPJp2QD7OOrhO5tQXqQoGSJc+DjDtWTGLOmNyAm6FgY=
 github.com/Microsoft/go-winio v0.5.1/go.mod h1:JPGBdM1cNvN/6ISo+n8V5iA4v8pBzdOpzfwIujj1a84=
 github.com/RomiChan/protobuf v0.0.0-20211223055824-048df49a8956 h1:hnaAkKz4t+xpSNVp5mnuloRMd3Rj2Lfg5biZ3emv//c=
