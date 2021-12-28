@@ -112,7 +112,7 @@ func main() {
 	for _, decl := range file.Decls {
 		switch decl := decl.(type) {
 		case *ast.FuncDecl:
-			if decl.Recv == nil {
+			if !decl.Name.IsExported() || decl.Recv == nil {
 				continue
 			}
 			if st, ok := decl.Recv.List[0].Type.(*ast.StarExpr); !ok || st.X.(*ast.Ident).Name != "CQBot" {
@@ -137,8 +137,6 @@ func main() {
 			for _, comment := range decl.Doc.List {
 				annotation, args := match(comment.Text)
 				switch annotation {
-				case "":
-					continue
 				case "route":
 					router.Path = args
 				case "alias":
