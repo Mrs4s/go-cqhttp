@@ -1309,7 +1309,7 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video bool, sourceTy
 	}
 	rawPath := path.Join(global.ImagePath, f)
 	if video {
-		if strings.HasSuffix(f, ".video") && cache.EnableCacheDB {
+		if strings.HasSuffix(f, ".video") {
 			hash, err := hex.DecodeString(strings.TrimSuffix(f, ".video"))
 			if err == nil {
 				if b := cache.Video.Get(hash); b != nil {
@@ -1334,7 +1334,7 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video bool, sourceTy
 			return &LocalImageElement{File: cacheFile}, nil
 		}
 	}
-	if strings.HasSuffix(f, ".image") && cache.EnableCacheDB {
+	if strings.HasSuffix(f, ".image") {
 		hash, err := hex.DecodeString(strings.TrimSuffix(f, ".image"))
 		if err == nil {
 			if b := cache.Image.Get(hash); b != nil {

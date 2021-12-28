@@ -726,7 +726,6 @@ func (bot *CQBot) groupDecrease(groupCode, userUin int64, operator *client.Group
 }
 
 func (bot *CQBot) checkMedia(e []message.IMessageElement, sourceID int64) {
-	// TODO(wdvxdr): remove these old cache file in v1.0.0
 	for _, elem := range e {
 		switch i := elem.(type) {
 		case *message.GroupImageElement:
@@ -744,12 +743,8 @@ func (bot *CQBot) checkMedia(e []message.IMessageElement, sourceID int64) {
 				w.WriteString(i.ImageId)
 				w.WriteString(i.Url)
 			})
-			filename := hex.EncodeToString(i.Md5) + ".image"
-			if cache.EnableCacheDB {
-				cache.Image.Insert(i.Md5, data)
-			} else if !global.PathExists(path.Join(global.ImagePath, filename)) {
-				_ = os.WriteFile(path.Join(global.ImagePath, filename), data, 0o644)
-			}
+			cache.Image.Insert(i.Md5, data)
+
 		case *message.GuildImageElement:
 			data := binary.NewWriterF(func(w *binary.Writer) {
 				w.Write(i.Md5)
@@ -758,14 +753,9 @@ func (bot *CQBot) checkMedia(e []message.IMessageElement, sourceID int64) {
 				w.WriteString(i.Url)
 			})
 			filename := hex.EncodeToString(i.Md5) + ".image"
-			if cache.EnableCacheDB {
-				cache.Image.Insert(i.Md5, data)
-			} else if !global.PathExists(path.Join(global.ImagePath, filename)) {
-				_ = os.WriteFile(path.Join(global.ImagePath, filename), data, 0o644)
-			}
-
+			cache.Image.Insert(i.Md5, data)
 			if i.Url != "" && !global.PathExists(path.Join(global.ImagePath, "guild-images", filename)) {
-				if err := global.DownloadFile(i.Url, path.Join(global.ImagePath, "guild-images", filename), -1, map[string]string{}); err != nil {
+				if err := global.DownloadFile(i.Url, path.Join(global.ImagePath, "guild-images", filename), -1, nil); err != nil {
 					log.Warnf("下载频道图片时出现错误: %v", err)
 				}
 			}
@@ -776,12 +766,8 @@ func (bot *CQBot) checkMedia(e []message.IMessageElement, sourceID int64) {
 				w.WriteString(i.ImageId)
 				w.WriteString(i.Url)
 			})
-			filename := hex.EncodeToString(i.Md5) + ".image"
-			if cache.EnableCacheDB {
-				cache.Image.Insert(i.Md5, data)
-			} else if !global.PathExists(path.Join(global.ImagePath, filename)) {
-				_ = os.WriteFile(path.Join(global.ImagePath, filename), data, 0o644)
-			}
+			cache.Image.Insert(i.Md5, data)
+
 		case *message.VoiceElement:
 			// todo: don't download original file?
 			i.Name = strings.ReplaceAll(i.Name, "{", "")
@@ -804,11 +790,7 @@ func (bot *CQBot) checkMedia(e []message.IMessageElement, sourceID int64) {
 				w.Write(i.Uuid)
 			})
 			filename := hex.EncodeToString(i.Md5) + ".video"
-			if cache.EnableCacheDB {
-				cache.Video.Insert(i.Md5, data)
-			} else if !global.PathExists(path.Join(global.VideoPath, filename)) {
-				_ = os.WriteFile(path.Join(global.VideoPath, filename), data, 0o644)
-			}
+			cache.Video.Insert(i.Md5, data)
 			i.Name = filename
 			i.Url = bot.Client.GetShortVideoUrl(i.Uuid, i.Md5)
 		}

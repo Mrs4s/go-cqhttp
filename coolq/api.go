@@ -1427,7 +1427,7 @@ func (bot *CQBot) CQHandleQuickOperation(context, operation gjson.Result) global
 func (bot *CQBot) CQGetImage(file string) global.MSG {
 	var b []byte
 	var err error
-	if cache.EnableCacheDB && strings.HasSuffix(file, ".image") {
+	if strings.HasSuffix(file, ".image") {
 		var f []byte
 		f, err = hex.DecodeString(strings.TrimSuffix(file, ".image"))
 		b = cache.Image.Get(f)

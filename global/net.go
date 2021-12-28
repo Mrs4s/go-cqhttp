@@ -71,9 +71,6 @@ func DownloadFile(url, path string, limit int64, headers map[string]string) erro
 		req.Header.Set(k, v)
 	}
 
-	if _, ok := headers["User-Agent"]; !ok {
-		req.Header["User-Agent"] = []string{UserAgent}
-	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return err
