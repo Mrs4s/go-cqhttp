@@ -28,15 +28,15 @@ func TestBtree(t *testing.T) {
 	bt, err := Create(f)
 	assert2.NoError(t, err)
 
-	var tests = []string{
+	tests := []string{
 		"hello world",
 		"123",
 		"We are met on a great battle-field of that war.",
 		"Abraham Lincoln, November 19, 1863, Gettysburg, Pennsylvania",
 	}
-	var sha = make([]*byte, len(tests))
+	sha := make([]*byte, len(tests))
 	for i, tt := range tests {
-		var hash = sha1.New()
+		hash := sha1.New()
 		hash.Write([]byte(tt))
 		sha[i] = &hash.Sum(nil)[0]
 		bt.Insert(sha[i], []byte(tt))

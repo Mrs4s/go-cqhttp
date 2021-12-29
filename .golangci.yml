@@ -28,6 +28,7 @@ linters:
     - errcheck
     - exportloopref
     - exhaustive
+    - bidichk
     #- funlen
     #- goconst
     - gocritic

@@ -542,7 +542,6 @@ func (bot *CQBot) InsertGuildChannelMessage(m *message.GuildChannelMessage) stri
 
 // Release 释放Bot实例
 func (bot *CQBot) Release() {
-
 }
 
 func (bot *CQBot) dispatchEventMessage(m global.MSG) {

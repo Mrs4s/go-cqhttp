@@ -45,7 +45,7 @@ func resethash(sha1 *byte) {
 // reading table
 
 func read32(r io.Reader) (int32, error) {
-	var b = make([]byte, 4)
+	b := make([]byte, 4)
 	_, err := r.Read(b)
 	if err != nil {
 		return 0, err

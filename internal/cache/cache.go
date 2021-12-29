@@ -66,7 +66,7 @@ func Init() {
 		}
 	}
 
-	var open = func(typ string, cache *Cache) {
+	open := func(typ string, cache *Cache) {
 		file := conf[typ]
 		if file == "" {
 			file = fmt.Sprintf("data/%s.db", typ)
