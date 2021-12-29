@@ -21,13 +21,13 @@ import (
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/Mrs4s/MiraiGo/utils"
-	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 
 	"github.com/Mrs4s/go-cqhttp/db"
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
 	"github.com/Mrs4s/go-cqhttp/internal/cache"
+	"github.com/Mrs4s/go-cqhttp/internal/log"
 	"github.com/Mrs4s/go-cqhttp/internal/param"
 	"github.com/Mrs4s/go-cqhttp/modules/filter"
 )
@@ -1360,7 +1360,7 @@ func (bot *CQBot) CQHandleQuickOperation(context, operation gjson.Result) global
 
 				err := json.Unmarshal(utils.S2B(reply.Raw), &replySegments)
 				if err != nil {
-					log.WithError(err).Warnf("处理 at_sender 过程中发生错误")
+					log.Warn("处理 at_sender 过程中发生错误", err)
 					return Failed(-1, "处理 at_sender 过程中发生错误", err.Error())
 				}
 
@@ -1368,7 +1368,7 @@ func (bot *CQBot) CQHandleQuickOperation(context, operation gjson.Result) global
 
 				modified, err := json.Marshal(segments)
 				if err != nil {
-					log.WithError(err).Warnf("处理 at_sender 过程中发生错误")
+					log.Warn("处理 at_sender 过程中发生错误:", err)
 					return Failed(-1, "处理 at_sender 过程中发生错误", err.Error())
 				}
 

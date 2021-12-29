@@ -14,11 +14,11 @@ import (
 
 	"github.com/dustin/go-humanize"
 	"github.com/kardianos/osext"
-	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
+	"github.com/Mrs4s/go-cqhttp/internal/log"
 )
 
 func readLine() (str string) {
@@ -38,22 +38,22 @@ func lastVersion() (string, error) {
 
 // CheckUpdate 检查更新
 func CheckUpdate() {
-	logrus.Infof("正在检查更新.")
+	log.Infof("正在检查更新.")
 	if base.Version == "(devel)" {
-		logrus.Warnf("检查更新失败: 使用的 Actions 测试版或自编译版本.")
+		log.Warnf("检查更新失败: 使用的 Actions 测试版或自编译版本.")
 		return
 	}
 	latest, err := lastVersion()
 	if err != nil {
-		logrus.Warnf("检查更新失败: %v", err)
+		log.Warnf("检查更新失败: %v", err)
 		return
 	}
 	if global.VersionNameCompare(base.Version, latest) {
-		logrus.Infof("当前有更新的 go-cqhttp 可供更新, 请前往 https://github.com/Mrs4s/go-cqhttp/releases 下载.")
-		logrus.Infof("当前版本: %v 最新版本: %v", base.Version, latest)
+		log.Infof("当前有更新的 go-cqhttp 可供更新, 请前往 https://github.com/Mrs4s/go-cqhttp/releases 下载.")
+		log.Infof("当前版本: %v 最新版本: %v", base.Version, latest)
 		return
 	}
-	logrus.Infof("检查更新完成. 当前已运行最新版本.")
+	log.Infof("检查更新完成. 当前已运行最新版本.")
 }
 
 func binaryName() string {
@@ -91,7 +91,7 @@ func checksum(github, version string) []byte {
 }
 
 func wait() {
-	logrus.Info("按 Enter 继续....")
+	log.Info("按 Enter 继续....")
 	readLine()
 	os.Exit(0)
 }
@@ -102,35 +102,35 @@ func SelfUpdate(github string) {
 		github = "https://github.com"
 	}
 
-	logrus.Infof("正在检查更新.")
+	log.Infof("正在检查更新.")
 	latest, err := lastVersion()
 	if err != nil {
-		logrus.Warnf("获取最新版本失败: %v", err)
+		log.Warnf("获取最新版本失败: %v", err)
 		wait()
 	}
 	url := fmt.Sprintf("%v/Mrs4s/go-cqhttp/releases/download/%v/%v", github, latest, binaryName())
 	if base.Version == latest {
-		logrus.Info("当前版本已经是最新版本!")
+		log.Info("当前版本已经是最新版本!")
 		wait()
 	}
-	logrus.Info("当前最新版本为 ", latest)
-	logrus.Warn("是否更新(y/N): ")
+	log.Info("当前最新版本为 ", latest)
+	log.Warn("是否更新(y/N): ")
 	r := strings.TrimSpace(readLine())
 	if r != "y" && r != "Y" {
-		logrus.Warn("已取消更新！")
+		log.Warn("已取消更新！")
 		wait()
 	}
-	logrus.Info("正在更新,请稍等...")
+	log.Info("正在更新,请稍等...")
 	sum := checksum(github, latest)
 	if sum != nil {
 		err = update(url, sum)
 		if err != nil {
-			logrus.Error("更新失败: ", err)
+			log.Error("更新失败: ", err)
 		} else {
-			logrus.Info("更新成功!")
+			log.Info("更新成功!")
 		}
 	} else {
-		logrus.Error("checksum 失败!")
+		log.Error("checksum 失败!")
 	}
 	wait()
 }
@@ -170,13 +170,13 @@ func fromStream(updateWith io.Reader) (err error, errRecover error) {
 	// We won't log this error, because it's always going to happen.
 	defer func() { _ = fp.Close() }()
 	if _, err = io.Copy(fp, bufio.NewReader(updateWith)); err != nil {
-		logrus.Errorf("Unable to copy data: %v\n", err)
+		log.Errorf("Unable to copy data: %v\n", err)
 	}
 
 	// if we don't call fp.Close(), windows won't let us move the new executable
 	// because the file will still be "in use"
 	if err := fp.Close(); err != nil {
-		logrus.Errorf("Unable to close file: %v\n", err)
+		log.Errorf("Unable to close file: %v\n", err)
 	}
 	// this is where we'll move the executable to so that we can swap in the updated replacement
 	oldPath := filepath.Join(updateDir, fmt.Sprintf(".%s.old", filename))

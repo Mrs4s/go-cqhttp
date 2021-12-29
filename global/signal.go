@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/Mrs4s/go-cqhttp/internal/log"
 )
 
 var (

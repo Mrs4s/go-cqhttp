@@ -16,7 +16,6 @@ import (
 	"github.com/Mrs4s/MiraiGo/client"
 	para "github.com/fumiama/go-hide-param"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
-	log "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/pbkdf2"
 	"golang.org/x/term"
 
@@ -26,6 +25,7 @@ import (
 	"github.com/Mrs4s/go-cqhttp/global/terminal"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
 	"github.com/Mrs4s/go-cqhttp/internal/cache"
+	"github.com/Mrs4s/go-cqhttp/internal/log"
 	"github.com/Mrs4s/go-cqhttp/internal/selfdiagnosis"
 	"github.com/Mrs4s/go-cqhttp/internal/selfupdate"
 	"github.com/Mrs4s/go-cqhttp/modules/servers"
@@ -77,7 +77,7 @@ func Main() {
 
 	consoleFormatter := global.LogFormat{EnableColor: base.LogColorful}
 	fileFormatter := global.LogFormat{EnableColor: false}
-	log.AddHook(global.NewLocalHook(w, consoleFormatter, fileFormatter, global.GetLogLevel(base.LogLevel)...))
+	log.SetHook(global.NewLocalHook(w, consoleFormatter, fileFormatter, global.GetLogLevel(base.LogLevel)))
 
 	mkCacheDir := func(path string, _type string) {
 		if !global.PathExists(path) {
@@ -132,7 +132,6 @@ func Main() {
 	log.Info("当前版本:", base.Version)
 	if base.Debug {
 		log.SetLevel(log.DebugLevel)
-		log.SetReportCaller(true)
 		log.Warnf("已开启Debug模式.")
 		log.Debugf("开发交流群: 192548878")
 	}

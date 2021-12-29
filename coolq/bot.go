@@ -18,11 +18,11 @@ import (
 	"github.com/Mrs4s/MiraiGo/utils"
 	"github.com/pkg/errors"
 	"github.com/segmentio/asm/base64"
-	log "github.com/sirupsen/logrus"
 
 	"github.com/Mrs4s/go-cqhttp/db"
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
+	"github.com/Mrs4s/go-cqhttp/internal/log"
 )
 
 // CQBot CQBot结构体,存储Bot实例相关配置

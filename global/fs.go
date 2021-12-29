@@ -14,8 +14,8 @@ import (
 	"strings"
 
 	"github.com/Mrs4s/MiraiGo/utils"
-	log "github.com/sirupsen/logrus"
 
+	"github.com/Mrs4s/go-cqhttp/internal/log"
 	"github.com/Mrs4s/go-cqhttp/internal/param"
 )
 

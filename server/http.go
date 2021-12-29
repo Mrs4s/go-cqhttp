@@ -17,12 +17,12 @@ import (
 	"time"
 
 	"github.com/Mrs4s/MiraiGo/utils"
-	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 	"gopkg.in/yaml.v3"
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
+	"github.com/Mrs4s/go-cqhttp/internal/log"
 	"github.com/Mrs4s/go-cqhttp/internal/param"
 	"github.com/Mrs4s/go-cqhttp/modules/api"
 	"github.com/Mrs4s/go-cqhttp/modules/config"
@@ -394,6 +394,6 @@ func (s *httpServer) ShutDown() {
 		log.Fatal("http Server Shutdown:", err)
 	}
 	<-ctx.Done()
-	log.Println("timeout of 5 seconds.")
-	log.Println("http Server exiting")
+	fmt.Println("timeout of 5 seconds.")
+	fmt.Println("http Server exiting")
 }

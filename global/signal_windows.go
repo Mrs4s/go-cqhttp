@@ -15,7 +15,8 @@ import (
 	"time"
 
 	"github.com/Microsoft/go-winio"
-	log "github.com/sirupsen/logrus"
+
+	"github.com/Mrs4s/go-cqhttp/internal/log"
 )
 
 var validTasks = map[string]func(){

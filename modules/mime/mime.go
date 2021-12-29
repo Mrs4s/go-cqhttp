@@ -5,9 +5,9 @@ import (
 	"io"
 
 	"github.com/gabriel-vasile/mimetype"
-	"github.com/sirupsen/logrus"
 
 	"github.com/Mrs4s/go-cqhttp/internal/base"
+	"github.com/Mrs4s/go-cqhttp/internal/log"
 )
 
 func init() {
@@ -46,7 +46,7 @@ func check(r io.ReadSeeker, list []string) (bool, string) {
 	defer r.Seek(0, io.SeekStart)
 	t, err := mimetype.DetectReader(r)
 	if err != nil {
-		logrus.Debugf("扫描 Mime 时出现问题: %v", err)
+		log.Debugf("扫描 Mime 时出现问题: %v", err)
 		return false, ""
 	}
 	for _, lt := range list {

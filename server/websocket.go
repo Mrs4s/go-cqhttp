@@ -14,12 +14,12 @@ import (
 
 	"github.com/Mrs4s/MiraiGo/utils"
 	"github.com/gorilla/websocket"
-	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 	"gopkg.in/yaml.v3"
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
+	"github.com/Mrs4s/go-cqhttp/internal/log"
 	"github.com/Mrs4s/go-cqhttp/internal/param"
 	"github.com/Mrs4s/go-cqhttp/modules/api"
 	"github.com/Mrs4s/go-cqhttp/modules/config"
@@ -455,7 +455,7 @@ func (s *webSocketServer) listenAPI(c *wsConn) {
 func (c *wsConn) handleRequest(_ *coolq.CQBot, payload []byte) {
 	defer func() {
 		if err := recover(); err != nil {
-			log.Printf("处置WS命令时发生无法恢复的异常：%v\n%s", err, debug.Stack())
+			log.Warnf("处置WS命令时发生无法恢复的异常：%v\n%s", err, debug.Stack())
 			_ = c.Close()
 		}
 	}()

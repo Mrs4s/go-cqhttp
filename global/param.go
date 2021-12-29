@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"strconv"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/Mrs4s/go-cqhttp/internal/log"
 )
 
 // MSG 消息Map

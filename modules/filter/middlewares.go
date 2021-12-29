@@ -4,8 +4,9 @@ import (
 	"os"
 	"sync"
 
-	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
+
+	"github.com/Mrs4s/go-cqhttp/internal/log"
 )
 
 var (
@@ -20,12 +21,12 @@ func Add(file string) {
 	}
 	bs, err := os.ReadFile(file)
 	if err != nil {
-		logrus.Error("init filter error: ", err)
+		log.Error("init filter error: ", err)
 		return
 	}
 	defer func() {
 		if err := recover(); err != nil {
-			logrus.Error("init filter error: ", err)
+			log.Error("init filter error: ", err)
 		}
 	}()
 	filter := Generate("and", gjson.ParseBytes(bs))

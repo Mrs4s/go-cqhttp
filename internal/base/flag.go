@@ -11,8 +11,9 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
+
+	"github.com/Mrs4s/go-cqhttp/internal/log"
 
 	"github.com/Mrs4s/go-cqhttp/modules/config"
 )

@@ -1,129 +1,53 @@
 package global
 
 import (
-	"fmt"
 	"io"
-	"os"
-	"path/filepath"
-	"reflect"
 	"strings"
-	"sync"
 
 	"github.com/mattn/go-colorable"
-	"github.com/sirupsen/logrus"
+
+	"github.com/Mrs4s/go-cqhttp/internal/log"
 )
 
 // LocalHook logrus本地钩子
 type LocalHook struct {
-	lock      *sync.Mutex
-	levels    []logrus.Level   // hook级别
-	formatter logrus.Formatter // 格式
-	path      string           // 写入path
-	writer    io.Writer        // io
+	level     log.Level
+	formatter log.Formatter // 格式
+	writer    io.Writer     // io
 }
 
-// Levels ref: logrus/hooks.go impl Hook interface
-func (hook *LocalHook) Levels() []logrus.Level {
-	if len(hook.levels) == 0 {
-		return logrus.AllLevels
-	}
-	return hook.levels
+// Level impl Hook interface
+func (hook *LocalHook) Level() log.Level {
+	return hook.level
 }
 
-func (hook *LocalHook) ioWrite(entry *logrus.Entry) error {
-	log, err := hook.formatter.Format(entry)
-	if err != nil {
-		return err
-	}
-
-	_, err = hook.writer.Write(log)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (hook *LocalHook) pathWrite(entry *logrus.Entry) error {
-	dir := filepath.Dir(hook.path)
-	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
-		return err
-	}
-
-	fd, err := os.OpenFile(hook.path, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0o666)
-	if err != nil {
-		return err
-	}
-	defer fd.Close()
-
-	log, err := hook.formatter.Format(entry)
-	if err != nil {
-		return err
-	}
-
-	_, err = fd.Write(log)
-	return err
+func (hook *LocalHook) ioWrite(entry *log.Entry) {
+	_, _ = hook.writer.Write(hook.formatter.Format(entry))
 }
 
 // Fire ref: logrus/hooks.go impl Hook interface
-func (hook *LocalHook) Fire(entry *logrus.Entry) error {
-	hook.lock.Lock()
-	defer hook.lock.Unlock()
-
+func (hook *LocalHook) Fire(entry *log.Entry) {
 	if hook.writer != nil {
-		return hook.ioWrite(entry)
+		hook.ioWrite(entry)
 	}
-
-	if hook.path != "" {
-		return hook.pathWrite(entry)
-	}
-
-	return nil
 }
 
 // SetFormatter 设置日志格式
-func (hook *LocalHook) SetFormatter(consoleFormatter, fileFormatter logrus.Formatter) {
-	hook.lock.Lock()
-	defer hook.lock.Unlock()
-
+func (hook *LocalHook) SetFormatter(consoleFormatter, fileFormatter log.Formatter) {
 	// 支持处理windows平台的console色彩
-	logrus.SetOutput(colorable.NewColorableStdout())
+	log.SetOutput(colorable.NewColorableStdout())
 	// 用于在console写出
-	logrus.SetFormatter(consoleFormatter)
+	log.SetFormatter(consoleFormatter)
 	// 用于写入文件
 	hook.formatter = fileFormatter
 }
 
-// SetWriter 设置Writer
-func (hook *LocalHook) SetWriter(writer io.Writer) {
-	hook.lock.Lock()
-	defer hook.lock.Unlock()
-	hook.writer = writer
-}
-
-// SetPath 设置日志写入路径
-func (hook *LocalHook) SetPath(path string) {
-	hook.lock.Lock()
-	defer hook.lock.Unlock()
-	hook.path = path
-}
-
 // NewLocalHook 初始化本地日志钩子实现
-func NewLocalHook(args interface{}, consoleFormatter, fileFormatter logrus.Formatter, levels ...logrus.Level) *LocalHook {
-	hook := &LocalHook{
-		lock: new(sync.Mutex),
-	}
+func NewLocalHook(local io.Writer, consoleFormatter, fileFormatter log.Formatter, level log.Level) *LocalHook {
+	hook := new(LocalHook)
 	hook.SetFormatter(consoleFormatter, fileFormatter)
-	hook.levels = append(hook.levels, levels...)
-
-	switch arg := args.(type) {
-	case string:
-		hook.SetPath(arg)
-	case io.Writer:
-		hook.SetWriter(arg)
-	default:
-		panic(fmt.Sprintf("unsupported type: %v", reflect.TypeOf(args)))
-	}
-
+	hook.level = level
+	hook.writer = local
 	return hook
 }
 
@@ -131,41 +55,19 @@ func NewLocalHook(args interface{}, consoleFormatter, fileFormatter logrus.Forma
 //
 // 可能的值有
 //
-// "trace","debug","info","warn","warn","error"
-func GetLogLevel(level string) []logrus.Level {
+// "debug","info","warn","warn","error"
+func GetLogLevel(level string) log.Level {
 	switch level {
-	case "trace":
-		return []logrus.Level{
-			logrus.TraceLevel, logrus.DebugLevel,
-			logrus.InfoLevel, logrus.WarnLevel, logrus.ErrorLevel,
-			logrus.FatalLevel, logrus.PanicLevel,
-		}
 	case "debug":
-		return []logrus.Level{
-			logrus.DebugLevel, logrus.InfoLevel,
-			logrus.WarnLevel, logrus.ErrorLevel,
-			logrus.FatalLevel, logrus.PanicLevel,
-		}
+		return log.DebugLevel
 	case "info":
-		return []logrus.Level{
-			logrus.InfoLevel, logrus.WarnLevel,
-			logrus.ErrorLevel, logrus.FatalLevel, logrus.PanicLevel,
-		}
+		return log.InfoLevel
 	case "warn":
-		return []logrus.Level{
-			logrus.WarnLevel, logrus.ErrorLevel,
-			logrus.FatalLevel, logrus.PanicLevel,
-		}
+		return log.WarnLevel
 	case "error":
-		return []logrus.Level{
-			logrus.ErrorLevel, logrus.FatalLevel,
-			logrus.PanicLevel,
-		}
+		return log.ErrorLevel
 	default:
-		return []logrus.Level{
-			logrus.InfoLevel, logrus.WarnLevel,
-			logrus.ErrorLevel, logrus.FatalLevel, logrus.PanicLevel,
-		}
+		return log.InfoLevel
 	}
 }
 
@@ -175,7 +77,7 @@ type LogFormat struct {
 }
 
 // Format implements logrus.Formatter
-func (f LogFormat) Format(entry *logrus.Entry) ([]byte, error) {
+func (f LogFormat) Format(entry *log.Entry) []byte {
 	buf := NewBuffer()
 	defer PutBuffer(buf)
 
@@ -196,37 +98,31 @@ func (f LogFormat) Format(entry *logrus.Entry) ([]byte, error) {
 	}
 
 	ret := append([]byte(nil), buf.Bytes()...) // copy buffer
-	return ret, nil
+	return ret
 }
 
 const (
-	colorCodePanic = "\x1b[1;31m" // color.Style{color.Bold, color.Red}.String()
 	colorCodeFatal = "\x1b[1;31m" // color.Style{color.Bold, color.Red}.String()
 	colorCodeError = "\x1b[31m"   // color.Style{color.Red}.String()
 	colorCodeWarn  = "\x1b[33m"   // color.Style{color.Yellow}.String()
 	colorCodeInfo  = "\x1b[37m"   // color.Style{color.White}.String()
 	colorCodeDebug = "\x1b[32m"   // color.Style{color.Green}.String()
-	colorCodeTrace = "\x1b[36m"   // color.Style{color.Cyan}.String()
 	colorReset     = "\x1b[0m"
 )
 
 // GetLogLevelColorCode 获取日志等级对应色彩code
-func GetLogLevelColorCode(level logrus.Level) string {
+func GetLogLevelColorCode(level log.Level) string {
 	switch level {
-	case logrus.PanicLevel:
-		return colorCodePanic
-	case logrus.FatalLevel:
+	case log.FatalLevel:
 		return colorCodeFatal
-	case logrus.ErrorLevel:
+	case log.ErrorLevel:
 		return colorCodeError
-	case logrus.WarnLevel:
+	case log.WarnLevel:
 		return colorCodeWarn
-	case logrus.InfoLevel:
+	case log.InfoLevel:
 		return colorCodeInfo
-	case logrus.DebugLevel:
+	case log.DebugLevel:
 		return colorCodeDebug
-	case logrus.TraceLevel:
-		return colorCodeTrace
 
 	default:
 		return colorCodeInfo
