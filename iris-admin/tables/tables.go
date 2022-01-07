@@ -16,8 +16,5 @@ import "github.com/GoAdminGroup/go-admin/plugins/admin/modules/table"
 // "authors" => http://localhost:8080/admin/info/authors
 //
 var Generators = map[string]table.Generator{
-	"posts":   GetPostsTable,
-	"users":   GetUserTable,
-	"authors": GetAuthorsTable,
-	"profile": GetProfileTable,
+	"qq_config": GetQQConfigTable,
 }

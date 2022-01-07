@@ -4,5 +4,5 @@ import (
 	"embed"
 )
 
-//go:embed html
-var HtmlFs embed.FS
+//go:embed html db
+var StaticFs embed.FS

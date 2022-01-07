@@ -19,11 +19,25 @@ func HtmlFilesHandler(data Msg, files ...string) (template2.HTML, error) {
 		data.Wait = 3
 	}
 	cbuf := new(bytes.Buffer)
-	t, err := template2.ParseFS(GetHtmlFs(), files...)
+	t, err := template2.ParseFS(GetStaticFs(), files...)
 	if err != nil {
 		return "", err
 	} else if err := t.Execute(cbuf, data); err != nil {
 		return "", err
 	}
 	return template.HTML(cbuf.String()), err
+}
+
+func HtmlFilesHandlerString(data Msg, files ...string) (string, error) {
+	if data.Wait == 0 {
+		data.Wait = 3
+	}
+	cbuf := new(bytes.Buffer)
+	t, err := template2.ParseFS(GetStaticFs(), files...)
+	if err != nil {
+		return "", err
+	} else if err := t.Execute(cbuf, data); err != nil {
+		return "", err
+	}
+	return cbuf.String(), err
 }

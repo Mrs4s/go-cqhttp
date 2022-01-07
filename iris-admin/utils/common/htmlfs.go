@@ -5,6 +5,6 @@ import (
 	"github.com/Mrs4s/go-cqhttp/iris-admin/static"
 )
 
-func GetHtmlFs() embed.FS {
-	return static.HtmlFs
+func GetStaticFs() embed.FS {
+	return static.StaticFs
 }

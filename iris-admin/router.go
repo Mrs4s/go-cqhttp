@@ -3,19 +3,38 @@ package iris_admin
 import (
 	adapter "github.com/GoAdminGroup/go-admin/adapter/iris"
 	"github.com/GoAdminGroup/go-admin/engine"
-	"github.com/Mrs4s/go-cqhttp/iris-admin/app/login"
 	"github.com/Mrs4s/go-cqhttp/iris-admin/pages"
 	"github.com/kataras/iris/v12"
 )
 
 func makeRouter(eng *engine.Engine, app *iris.Application) {
-	eng.HTML("GET", "/admin", pages.DashboardPage)
-	eng.HTML("GET", "/admin/form", pages.GetFormContent)
-	eng.HTML("GET", "/admin/table", pages.GetTableContent)
+	eng.HTML("get", "/admin", pages.GetIndex)
 	app.Get("/", func(ctx iris.Context) {
-		ctx.Redirect("/admin")
+		//默认转跳地址
+		ctx.Redirect("/admin/qq/info") //配置页面
 	})
-	app.Get("/test", adapter.Content(login.CheckQQlogin))
+	////自定义中间件
+	//app.WrapRouter(func(w http.ResponseWriter, r *http.Request, firstNextIsTheRouter http.HandlerFunc) {
+	//	path := r.URL.Path
+	//	if strings.HasPrefix(path, "/qq") {
+	//		ctx := app.ContextPool.Acquire(w, r)
+	//		adapter.Content(login.CheckQQlogin)
+	//		app.ContextPool.Release(ctx)
+	//		return
+	//	}
+	//	firstNextIsTheRouter.ServeHTTP(w, r)
+	//})
+	app.Get("/admin/qq/checkconfig", appInterface.Login.CheckConfig) //登录前调用，校验配置文件等信息。
+	app.Post("/qq/do_encrypt_key_input", adapter.Content(appInterface.Login.DoEncryptKeyInput))
+	app.Get("/qq/login", appInterface.Login.NomalLogin)    //正常登录
+	app.Get("/qq/qrlogin", appInterface.Login.QrloginHtml) //二维码方式登录
+	app.Any("/qq/do_qrlogin", adapter.Content(appInterface.Login.DoQrlogin))
+	app.Get("/qq/captcha_input", adapter.Content(appInterface.Login.CaptchaInput))
+	app.Get("/qq/loginsuccess", appInterface.Login.LoginSuccess)
+	app.Get("/admin/qq/info", adapter.Content(appInterface.Login.QqInfo))
+	eng.HTML("any", "/qq/sms_input", appInterface.Login.SmsInput)
+	eng.HTML("get", "/admin/qq/encrypt_key_input", appInterface.Login.EncryptPasswordEnterWeb)
+	eng.HTML("get", "/admin/qq/session_token_select", appInterface.Login.SessionTokenWeb)
 	app.HandleDir("/uploads", "./uploads", iris.DirOptions{
 		IndexName: "/index.html",
 		Gzip:      true,

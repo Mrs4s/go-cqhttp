@@ -148,3 +148,44 @@ func ResetWorkingDir() {
 	}
 	os.Exit(0)
 }
+
+// 从外部导入config配置到base库
+func SetConf(conf *config.Config) {
+	{ // bool config
+		if conf.Output.Debug {
+			Debug = true
+		}
+		IgnoreInvalidCQCode = conf.Message.IgnoreInvalidCQCode
+		SplitURL = conf.Message.FixURL
+		RemoveReplyAt = conf.Message.RemoveReplyAt
+		ExtraReplyData = conf.Message.ExtraReplyData
+		ForceFragmented = conf.Message.ForceFragment
+		SkipMimeScan = conf.Message.SkipMimeScan
+		ReportSelfMessage = conf.Message.ReportSelfMessage
+		UseSSOAddress = conf.Account.UseSSOAddress
+	}
+	{ // others
+		Proxy = conf.Message.ProxyRewrite
+		Account = conf.Account
+		Reconnect = conf.Account.ReLogin
+		Servers = conf.Servers
+		Database = conf.Database
+		LogLevel = conf.Output.LogLevel
+		LogColorful = conf.Output.LogColorful == nil || *conf.Output.LogColorful
+		if conf.Message.PostFormat != "string" && conf.Message.PostFormat != "array" {
+			log.Warnf("post-format 配置错误, 将自动使用 string")
+			PostFormat = "string"
+		} else {
+			PostFormat = conf.Message.PostFormat
+		}
+		if conf.Output.LogAging > 0 {
+			LogAging = time.Hour * 24 * time.Duration(conf.Output.LogAging)
+		}
+		if conf.Heartbeat.Interval > 0 {
+			HeartbeatInterval = time.Second * time.Duration(conf.Heartbeat.Interval)
+		}
+		if conf.Heartbeat.Disabled || conf.Heartbeat.Interval < 0 {
+			HeartbeatInterval = 0
+		}
+	}
+}

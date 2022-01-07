@@ -124,6 +124,41 @@ func NewQQBot(cli *client.QQClient) *CQBot {
 	return bot
 }
 
+func (bot *CQBot) SetClient(cli *client.QQClient) {
+	bot.Client = cli
+	bot.Client.OnPrivateMessage(bot.privateMessageEvent)
+	bot.Client.OnGroupMessage(bot.groupMessageEvent)
+	if base.ReportSelfMessage {
+		bot.Client.OnSelfPrivateMessage(bot.privateMessageEvent)
+		bot.Client.OnSelfGroupMessage(bot.groupMessageEvent)
+	}
+	bot.Client.OnTempMessage(bot.tempMessageEvent)
+	bot.Client.GuildService.OnGuildChannelMessage(bot.guildChannelMessageEvent)
+	bot.Client.GuildService.OnGuildMessageReactionsUpdated(bot.guildMessageReactionsUpdatedEvent)
+	bot.Client.GuildService.OnGuildChannelUpdated(bot.guildChannelUpdatedEvent)
+	bot.Client.GuildService.OnGuildChannelCreated(bot.guildChannelCreatedEvent)
+	bot.Client.GuildService.OnGuildChannelDestroyed(bot.guildChannelDestroyedEvent)
+	bot.Client.OnGroupMuted(bot.groupMutedEvent)
+	bot.Client.OnGroupMessageRecalled(bot.groupRecallEvent)
+	bot.Client.OnGroupNotify(bot.groupNotifyEvent)
+	bot.Client.OnFriendNotify(bot.friendNotifyEvent)
+	bot.Client.OnMemberSpecialTitleUpdated(bot.memberTitleUpdatedEvent)
+	bot.Client.OnFriendMessageRecalled(bot.friendRecallEvent)
+	bot.Client.OnReceivedOfflineFile(bot.offlineFileEvent)
+	bot.Client.OnJoinGroup(bot.joinGroupEvent)
+	bot.Client.OnLeaveGroup(bot.leaveGroupEvent)
+	bot.Client.OnGroupMemberJoined(bot.memberJoinEvent)
+	bot.Client.OnGroupMemberLeaved(bot.memberLeaveEvent)
+	bot.Client.OnGroupMemberPermissionChanged(bot.memberPermissionChangedEvent)
+	bot.Client.OnGroupMemberCardUpdated(bot.memberCardUpdatedEvent)
+	bot.Client.OnNewFriendRequest(bot.friendRequestEvent)
+	bot.Client.OnNewFriendAdded(bot.friendAddedEvent)
+	bot.Client.OnGroupInvited(bot.groupInvitedEvent)
+	bot.Client.OnUserWantJoinGroup(bot.groupJoinReqEvent)
+	bot.Client.OnOtherClientStatusChanged(bot.otherClientStatusChangedEvent)
+	bot.Client.OnGroupDigest(bot.groupEssenceMsg)
+}
+
 // OnEventPush 注册事件上报函数
 func (bot *CQBot) OnEventPush(f func(e *Event)) {
 	bot.lock.Lock()

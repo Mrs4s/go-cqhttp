@@ -3,6 +3,7 @@ package jump
 import (
 	"github.com/GoAdminGroup/go-admin/template/types"
 	"github.com/Mrs4s/go-cqhttp/iris-admin/utils/common"
+	"github.com/kataras/iris/v12"
 )
 
 func JumpError(data common.Msg) types.Panel {
@@ -17,7 +18,16 @@ func JumpError(data common.Msg) types.Panel {
 		//})
 	}
 	return types.Panel{
-		Title: "跳转提示",
+		Title:   "跳转提示",
 		Content: tmp,
 	}
+}
+
+func JumpErrorForIris(ctx iris.Context, data common.Msg) {
+	var path = "html/error.tmpl"
+	tmp, err := common.HtmlFilesHandlerString(data, path)
+	if err != nil {
+		panic(err)
+	}
+	ctx.HTML(tmp)
 }
