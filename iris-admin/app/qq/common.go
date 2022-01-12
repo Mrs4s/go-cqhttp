@@ -1,5 +1,5 @@
 // Package gocq 程序的主体部分
-package login
+package qq
 
 import (
 	"crypto/aes"
@@ -8,6 +8,7 @@ import (
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
+	"github.com/kataras/iris/v12"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/pbkdf2"
 	"os"
@@ -87,4 +88,13 @@ func newClient() *client.QQClient {
 func (l *Dologin) saveToken() {
 	base.AccountToken = l.Cli.GenToken()
 	_ = os.WriteFile("session.token", base.AccountToken, 0o644)
+}
+
+// 退出程序,用于docker重启
+func (l *Dologin) Shutdown(ctx iris.Context) {
+	err := l.checkAuth(ctx)
+	if err != nil {
+		return
+	}
+	os.Exit(1)
 }

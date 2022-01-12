@@ -32,8 +32,9 @@ type serverHttp struct {
 }
 
 type serverHttpPost struct {
-	Url    string `json:"url"`
-	Secret string `json:"secret"`
+	Disable bool   `json:"disable"`
+	Url     string `json:"url"`
+	Secret  string `json:"secret"`
 }
 
 type serverWs struct {
@@ -232,6 +233,9 @@ func parseServerHttp(cfg *serverHttp, c *config) map[string]yaml.Node {
 		},
 	}
 	for _, post := range cfg.Post {
+		if post.Disable {
+			continue
+		}
 		httpConf.Post = append(httpConf.Post, struct {
 			URL    string `yaml:"url"`
 			Secret string `yaml:"secret"`

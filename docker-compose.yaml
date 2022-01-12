@@ -1,0 +1,14 @@
+version: '3'
+services:
+  go-cqhttp:
+    container_name: go-cqhttp
+    image: scjtqs/cqhttp:1.0.1
+    restart: always
+    privileged: true
+    ports:
+      - 5700:5700
+      - 9999:8080
+    volumes:
+      - ./cqhttp-data:/data
+    environment:
+      - UPDATE=1

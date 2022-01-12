@@ -1,4 +1,4 @@
-package login
+package qq
 
 import (
 	"crypto/md5"
@@ -12,20 +12,28 @@ import (
 	"github.com/GoAdminGroup/go-admin/template/icon"
 	"github.com/GoAdminGroup/go-admin/template/types"
 	"github.com/GoAdminGroup/go-admin/template/types/form"
+	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/go-cqhttp/coolq"
+	gocq_db "github.com/Mrs4s/go-cqhttp/db"
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
+	"github.com/Mrs4s/go-cqhttp/internal/cache"
+	"github.com/Mrs4s/go-cqhttp/iris-admin/loghook"
 	"github.com/Mrs4s/go-cqhttp/iris-admin/models"
 	"github.com/Mrs4s/go-cqhttp/iris-admin/utils/common"
 	"github.com/Mrs4s/go-cqhttp/iris-admin/utils/jump"
 	config2 "github.com/Mrs4s/go-cqhttp/modules/config"
 	"github.com/Mrs4s/go-cqhttp/modules/servers"
 	"github.com/kataras/iris/v12"
+	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus/hooks/writer"
 	"os"
+	"path"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -45,10 +53,24 @@ type Dologin struct {
 	Status bool //是否已经启动过net server
 	Conn   chan string
 	Bot    *coolq.CQBot
+	Weblog *loghook.WebLogWriter
 }
 
+// 初始化
 func NewDologin() *Dologin {
 	cfg, _ := models.GetQqConfig()
+	weblog := loghook.NewWebLogWriter()
+	log.AddHook(&writer.Hook{
+		Writer: weblog,
+		LogLevels: []log.Level{
+			log.PanicLevel,
+			log.FatalLevel,
+			log.ErrorLevel,
+			log.WarnLevel,
+			log.InfoLevel,
+			log.DebugLevel,
+		},
+	})
 	return &Dologin{
 		Cli:    newClient(),
 		Config: cfg,
@@ -59,6 +81,7 @@ func NewDologin() *Dologin {
 			Step int
 		}{Code: 0, Msg: "", Step: 0},
 		Status: false,
+		Weblog: weblog,
 	}
 }
 
@@ -78,8 +101,7 @@ func (l *Dologin) EncryptPasswordEnterWeb(ctx *context.Context) (types.Panel, er
 	link := tmpl.Default().Link().
 		SetURL("/admin/info/qq_config"). // 设置跳转路由
 		SetContent("返回配置页面"). // 设置链接内容
-		//OpenInNewTab().  // 是否在新的tab页打开
-		//SetTabTitle("Manager Detail").  // 设置tab的标题
+		SetClass("btn-group btn btn-sm btn-info btn-flat pull-left").
 		GetContent()
 	col1 := components.Col().SetSize(types.SizeMD(8)).SetContent(link).GetContent()
 	btn2 := components.Button().SetType("reset").
@@ -118,6 +140,7 @@ func (l *Dologin) EncryptPasswordEnterWeb(ctx *context.Context) (types.Panel, er
 	}, nil
 }
 
+// bytekey的输入处理
 func (l *Dologin) DoEncryptKeyInput(ctx iris.Context) (types.Panel, error) {
 	byteKey := ctx.FormValue("byteKey")
 	if byteKey == "" {
@@ -230,6 +253,7 @@ func (l *Dologin) QrloginHtml(ctx iris.Context) {
 	ctx.Redirect("/qq/do_qrlogin", 302)
 }
 
+// 二维码登录处理
 func (l *Dologin) DoQrlogin(ctx iris.Context) (types.Panel, error) {
 	err := l.checkAuth(ctx)
 	if err != nil {
@@ -261,6 +285,9 @@ func (l *Dologin) DoQrlogin(ctx iris.Context) (types.Panel, error) {
 	} else {
 		log.Infof("请使用手机QQ扫描二维码 (qrcode.png) : ")
 		header = fmt.Sprintf("请使用手机QQ扫描二维码 (qrcode.png) : ")
+	}
+	if l.Qrcode == nil {
+		l.fetchQrCode()
 	}
 	s, err := l.Cli.QueryQRCodeStatus(l.Qrcode.Sig)
 	if err != nil {
@@ -437,9 +464,6 @@ func (l *Dologin) loginResponseProcessor(ctx iris.Context, res *client.LoginResp
 			Url: "/admin/info/qq_config",
 		})
 		return errors.Errorf("登录失败: %v", msg)
-		//log.Infof("按 Enter 或等待 5s 后继续....")
-		//readLineTimeout(time.Second*5, "")
-		//os.Exit(0)
 	}
 	return nil
 }
@@ -581,6 +605,11 @@ func (l *Dologin) DoLoginBackend() {
 					l.Bot = coolq.NewQQBot(l.Cli)
 					servers.Run(l.Bot)
 				}
+				l.ErrMsg = struct {
+					Code int
+					Msg  string
+					Step int
+				}{Code: 0, Msg: "登录成功", Step: 0}
 				//servers.Run(coolq.NewQQBot(l.Cli))
 				log.Info("资源初始化完成, 开始处理信息.")
 				log.Info("アトリは、高性能ですから!")
@@ -592,10 +621,6 @@ func (l *Dologin) DoLoginBackend() {
 func (l *Dologin) LoginSuccess(ctx iris.Context) {
 	l.Conn <- "loginsuccess"
 	ctx.Redirect("/admin/qq/info")
-	//jump.JumpSuccessForIris(ctx, common.Msg{
-	//	Msg: "登录成功",
-	//	Url: "/admin/info/qq_config",
-	//})
 }
 
 func (l *Dologin) NomalLogin(ctx iris.Context) {
@@ -616,5 +641,427 @@ func (l *Dologin) NomalLogin(ctx iris.Context) {
 	base.SetConf(cfg)
 	if err := l.commonLogin(ctx); err != nil {
 		return
+	}
+}
+
+// 自动登录尝试
+func (l *Dologin) AutoLoginCommon() {
+	cfg, err := models.GetQqConfig()
+	if err != nil {
+		l.ErrMsg = struct {
+			Code int
+			Msg  string
+			Step int
+		}{Code: 3000, Msg: "配置信息获取错误", Step: 0}
+		return
+	}
+	if l.Cli != nil && l.Cli.Online {
+		l.ErrMsg = struct {
+			Code int
+			Msg  string
+			Step int
+		}{Code: 0, Msg: "QQ已经在线", Step: 0}
+		return
+	}
+	l.Config = cfg
+	base.SetConf(l.Config)
+	l.Cli = newClient()
+	isQRCodeLogin := (base.Account.Uin == 0 || len(base.Account.Password) == 0) && !base.Account.Encrypt
+	isTokenLogin := false
+	var times uint = 1 // 重试次数
+	var reLoginLock sync.Mutex
+	l.Cli.OnDisconnected(func(q *client.QQClient, e *client.ClientDisconnectedEvent) {
+		reLoginLock.Lock()
+		defer reLoginLock.Unlock()
+		times = 1
+		if l.Cli.Online {
+			return
+		}
+		log.Warnf("Bot已离线: %v", e.Message)
+		time.Sleep(time.Second * time.Duration(base.Reconnect.Delay))
+		for {
+			if base.Reconnect.Disabled {
+				log.Warnf("未启用自动重连, 将退出.")
+				time.Sleep(time.Second)
+				l.Cli.Disconnect()
+				l.Cli.Release()
+				l.Cli = newClient()
+				l.ErrMsg = struct {
+					Code int
+					Msg  string
+					Step int
+				}{Code: 1000, Msg: "未启用自动重连, 将退出", Step: 1}
+				return
+			}
+			if times > base.Reconnect.MaxTimes && base.Reconnect.MaxTimes != 0 {
+				//log.Fatalf("Bot重连次数超过限制, 停止")
+				time.Sleep(time.Second)
+				l.Cli.Disconnect()
+				l.Cli.Release()
+				l.Cli = newClient()
+				l.ErrMsg = struct {
+					Code int
+					Msg  string
+					Step int
+				}{Code: 1001, Msg: "Bot重连次数超过限制, 停止", Step: 1}
+				return
+			}
+			times++
+			if base.Reconnect.Interval > 0 {
+				log.Warnf("将在 %v 秒后尝试重连. 重连次数：%v/%v", base.Reconnect.Interval, times, base.Reconnect.MaxTimes)
+				time.Sleep(time.Second * time.Duration(base.Reconnect.Interval))
+			} else {
+				time.Sleep(time.Second)
+			}
+			if l.Cli.Online {
+				log.Infof("登录已完成")
+				break
+			}
+			log.Warnf("尝试重连...")
+			err := l.Cli.TokenLogin(base.AccountToken)
+			if err == nil {
+				l.saveToken()
+				return
+			}
+			log.Warnf("快速重连失败: %v", err)
+			if isQRCodeLogin {
+				//log.Fatalf("快速重连失败, 扫码登录无法恢复会话.")
+				time.Sleep(time.Second)
+				l.Cli.Disconnect()
+				l.Cli.Release()
+				l.Cli = newClient()
+				l.ErrMsg = struct {
+					Code int
+					Msg  string
+					Step int
+				}{Code: 1002, Msg: "快速重连失败, 扫码登录无法恢复会话.", Step: 1}
+				//panic("快速重连失败, 扫码登录无法恢复会话.")
+				return
+			}
+			log.Warnf("快速重连失败, 尝试普通登录. 这可能是因为其他端强行T下线导致的.")
+			time.Sleep(time.Second)
+			res, err := l.Cli.Login()
+			if err != nil {
+				l.ErrMsg = struct {
+					Code int
+					Msg  string
+					Step int
+				}{Code: 3003, Msg: "登录失败：" + err.Error(), Step: 5}
+				return
+			}
+			if err := l.loginResponseProcessorBackend(res); err != nil {
+				//log.Errorf("登录时发生致命错误: %v", err)
+				time.Sleep(time.Second)
+				l.Cli.Disconnect()
+				l.Cli.Release()
+				l.Cli = newClient()
+				l.ErrMsg = struct {
+					Code int
+					Msg  string
+					Step int
+				}{Code: 1002, Msg: fmt.Sprintf("登录时发生致命错误: %v", err), Step: 1}
+				return
+			} else {
+				l.saveToken()
+				break
+			}
+		}
+	})
+	var byteKey []byte
+	byteKey, err = models.Getbytekey()
+	rotateOptions := []rotatelogs.Option{
+		rotatelogs.WithRotationTime(time.Hour * 24),
+	}
+	rotateOptions = append(rotateOptions, rotatelogs.WithMaxAge(base.LogAging))
+	if base.LogForceNew {
+		rotateOptions = append(rotateOptions, rotatelogs.ForceNewFile())
+	}
+	w, err := rotatelogs.New(path.Join("logs", "%Y-%m-%d.log"), rotateOptions...)
+	if err != nil {
+		log.Errorf("rotatelogs init err: %v", err)
+		panic(err)
+	}
+
+	consoleFormatter := global.LogFormat{EnableColor: base.LogColorful}
+	fileFormatter := global.LogFormat{EnableColor: false}
+	log.AddHook(global.NewLocalHook(w, consoleFormatter, fileFormatter, global.GetLogLevel(base.LogLevel)...))
+
+	mkCacheDir := func(path string, _type string) (errmsg string) {
+		if !global.PathExists(path) {
+			if err := os.MkdirAll(path, 0o755); err != nil {
+				//log.Fatalf("创建%s缓存文件夹失败: %v", _type, err)
+				return fmt.Sprintf("创建%s缓存文件夹失败: %v", _type, err)
+			}
+		}
+		return ""
+	}
+
+	errmsg := mkCacheDir(global.ImagePath, "图片")
+	errmsg += mkCacheDir(global.VoicePath, "语音")
+	errmsg += mkCacheDir(global.VideoPath, "视频")
+	errmsg += mkCacheDir(global.CachePath, "发送图片")
+	errmsg += mkCacheDir(path.Join(global.ImagePath, "guild-images"), "频道图片缓存")
+	if errmsg != "" {
+		l.ErrMsg = struct {
+			Code int
+			Msg  string
+			Step int
+		}{Code: 3004, Msg: errmsg, Step: 0}
+		return
+	}
+
+	cache.Init()
+	gocq_db.Init()
+	gocq_db.Open()
+
+	log.Info("当前版本:", base.Version)
+	if base.Debug {
+		log.SetLevel(log.DebugLevel)
+		log.SetReportCaller(true)
+		log.Warnf("已开启Debug模式.")
+		log.Debugf("开发交流群: 192548878")
+	}
+	log.Info("用户交流群: 721829413")
+	if !global.PathExists("device.json") {
+		log.Warn("虚拟设备信息不存在, 将自动生成随机设备.")
+		client.GenRandomDevice()
+		_ = os.WriteFile("device.json", client.SystemDeviceInfo.ToJson(), 0o644)
+		log.Info("已生成设备信息并保存到 device.json 文件.")
+	} else {
+		log.Info("将使用 device.json 内的设备信息运行Bot.")
+		if err := client.SystemDeviceInfo.ReadJson([]byte(global.ReadAllText("device.json"))); err != nil {
+			log.Fatalf("加载设备信息失败: %v", err)
+		}
+	}
+	if global.PathExists("session.token") {
+		token, err := os.ReadFile("session.token")
+		if err == nil {
+			if base.Account.Uin != 0 {
+				r := binary.NewReader(token)
+				cu := r.ReadInt64()
+				if cu != base.Account.Uin {
+					msg := fmt.Sprintf("警告: 配置文件内的QQ号 (%v) 与缓存内的QQ号 (%v) 不相同,已删除缓存，请重新登录", base.Account.Uin, cu)
+					l.ErrMsg = struct {
+						Code int
+						Msg  string
+						Step int
+					}{Code: 3005, Msg: msg, Step: 0}
+					return
+				}
+			}
+			if err = l.Cli.TokenLogin(token); err != nil {
+				_ = os.Remove("session.token")
+				log.Warnf("恢复会话失败: %v , 尝试使用正常流程登录.", err)
+				time.Sleep(time.Second)
+				l.Cli.Disconnect()
+				l.Cli.Release()
+				l.Cli = newClient()
+			} else {
+				isTokenLogin = true
+			}
+		}
+	}
+	if base.Account.Uin != 0 && base.PasswordHash != [16]byte{} {
+		l.Cli.Uin = base.Account.Uin
+		l.Cli.PasswordMd5 = base.PasswordHash
+	}
+	if base.Account.Encrypt {
+		if !global.PathExists("password.encrypt") {
+			if base.Account.Password == "" {
+				l.ErrMsg = struct {
+					Code int
+					Msg  string
+					Step int
+				}{Code: 3006, Msg: "自动登录失败： 无法进行加密，请在配置文件中的添加密码后重新启动.", Step: 0}
+				return
+			}
+
+			if len(byteKey) == 0 {
+				l.ErrMsg = struct {
+					Code int
+					Msg  string
+					Step int
+				}{Code: 3006, Msg: "自动登录失败： 无法进行加密，请在配置文件中的添加密码后重新启动.", Step: 0}
+				return
+			}
+		} else {
+			if base.Account.Password != "" {
+				l.ErrMsg = struct {
+					Code int
+					Msg  string
+					Step int
+				}{Code: 3006, Msg: "自动登录失败：密码已加密，为了您的账号安全，请删除配置文件中的密码后重新启动.", Step: 0}
+				return
+			}
+			if len(byteKey) == 0 {
+				l.ErrMsg = struct {
+					Code int
+					Msg  string
+					Step int
+				}{Code: 3006, Msg: "自动登录失败：无法进行加密，请在配置文件中的添加密码后重新启动.", Step: 0}
+				return
+			}
+
+			encrypt, _ := os.ReadFile("password.encrypt")
+			ph, err := PasswordHashDecrypt(string(encrypt), byteKey)
+			if err != nil {
+				l.ErrMsg = struct {
+					Code int
+					Msg  string
+					Step int
+				}{Code: 3006, Msg: "自动登录失败：加密存储的密码损坏，请尝试重新配置密码", Step: 0}
+				return
+			}
+			copy(base.PasswordHash[:], ph)
+		}
+	} else if len(base.Account.Password) > 0 {
+		base.PasswordHash = md5.Sum([]byte(base.Account.Password))
+	}
+
+	if !isTokenLogin {
+		if !isQRCodeLogin {
+			res, err := l.Cli.Login()
+			if err != nil {
+				l.ErrMsg = struct {
+					Code int
+					Msg  string
+					Step int
+				}{Code: 3003, Msg: "登录失败：" + err.Error(), Step: 5}
+				return
+			}
+			if err := l.loginResponseProcessorBackend(res); err != nil {
+				log.Errorf("登录时发生致命错误： %v", err)
+				return
+			}
+		} else {
+			l.ErrMsg = struct {
+				Code int
+				Msg  string
+				Step int
+			}{Code: 3007, Msg: "自动登录失败，需要扫码登录", Step: 1}
+		}
+	} else {
+		l.ErrMsg.Msg = "自动登录成功"
+		l.Conn <- "loginsuccess"
+		return
+	}
+	if (base.Account.Uin == 0 || (base.Account.Password == "" && !base.Account.Encrypt)) && !global.PathExists("session.token") {
+		log.Warnf("账号密码未配置, 将使用二维码登录.")
+		l.ErrMsg = struct {
+			Code int
+			Msg  string
+			Step int
+		}{Code: 2000, Msg: "账号密码未配置, 将使用二维码登录.", Step: 1}
+		return
+	}
+}
+
+// 启动的时候自动登录 回包处理
+func (l *Dologin) loginResponseProcessorBackend(res *client.LoginResponse) error {
+	var err error
+	for {
+		if err != nil {
+			l.ErrMsg.Msg = err.Error()
+			l.ErrMsg.Code = 2000
+			return err
+		}
+		if res.Success {
+			l.ErrMsg.Msg = "自动登录成功"
+			l.Conn <- "loginsuccess"
+			return nil
+		}
+		time.Sleep(time.Second)
+		switch res.Error {
+		case client.SliderNeededError:
+			log.Warnf("登录需要滑条验证码, 请使用手机QQ扫描二维码以继续登录.")
+			l.Cli.Disconnect()
+			l.Cli.Release()
+			l.Cli = client.NewClientEmpty()
+			l.ErrMsg = struct {
+				Code int
+				Msg  string
+				Step int
+			}{Code: 2001, Msg: "登录需要滑条验证码, 请使用手机QQ扫描二维码以继续登录.", Step: 2}
+			return errors.New("登录需要滑条验证码, 请使用手机QQ扫描二维码以继续登录.")
+		case client.NeedCaptcha:
+			log.Warnf("登录需要验证码.")
+			//_ = os.WriteFile("captcha.jpg", res.CaptchaImage, 0o644)
+			//log.Warnf("请输入验证码 (captcha.jpg)： (Enter 提交)")
+			l.ErrMsg = struct {
+				Code int
+				Msg  string
+				Step int
+			}{Code: 2002, Msg: "自动登录失败，需要验证码", Step: 2}
+			return errors.New("登录需要验证码.")
+		case client.SMSNeededError:
+			log.Warnf("账号已开启设备锁,  向手机 %v 发送短信验证码.", res.SMSPhone)
+			if !l.Cli.RequestSMS() {
+				log.Warnf("发送验证码失败，可能是请求过于频繁.")
+				l.ErrMsg = struct {
+					Code int
+					Msg  string
+					Step int
+				}{Code: 2003, Msg: "自动登录失败，发送验证码失败，可能是请求过于频繁.", Step: 2}
+				return errors.New("发送验证码失败，可能是请求过于频繁.")
+			}
+			l.ErrMsg = struct {
+				Code int
+				Msg  string
+				Step int
+			}{Code: 2004, Msg: "自动登录失败，账号已开启设备锁.需要验证码", Step: 2}
+			return errors.Errorf("账号已开启设备锁,  向手机 %v 发送短信验证码.", res.SMSPhone)
+		case client.SMSOrVerifyNeededError:
+			if !l.Cli.RequestSMS() {
+				log.Warnf("发送验证码失败，可能是请求过于频繁.")
+				l.ErrMsg = struct {
+					Code int
+					Msg  string
+					Step int
+				}{Code: 2003, Msg: "自动登录失败，发送验证码失败，可能是请求过于频繁.", Step: 2}
+				return errors.New("发送验证码失败，可能是请求过于频繁.")
+			}
+			l.ErrMsg = struct {
+				Code int
+				Msg  string
+				Step int
+			}{Code: 2004, Msg: "自动登录失败，账号已开启设备锁.需要验证码", Step: 2}
+			return errors.Errorf("账号已开启设备锁,  向手机 %v 发送短信验证码.", res.SMSPhone)
+		case client.UnsafeDeviceError:
+			log.Warnf("账号已开启设备锁，请前往 -> %v <- 验证后重启Bot.", res.VerifyUrl)
+			log.Infof("按 Enter 或等待 5s 后继续....")
+			l.ErrMsg = struct {
+				Code int
+				Msg  string
+				Step int
+			}{Code: 2005, Msg: "自动登录失败，账号已开启设备锁.验证", Step: 2}
+			return errors.Errorf("账号已开启设备锁，请前往 -> %v <- 验证后重启Bot.", res.VerifyUrl)
+		case client.OtherLoginError, client.UnknownLoginError, client.TooManySMSRequestError:
+			msg := res.ErrorMessage
+			if strings.Contains(msg, "版本") {
+				msg = "密码错误或账号被冻结"
+				l.ErrMsg = struct {
+					Code int
+					Msg  string
+					Step int
+				}{Code: 2006, Msg: "自动登录失败，密码错误或账号被冻结", Step: 2}
+				return errors.New("密码错误或账号被冻结")
+			}
+			if strings.Contains(msg, "冻结") {
+				l.ErrMsg = struct {
+					Code int
+					Msg  string
+					Step int
+				}{Code: 2007, Msg: "自动登录失败，账号被冻结", Step: 2}
+				return errors.New("密码错误或账号被冻结")
+				//log.Fatalf("账号被冻结")
+			}
+			log.Warnf("登录失败: %v", msg)
+			l.ErrMsg = struct {
+				Code int
+				Msg  string
+				Step int
+			}{Code: 2008, Msg: fmt.Sprintf("登录失败: %v", msg), Step: 2}
+			return errors.Errorf("登录失败: %v", msg)
+		}
 	}
 }

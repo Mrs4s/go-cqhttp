@@ -1,11 +1,10 @@
-package login
+package qq
 
 import (
 	"crypto/md5"
 	"fmt"
 	"github.com/GoAdminGroup/go-admin/engine"
 	models2 "github.com/GoAdminGroup/go-admin/plugins/admin/models"
-	"github.com/GoAdminGroup/go-admin/template/types"
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/go-cqhttp/db"
@@ -26,23 +25,20 @@ import (
 )
 
 //验证 QQ是否已经登录
-func (l *Dologin) CheckQQlogin(ctx iris.Context) (types.Panel, error) {
+func (l *Dologin) CheckQQlogin(ctx iris.Context) error {
 	err := l.checkAuth(ctx)
 	if err != nil {
-		return types.Panel{}, nil
+		return err
 	}
 	if !l.Cli.Online {
-		return jump.JumpError(common.Msg{
+		jump.JumpErrorForIris(ctx, common.Msg{
 			Msg:  "qq尚未登录",
-			Url:  "/admin/info/qq_config",
+			Url:  "/admin/qq/info",
 			Wait: 3,
-		}), errors.New("qq尚未登录")
+		})
+		return errors.New("qq尚未登录")
 	}
-	return jump.JumpSuccess(common.Msg{
-		Msg:  "qq已成功登陆",
-		Url:  "/admin/qq/info",
-		Wait: 3,
-	}), nil
+	return nil
 }
 
 func (l *Dologin) checkAuth(ctx iris.Context) error {
@@ -92,7 +88,7 @@ func (l *Dologin) CheckConfig(ctx iris.Context) {
 	if l.Cli != nil && l.Cli.Online {
 		jump.JumpSuccessForIris(ctx, common.Msg{
 			Msg: "QQ已经在线",
-			Url: "/admin/info/qq_config",
+			Url: "/admin/qq/info",
 		})
 		return
 	}
@@ -228,7 +224,7 @@ func (l *Dologin) CheckConfig(ctx iris.Context) {
 	if errmsg != "" {
 		jump.JumpErrorForIris(ctx, common.Msg{
 			Msg:  errmsg,
-			Url:  "/admin/info/qq_config", //二维码方式登录地址
+			Url:  "/admin/info/qq_config", //配置信息有误
 			Wait: 3,
 		})
 		return
@@ -350,7 +346,12 @@ func (l *Dologin) CheckConfig(ctx iris.Context) {
 				return
 			}
 		} else {
-			ctx.Redirect("/qq/qrlogin", 302)
+			jump.JumpSuccessForIris(ctx, common.Msg{
+				Msg: "将采用扫码登录",
+				Url: "/qq/qrlogin",
+			})
+			return
+			//ctx.Redirect("/qq/qrlogin", 302)
 		}
 	} else {
 		jump.JumpSuccessForIris(ctx, common.Msg{

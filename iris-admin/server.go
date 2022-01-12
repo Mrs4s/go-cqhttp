@@ -16,7 +16,7 @@ import (
 	"github.com/Mrs4s/go-cqhttp/internal/base"
 	"github.com/Mrs4s/go-cqhttp/internal/cache"
 	"github.com/Mrs4s/go-cqhttp/iris-admin/app/info"
-	"github.com/Mrs4s/go-cqhttp/iris-admin/app/login"
+	"github.com/Mrs4s/go-cqhttp/iris-admin/app/qq"
 	"github.com/Mrs4s/go-cqhttp/iris-admin/models"
 	"github.com/Mrs4s/go-cqhttp/iris-admin/tables"
 	"github.com/Mrs4s/go-cqhttp/iris-admin/utils/common"
@@ -52,7 +52,7 @@ func setup() {
 }
 
 type App struct {
-	Login *login.Dologin
+	Login *qq.Dologin
 	Info  *info.Info
 }
 
@@ -60,7 +60,7 @@ var appInterface *App
 
 func initApp() {
 	appInterface = &App{
-		Login: login.NewDologin(),
+		Login: qq.NewDologin(),
 		Info:  info.NewInfo(),
 	}
 }
@@ -137,6 +137,7 @@ func StartServer() {
 		_ = app.Run(iris.Addr(":8080"))
 	}()
 	go appInterface.Login.DoLoginBackend()
+	appInterface.Login.AutoLoginCommon()
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
 	<-quit
