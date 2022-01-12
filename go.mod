@@ -6,11 +6,11 @@ require (
 	github.com/Baozisoftware/qrcode-terminal-go v0.0.0-20170407111555-c0650d8dff0f
 	github.com/Microsoft/go-winio v0.5.1
 	github.com/Mrs4s/MiraiGo v0.0.0-20211228140953-ab72f3dc28da
+	github.com/RomiChan/websocket v1.4.3-0.20220112132122-0fb50fcee646
 	github.com/dustin/go-humanize v1.0.0
 	github.com/fumiama/go-hide-param v0.1.4
 	github.com/gabriel-vasile/mimetype v1.4.0
 	github.com/gocq/qrcode v0.0.0-20211114040510-366b953fcd98
-	github.com/gorilla/websocket v1.4.2
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0
 	github.com/klauspost/compress v1.13.6
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
@@ -52,7 +52,7 @@ require (
 	go.uber.org/atomic v1.9.0 // indirect
 	golang.org/x/net v0.0.0-20211123203042-d83791d6bcd9 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
-	golang.org/x/sys v0.0.0-20211110154304-99a53858aa08 // indirect
+	golang.org/x/sys v0.0.0-20220111092808-5a964db01320 // indirect
 	golang.org/x/text v0.3.6 // indirect
 	modernc.org/libc v1.8.1 // indirect
 	modernc.org/mathutil v1.2.2 // indirect
