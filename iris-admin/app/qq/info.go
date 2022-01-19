@@ -1,6 +1,7 @@
 package qq
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/GoAdminGroup/go-admin/context"
 	"github.com/GoAdminGroup/go-admin/modules/config"
@@ -11,9 +12,14 @@ import (
 	"github.com/GoAdminGroup/go-admin/template/types"
 	"github.com/GoAdminGroup/themes/adminlte/components/infobox"
 	"github.com/Mrs4s/MiraiGo/client"
+	"github.com/Mrs4s/go-cqhttp/db"
+	"github.com/Mrs4s/go-cqhttp/global"
+	"github.com/Mrs4s/go-cqhttp/iris-admin/loghook"
 	"github.com/Mrs4s/go-cqhttp/iris-admin/utils/common"
 	"github.com/Mrs4s/go-cqhttp/iris-admin/utils/jump"
 	"github.com/kataras/iris/v12"
+	"github.com/pkg/errors"
+	"html/template"
 	"strconv"
 	"time"
 )
@@ -106,9 +112,14 @@ func (l *Dologin) QqInfo(ctx iris.Context) (types.Panel, error) {
 		SetTabTitle("系统日志").
 		SetClass("btn btn-sm btn-default").
 		GetContent()
+	linkChangeUserinfo := components.Link().
+		SetURL("/admin/info/normal_manager/edit?__goadmin_edit_pk=1").
+		SetContent("修改后台登录密码").
+		SetClass("btn btn-sm btn-default").
+		GetContent()
 	rown1 := components.Row().SetContent(tmpl.Default().Box().WithHeadBorder().
 		SetBody(
-			link1 + link2 + link3 + linkinfo + linkLog,
+			link1 + link2 + link3 + linkinfo + linkLog + linkChangeUserinfo,
 		).GetContent()).GetContent()
 	link4 := components.Link().
 		SetURL("/admin/qq/friendlist").
@@ -140,11 +151,12 @@ func (l *Dologin) MemberList(ctx iris.Context) (types.Panel, error) {
 	for _, f := range l.Cli.FriendList {
 		linkDelete := comp.Link().SetClass("btn btn-sm btn-danger").SetContent("删除").SetURL("/admin/qq/deletefriend?uin=" + strconv.FormatInt(f.Uin, 10)).GetContent()
 		linkDetail := comp.Link().SetClass("btn btn-sm btn-primary").SetContent("详情").SetURL("/admin/qq/getfrienddetail?uin=" + strconv.FormatInt(f.Uin, 10)).GetContent()
+		linkSendMsg := comp.Link().SetClass("btn btn-sm btn-default").SetContent("和TA聊天").SetURL("/admin/qq/getmsglist?uin=" + strconv.FormatInt(f.Uin, 10)).GetContent()
 		fs = append(fs, map[string]types.InfoItem{
 			"nickname": {Content: tmpl.HTML(f.Nickname), Value: f.Nickname},
 			"remark":   {Content: tmpl.HTML(f.Remark), Value: f.Remark},
 			"user_id":  {Content: tmpl.HTML(strconv.FormatInt(f.Uin, 10)), Value: strconv.FormatInt(f.Uin, 10)},
-			"console":  {Content: linkDetail + linkDelete},
+			"console":  {Content: linkSendMsg + linkDetail + linkDelete},
 		})
 	}
 
@@ -188,12 +200,13 @@ func (l *Dologin) GroupList(ctx iris.Context) (types.Panel, error) {
 	for _, g := range l.Cli.GroupList {
 		linkLeave := comp.Link().SetClass("btn btn-sm btn-danger").SetContent("退出群").SetURL("/admin/qq/leavegroup?guin=" + strconv.FormatInt(g.Code, 10)).GetContent()
 		linkDetail := comp.Link().SetClass("btn btn-sm btn-primary").SetContent("详情").SetURL("/admin/qq/getgroupdetail?guin=" + strconv.FormatInt(g.Code, 10)).GetContent()
+		linkSendMsg := comp.Link().SetClass("btn btn-sm btn-default").SetContent("进去聊天").SetURL("/admin/qq/getgroupmsglist?uin=" + strconv.FormatInt(g.Code, 10)).GetContent()
 		fs = append(fs, map[string]types.InfoItem{
 			"name":      {Content: tmpl.HTML(g.Name)},
 			"owneruin":  {Content: tmpl.HTML(strconv.FormatInt(g.OwnerUin, 10))},
 			"groupuin":  {Content: tmpl.HTML(strconv.FormatInt(g.Uin, 10))},
 			"groupcode": {Content: tmpl.HTML(strconv.FormatInt(g.Code, 10))},
-			"console":   {Content: linkDetail + linkLeave},
+			"console":   {Content: linkSendMsg + linkDetail + linkLeave},
 		})
 	}
 	param := parameter.GetParam(ctx.Request().URL, 100)
@@ -249,6 +262,7 @@ func (l *Dologin) GetFriendDetal(ctx iris.Context) (types.Panel, error) {
 	if err != nil {
 		return jump.JumpError(common.Msg{
 			Msg: fmt.Sprintf("获取uin%d的信息失败：%s", uin, err.Error()),
+			Url: re,
 		}), nil
 	}
 	comp := tmpl.Get(config.GetTheme())
@@ -479,4 +493,223 @@ func (l *Dologin) WebLog(ctx *context.Context) (types.Panel, error) {
 		}(),
 		RefreshInterval: []int{2},
 	}, nil
+}
+
+func (l *Dologin) GetMsgListJson(ctx iris.Context) {
+	err := l.CheckQQlogin(ctx)
+	if err != nil {
+		return
+	}
+	uin := ctx.URLParamInt64Default("uin", 0)
+	list := loghook.ReadMsg(uin)
+	ctx.JSON(list)
+}
+
+func (l *Dologin) GetMsgListAjaxHtml(ctx iris.Context) {
+	type data struct {
+		Code int           `json:"code"`
+		Msg  string        `json:"msg"`
+		Html template.HTML `json:"html"`
+	}
+	err := l.CheckQQlogin(ctx)
+	if err != nil {
+		return
+	}
+	uin := ctx.URLParamInt64Default("uin", 0)
+	if uin == 0 {
+		uin = ctx.PostValueInt64Default("uin", 0)
+	}
+	if uin == 0 {
+		ctx.JSON(data{Code: -1, Msg: "empty uin"})
+	}
+	list := loghook.ReadMsg(uin)
+	var body template.HTML
+	if list != nil {
+		for _, v := range list {
+			body += l.parseMsg(v)
+		}
+	}
+	ctx.JSON(data{Code: 200, Html: body})
+}
+
+// 拉取和好友的聊天页面
+func (l *Dologin) GetMsgList(ctx iris.Context) (types.Panel, error) {
+	components := tmpl.Get(config.GetTheme())
+	err := l.CheckQQlogin(ctx)
+	if err != nil {
+		return types.Panel{}, nil
+	}
+	uin := ctx.URLParamInt64Default("uin", 0)
+	if uin == 0 {
+		return jump.JumpError(common.Msg{
+			Msg: "参数错误",
+			Url: "/admin/qq/info",
+		}), nil
+	}
+	re := ctx.GetReferrer().URL
+	if re == "" {
+		re = "/admin/qq/friendlist"
+	} else if ctx.GetReferrer().Path == "/admin/qq/getmsglist" {
+		re = "/admin/qq/friendlist"
+	}
+	userinfo, err := l.Cli.GetSummaryInfo(uin)
+	if err != nil {
+		return jump.JumpError(common.Msg{
+			Msg: fmt.Sprintf("获取uin%d的信息失败：%s", uin, err.Error()),
+			Url: re,
+		}), nil
+	}
+	list := loghook.ReadMsg(uin)
+	var body template.HTML
+	if list != nil {
+		for _, v := range list {
+			body += l.parseMsg(v)
+		}
+	}
+	box := components.Box().WithHeadBorder().SetHeader(tmpl.HTML(fmt.Sprintf("和 %s(%d) 的聊天记录", userinfo.Nickname, uin))).
+		SetBody(body).
+		SetFooter("").
+		SetAttr(`id="msgbox"`).
+		GetContent()
+	texeArea := components.Box().SetBody(tmpl.HTML(fmt.Sprintf(`
+<textarea class="form-control" id="msgtext" data-username="%s" data-type="private" rows="3"></textarea>
+`, l.Cli.Nickname))).
+		SetFooter(components.Button().SetContent("发送").SetThemeDefault().SetID("msgsend").GetContent()).
+		GetContent()
+	fs := common.GetStaticFs()
+	js, _ := fs.ReadFile("js/getmsglist.js")
+	return types.Panel{
+		Content:     box + texeArea,
+		Title:       tmpl.HTML(fmt.Sprintf("和%s(%d)的聊天", userinfo.Nickname, uin)),
+		Description: tmpl.HTML(fmt.Sprintf("和%s(%d)的聊天", userinfo.Nickname, uin)),
+		JS:          tmpl.JS(string(js)),
+	}, nil
+}
+
+//群聊天记录列表
+func (l *Dologin) GetGroupMsgList(ctx iris.Context) (types.Panel, error) {
+	components := tmpl.Get(config.GetTheme())
+	err := l.CheckQQlogin(ctx)
+	if err != nil {
+		return types.Panel{}, nil
+	}
+	uin := ctx.URLParamInt64Default("uin", 0)
+	if uin == 0 {
+		return jump.JumpError(common.Msg{
+			Msg: "参数错误",
+			Url: "/admin/qq/info",
+		}), nil
+	}
+	re := ctx.GetReferrer().URL
+	if re == "" {
+		re = "/admin/qq/grouplist"
+	} else if ctx.GetReferrer().Path == "/admin/qq/getgroupmsglist" {
+		re = "/admin/qq/grouplist"
+	}
+	groupinfo, err := l.getGroupInfo(uin)
+	if err != nil {
+		return jump.JumpError(common.Msg{
+			Msg: fmt.Sprintf("获取uin%d的信息失败：%s", uin, err.Error()),
+			Url: re,
+		}), nil
+	}
+	list := loghook.ReadMsg(uin)
+	var body template.HTML
+	if list != nil {
+		for _, v := range list {
+			body += l.parseMsg(v)
+		}
+	}
+	box := components.Box().WithHeadBorder().SetHeader(tmpl.HTML(fmt.Sprintf("和 %s 的聊天记录", groupinfo.Name))).
+		SetBody(body).
+		SetFooter("").
+		SetAttr(`id="msgbox"`).
+		GetContent()
+	texeArea := components.Box().SetBody(tmpl.HTML(fmt.Sprintf(`
+<textarea class="form-control" id="msgtext" data-username="%s" data-type="group" rows="3"></textarea>
+`, l.Cli.Nickname))).
+		SetFooter(components.Button().SetContent("发送").SetThemeDefault().SetID("msgsend").GetContent()).
+		GetContent()
+	fs := common.GetStaticFs()
+	js, _ := fs.ReadFile("js/getmsglist.js")
+	return types.Panel{
+		Content:     box + texeArea,
+		Title:       tmpl.HTML(fmt.Sprintf("和%s(%d)的聊天", groupinfo.Name, uin)),
+		Description: tmpl.HTML(fmt.Sprintf("和%s(%d)的聊天", groupinfo.Name, uin)),
+		JS:          tmpl.JS(string(js)),
+	}, nil
+}
+func (l *Dologin) getGroupInfo(groupID int64) (*client.GroupInfo, error) {
+	group := l.Cli.FindGroup(groupID)
+	if group == nil {
+		group, _ = l.Cli.GetGroupInfo(groupID)
+	}
+	if group == nil {
+		gid := strconv.FormatInt(groupID, 10)
+		info, err := l.Cli.SearchGroupByKeyword(gid)
+		if err != nil {
+			return nil, err
+		}
+		for _, g := range info {
+			if g.Code == groupID {
+				return &client.GroupInfo{
+					Code: g.Code,
+					Name: g.Name,
+					Memo: g.Memo,
+				}, nil
+			}
+		}
+	} else {
+		return group, nil
+	}
+	return nil, errors.New("GROUP_NOT_FOUND")
+}
+func (l *Dologin) parseMsg(msg db.StoredMessage) template.HTML {
+	var text template.HTML
+	for _, v := range msg.GetContent() {
+		data := v["data"].(global.MSG)
+		switch v["type"] {
+		case "text":
+			text += tmpl.HTML(data["text"].(string))
+		case "image":
+			text += tmpl.Get(config.GetTheme()).Image().SetSrc(tmpl.HTML(data["url"].(string))).
+				GetContent()
+		case "face":
+			face := v["data"].(global.MSG)
+			text += tmpl.HTML(fmt.Sprintf("[CQ:face,id=%d]", face["id"]))
+		default: //其他消息类型
+			d, _ := json.Marshal(v["data"])
+			text += tmpl.HTML(fmt.Sprintf("[%s:%s]", v["type"], string(d)))
+		}
+	}
+	components := tmpl.Get(config.GetTheme())
+	return components.Row().SetContent(
+		components.Col().SetSize(types.Size(11, 11, 11)).SetContent(
+			tmpl.HTML(msgbox(msg.GetAttribute().SenderName, text, msg.GetAttribute().SenderUin == l.Cli.Uin)),
+		).GetContent(),
+	).GetContent()
+}
+
+func msgbox(name string, text template.HTML, isSelf bool) string {
+	var box string
+	if !isSelf {
+		box = fmt.Sprintf(`
+<div class="row" style="text-align:left;margin-left:15px;margin-right:15px;">
+<div class="row">
+%s<i class="fa fa-arrow-right"></i>
+</div>
+<p>%s</p>
+</div>
+`, name, text)
+	} else {
+		box = fmt.Sprintf(`
+<div class="row" style="text-align:right;margin-left:15px;margin-right:15px;">
+<div class="row">
+<i class="fa fa-arrow-left"></i>%s
+</div>
+<p>%s</p>
+</div>
+`, name, text)
+	}
+	return box
 }

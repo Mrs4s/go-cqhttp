@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/Mrs4s/go-cqhttp/iris-admin/loghook"
 	"io"
 	"os"
 	"path"
@@ -472,6 +473,7 @@ func (bot *CQBot) InsertGroupMessage(m *message.GroupMessage) int32 {
 			QuotedContent: ToMessageContent(reply.Elements),
 		}
 	}
+	loghook.SaveMsg(m.GroupCode, msg.GetGlobalID())
 	if err := db.InsertGroupMessage(msg); err != nil {
 		log.Warnf("记录聊天数据时出现错误: %v", err)
 		return -1
@@ -515,6 +517,13 @@ func (bot *CQBot) InsertPrivateMessage(m *message.PrivateMessage) int32 {
 			QuotedContent: ToMessageContent(reply.Elements),
 		}
 	}
+	var saveUin int64
+	if msg.TargetUin == bot.Client.Uin {
+		saveUin = m.Sender.Uin
+	} else {
+		saveUin = m.Target
+	}
+	loghook.SaveMsg(saveUin, msg.GetGlobalID())
 	if err := db.InsertPrivateMessage(msg); err != nil {
 		log.Warnf("记录聊天数据时出现错误: %v", err)
 		return -1

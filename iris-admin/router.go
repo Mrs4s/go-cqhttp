@@ -44,6 +44,10 @@ func makeRouter(eng *engine.Engine, app *iris.Application) {
 	app.Get("/admin/qq/getgroupdetail", adapter.Content(appInterface.Login.GetGroupDetal))
 	app.Get("/admin/qq/deletefriend", appInterface.Login.DeleteFriend)
 	app.Get("/admin/qq/getfrienddetail", adapter.Content(appInterface.Login.GetFriendDetal))
+	app.Get("/admin/qq/getmsglist", adapter.Content(appInterface.Login.GetMsgList))
+	app.Get("/admin/qq/getgroupmsglist", adapter.Content(appInterface.Login.GetGroupMsgList))
+	app.Any("/admin/qq/getmsglistforajax", appInterface.Login.GetMsgListAjaxHtml)
+	app.Post("/admin/qq/sendmsg", appInterface.Login.SendMsg)
 	app.HandleDir("/uploads", "./uploads", iris.DirOptions{
 		IndexName: "/index.html",
 		Gzip:      true,
