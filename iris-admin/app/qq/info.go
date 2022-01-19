@@ -19,6 +19,7 @@ import (
 	"github.com/Mrs4s/go-cqhttp/iris-admin/utils/jump"
 	"github.com/kataras/iris/v12"
 	"github.com/pkg/errors"
+	"html"
 	"html/template"
 	"strconv"
 	"time"
@@ -670,7 +671,7 @@ func (l *Dologin) parseMsg(msg db.StoredMessage) template.HTML {
 		data := v["data"].(global.MSG)
 		switch v["type"] {
 		case "text":
-			text += tmpl.HTML(data["text"].(string))
+			text += tmpl.HTML(html.EscapeString(data["text"].(string)))
 		case "image":
 			text += tmpl.Get(config.GetTheme()).Image().SetSrc(tmpl.HTML(data["url"].(string))).
 				GetContent()
