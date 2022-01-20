@@ -1,8 +1,10 @@
 package iris_admin
 
 import (
+	"fmt"
 	adapter "github.com/GoAdminGroup/go-admin/adapter/iris"
 	"github.com/GoAdminGroup/go-admin/engine"
+	"github.com/Mrs4s/go-cqhttp/iris-admin/utils/common"
 	"github.com/kataras/iris/v12"
 )
 
@@ -48,6 +50,25 @@ func makeRouter(eng *engine.Engine, app *iris.Application) {
 	app.Get("/admin/qq/getgroupmsglist", adapter.Content(appInterface.Login.GetGroupMsgList))
 	app.Any("/admin/qq/getmsglistforajax", appInterface.Login.GetMsgListAjaxHtml)
 	app.Post("/admin/qq/sendmsg", appInterface.Login.SendMsg)
+	app.Get("/admin/qq/guildlist", adapter.Content(appInterface.Login.GuildList))
+	app.Get("/admin/qq/channellist", adapter.Content(appInterface.Login.ChannelList))
+	app.Get("/admin/qq/help", func(ctx iris.Context) {
+		p := "html/help.md"
+		fs := common.GetStaticFs()
+		data, _ := fs.ReadFile(p)
+		ctx.Markdown(data)
+	})
+	app.Get("/admin/qq/faceimg/{name:file}", func(ctx iris.Context) {
+		name := ctx.Params().Get("name")
+		fs := common.GetStaticFs()
+		data, err := fs.ReadFile("qqface/" + name)
+		if err != nil {
+			return
+		}
+		ctx.Header("Content-Type", "image/gif")
+		ctx.Header("Content-Disposition", fmt.Sprintf(`filename="%s"`, name))
+		ctx.Write(data)
+	})
 	app.HandleDir("/uploads", "./uploads", iris.DirOptions{
 		IndexName: "/index.html",
 		Gzip:      true,

@@ -19,9 +19,11 @@ import (
 	"github.com/Mrs4s/go-cqhttp/iris-admin/utils/jump"
 	"github.com/kataras/iris/v12"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"html"
 	"html/template"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -118,9 +120,14 @@ func (l *Dologin) QqInfo(ctx iris.Context) (types.Panel, error) {
 		SetContent("修改后台登录密码").
 		SetClass("btn btn-sm btn-default").
 		GetContent()
+	linkHelp := components.Link().
+		SetURL("/admin/qq/help").
+		SetContent("使用帮助").
+		SetClass("btn btn-sm btn-default").
+		GetContent()
 	rown1 := components.Row().SetContent(tmpl.Default().Box().WithHeadBorder().
 		SetBody(
-			link1 + link2 + link3 + linkinfo + linkLog + linkChangeUserinfo,
+			link1 + link2 + link3 + linkinfo + linkLog + linkChangeUserinfo + linkHelp,
 		).GetContent()).GetContent()
 	link4 := components.Link().
 		SetURL("/admin/qq/friendlist").
@@ -154,22 +161,22 @@ func (l *Dologin) MemberList(ctx iris.Context) (types.Panel, error) {
 		linkDetail := comp.Link().SetClass("btn btn-sm btn-primary").SetContent("详情").SetURL("/admin/qq/getfrienddetail?uin=" + strconv.FormatInt(f.Uin, 10)).GetContent()
 		linkSendMsg := comp.Link().SetClass("btn btn-sm btn-default").SetContent("和TA聊天").SetURL("/admin/qq/getmsglist?uin=" + strconv.FormatInt(f.Uin, 10)).GetContent()
 		fs = append(fs, map[string]types.InfoItem{
-			"nickname": {Content: tmpl.HTML(f.Nickname), Value: f.Nickname},
-			"remark":   {Content: tmpl.HTML(f.Remark), Value: f.Remark},
-			"user_id":  {Content: tmpl.HTML(strconv.FormatInt(f.Uin, 10)), Value: strconv.FormatInt(f.Uin, 10)},
-			"console":  {Content: linkSendMsg + linkDetail + linkDelete},
+			"昵称":  {Content: tmpl.HTML(f.Nickname), Value: f.Nickname},
+			"备注":  {Content: tmpl.HTML(f.Remark), Value: f.Remark},
+			"QQ号": {Content: tmpl.HTML(strconv.FormatInt(f.Uin, 10)), Value: strconv.FormatInt(f.Uin, 10)},
+			"操作":  {Content: linkSendMsg + linkDetail + linkDelete},
 		})
 	}
 
 	param := parameter.GetParam(ctx.Request().URL, 300)
-	table := comp.DataTable().
+	table := comp.Table().
 		SetInfoList(common.PageSlice(fs, param.PageInt, param.PageSizeInt)).
 		SetThead(types.Thead{
-			{Head: "昵称", Field: "nickname"},
-			{Head: "备注", Field: "remark"},
-			{Head: "QQ号", Field: "user_id"},
-			{Head: "操作", Field: "console"},
-		})
+			{Head: "昵称", Width: "15%"},
+			{Head: "备注", Width: "15%"},
+			{Head: "QQ号", Width: "10%"},
+			{Head: "操作"},
+		}).SetMinWidth("0.01%")
 
 	body := table.GetContent()
 
@@ -203,24 +210,20 @@ func (l *Dologin) GroupList(ctx iris.Context) (types.Panel, error) {
 		linkDetail := comp.Link().SetClass("btn btn-sm btn-primary").SetContent("详情").SetURL("/admin/qq/getgroupdetail?guin=" + strconv.FormatInt(g.Code, 10)).GetContent()
 		linkSendMsg := comp.Link().SetClass("btn btn-sm btn-default").SetContent("进去聊天").SetURL("/admin/qq/getgroupmsglist?uin=" + strconv.FormatInt(g.Code, 10)).GetContent()
 		fs = append(fs, map[string]types.InfoItem{
-			"name":      {Content: tmpl.HTML(g.Name)},
-			"owneruin":  {Content: tmpl.HTML(strconv.FormatInt(g.OwnerUin, 10))},
-			"groupuin":  {Content: tmpl.HTML(strconv.FormatInt(g.Uin, 10))},
-			"groupcode": {Content: tmpl.HTML(strconv.FormatInt(g.Code, 10))},
-			"console":   {Content: linkSendMsg + linkDetail + linkLeave},
+			"群组名": {Content: tmpl.HTML(g.Name)},
+			"群号":  {Content: tmpl.HTML(strconv.FormatInt(g.Code, 10))},
+			"操作":  {Content: linkSendMsg + linkDetail + linkLeave},
 		})
 	}
 	param := parameter.GetParam(ctx.Request().URL, 100)
 
-	table := comp.DataTable().
+	table := comp.Table().
 		SetInfoList(common.PageSlice(fs, param.PageInt, param.PageSizeInt)).
 		SetThead(types.Thead{
-			{Head: "群组名", Field: "name"},
-			{Head: "群主uin", Field: "owneruin"},
-			{Head: "群组uin", Field: "groupuin"},
-			{Head: "群组code", Field: "groupcode"},
-			{Head: "操作", Field: "console"},
-		})
+			{Head: "群组名", Width: "30%"},
+			{Head: "群号", Width: "15%"},
+			{Head: "操作"},
+		}).SetMinWidth("0.01%")
 
 	body := table.GetContent()
 
@@ -237,6 +240,115 @@ func (l *Dologin) GroupList(ctx iris.Context) (types.Panel, error) {
 			GetContent(),
 		Title:       "群组列表",
 		Description: tmpl.HTML(fmt.Sprintf("%d的群组列表", l.Cli.Uin)),
+	}, nil
+}
+
+// 频道guild列表
+func (l *Dologin) GuildList(ctx iris.Context) (types.Panel, error) {
+	err := l.CheckQQlogin(ctx)
+	if err != nil {
+		return types.Panel{}, nil
+	}
+	comp := tmpl.Get(config.GetTheme())
+	fs := make([]map[string]types.InfoItem, 0, len(l.Cli.GuildService.Guilds))
+	for _, info := range l.Cli.GuildService.Guilds {
+		linkLeave := comp.Link().SetClass("btn btn-sm btn-danger").SetContent("退出频道").SetURL("/admin/qq/leaveguild?guid=" + strconv.FormatUint(info.GuildId, 10)).GetContent()
+		linkDetail := comp.Link().SetClass("btn btn-sm btn-primary").SetContent("查看子频道").SetURL("/admin/qq/channellist?guid=" + strconv.FormatUint(info.GuildId, 10)).GetContent()
+		//linkSendMsg := comp.Link().SetClass("btn btn-sm btn-default").SetContent("进去聊天").SetURL("/admin/qq/getgroupmsglist?uin=" + strconv.FormatInt(g.Code, 10)).GetContent()
+		fs = append(fs, map[string]types.InfoItem{
+			"频道名": {Content: tmpl.HTML(info.GuildName)},
+			"频道号": {Content: tmpl.HTML(strconv.FormatUint(info.GuildId, 10))},
+			"操作":  {Content: linkDetail + linkLeave},
+		})
+	}
+	param := parameter.GetParam(ctx.Request().URL, 100)
+	table := comp.Table().
+		SetInfoList(common.PageSlice(fs, param.PageInt, param.PageSizeInt)).
+		SetThead(types.Thead{
+			{Head: "频道名", Width: "30%"},
+			{Head: "频道号", Width: "15%"},
+			{Head: "操作"},
+		}).SetMinWidth("0.01%")
+	body := table.GetContent()
+	return types.Panel{
+		Content: comp.Box().
+			SetBody(body).
+			SetNoPadding().
+			WithHeadBorder().
+			SetFooter(paginator.Get(paginator.Config{
+				Size:         len(l.Cli.GuildService.Guilds),
+				PageSizeList: []string{"100", "200", "300", "500"},
+				Param:        param,
+			}).GetContent()).
+			GetContent(),
+		Title:       "频道列表",
+		Description: tmpl.HTML(fmt.Sprintf("%d的频道列表", l.Cli.Uin)),
+	}, nil
+}
+
+// 子频道列表
+func (l *Dologin) ChannelList(ctx iris.Context) (types.Panel, error) {
+	err := l.CheckQQlogin(ctx)
+	if err != nil {
+		return types.Panel{}, nil
+	}
+	comp := tmpl.Get(config.GetTheme())
+	fs := make([]map[string]types.InfoItem, 0, len(l.Cli.GuildService.Guilds))
+	guildID, _ := strconv.ParseUint(ctx.URLParam("guid"), 10, 64)
+	guild := l.Cli.GuildService.FindGuild(guildID)
+	if guild == nil {
+		return jump.JumpError(common.Msg{
+			Msg: "GUILD_NOT_FOUND",
+			Url: "/admin/qq/guildlist",
+		}), nil
+	}
+	guild.Channels, err = l.Cli.GuildService.FetchChannelList(guildID)
+	if err != nil {
+		log.Errorf("获取频道 %v 子频道列表时出现错误: %v", guildID, err)
+		return jump.JumpError(common.Msg{
+			Msg: "API_ERROR" + err.Error(),
+			Url: "/admin/qq/guildlist",
+		}), nil
+	}
+	for _, c := range guild.Channels {
+		//linkLeave := comp.Link().SetClass("btn btn-sm btn-danger").SetContent("退出频道").SetURL("/admin/qq/leavegroup?guin=" + strconv.FormatUint(c.ChannelId, 10)).GetContent()
+		linkDetail := comp.Link().SetClass("btn btn-sm btn-primary").SetContent("进入子频道").SetURL(fmt.Sprintf("/admin/qq/getgroupdetail?guin=%d&cid=%d", guildID, c.ChannelId)).GetContent()
+		//linkSendMsg := comp.Link().SetClass("btn btn-sm btn-default").SetContent("进去聊天").SetURL("/admin/qq/getgroupmsglist?uin=" + strconv.FormatInt(g.Code, 10)).GetContent()
+		fs = append(fs, map[string]types.InfoItem{
+			"子频道名": {Content: tmpl.HTML(c.ChannelName)},
+			"子频道号": {Content: tmpl.HTML(strconv.FormatUint(c.ChannelId, 10))},
+			"操作":   {Content: linkDetail},
+		})
+	}
+	param := parameter.GetParam(ctx.Request().URL, 100)
+	table := comp.Table().
+		SetInfoList(common.PageSlice(fs, param.PageInt, param.PageSizeInt)).
+		SetThead(types.Thead{
+			{Head: "子频道名", Width: "30%"},
+			{Head: "子频道号", Width: "15%"},
+			{Head: "操作"},
+		}).SetMinWidth("0.01%")
+	body := table.GetContent()
+	meta, err := l.Cli.GuildService.FetchGuestGuild(guildID)
+	var guidName string
+	if err != nil {
+		guidName = ctx.URLParam("guid")
+	} else {
+		guidName = meta.GuildName
+	}
+	return types.Panel{
+		Content: comp.Box().
+			SetBody(body).
+			SetNoPadding().
+			WithHeadBorder().
+			SetFooter(paginator.Get(paginator.Config{
+				Size:         len(l.Cli.GuildService.Guilds),
+				PageSizeList: []string{"100", "200", "300", "500"},
+				Param:        param,
+			}).GetContent()).
+			GetContent(),
+		Title:       tmpl.HTML(fmt.Sprintf("%s的子频道列表", guidName)),
+		Description: tmpl.HTML(fmt.Sprintf("%d的子频道列表", guildID)),
 	}, nil
 }
 
@@ -572,10 +684,12 @@ func (l *Dologin) GetMsgList(ctx iris.Context) (types.Panel, error) {
 		SetFooter("").
 		SetAttr(`id="msgbox"`).
 		GetContent()
+	linkBack := components.Link().SetContent("返回群列表").SetClass("btn btn-sm btn-default").SetURL("/admin/qq/friendlist").GetContent()
+	buttonSend := components.Button().SetContent("发送").SetThemeDefault().SetID("msgsend").GetContent()
 	texeArea := components.Box().SetBody(tmpl.HTML(fmt.Sprintf(`
 <textarea class="form-control" id="msgtext" data-username="%s" data-type="private" rows="3"></textarea>
 `, l.Cli.Nickname))).
-		SetFooter(components.Button().SetContent("发送").SetThemeDefault().SetID("msgsend").GetContent()).
+		SetFooter(linkBack + buttonSend).
 		GetContent()
 	fs := common.GetStaticFs()
 	js, _ := fs.ReadFile("js/getmsglist.js")
@@ -626,10 +740,12 @@ func (l *Dologin) GetGroupMsgList(ctx iris.Context) (types.Panel, error) {
 		SetFooter("").
 		SetAttr(`id="msgbox"`).
 		GetContent()
+	linkBack := components.Link().SetContent("返回群列表").SetClass("btn btn-sm btn-default").SetURL("/admin/qq/grouplist").GetContent()
+	buttonSend := components.Button().SetContent("发送").SetThemeDefault().SetID("msgsend").GetContent()
 	texeArea := components.Box().SetBody(tmpl.HTML(fmt.Sprintf(`
 <textarea class="form-control" id="msgtext" data-username="%s" data-type="group" rows="3"></textarea>
 `, l.Cli.Nickname))).
-		SetFooter(components.Button().SetContent("发送").SetThemeDefault().SetID("msgsend").GetContent()).
+		SetFooter(linkBack + buttonSend).
 		GetContent()
 	fs := common.GetStaticFs()
 	js, _ := fs.ReadFile("js/getmsglist.js")
@@ -671,13 +787,26 @@ func (l *Dologin) parseMsg(msg db.StoredMessage) template.HTML {
 		data := v["data"].(global.MSG)
 		switch v["type"] {
 		case "text":
-			text += tmpl.HTML(html.EscapeString(data["text"].(string)))
+			str := html.EscapeString(data["text"].(string))
+			str = strings.Replace(str, "\n", "<br/>", -1)
+			text += tmpl.HTML(str)
 		case "image":
-			text += tmpl.Get(config.GetTheme()).Image().SetSrc(tmpl.HTML(data["url"].(string))).
-				GetContent()
+			//url := data["url"].(string)
+			//text += tmpl.Get(config.GetTheme()).Image().SetSrc(tmpl.HTML(url)).GetContent()
+			//text += tmpl.HTML(fmt.Sprintf(`[CQ:image,url=<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>]`, url, url))
+			text += common.GetImageWithCache(data)
 		case "face":
 			face := v["data"].(global.MSG)
-			text += tmpl.HTML(fmt.Sprintf("[CQ:face,id=%d]", face["id"]))
+			if face["id"].(int32) <= 274 {
+				text += tmpl.Get(config.GetTheme()).Image().SetSrc(tmpl.HTML(fmt.Sprintf("/admin/qq/faceimg/%d.gif", face["id"]))).
+					SetHeight("24").
+					SetWidth("24").
+					GetContent()
+			} else {
+				text += tmpl.HTML(fmt.Sprintf("[CQ:face,id=%d]", face["id"]))
+			}
+		case "at":
+			text += tmpl.HTML(fmt.Sprintf(`%s(%d)`, data["display"], data["target"]))
 		default: //其他消息类型
 			d, _ := json.Marshal(v["data"])
 			text += tmpl.HTML(fmt.Sprintf("[%s:%s]", v["type"], string(d)))
