@@ -10,11 +10,9 @@ import (
 	"github.com/GoAdminGroup/go-admin/template"
 	"github.com/GoAdminGroup/go-admin/template/chartjs"
 	_ "github.com/GoAdminGroup/themes/adminlte" // ui theme
-	go_db "github.com/Mrs4s/go-cqhttp/db"
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/global/terminal"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
-	"github.com/Mrs4s/go-cqhttp/internal/cache"
 	"github.com/Mrs4s/go-cqhttp/iris-admin/app/info"
 	"github.com/Mrs4s/go-cqhttp/iris-admin/app/qq"
 	"github.com/Mrs4s/go-cqhttp/iris-admin/models"
@@ -128,9 +126,6 @@ func StartServer() {
 
 	models.Init(eng.SqliteConnection())
 
-	cache.Init()
-
-	go_db.Init()
 	initApp()
 	makeRouter(eng, app) //注册路由
 	go func() {

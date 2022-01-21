@@ -15,10 +15,8 @@ import (
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/go-cqhttp/coolq"
-	gocq_db "github.com/Mrs4s/go-cqhttp/db"
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
-	"github.com/Mrs4s/go-cqhttp/internal/cache"
 	"github.com/Mrs4s/go-cqhttp/iris-admin/loghook"
 	"github.com/Mrs4s/go-cqhttp/iris-admin/models"
 	"github.com/Mrs4s/go-cqhttp/iris-admin/utils/common"
@@ -26,12 +24,10 @@ import (
 	config2 "github.com/Mrs4s/go-cqhttp/modules/config"
 	"github.com/Mrs4s/go-cqhttp/modules/servers"
 	"github.com/kataras/iris/v12"
-	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/writer"
 	"os"
-	"path"
 	"strings"
 	"sync"
 	"time"
@@ -585,105 +581,105 @@ func (l *Dologin) DoLoginBackend() {
 		select {
 		case str := <-l.Conn:
 			fmt.Println(str)
-			//var times uint = 1 // 重试次数
-			//var reLoginLock sync.Mutex
-			//l.Cli.OnDisconnected(func(q *client.QQClient, e *client.ClientDisconnectedEvent) {
-			//	reLoginLock.Lock()
-			//	defer reLoginLock.Unlock()
-			//	times = 1
-			//	if l.Cli.Online.Load() {
-			//		return
-			//	}
-			//	log.Warnf("Bot已离线: %v", e.Message)
-			//	time.Sleep(time.Second * time.Duration(base.Reconnect.Delay))
-			//	for {
-			//		if base.Reconnect.Disabled {
-			//			log.Warnf("未启用自动重连, 将退出.")
-			//			time.Sleep(time.Second)
-			//			l.Cli.Disconnect()
-			//			l.Cli.Release()
-			//			l.Cli = newClient()
-			//			l.ErrMsg = struct {
-			//				Code int
-			//				Msg  string
-			//				Step int
-			//			}{Code: 1000, Msg: "未启用自动重连, 将退出", Step: 1}
-			//			return
-			//		}
-			//		if times > base.Reconnect.MaxTimes && base.Reconnect.MaxTimes != 0 {
-			//			//log.Fatalf("Bot重连次数超过限制, 停止")
-			//			time.Sleep(time.Second)
-			//			l.Cli.Disconnect()
-			//			l.Cli.Release()
-			//			l.Cli = newClient()
-			//			l.ErrMsg = struct {
-			//				Code int
-			//				Msg  string
-			//				Step int
-			//			}{Code: 1001, Msg: "Bot重连次数超过限制, 停止", Step: 1}
-			//			return
-			//		}
-			//		times++
-			//		if base.Reconnect.Interval > 0 {
-			//			log.Warnf("将在 %v 秒后尝试重连. 重连次数：%v/%v", base.Reconnect.Interval, times, base.Reconnect.MaxTimes)
-			//			time.Sleep(time.Second * time.Duration(base.Reconnect.Interval))
-			//		} else {
-			//			time.Sleep(time.Second)
-			//		}
-			//		if l.Cli.Online.Load() {
-			//			log.Infof("登录已完成")
-			//			break
-			//		}
-			//		log.Warnf("尝试重连...")
-			//		err := l.Cli.TokenLogin(base.AccountToken)
-			//		if err == nil {
-			//			l.saveToken()
-			//			return
-			//		}
-			//		log.Warnf("快速重连失败: %v", err)
-			//		if l.IsQRLogin {
-			//			//log.Fatalf("快速重连失败, 扫码登录无法恢复会话.")
-			//			time.Sleep(time.Second)
-			//			l.Cli.Disconnect()
-			//			l.Cli.Release()
-			//			l.Cli = newClient()
-			//			l.ErrMsg = struct {
-			//				Code int
-			//				Msg  string
-			//				Step int
-			//			}{Code: 1002, Msg: "快速重连失败, 扫码登录无法恢复会话.", Step: 1}
-			//			//panic("快速重连失败, 扫码登录无法恢复会话.")
-			//			return
-			//		}
-			//		log.Warnf("快速重连失败, 尝试普通登录. 这可能是因为其他端强行T下线导致的.")
-			//		time.Sleep(time.Second)
-			//		res, err := l.Cli.Login()
-			//		if err != nil {
-			//			l.ErrMsg = struct {
-			//				Code int
-			//				Msg  string
-			//				Step int
-			//			}{Code: 3003, Msg: "登录失败：" + err.Error(), Step: 5}
-			//			return
-			//		}
-			//		if err := l.loginResponseProcessorBackend(res); err != nil {
-			//			//log.Errorf("登录时发生致命错误: %v", err)
-			//			time.Sleep(time.Second)
-			//			l.Cli.Disconnect()
-			//			l.Cli.Release()
-			//			l.Cli = newClient()
-			//			l.ErrMsg = struct {
-			//				Code int
-			//				Msg  string
-			//				Step int
-			//			}{Code: 1002, Msg: fmt.Sprintf("登录时发生致命错误: %v", err), Step: 1}
-			//			return
-			//		} else {
-			//			l.saveToken()
-			//			break
-			//		}
-			//	}
-			//})
+			var times uint = 1 // 重试次数
+			var reLoginLock sync.Mutex
+			l.Cli.OnDisconnected(func(q *client.QQClient, e *client.ClientDisconnectedEvent) {
+				reLoginLock.Lock()
+				defer reLoginLock.Unlock()
+				times = 1
+				if l.Cli.Online.Load() {
+					return
+				}
+				log.Warnf("Bot已离线: %v", e.Message)
+				time.Sleep(time.Second * time.Duration(base.Reconnect.Delay))
+				for {
+					if base.Reconnect.Disabled {
+						log.Warnf("未启用自动重连, 将退出.")
+						time.Sleep(time.Second)
+						l.Cli.Disconnect()
+						l.Cli.Release()
+						l.Cli = newClient()
+						l.ErrMsg = struct {
+							Code int
+							Msg  string
+							Step int
+						}{Code: 1000, Msg: "未启用自动重连, 将退出", Step: 1}
+						return
+					}
+					if times > base.Reconnect.MaxTimes && base.Reconnect.MaxTimes != 0 {
+						//log.Fatalf("Bot重连次数超过限制, 停止")
+						time.Sleep(time.Second)
+						l.Cli.Disconnect()
+						l.Cli.Release()
+						l.Cli = newClient()
+						l.ErrMsg = struct {
+							Code int
+							Msg  string
+							Step int
+						}{Code: 1001, Msg: "Bot重连次数超过限制, 停止", Step: 1}
+						return
+					}
+					times++
+					if base.Reconnect.Interval > 0 {
+						log.Warnf("将在 %v 秒后尝试重连. 重连次数：%v/%v", base.Reconnect.Interval, times, base.Reconnect.MaxTimes)
+						time.Sleep(time.Second * time.Duration(base.Reconnect.Interval))
+					} else {
+						time.Sleep(time.Second)
+					}
+					if l.Cli.Online.Load() {
+						log.Infof("登录已完成")
+						break
+					}
+					log.Warnf("尝试重连...")
+					err := l.Cli.TokenLogin(base.AccountToken)
+					if err == nil {
+						l.saveToken()
+						return
+					}
+					log.Warnf("快速重连失败: %v", err)
+					if l.IsQRLogin {
+						//log.Fatalf("快速重连失败, 扫码登录无法恢复会话.")
+						time.Sleep(time.Second)
+						l.Cli.Disconnect()
+						l.Cli.Release()
+						l.Cli = newClient()
+						l.ErrMsg = struct {
+							Code int
+							Msg  string
+							Step int
+						}{Code: 1002, Msg: "快速重连失败, 扫码登录无法恢复会话.", Step: 1}
+						//panic("快速重连失败, 扫码登录无法恢复会话.")
+						return
+					}
+					log.Warnf("快速重连失败, 尝试普通登录. 这可能是因为其他端强行T下线导致的.")
+					time.Sleep(time.Second)
+					res, err := l.Cli.Login()
+					if err != nil {
+						l.ErrMsg = struct {
+							Code int
+							Msg  string
+							Step int
+						}{Code: 3003, Msg: "登录失败：" + err.Error(), Step: 5}
+						return
+					}
+					if err := l.loginResponseProcessorBackend(res); err != nil {
+						//log.Errorf("登录时发生致命错误: %v", err)
+						time.Sleep(time.Second)
+						l.Cli.Disconnect()
+						l.Cli.Release()
+						l.Cli = newClient()
+						l.ErrMsg = struct {
+							Code int
+							Msg  string
+							Step int
+						}{Code: 1002, Msg: fmt.Sprintf("登录时发生致命错误: %v", err), Step: 1}
+						return
+					} else {
+						l.saveToken()
+						break
+					}
+				}
+			})
 			l.saveToken()
 			l.Cli.AllowSlider = true
 			log.Infof("使用协议: %s", client.SystemDeviceInfo.Protocol)
@@ -769,49 +765,7 @@ func (l *Dologin) AutoLoginCommon() {
 	isTokenLogin := false
 	var byteKey []byte
 	byteKey, err = models.Getbytekey()
-	rotateOptions := []rotatelogs.Option{
-		rotatelogs.WithRotationTime(time.Hour * 24),
-	}
-	rotateOptions = append(rotateOptions, rotatelogs.WithMaxAge(base.LogAging))
-	if base.LogForceNew {
-		rotateOptions = append(rotateOptions, rotatelogs.ForceNewFile())
-	}
-	w, err := rotatelogs.New(path.Join("logs", "%Y-%m-%d.log"), rotateOptions...)
-	if err != nil {
-		log.Errorf("rotatelogs init err: %v", err)
-		panic(err)
-	}
-
-	consoleFormatter := global.LogFormat{EnableColor: base.LogColorful}
-	fileFormatter := global.LogFormat{EnableColor: false}
-	log.AddHook(global.NewLocalHook(w, consoleFormatter, fileFormatter, global.GetLogLevel(base.LogLevel)...))
-
-	mkCacheDir := func(path string, _type string) (errmsg string) {
-		if !global.PathExists(path) {
-			if err := os.MkdirAll(path, 0o755); err != nil {
-				//log.Fatalf("创建%s缓存文件夹失败: %v", _type, err)
-				return fmt.Sprintf("创建%s缓存文件夹失败: %v", _type, err)
-			}
-		}
-		return ""
-	}
-
-	errmsg := mkCacheDir(global.ImagePath, "图片")
-	errmsg += mkCacheDir(global.VoicePath, "语音")
-	errmsg += mkCacheDir(global.VideoPath, "视频")
-	errmsg += mkCacheDir(global.CachePath, "发送图片")
-	errmsg += mkCacheDir(path.Join(global.ImagePath, "guild-images"), "频道图片缓存")
-	if errmsg != "" {
-		l.ErrMsg = struct {
-			Code int
-			Msg  string
-			Step int
-		}{Code: 3004, Msg: errmsg, Step: 0}
-		return
-	}
-	cache.Init()
-	gocq_db.Init()
-	gocq_db.Open()
+	l.initLog()
 	log.Info("当前版本:", base.Version)
 	if base.Debug {
 		log.SetLevel(log.DebugLevel)
@@ -831,6 +785,106 @@ func (l *Dologin) AutoLoginCommon() {
 			log.Fatalf("加载设备信息失败: %v", err)
 		}
 	}
+	l.Cli = newClient()
+	//var times uint = 1 // 重试次数
+	//var reLoginLock sync.Mutex
+	//l.Cli.OnDisconnected(func(q *client.QQClient, e *client.ClientDisconnectedEvent) {
+	//	reLoginLock.Lock()
+	//	defer reLoginLock.Unlock()
+	//	times = 1
+	//	if l.Cli.Online.Load() {
+	//		return
+	//	}
+	//	log.Warnf("Bot已离线: %v", e.Message)
+	//	time.Sleep(time.Second * time.Duration(base.Reconnect.Delay))
+	//	for {
+	//		if base.Reconnect.Disabled {
+	//			log.Warnf("未启用自动重连, 将退出.")
+	//			time.Sleep(time.Second)
+	//			l.Cli.Disconnect()
+	//			l.Cli.Release()
+	//			l.Cli = newClient()
+	//			l.ErrMsg = struct {
+	//				Code int
+	//				Msg  string
+	//				Step int
+	//			}{Code: 1000, Msg: "未启用自动重连, 将退出", Step: 1}
+	//			return
+	//		}
+	//		if times > base.Reconnect.MaxTimes && base.Reconnect.MaxTimes != 0 {
+	//			//log.Fatalf("Bot重连次数超过限制, 停止")
+	//			time.Sleep(time.Second)
+	//			l.Cli.Disconnect()
+	//			l.Cli.Release()
+	//			l.Cli = newClient()
+	//			l.ErrMsg = struct {
+	//				Code int
+	//				Msg  string
+	//				Step int
+	//			}{Code: 1001, Msg: "Bot重连次数超过限制, 停止", Step: 1}
+	//			return
+	//		}
+	//		times++
+	//		if base.Reconnect.Interval > 0 {
+	//			log.Warnf("将在 %v 秒后尝试重连. 重连次数：%v/%v", base.Reconnect.Interval, times, base.Reconnect.MaxTimes)
+	//			time.Sleep(time.Second * time.Duration(base.Reconnect.Interval))
+	//		} else {
+	//			time.Sleep(time.Second)
+	//		}
+	//		if l.Cli.Online.Load() {
+	//			log.Infof("登录已完成")
+	//			break
+	//		}
+	//		log.Warnf("尝试重连...")
+	//		err := l.Cli.TokenLogin(base.AccountToken)
+	//		if err == nil {
+	//			l.saveToken()
+	//			return
+	//		}
+	//		log.Warnf("快速重连失败: %v", err)
+	//		if l.IsQRLogin {
+	//			//log.Fatalf("快速重连失败, 扫码登录无法恢复会话.")
+	//			time.Sleep(time.Second)
+	//			l.Cli.Disconnect()
+	//			l.Cli.Release()
+	//			l.Cli = newClient()
+	//			l.ErrMsg = struct {
+	//				Code int
+	//				Msg  string
+	//				Step int
+	//			}{Code: 1002, Msg: "快速重连失败, 扫码登录无法恢复会话.", Step: 1}
+	//			//panic("快速重连失败, 扫码登录无法恢复会话.")
+	//			return
+	//		}
+	//		log.Warnf("快速重连失败, 尝试普通登录. 这可能是因为其他端强行T下线导致的.")
+	//		time.Sleep(time.Second)
+	//		res, err := l.Cli.Login()
+	//		if err != nil {
+	//			l.ErrMsg = struct {
+	//				Code int
+	//				Msg  string
+	//				Step int
+	//			}{Code: 3003, Msg: "登录失败：" + err.Error(), Step: 5}
+	//			return
+	//		}
+	//		if err := l.loginResponseProcessorBackend(res); err != nil {
+	//			//log.Errorf("登录时发生致命错误: %v", err)
+	//			time.Sleep(time.Second)
+	//			l.Cli.Disconnect()
+	//			l.Cli.Release()
+	//			l.Cli = newClient()
+	//			l.ErrMsg = struct {
+	//				Code int
+	//				Msg  string
+	//				Step int
+	//			}{Code: 1002, Msg: fmt.Sprintf("登录时发生致命错误: %v", err), Step: 1}
+	//			return
+	//		} else {
+	//			l.saveToken()
+	//			break
+	//		}
+	//	}
+	//})
 	if global.PathExists("session.token") {
 		token, err := os.ReadFile("session.token")
 		if err == nil {
@@ -915,106 +969,7 @@ func (l *Dologin) AutoLoginCommon() {
 	} else if len(base.Account.Password) > 0 {
 		base.PasswordHash = md5.Sum([]byte(base.Account.Password))
 	}
-	l.Cli = newClient()
-	var times uint = 1 // 重试次数
-	var reLoginLock sync.Mutex
-	l.Cli.OnDisconnected(func(q *client.QQClient, e *client.ClientDisconnectedEvent) {
-		reLoginLock.Lock()
-		defer reLoginLock.Unlock()
-		times = 1
-		if l.Cli.Online.Load() {
-			return
-		}
-		log.Warnf("Bot已离线: %v", e.Message)
-		time.Sleep(time.Second * time.Duration(base.Reconnect.Delay))
-		for {
-			if base.Reconnect.Disabled {
-				log.Warnf("未启用自动重连, 将退出.")
-				time.Sleep(time.Second)
-				l.Cli.Disconnect()
-				l.Cli.Release()
-				l.Cli = newClient()
-				l.ErrMsg = struct {
-					Code int
-					Msg  string
-					Step int
-				}{Code: 1000, Msg: "未启用自动重连, 将退出", Step: 1}
-				return
-			}
-			if times > base.Reconnect.MaxTimes && base.Reconnect.MaxTimes != 0 {
-				//log.Fatalf("Bot重连次数超过限制, 停止")
-				time.Sleep(time.Second)
-				l.Cli.Disconnect()
-				l.Cli.Release()
-				l.Cli = newClient()
-				l.ErrMsg = struct {
-					Code int
-					Msg  string
-					Step int
-				}{Code: 1001, Msg: "Bot重连次数超过限制, 停止", Step: 1}
-				return
-			}
-			times++
-			if base.Reconnect.Interval > 0 {
-				log.Warnf("将在 %v 秒后尝试重连. 重连次数：%v/%v", base.Reconnect.Interval, times, base.Reconnect.MaxTimes)
-				time.Sleep(time.Second * time.Duration(base.Reconnect.Interval))
-			} else {
-				time.Sleep(time.Second)
-			}
-			if l.Cli.Online.Load() {
-				log.Infof("登录已完成")
-				break
-			}
-			log.Warnf("尝试重连...")
-			err := l.Cli.TokenLogin(base.AccountToken)
-			if err == nil {
-				l.saveToken()
-				return
-			}
-			log.Warnf("快速重连失败: %v", err)
-			if l.IsQRLogin {
-				//log.Fatalf("快速重连失败, 扫码登录无法恢复会话.")
-				time.Sleep(time.Second)
-				l.Cli.Disconnect()
-				l.Cli.Release()
-				l.Cli = newClient()
-				l.ErrMsg = struct {
-					Code int
-					Msg  string
-					Step int
-				}{Code: 1002, Msg: "快速重连失败, 扫码登录无法恢复会话.", Step: 1}
-				//panic("快速重连失败, 扫码登录无法恢复会话.")
-				return
-			}
-			log.Warnf("快速重连失败, 尝试普通登录. 这可能是因为其他端强行T下线导致的.")
-			time.Sleep(time.Second)
-			res, err := l.Cli.Login()
-			if err != nil {
-				l.ErrMsg = struct {
-					Code int
-					Msg  string
-					Step int
-				}{Code: 3003, Msg: "登录失败：" + err.Error(), Step: 5}
-				return
-			}
-			if err := l.loginResponseProcessorBackend(res); err != nil {
-				//log.Errorf("登录时发生致命错误: %v", err)
-				time.Sleep(time.Second)
-				l.Cli.Disconnect()
-				l.Cli.Release()
-				l.Cli = newClient()
-				l.ErrMsg = struct {
-					Code int
-					Msg  string
-					Step int
-				}{Code: 1002, Msg: fmt.Sprintf("登录时发生致命错误: %v", err), Step: 1}
-				return
-			} else {
-				l.saveToken()
-				break
-			}
-		}
-	})
+
 	if !isTokenLogin {
 		if !l.IsQRLogin {
 			res, err := l.Cli.Login()

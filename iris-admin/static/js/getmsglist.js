@@ -1,6 +1,23 @@
 $(document).ready(function () {
-    var url = "/admin/qq/getmsglistforajax?uin=" + getUrlParam("uin")
-    var url = String.format("/admin/qq/getmsglistforajax?uin={0}&guid={1}cid={2}", getUrlParam("uin"), getUrlParam("guid"), getUrlParam("cid"))
+    String.format = function () {
+        if (arguments.length == 0)
+            return null;
+        var str = arguments[0];
+        for (var i = 1; i < arguments.length; i++) {
+            var re = new RegExp('\\{' + (i - 1) + '\\}', 'gm');
+            str = str.replace(re, arguments[i]);
+        }
+        return str;
+        /*
+        调用方式：
+            var info = "我喜欢吃{0}，也喜欢吃{1}，但是最喜欢的还是{0},偶尔再买点{2}。";
+            var msg=String.format(info , "苹果","香蕉","香梨")
+            alert(msg);
+            输出:我喜欢吃苹果，也喜欢吃香蕉，但是最喜欢的还是苹果,偶尔再买点香梨。
+        */
+    };
+    // var url = "/admin/qq/getmsglistforajax?uin=" + getUrlParam("uin")
+    var url = String.format("/admin/qq/getmsglistforajax?uin={0}&guid={1}&cid={2}", getUrlParam("uin"), getUrlParam("guid"), getUrlParam("cid"))
     $("#msgsend").click(function () {
         var username = $("#msgtext").data("username");
         var text = $("#msgtext").val();
@@ -27,9 +44,9 @@ $(document).ready(function () {
     t = setInterval(getmsg, 1000);
 
     function getmsg() {
-        if (getUrlParam("uin") == null || (getUrlParam("guid") == null || getUrlParam("cid") == null)) {
+        if (getUrlParam("uin") == null && (getUrlParam("guid") == null || getUrlParam("cid") == null)) {
             clearInterval(t)
-            return
+            return;
         }
         $.get(url, function (data, status) {
             if (data.code === 200) {
@@ -48,21 +65,4 @@ $(document).ready(function () {
         return null; //返回参数值
     }
 
-    String.format = function () {
-        if (arguments.length == 0)
-            return null;
-        var str = arguments[0];
-        for (var i = 1; i < arguments.length; i++) {
-            var re = new RegExp('\\{' + (i - 1) + '\\}', 'gm');
-            str = str.replace(re, arguments[i]);
-        }
-        return str;
-        /*
-        调用方式：
-            var info = "我喜欢吃{0}，也喜欢吃{1}，但是最喜欢的还是{0},偶尔再买点{2}。";
-            var msg=String.format(info , "苹果","香蕉","香梨")
-            alert(msg);
-            输出:我喜欢吃苹果，也喜欢吃香蕉，但是最喜欢的还是苹果,偶尔再买点香梨。
-        */
-    };
 });

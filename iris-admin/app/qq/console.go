@@ -81,8 +81,8 @@ func (l *Dologin) SendMsg(ctx iris.Context) {
 		MsgId string `json:"msg_id"`
 	}
 	uin, _ := ctx.PostValueInt64("uin")
-	guid, _ := strconv.ParseUint(ctx.URLParam("guid"), 10, 64)
-	cid, _ := strconv.ParseUint(ctx.URLParam("cid"), 10, 64)
+	guid, _ := strconv.ParseUint(ctx.PostValue("guid"), 10, 64)
+	cid, _ := strconv.ParseUint(ctx.PostValue("cid"), 10, 64)
 	text := ctx.PostValue("text")
 	if (uin == 0 && (guid == 0 || cid == 0)) || text == "" {
 		ctx.JSON(data{
@@ -189,6 +189,7 @@ func (l *Dologin) sendPrivateMsg(uin int64, msg string) (int32, error) {
 func (l *Dologin) sendGuildChannelMsg(guildID, channelID uint64, msg string) (string, error) {
 	guild := l.Cli.GuildService.FindGuild(guildID)
 	if guild == nil {
+		log.Errorf("guildid:%d not found", guildID)
 		return "", errors.New("GUILD_NOT_FOUND")
 	}
 	channel := guild.FindChannel(channelID)

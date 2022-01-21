@@ -139,7 +139,12 @@ func (l *Dologin) QqInfo(ctx iris.Context) (types.Panel, error) {
 		SetContent("群组列表").
 		SetClass("btn btn-sm btn-default").
 		GetContent()
-	rown2 := components.Row().SetContent(tmpl.Default().Box().WithHeadBorder().SetBody(link4 + link5).GetContent()).GetContent()
+	linkGuildList := components.Link().
+		SetURL("/admin/qq/guildlist").
+		SetContent("频道列表").
+		SetClass("btn btn-sm btn-default").
+		GetContent()
+	rown2 := components.Row().SetContent(tmpl.Default().Box().WithHeadBorder().SetBody(link4 + link5 + linkGuildList).GetContent()).GetContent()
 
 	return types.Panel{
 		Content:     row1 + rowlab + rown1 + rown2,
@@ -252,13 +257,13 @@ func (l *Dologin) GuildList(ctx iris.Context) (types.Panel, error) {
 	comp := tmpl.Get(config.GetTheme())
 	fs := make([]map[string]types.InfoItem, 0, len(l.Cli.GuildService.Guilds))
 	for _, info := range l.Cli.GuildService.Guilds {
-		linkLeave := comp.Link().SetClass("btn btn-sm btn-danger").SetContent("退出频道").SetURL("/admin/qq/leaveguild?guid=" + strconv.FormatUint(info.GuildId, 10)).GetContent()
-		linkDetail := comp.Link().SetClass("btn btn-sm btn-primary").SetContent("查看子频道").SetURL("/admin/qq/channellist?guid=" + strconv.FormatUint(info.GuildId, 10)).GetContent()
+		//linkLeave := comp.Link().SetClass("btn btn-sm btn-danger").SetContent("退出频道").SetURL("/admin/qq/leaveguild?guid=" + strconv.FormatUint(info.GuildId, 10)).GetContent()
+		linkList := comp.Link().SetClass("btn btn-sm btn-primary").SetContent("查看子频道").SetURL("/admin/qq/channellist?guid=" + strconv.FormatUint(info.GuildId, 10)).GetContent()
 		//linkSendMsg := comp.Link().SetClass("btn btn-sm btn-default").SetContent("进去聊天").SetURL("/admin/qq/getgroupmsglist?uin=" + strconv.FormatInt(g.Code, 10)).GetContent()
 		fs = append(fs, map[string]types.InfoItem{
 			"频道名": {Content: tmpl.HTML(info.GuildName)},
 			"频道号": {Content: tmpl.HTML(strconv.FormatUint(info.GuildId, 10))},
-			"操作":  {Content: linkDetail + linkLeave},
+			"操作":  {Content: linkList},
 		})
 	}
 	param := parameter.GetParam(ctx.Request().URL, 100)
@@ -312,7 +317,7 @@ func (l *Dologin) ChannelList(ctx iris.Context) (types.Panel, error) {
 	}
 	for _, c := range guild.Channels {
 		//linkLeave := comp.Link().SetClass("btn btn-sm btn-danger").SetContent("退出频道").SetURL("/admin/qq/leavegroup?guin=" + strconv.FormatUint(c.ChannelId, 10)).GetContent()
-		linkSendMsg := comp.Link().SetClass("btn btn-sm btn-primary").SetContent("进入子频道").SetURL(fmt.Sprintf("/admin/qq/getgroupdetail?guid=%d&cid=%d", guildID, c.ChannelId)).GetContent()
+		linkSendMsg := comp.Link().SetClass("btn btn-sm btn-primary").SetContent("进入子频道").SetURL(fmt.Sprintf("/admin/qq/getguildchennelmsglist?guid=%d&cid=%d", guildID, c.ChannelId)).GetContent()
 		//linkSendMsg := comp.Link().SetClass("btn btn-sm btn-default").SetContent("进去聊天").SetURL("/admin/qq/getgroupmsglist?uin=" + strconv.FormatInt(g.Code, 10)).GetContent()
 		fs = append(fs, map[string]types.InfoItem{
 			"子频道名": {Content: tmpl.HTML(c.ChannelName)},

@@ -7,9 +7,12 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/Mrs4s/MiraiGo/client"
+	"github.com/Mrs4s/go-cqhttp/db"
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
+	"github.com/Mrs4s/go-cqhttp/internal/cache"
 	"github.com/kataras/iris/v12"
+	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/pbkdf2"
 	"os"
@@ -107,4 +110,49 @@ func (l *Dologin) Shutdown(ctx iris.Context) {
 		return
 	}
 	os.Exit(1)
+}
+
+func (l *Dologin) initLog() {
+	base.SetConf(l.Config)
+	rotateOptions := []rotatelogs.Option{
+		rotatelogs.WithRotationTime(time.Hour * 24),
+	}
+	rotateOptions = append(rotateOptions, rotatelogs.WithMaxAge(base.LogAging))
+	if base.LogForceNew {
+		rotateOptions = append(rotateOptions, rotatelogs.ForceNewFile())
+	}
+	w, err := rotatelogs.New(path.Join("logs", "%Y-%m-%d.log"), rotateOptions...)
+	if err != nil {
+		log.Errorf("rotatelogs init err: %v", err)
+		panic(err)
+	}
+
+	consoleFormatter := global.LogFormat{EnableColor: base.LogColorful}
+	fileFormatter := global.LogFormat{EnableColor: false}
+	log.AddHook(global.NewLocalHook(w, consoleFormatter, fileFormatter, global.GetLogLevel(base.LogLevel)...))
+
+	mkCacheDir := func(path string, _type string) (errmsg string) {
+		if !global.PathExists(path) {
+			if err := os.MkdirAll(path, 0o755); err != nil {
+				//log.Fatalf("创建%s缓存文件夹失败: %v", _type, err)
+				return fmt.Sprintf("创建%s缓存文件夹失败: %v", _type, err)
+			}
+		}
+		return ""
+	}
+
+	errmsg := mkCacheDir(global.ImagePath, "图片")
+	errmsg += mkCacheDir(global.VoicePath, "语音")
+	errmsg += mkCacheDir(global.VideoPath, "视频")
+	errmsg += mkCacheDir(global.CachePath, "发送图片")
+	errmsg += mkCacheDir(path.Join(global.ImagePath, "guild-images"), "频道图片缓存")
+	if errmsg != ""{
+		panic("配置信息有误")
+	}
+	cache.Init()
+	db.Init()
+	err = db.Open()
+	if err != nil {
+		log.Errorf("leveldb err:%v", err)
+	}
 }
