@@ -2,6 +2,7 @@ package qq
 
 import (
 	"fmt"
+	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/iris-admin/utils/common"
@@ -77,11 +78,13 @@ func (l *Dologin) SendMsg(ctx iris.Context) {
 	type data struct {
 		Code  int    `json:"code"`
 		Msg   string `json:"msg"`
-		MsgId int32  `json:"msg_id"`
+		MsgId string `json:"msg_id"`
 	}
-	uin, err := ctx.PostValueInt64("uin")
+	uin, _ := ctx.PostValueInt64("uin")
+	guid, _ := strconv.ParseUint(ctx.URLParam("guid"), 10, 64)
+	cid, _ := strconv.ParseUint(ctx.URLParam("cid"), 10, 64)
 	text := ctx.PostValue("text")
-	if err != nil || uin == 0 || text == "" {
+	if (uin == 0 && (guid == 0 || cid == 0)) || text == "" {
 		ctx.JSON(data{
 			Code: -1,
 			Msg:  "invalid params",
@@ -100,11 +103,25 @@ func (l *Dologin) SendMsg(ctx iris.Context) {
 		}
 		ctx.JSON(data{
 			Code:  200,
-			MsgId: mid,
+			MsgId: strconv.FormatInt(int64(mid), 10),
 		})
 		return
 	case "group":
 		mid, err := l.sendGroupMsg(uin, text)
+		if err != nil {
+			ctx.JSON(data{
+				Code: -1,
+				Msg:  err.Error(),
+			})
+			return
+		}
+		ctx.JSON(data{
+			Code:  200,
+			MsgId: strconv.FormatInt(int64(mid), 10),
+		})
+		return
+	case "channel":
+		mid, err := l.sendGuildChannelMsg(guid, cid, text)
 		if err != nil {
 			ctx.JSON(data{
 				Code: -1,
@@ -158,6 +175,7 @@ func (l *Dologin) sendGroupMsg(groupID int64, msg string) (int32, error) {
 	log.Infof("发送群 %v(%v) 的消息: %v (%v)", group.Name, groupID, common.LimitedString(msg), mid)
 	return mid, nil
 }
+
 func (l *Dologin) sendPrivateMsg(uin int64, msg string) (int32, error) {
 	elem := l.Bot.ConvertStringMessage(msg, coolq.MessageSourcePrivate)
 	mid := l.Bot.SendPrivateMessage(uin, 0, &message.SendingMessage{Elements: elem})
@@ -165,5 +183,45 @@ func (l *Dologin) sendPrivateMsg(uin int64, msg string) (int32, error) {
 		return mid, errors.New("SEND_MSG_API_ERROR")
 	}
 	log.Infof("发送好友 %v(%v)  的消息: %v (%v)", uin, uin, common.LimitedString(msg), mid)
+	return mid, nil
+}
+
+func (l *Dologin) sendGuildChannelMsg(guildID, channelID uint64, msg string) (string, error) {
+	guild := l.Cli.GuildService.FindGuild(guildID)
+	if guild == nil {
+		return "", errors.New("GUILD_NOT_FOUND")
+	}
+	channel := guild.FindChannel(channelID)
+	if channel == nil {
+		return "", errors.New("CHANNEL_NOT_FOUND")
+	}
+	if channel.ChannelType != client.ChannelTypeText {
+		log.Warnf("无法发送频道信息: 频道类型错误, 不接受文本信息")
+		return "", errors.New("CHANNEL_NOT_SUPPORTED_TEXT_MSG")
+	}
+	fixAt := func(elem []message.IMessageElement) {
+		for _, e := range elem {
+			if at, ok := e.(*message.AtElement); ok && at.Target != 0 && at.Display == "" {
+				mem, _ := l.Cli.GuildService.FetchGuildMemberProfileInfo(guildID, uint64(at.Target))
+				if mem != nil {
+					at.Display = "@" + mem.Nickname
+				} else {
+					at.Display = "@" + strconv.FormatInt(at.Target, 10)
+				}
+			}
+		}
+	}
+	var elem []message.IMessageElement
+	if msg == "" {
+		log.Warn("频道发送失败: 信息为空.")
+		return "", errors.New("EMPTY_MSG_ERROR")
+	}
+	elem = l.Bot.ConvertStringMessage(msg, coolq.MessageSourceGuildChannel)
+	fixAt(elem)
+	mid := l.Bot.SendGuildChannelMessage(guildID, channelID, &message.SendingMessage{Elements: elem})
+	if mid == "" {
+		return "", errors.New("SEND_MSG_API_ERROR")
+	}
+	log.Infof("发送频道 %v(%v) 子频道 %v(%v) 的消息: %v (%v)", guild.GuildName, guild.GuildId, channel.ChannelName, channel.ChannelId, common.LimitedString(msg), mid)
 	return mid, nil
 }

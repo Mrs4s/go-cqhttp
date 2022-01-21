@@ -237,9 +237,11 @@ func parseServerHttp(cfg *serverHttp, c *config) map[string]yaml.Node {
 			continue
 		}
 		httpConf.Post = append(httpConf.Post, struct {
-			URL    string `yaml:"url"`
-			Secret string `yaml:"secret"`
-		}{post.Url, post.Secret})
+			URL             string  `yaml:"url"`
+			Secret          string  `yaml:"secret"`
+			MaxRetries      *uint64 `yaml:"max-retries"`
+			RetriesInterval *uint64 `yaml:"retries-interval"`
+		}{URL: post.Url, Secret: post.Secret})
 	}
 	_ = node.Encode(httpConf)
 	cfgMap := make(map[string]yaml.Node)

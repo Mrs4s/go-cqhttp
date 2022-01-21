@@ -5,6 +5,7 @@ import (
 	"crypto/aes"
 	"crypto/sha1"
 	"encoding/hex"
+	"fmt"
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
@@ -12,6 +13,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/pbkdf2"
 	"os"
+	"path"
+	"time"
 )
 
 // 允许通过配置文件设置的状态列表
@@ -80,6 +83,13 @@ func newClient() *client.QQClient {
 			log.Error("Protocol -> " + e.Message)
 		case "DEBUG":
 			log.Debug("Protocol -> " + e.Message)
+		case "DUMP":
+			if !global.PathExists(global.DumpsPath) {
+				_ = os.MkdirAll(global.DumpsPath, 0o755)
+			}
+			dumpFile := path.Join(global.DumpsPath, fmt.Sprintf("%v.dump", time.Now().Unix()))
+			log.Errorf("出现错误 %v. 详细信息已转储至文件 %v 请连同日志提交给开发者处理", e.Message, dumpFile)
+			_ = os.WriteFile(dumpFile, e.Dump, 0o644)
 		}
 	})
 	return c

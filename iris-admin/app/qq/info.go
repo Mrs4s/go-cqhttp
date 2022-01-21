@@ -42,7 +42,7 @@ func (l *Dologin) QqInfo(ctx iris.Context) (types.Panel, error) {
 		SetIcon("ion-ios-gear-outline").
 		GetContent()
 	status := func(l *Dologin) string {
-		if l.Cli.Online {
+		if l.Cli.Online.Load() {
 			return "QQ在线"
 		}
 		return "QQ离线"
@@ -312,12 +312,12 @@ func (l *Dologin) ChannelList(ctx iris.Context) (types.Panel, error) {
 	}
 	for _, c := range guild.Channels {
 		//linkLeave := comp.Link().SetClass("btn btn-sm btn-danger").SetContent("退出频道").SetURL("/admin/qq/leavegroup?guin=" + strconv.FormatUint(c.ChannelId, 10)).GetContent()
-		linkDetail := comp.Link().SetClass("btn btn-sm btn-primary").SetContent("进入子频道").SetURL(fmt.Sprintf("/admin/qq/getgroupdetail?guin=%d&cid=%d", guildID, c.ChannelId)).GetContent()
+		linkSendMsg := comp.Link().SetClass("btn btn-sm btn-primary").SetContent("进入子频道").SetURL(fmt.Sprintf("/admin/qq/getgroupdetail?guid=%d&cid=%d", guildID, c.ChannelId)).GetContent()
 		//linkSendMsg := comp.Link().SetClass("btn btn-sm btn-default").SetContent("进去聊天").SetURL("/admin/qq/getgroupmsglist?uin=" + strconv.FormatInt(g.Code, 10)).GetContent()
 		fs = append(fs, map[string]types.InfoItem{
 			"子频道名": {Content: tmpl.HTML(c.ChannelName)},
 			"子频道号": {Content: tmpl.HTML(strconv.FormatUint(c.ChannelId, 10))},
-			"操作":   {Content: linkDetail},
+			"操作":   {Content: linkSendMsg},
 		})
 	}
 	param := parameter.GetParam(ctx.Request().URL, 100)
@@ -629,17 +629,27 @@ func (l *Dologin) GetMsgListAjaxHtml(ctx iris.Context) {
 		return
 	}
 	uin := ctx.URLParamInt64Default("uin", 0)
-	if uin == 0 {
-		uin = ctx.PostValueInt64Default("uin", 0)
+	guid, _ := strconv.ParseUint(ctx.URLParam("guid"), 10, 64)
+	cid, _ := strconv.ParseUint(ctx.URLParam("cid"), 10, 64)
+	if uin == 0 && (guid == 0 || cid == 0) {
+		ctx.JSON(data{Code: -1, Msg: "empty uin or guildid or channelid"})
 	}
-	if uin == 0 {
-		ctx.JSON(data{Code: -1, Msg: "empty uin"})
-	}
-	list := loghook.ReadMsg(uin)
 	var body template.HTML
-	if list != nil {
-		for _, v := range list {
-			body += l.parseMsg(v)
+	if uin != 0 {
+		list := loghook.ReadMsg(uin)
+		if list != nil {
+			for _, v := range list {
+				body += l.parseMsg(v)
+			}
+		}
+	} else {
+		//频道消息
+		list := loghook.ReadGuildChannelMsg(guid, cid)
+		if list != nil {
+			for _, v := range list {
+				body += l.parseGuildChannelMsg(v)
+
+			}
 		}
 	}
 	ctx.JSON(data{Code: 200, Html: body})
@@ -756,6 +766,72 @@ func (l *Dologin) GetGroupMsgList(ctx iris.Context) (types.Panel, error) {
 		JS:          tmpl.JS(string(js)),
 	}, nil
 }
+
+// 频道聊天记录列表
+func (l *Dologin) GetGuildChannelMsgList(ctx iris.Context) (types.Panel, error) {
+	components := tmpl.Get(config.GetTheme())
+	err := l.CheckQQlogin(ctx)
+	if err != nil {
+		return types.Panel{}, nil
+	}
+	guid, _ := strconv.ParseUint(ctx.URLParam("guid"), 10, 64)
+	cid, _ := strconv.ParseUint(ctx.URLParam("cid"), 10, 64)
+	if guid == 0 || cid == 0 {
+		return jump.JumpError(common.Msg{
+			Msg: "参数错误",
+			Url: "/admin/qq/info",
+		}), nil
+	}
+	re := ctx.GetReferrer().URL
+	if re == "" {
+		re = "/admin/qq/guildlist"
+	} else if ctx.GetReferrer().Path == "/admin/qq/getguildchennelmsglist" {
+		re = "/admin/qq/guildlist"
+	}
+	chanlelInfo, err := l.Cli.GuildService.FetchChannelInfo(guid, cid)
+	if err != nil {
+		return jump.JumpError(common.Msg{
+			Msg: fmt.Sprintf("获取guid:%d channelid:%d的信息失败：%s", guid, cid, err.Error()),
+			Url: re,
+		}), nil
+	}
+	guildinfo := l.Cli.GuildService.FindGuild(guid)
+	var guildname string
+	if guildinfo == nil {
+		guildname = strconv.FormatUint(guid, 10)
+	} else {
+		guildname = guildinfo.GuildName
+	}
+	list := loghook.ReadGuildChannelMsg(guid, cid)
+	var body template.HTML
+	if list != nil {
+		for _, v := range list {
+			body += l.parseGuildChannelMsg(v)
+		}
+	}
+	box := components.Box().WithHeadBorder().SetHeader(tmpl.HTML(fmt.Sprintf("和 %s 的聊天记录", chanlelInfo.ChannelName))).
+		SetBody(body).
+		SetFooter("").
+		SetAttr(`id="msgbox"`).
+		GetContent()
+	linkBack := components.Link().SetContent("返回子频道列表").SetClass("btn btn-sm btn-default").SetURL(fmt.Sprintf("/admin/qq/channellist?guid=%d", guid)).GetContent()
+	linkBack2 := components.Link().SetContent("返回频道列表").SetClass("btn btn-sm btn-default").SetURL("/admin/qq/guildlist").GetContent()
+	buttonSend := components.Button().SetContent("发送").SetThemeDefault().SetID("msgsend").GetContent()
+	texeArea := components.Box().SetBody(tmpl.HTML(fmt.Sprintf(`
+<textarea class="form-control" id="msgtext" data-username="%s" data-type="channel" rows="3"></textarea>
+`, l.Cli.Nickname))).
+		SetFooter(linkBack2 + linkBack + buttonSend).
+		GetContent()
+	fs := common.GetStaticFs()
+	js, _ := fs.ReadFile("js/getmsglist.js")
+	return types.Panel{
+		Content:     box + texeArea,
+		Title:       tmpl.HTML(fmt.Sprintf("和%s(%d)/%s(%d)的聊天", guildname, guid, chanlelInfo.ChannelName, cid)),
+		Description: tmpl.HTML(fmt.Sprintf("和%s(%d)/%s(%d)的聊天", guildname, guid, chanlelInfo.ChannelName, cid)),
+		JS:          tmpl.JS(string(js)),
+	}, nil
+}
+
 func (l *Dologin) getGroupInfo(groupID int64) (*client.GroupInfo, error) {
 	group := l.Cli.FindGroup(groupID)
 	if group == nil {
@@ -819,7 +895,44 @@ func (l *Dologin) parseMsg(msg db.StoredMessage) template.HTML {
 		).GetContent(),
 	).GetContent()
 }
-
+func (l *Dologin) parseGuildChannelMsg(msg *db.StoredGuildChannelMessage) template.HTML {
+	var text template.HTML
+	for _, v := range msg.Content {
+		data := v["data"].(global.MSG)
+		switch v["type"] {
+		case "text":
+			str := html.EscapeString(data["text"].(string))
+			str = strings.Replace(str, "\n", "<br/>", -1)
+			text += tmpl.HTML(str)
+		case "image":
+			//url := data["url"].(string)
+			//text += tmpl.Get(config.GetTheme()).Image().SetSrc(tmpl.HTML(url)).GetContent()
+			//text += tmpl.HTML(fmt.Sprintf(`[CQ:image,url=<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>]`, url, url))
+			text += common.GetImageWithCache(data)
+		case "face":
+			face := v["data"].(global.MSG)
+			if face["id"].(int32) <= 274 {
+				text += tmpl.Get(config.GetTheme()).Image().SetSrc(tmpl.HTML(fmt.Sprintf("/admin/qq/faceimg/%d.gif", face["id"]))).
+					SetHeight("24").
+					SetWidth("24").
+					GetContent()
+			} else {
+				text += tmpl.HTML(fmt.Sprintf("[CQ:face,id=%d]", face["id"]))
+			}
+		case "at":
+			text += tmpl.HTML(fmt.Sprintf(`%s(%d)`, data["display"], data["target"]))
+		default: //其他消息类型
+			d, _ := json.Marshal(v["data"])
+			text += tmpl.HTML(fmt.Sprintf("[%s:%s]", v["type"], string(d)))
+		}
+	}
+	components := tmpl.Get(config.GetTheme())
+	return components.Row().SetContent(
+		components.Col().SetSize(types.Size(11, 11, 11)).SetContent(
+			tmpl.HTML(msgbox(msg.Attribute.SenderName, text, int64(msg.Attribute.SenderTinyID) == l.Cli.Uin)),
+		).GetContent(),
+	).GetContent()
+}
 func msgbox(name string, text template.HTML, isSelf bool) string {
 	var box string
 	if !isSelf {

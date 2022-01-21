@@ -1,5 +1,6 @@
 $(document).ready(function () {
     var url = "/admin/qq/getmsglistforajax?uin=" + getUrlParam("uin")
+    var url = String.format("/admin/qq/getmsglistforajax?uin={0}&guid={1}cid={2}", getUrlParam("uin"), getUrlParam("guid"), getUrlParam("cid"))
     $("#msgsend").click(function () {
         var username = $("#msgtext").data("username");
         var text = $("#msgtext").val();
@@ -16,6 +17,8 @@ $(document).ready(function () {
             {
                 type: msgtype,
                 uin: getUrlParam("uin"),
+                guid: getUrlParam("guid"),
+                cid: getUrlParam("cid"),
                 text: text,
             }
         );
@@ -24,7 +27,7 @@ $(document).ready(function () {
     t = setInterval(getmsg, 1000);
 
     function getmsg() {
-        if (getUrlParam("uin") == null) {
+        if (getUrlParam("uin") == null || (getUrlParam("guid") == null || getUrlParam("cid") == null)) {
             clearInterval(t)
             return
         }

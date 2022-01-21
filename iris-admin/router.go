@@ -46,10 +46,11 @@ func makeRouter(eng *engine.Engine, app *iris.Application) {
 	app.Get("/admin/qq/getgroupdetail", adapter.Content(appInterface.Login.GetGroupDetal))
 	app.Get("/admin/qq/deletefriend", appInterface.Login.DeleteFriend)
 	app.Get("/admin/qq/getfrienddetail", adapter.Content(appInterface.Login.GetFriendDetal))
-	app.Get("/admin/qq/getmsglist", adapter.Content(appInterface.Login.GetMsgList))
-	app.Get("/admin/qq/getgroupmsglist", adapter.Content(appInterface.Login.GetGroupMsgList))
-	app.Any("/admin/qq/getmsglistforajax", appInterface.Login.GetMsgListAjaxHtml)
-	app.Post("/admin/qq/sendmsg", appInterface.Login.SendMsg)
+	app.Get("/admin/qq/getmsglist", adapter.Content(appInterface.Login.GetMsgList))                         //私聊聊天界面
+	app.Get("/admin/qq/getgroupmsglist", adapter.Content(appInterface.Login.GetGroupMsgList))               //群聊聊天界面
+	app.Get("/admin/qq/getguildchennelmsglist", adapter.Content(appInterface.Login.GetGuildChannelMsgList)) //频道聊天界面
+	app.Any("/admin/qq/getmsglistforajax", appInterface.Login.GetMsgListAjaxHtml)                           //ajax拉取 私聊/群聊/频道 的聊天记录的html
+	app.Post("/admin/qq/sendmsg", appInterface.Login.SendMsg)                                               //发送消息
 	app.Get("/admin/qq/guildlist", adapter.Content(appInterface.Login.GuildList))
 	app.Get("/admin/qq/channellist", adapter.Content(appInterface.Login.ChannelList))
 	app.Get("/admin/qq/help", func(ctx iris.Context) {

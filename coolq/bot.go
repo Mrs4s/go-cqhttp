@@ -5,13 +5,14 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/Mrs4s/go-cqhttp/iris-admin/loghook"
 	"io"
 	"os"
 	"path"
 	"runtime/debug"
 	"sync"
 	"time"
+
+	"github.com/Mrs4s/go-cqhttp/iris-admin/loghook"
 
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/client"
@@ -577,6 +578,7 @@ func (bot *CQBot) InsertGuildChannelMessage(m *message.GuildChannelMessage) stri
 		ChannelID: m.ChannelId,
 		Content:   ToMessageContent(m.Elements),
 	}
+	//loghook.SaveGuildChannelMsg(m.GuildId, m.ChannelId, id)
 	if err := db.InsertGuildChannelMessage(msg); err != nil {
 		log.Warnf("记录聊天数据时出现错误: %v", err)
 		return ""

@@ -30,7 +30,7 @@ func (l *Dologin) CheckQQlogin(ctx iris.Context) error {
 	if err != nil {
 		return err
 	}
-	if !l.Cli.Online {
+	if !l.Cli.Online.Load() {
 		jump.JumpErrorForIris(ctx, common.Msg{
 			Msg:  "qq尚未登录",
 			Url:  "/admin/qq/info",
@@ -85,7 +85,7 @@ func (l *Dologin) CheckConfig(ctx iris.Context) {
 		})
 		return
 	}
-	if l.Cli != nil && l.Cli.Online {
+	if l.Cli != nil && l.Cli.Online.Load() {
 		jump.JumpSuccessForIris(ctx, common.Msg{
 			Msg: "QQ已经在线",
 			Url: "/admin/qq/info",
@@ -94,99 +94,8 @@ func (l *Dologin) CheckConfig(ctx iris.Context) {
 	}
 	l.Config = cfg
 	base.SetConf(l.Config)
-	l.Cli = newClient()
-	isQRCodeLogin := (base.Account.Uin == 0 || len(base.Account.Password) == 0) && !base.Account.Encrypt
+	l.IsQRLogin = (base.Account.Uin == 0 || len(base.Account.Password) == 0) && !base.Account.Encrypt
 	isTokenLogin := false
-	var times uint = 1 // 重试次数
-	var reLoginLock sync.Mutex
-	l.Cli.OnDisconnected(func(q *client.QQClient, e *client.ClientDisconnectedEvent) {
-		reLoginLock.Lock()
-		defer reLoginLock.Unlock()
-		times = 1
-		if l.Cli.Online {
-			return
-		}
-		log.Warnf("Bot已离线: %v", e.Message)
-		time.Sleep(time.Second * time.Duration(base.Reconnect.Delay))
-		for {
-			if base.Reconnect.Disabled {
-				log.Warnf("未启用自动重连, 将退出.")
-				time.Sleep(time.Second)
-				l.Cli.Disconnect()
-				l.Cli.Release()
-				l.Cli = newClient()
-				l.ErrMsg = struct {
-					Code int
-					Msg  string
-					Step int
-				}{Code: 1000, Msg: "未启用自动重连, 将退出", Step: 1}
-				return
-			}
-			if times > base.Reconnect.MaxTimes && base.Reconnect.MaxTimes != 0 {
-				//log.Fatalf("Bot重连次数超过限制, 停止")
-				time.Sleep(time.Second)
-				l.Cli.Disconnect()
-				l.Cli.Release()
-				l.Cli = newClient()
-				l.ErrMsg = struct {
-					Code int
-					Msg  string
-					Step int
-				}{Code: 1001, Msg: "Bot重连次数超过限制, 停止", Step: 1}
-				return
-			}
-			times++
-			if base.Reconnect.Interval > 0 {
-				log.Warnf("将在 %v 秒后尝试重连. 重连次数：%v/%v", base.Reconnect.Interval, times, base.Reconnect.MaxTimes)
-				time.Sleep(time.Second * time.Duration(base.Reconnect.Interval))
-			} else {
-				time.Sleep(time.Second)
-			}
-			if l.Cli.Online {
-				log.Infof("登录已完成")
-				break
-			}
-			log.Warnf("尝试重连...")
-			err := l.Cli.TokenLogin(base.AccountToken)
-			if err == nil {
-				l.saveToken()
-				return
-			}
-			log.Warnf("快速重连失败: %v", err)
-			if isQRCodeLogin {
-				//log.Fatalf("快速重连失败, 扫码登录无法恢复会话.")
-				time.Sleep(time.Second)
-				l.Cli.Disconnect()
-				l.Cli.Release()
-				l.Cli = newClient()
-				l.ErrMsg = struct {
-					Code int
-					Msg  string
-					Step int
-				}{Code: 1002, Msg: "快速重连失败, 扫码登录无法恢复会话.", Step: 1}
-				//panic("快速重连失败, 扫码登录无法恢复会话.")
-				return
-			}
-			log.Warnf("快速重连失败, 尝试普通登录. 这可能是因为其他端强行T下线导致的.")
-			time.Sleep(time.Second)
-			if err := l.commonLogin(ctx); err != nil {
-				//log.Errorf("登录时发生致命错误: %v", err)
-				time.Sleep(time.Second)
-				l.Cli.Disconnect()
-				l.Cli.Release()
-				l.Cli = newClient()
-				l.ErrMsg = struct {
-					Code int
-					Msg  string
-					Step int
-				}{Code: 1002, Msg: fmt.Sprintf("登录时发生致命错误: %v", err), Step: 1}
-				return
-			} else {
-				l.saveToken()
-				break
-			}
-		}
-	})
 	var byteKey []byte
 	byteKey, err = models.Getbytekey()
 	rotateOptions := []rotatelogs.Option{
@@ -338,9 +247,99 @@ func (l *Dologin) CheckConfig(ctx iris.Context) {
 	} else if len(base.Account.Password) > 0 {
 		base.PasswordHash = md5.Sum([]byte(base.Account.Password))
 	}
-
+	l.Cli = newClient()
+	var times uint = 1 // 重试次数
+	var reLoginLock sync.Mutex
+	l.Cli.OnDisconnected(func(q *client.QQClient, e *client.ClientDisconnectedEvent) {
+		reLoginLock.Lock()
+		defer reLoginLock.Unlock()
+		times = 1
+		if l.Cli.Online.Load() {
+			return
+		}
+		log.Warnf("Bot已离线: %v", e.Message)
+		time.Sleep(time.Second * time.Duration(base.Reconnect.Delay))
+		for {
+			if base.Reconnect.Disabled {
+				log.Warnf("未启用自动重连, 将退出.")
+				time.Sleep(time.Second)
+				l.Cli.Disconnect()
+				l.Cli.Release()
+				l.Cli = newClient()
+				l.ErrMsg = struct {
+					Code int
+					Msg  string
+					Step int
+				}{Code: 1000, Msg: "未启用自动重连, 将退出", Step: 1}
+				return
+			}
+			if times > base.Reconnect.MaxTimes && base.Reconnect.MaxTimes != 0 {
+				//log.Fatalf("Bot重连次数超过限制, 停止")
+				time.Sleep(time.Second)
+				l.Cli.Disconnect()
+				l.Cli.Release()
+				l.Cli = newClient()
+				l.ErrMsg = struct {
+					Code int
+					Msg  string
+					Step int
+				}{Code: 1001, Msg: "Bot重连次数超过限制, 停止", Step: 1}
+				return
+			}
+			times++
+			if base.Reconnect.Interval > 0 {
+				log.Warnf("将在 %v 秒后尝试重连. 重连次数：%v/%v", base.Reconnect.Interval, times, base.Reconnect.MaxTimes)
+				time.Sleep(time.Second * time.Duration(base.Reconnect.Interval))
+			} else {
+				time.Sleep(time.Second)
+			}
+			if l.Cli.Online.Load() {
+				log.Infof("登录已完成")
+				break
+			}
+			log.Warnf("尝试重连...")
+			err := l.Cli.TokenLogin(base.AccountToken)
+			if err == nil {
+				l.saveToken()
+				return
+			}
+			log.Warnf("快速重连失败: %v", err)
+			if l.IsQRLogin {
+				//log.Fatalf("快速重连失败, 扫码登录无法恢复会话.")
+				time.Sleep(time.Second)
+				l.Cli.Disconnect()
+				l.Cli.Release()
+				l.Cli = newClient()
+				l.ErrMsg = struct {
+					Code int
+					Msg  string
+					Step int
+				}{Code: 1002, Msg: "快速重连失败, 扫码登录无法恢复会话.", Step: 1}
+				//panic("快速重连失败, 扫码登录无法恢复会话.")
+				return
+			}
+			log.Warnf("快速重连失败, 尝试普通登录. 这可能是因为其他端强行T下线导致的.")
+			time.Sleep(time.Second)
+			if err := l.commonLogin(ctx); err != nil {
+				//log.Errorf("登录时发生致命错误: %v", err)
+				time.Sleep(time.Second)
+				l.Cli.Disconnect()
+				l.Cli.Release()
+				l.Cli = newClient()
+				l.ErrMsg = struct {
+					Code int
+					Msg  string
+					Step int
+				}{Code: 1002, Msg: fmt.Sprintf("登录时发生致命错误: %v", err), Step: 1}
+				return
+			} else {
+				l.saveToken()
+				break
+			}
+		}
+	})
 	if !isTokenLogin {
-		if !isQRCodeLogin {
+		if !l.IsQRLogin {
 			if err := l.commonLogin(ctx); err != nil {
 				log.Errorf("登录时发生致命错误： %v", err)
 				return
@@ -361,7 +360,6 @@ func (l *Dologin) CheckConfig(ctx iris.Context) {
 		})
 		return
 	}
-
 	if (base.Account.Uin == 0 || (base.Account.Password == "" && !base.Account.Encrypt)) && !global.PathExists("session.token") {
 		msg := "账号密码未配置, 将使用二维码登录."
 		var wait int64 = 3

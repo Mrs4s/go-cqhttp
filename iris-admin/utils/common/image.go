@@ -21,7 +21,7 @@ func GetImageWithCache(data global.MSG) template.HTML {
 	var err error
 	url := data["url"].(string)
 	file := data["file"].(string)
-	if cache.EnableCacheDB && strings.HasSuffix(file, ".image") {
+	if strings.HasSuffix(file, ".image") {
 		var f []byte
 		f, err = hex.DecodeString(strings.TrimSuffix(file, ".image"))
 		b = cache.Image.Get(f)
