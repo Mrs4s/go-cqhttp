@@ -2,7 +2,7 @@ version: '3'
 services:
   go-cqhttp:
     container_name: go-cqhttp
-    image: scjtqs/cqhttp:1.0.2
+    image: ghcr.io/mrs4s/go-cqhttp:master
     restart: always
     privileged: true
     ports:
@@ -12,3 +12,4 @@ services:
       - ./cqhttp-data:/data
     environment:
       - UPDATE=1
+      - GOCQWEBUI=1

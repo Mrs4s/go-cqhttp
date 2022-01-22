@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Mrs4s/go-cqhttp/internal/param"
+
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 
@@ -39,6 +41,7 @@ var (
 	LogForceNew         bool // 是否在每次启动时强制创建全新的文件储存日志
 	LogColorful         bool // 是否启用日志颜色
 	FastStart           bool // 是否为快速启动
+	WebUI               bool // 是否为webUI的方式启动
 
 	PostFormat        string                 // 上报格式 string or array
 	Proxy             string                 // 存储 proxy_rewrite,用于设置代理
@@ -62,9 +65,13 @@ func Parse() {
 	flag.BoolVar(&LittleD, "d", false, "running as a daemon")
 	flag.BoolVar(&LittleH, "h", false, "this Help")
 	flag.StringVar(&LittleWD, "w", "", "cover the working directory")
+	flag.BoolVar(&WebUI, "webui", false, "to use webui mode replace commond mod (must build with cgo)")
 	d := flag.Bool("D", false, "debug mode")
 	flag.Parse()
-
+	if param.EnsureBool(os.Getenv("GOCQWEBUI"), false) {
+		// 开发调试的时候添加环境变量用
+		WebUI = true
+	}
 	if *d {
 		Debug = true
 	}
@@ -149,7 +156,7 @@ func ResetWorkingDir() {
 	os.Exit(0)
 }
 
-// 从外部导入config配置到base库
+// SetConf 从外部导入config配置到base库
 func SetConf(conf *config.Config) {
 	{ // bool config
 		if conf.Output.Debug {

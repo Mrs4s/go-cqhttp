@@ -43,7 +43,7 @@ var allowStatus = [...]client.UserOnlineStatus{
 
 // Main 启动主程序
 func Main() {
-	base.Parse()
+	// base.Parse()
 	if !base.FastStart && terminal.RunningByDoubleClick() {
 		err := terminal.NoMoreDoubleClick()
 		if err != nil {

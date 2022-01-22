@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Mrs4s/go-cqhttp/iris-admin/loghook"
+	"github.com/Mrs4s/go-cqhttp/cmd/iris_admin/loghook"
 
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/client"
@@ -126,6 +126,7 @@ func NewQQBot(cli *client.QQClient) *CQBot {
 	return bot
 }
 
+// SetClient 手动导入 client
 func (bot *CQBot) SetClient(cli *client.QQClient) {
 	bot.Client = cli
 	bot.Client.OnPrivateMessage(bot.privateMessageEvent)
