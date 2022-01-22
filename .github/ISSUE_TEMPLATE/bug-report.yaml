@@ -26,7 +26,9 @@ body:
       options:
         - label: "我已经仔细阅读上述教程和 [\"提问前需知\"](https://github.com/Mrs4s/go-cqhttp/issues/633)"
           required: true
-        - label: 我已知晓并同意，如果我不遵循以下格式提交 Issue，或者我使用的并非最新版本，或者我没有提供足够的环境信息，我的 Issue 可能会被无条件自动关闭或/并锁定。
+        - label: "我已经使用 dev 分支版本测试过，问题依旧存在。"
+          required: true
+        - label: "我已经在 [Issue Tracker](……/) 中找过我要提出的问题，没有找到相同问题的ISSUE。"
           required: true
         - label: 我已知晓并同意，此处仅用于汇报程序中存在的问题。若这个 Issue 是关于其他非程序本身问题，则我的 Issue 可能会被无条件自动关闭或/并锁定。（这些问题应当在 Discussion 板块提出。）
           required: true
@@ -39,25 +41,10 @@ body:
         请根据实际使用环境修改以下信息。
 
   # Env | go-cqhttp Version
-  - type: dropdown
+  - type: input
     id: env-gocq-ver
     attributes:
       label: go-cqhttp 版本
-      description: 选择正在使用的版本 (未列出的版本为已不支持，请更新到最新版本。)
-      options:
-        - v1.0.0-beta8-fix2
-        - v1.0.0-beta8-fix1
-        - v1.0.0-beta8
-        - v1.0.0-beta7-fix2
-        - v1.0.0-beta7-fix1
-        - v1.0.0-beta7
-        - v1.0.0-beta6
-        - v1.0.0-beta5
-        - v1.0.0-beta4
-        - v1.0.0-beta3
-        - v1.0.0-beta2
-        - v1.0.0-beta1
-        - 更老的版本
     validations:
       required: true
 
