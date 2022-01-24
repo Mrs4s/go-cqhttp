@@ -36,6 +36,7 @@ require (
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/gocq/rs v1.0.1 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
+	github.com/google/go-cmp v0.5.5 // indirect
 	github.com/google/uuid v1.1.0 // indirect
 	github.com/jonboulle/clockwork v0.2.2 // indirect
 	github.com/lestrrat-go/strftime v1.0.5 // indirect

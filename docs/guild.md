@@ -30,7 +30,8 @@ API以及字段相关命名均为参考QQ官方命名或相似产品命名规则
 - 所有事件的 `self_id` 均为 BOT 的QQ号. `tiny_id` 将放在 `self_tiny_id` 字段
 - 遵循我们一贯的原则, 将不会支持主动加频道/主动拉人/红包相关消息类型
 - 频道相关的API仅能在 `Android Phone` 和 `iPad` 协议上使用.
-- 由于频道相关ID的数据类型均为 `uint64` , 为保证不超过某些语言的安全值范围, 在 `v1.0.0-beta8-fix3` 以后, 所有ID相关数据将转换为 `string` 类型, API调用 `uint64` 或 `string` 均可接受.
+- 由于频道相关ID的数据类型均为 `uint64` , 为保证不超过某些语言的安全值范围, 在 `v1.0.0-beta8-fix3` 以后, 所有ID相关数据将转换为 `string` 类型, API调用 `uint64`
+  或 `string` 均可接受.
 - 为保证一致性, 所有频道接口返回的 `用户ID` 均命名为 `tiny_id`, 所有频道相关接口的 `用户ID` 入参均命名为 `user_id`
 
 ## API
@@ -140,7 +141,7 @@ SlowModeInfo:
 终结点: `/get_guild_member_list`
 
 > 由于频道人数较多(数万), 请尽量不要全量拉取成员列表, 这将会导致严重的性能问题
-> 
+>
 > 尽量使用 `get_guild_member_profile` 接口代替全量拉取
 
 **参数**
@@ -171,7 +172,7 @@ GuildMemberInfo:
 | `role_name`    | string | 所在权限组名称   |
 
 > 默认情况下频道管理员的权限组ID为 `2`, 部分频道可能会另行创建, 需手动判断
-> 
+>
 > 此接口仅展现最新的权限组, 获取用户加入的所有权限组请使用 `get_guild_member_profile` 接口
 
 ### 单独获取频道成员信息
@@ -286,7 +287,7 @@ FeedContent:
 | `url_quote` |  链接引用   |
 | `channel_quote` |  子频道引用  |
 
-#### 内容类型对应数据列表:  
+#### 内容类型对应数据列表:
 
 - `text`
 

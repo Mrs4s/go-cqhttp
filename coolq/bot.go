@@ -314,6 +314,10 @@ func (bot *CQBot) SendPrivateMessage(target int64, groupID int64, m *message.Sen
 			id = bot.InsertPrivateMessage(msg)
 		}
 	case ok || groupID != 0: // 临时会话
+		if !base.AllowTempSession {
+			log.Warnf("发送临时会话消息失败: 已关闭临时会话信息发送功能")
+			return -1
+		}
 		switch {
 		case groupID != 0 && bot.Client.FindGroup(groupID) == nil:
 			log.Errorf("错误: 找不到群(%v)", groupID)

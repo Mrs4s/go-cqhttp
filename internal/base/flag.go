@@ -39,6 +39,7 @@ var (
 	LogForceNew         bool // 是否在每次启动时强制创建全新的文件储存日志
 	LogColorful         bool // 是否启用日志颜色
 	FastStart           bool // 是否为快速启动
+	AllowTempSession    bool // 是否允许发送临时会话信息
 
 	PostFormat        string                 // 上报格式 string or array
 	Proxy             string                 // 存储 proxy_rewrite,用于设置代理
@@ -85,6 +86,7 @@ func Init() {
 		SkipMimeScan = conf.Message.SkipMimeScan
 		ReportSelfMessage = conf.Message.ReportSelfMessage
 		UseSSOAddress = conf.Account.UseSSOAddress
+		AllowTempSession = conf.Account.AllowTempSession
 	}
 	{ // others
 		Proxy = conf.Message.ProxyRewrite
