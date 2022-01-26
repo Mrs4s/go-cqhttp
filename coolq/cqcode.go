@@ -1271,7 +1271,10 @@ func CQCodeUnescapeValue(content string) string {
 // makeImageOrVideoElem 图片 elem 生成器，单独拎出来，用于公用
 func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video bool, sourceType MessageSourceType) (message.IMessageElement, error) {
 	f := d["file"]
-	u, _ := d["url"]
+	u, ok := d["url"]
+	if !ok {
+		u = ""
+	}
 	if strings.HasPrefix(f, "http") {
 		hash := md5.Sum([]byte(f))
 		cacheFile := path.Join(global.CachePath, hex.EncodeToString(hash[:])+".cache")
