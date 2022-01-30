@@ -75,7 +75,6 @@ func testForeach(t *testing.T, elemSize int) {
 	f := tempfile(t)
 	defer os.Remove(f)
 	bt, err := Create(f)
-	defer bt.Close()
 	assert2.NoError(t, err)
 	for _, v := range expected {
 		hash := sha1.New()
@@ -87,6 +86,7 @@ func testForeach(t *testing.T, elemSize int) {
 		got = append(got, string(value))
 	})
 	assert2.ElementsMatch(t, expected, got)
+	assert2.NoError(t, bt.Close())
 }
 
 func TestDB_Foreach(t *testing.T) {
