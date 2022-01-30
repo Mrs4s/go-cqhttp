@@ -28,7 +28,7 @@ body:
           required: true
         - label: "我已经使用 [dev分支版本](https://github.com/Mrs4s/go-cqhttp/actions/workflows/ci.yml) 测试过，问题依旧存在。"
           required: true
-        - label: "我已经在 [Issue Tracker](https://github.com/Mrs4s/go-cqhttp/actions/workflows/ci.yml) 中找过我要提出的问题，没有找到相同问题的ISSUE。"
+        - label: "我已经在 [Issue Tracker](https://github.com/Mrs4s/go-cqhttp/issues) 中找过我要提出的问题，没有找到相同问题的ISSUE。"
           required: true
         - label: 我已知晓并同意，此处仅用于汇报程序中存在的问题。若这个 Issue 是关于其他非程序本身问题，则我的 Issue 可能会被无条件自动关闭或/并锁定。（这些问题应当在 Discussion 板块提出。）
           required: true
