@@ -526,6 +526,7 @@ func (d *DB) Delete(hash *byte) error {
 	return nil
 }
 
+// Foreach iterates over all items in the database file.
 func (d *DB) Foreach(iter func(key [16]byte, value []byte)) {
 	top := d.get(d.top)
 	d.iterate(top, iter)
@@ -541,5 +542,10 @@ func (d *DB) iterate(table *table, iter func(key [16]byte, value []byte)) {
 			child := d.get(item.child)
 			d.iterate(child, iter)
 		}
+	}
+	item := table.items[table.size]
+	if item.child != 0 {
+		child := d.get(item.child)
+		d.iterate(child, iter)
 	}
 }

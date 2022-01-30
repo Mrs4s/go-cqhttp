@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/Mrs4s/MiraiGo/utils"
 	assert2 "github.com/stretchr/testify/assert"
 )
 
@@ -64,4 +65,28 @@ func TestBtree(t *testing.T) {
 	}
 
 	assert2.NoError(t, bt.Close())
+}
+
+func TestDB_Foreach(t *testing.T) {
+	const elemSize = 100
+	set := make([]string, elemSize)
+	for i := 0; i < elemSize; i++ {
+		set[i] = utils.RandomString(20)
+	}
+	f := tempfile(t)
+	defer os.Remove(f)
+	bt, err := Create(f)
+	defer bt.Close()
+	assert2.NoError(t, err)
+	for _, v := range set {
+		hash := sha1.New()
+		hash.Write([]byte(v))
+		bt.Insert(&hash.Sum(nil)[0], []byte(v))
+	}
+
+	var ss []string
+	bt.Foreach(func(key [16]byte, value []byte) {
+		ss = append(ss, string(value))
+	})
+	assert2.ElementsMatch(t, set, ss)
 }
