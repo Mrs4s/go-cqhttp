@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -142,11 +143,19 @@ func init() {
 	config.AddServer(&config.Server{Brief: "HTTP通信", Default: httpDefault, ParseEnv: readEnvConfig})
 }
 
-func (h *httpCtx) Get(s string) gjson.Result {
-	j := h.json.Get(s)
-	if j.Exists() {
-		return j
+var joinQuery = regexp.MustCompile(`\[(.+?),(.+?)]\.0`)
+
+func (h *httpCtx) get(s string, join bool) gjson.Result {
+	// support gjson advanced syntax:
+	// h.Get("[a,b].0") see usage in http_test.go
+	if join && joinQuery.MatchString(s) {
+		matched := joinQuery.FindStringSubmatch(s)
+		if r := h.get(matched[1], false); r.Exists() {
+			return r
+		}
+		return h.get(matched[2], false)
 	}
+
 	validJSONParam := func(p string) bool {
 		return (strings.HasPrefix(p, "{") || strings.HasPrefix(p, "[")) && gjson.Valid(p)
 	}
@@ -167,6 +176,14 @@ func (h *httpCtx) Get(s string) gjson.Result {
 		}
 	}
 	return gjson.Result{}
+}
+
+func (h *httpCtx) Get(s string) gjson.Result {
+	j := h.json.Get(s)
+	if j.Exists() {
+		return j
+	}
+	return h.get(s, true)
 }
 
 func (s *httpServer) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
