@@ -45,6 +45,12 @@ func TestBtree(t *testing.T) {
 
 	bt, err = Open(f)
 	assert2.NoError(t, err)
+	var ss []string
+	bt.Foreach(func(key [16]byte, value []byte) {
+		ss = append(ss, string(value))
+	})
+	assert2.ElementsMatch(t, tests, ss)
+
 	for i, tt := range tests {
 		assert2.Equal(t, []byte(tt), bt.Get(sha[i]))
 	}
