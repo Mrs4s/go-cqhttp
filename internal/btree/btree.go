@@ -528,8 +528,10 @@ func (d *DB) Delete(hash *byte) error {
 
 // Foreach iterates over all items in the database file.
 func (d *DB) Foreach(iter func(key [16]byte, value []byte)) {
-	top := d.get(d.top)
-	d.iterate(top, iter)
+	if d.top != 0 {
+		top := d.get(d.top)
+		d.iterate(top, iter)
+	}
 }
 
 func (d *DB) iterate(table *table, iter func(key [16]byte, value []byte)) {
