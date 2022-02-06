@@ -64,6 +64,7 @@ func Parse() {
 	flag.BoolVar(&LittleH, "h", false, "this Help")
 	flag.StringVar(&LittleWD, "w", "", "cover the working directory")
 	d := flag.Bool("D", false, "debug mode")
+	flag.BoolVar(&FastStart, "faststart", false, "skip waiting 5 seconds")
 	flag.Parse()
 
 	if *d {

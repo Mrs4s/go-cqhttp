@@ -115,8 +115,6 @@ func Main() {
 					byteKey = []byte(arg[p])
 					para.Hide(p)
 				}
-			case "faststart":
-				base.FastStart = true
 			}
 		}
 	}
