@@ -3,8 +3,10 @@ package leveldb
 import (
 	"bytes"
 	"encoding/gob"
-	"github.com/Mrs4s/MiraiGo/utils"
 	"path"
+
+	"github.com/Mrs4s/MiraiGo/message"
+	"github.com/Mrs4s/MiraiGo/utils"
 
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/pkg/errors"
@@ -35,6 +37,7 @@ func init() {
 	gob.Register(db.StoredGroupMessage{})
 	gob.Register(db.StoredPrivateMessage{})
 	gob.Register(db.StoredGuildChannelMessage{})
+	gob.Register(message.RedBagMessageType(0))
 
 	db.Register("leveldb", func(node yaml.Node) db.Database {
 		conf := new(config.LevelDBConfig)
