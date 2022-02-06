@@ -132,9 +132,8 @@ func Main() {
 		log.SetLevel(log.DebugLevel)
 		log.SetReportCaller(true)
 		log.Warnf("已开启Debug模式.")
-		log.Debugf("开发交流群: 192548878")
+		// log.Debugf("开发交流群: 192548878")
 	}
-	log.Info("用户交流群: 721829413")
 	if !global.PathExists("device.json") {
 		log.Warn("虚拟设备信息不存在, 将自动生成随机设备.")
 		client.GenRandomDevice()
