@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"runtime/debug"
 	"strconv"
 	"strings"
@@ -20,7 +19,6 @@ import (
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
-	"github.com/Mrs4s/go-cqhttp/internal/param"
 	"github.com/Mrs4s/go-cqhttp/modules/api"
 	"github.com/Mrs4s/go-cqhttp/modules/config"
 	"github.com/Mrs4s/go-cqhttp/modules/filter"
@@ -123,52 +121,10 @@ func init() {
 	config.AddServer(&config.Server{
 		Brief:   "正向 Websocket 通信",
 		Default: wsDefault,
-		ParseEnv: func() (string, *yaml.Node) {
-			if os.Getenv("GCQ_WS_PORT") != "" {
-				// type convert tools
-				toInt64 := func(str string) int64 {
-					i, _ := strconv.ParseInt(str, 10, 64)
-					return i
-				}
-				accessTokenEnv := os.Getenv("GCQ_ACCESS_TOKEN")
-				node := &yaml.Node{}
-				wsServerConf := &WebsocketServer{
-					Host: "0.0.0.0",
-					Port: 6700,
-					MiddleWares: MiddleWares{
-						AccessToken: accessTokenEnv,
-					},
-				}
-				param.SetExcludeDefault(&wsServerConf.Disabled, param.EnsureBool(os.Getenv("GCQ_WS_DISABLE"), false), false)
-				param.SetExcludeDefault(&wsServerConf.Host, os.Getenv("GCQ_WS_HOST"), "")
-				param.SetExcludeDefault(&wsServerConf.Port, int(toInt64(os.Getenv("GCQ_WS_PORT"))), 0)
-				_ = node.Encode(wsServerConf)
-				return "ws", node
-			}
-			return "", nil
-		},
 	})
 	config.AddServer(&config.Server{
 		Brief:   "反向 Websocket 通信",
 		Default: wsReverseDefault,
-		ParseEnv: func() (string, *yaml.Node) {
-			if os.Getenv("GCQ_RWS_API") != "" || os.Getenv("GCQ_RWS_EVENT") != "" || os.Getenv("GCQ_RWS_UNIVERSAL") != "" {
-				accessTokenEnv := os.Getenv("GCQ_ACCESS_TOKEN")
-				node := &yaml.Node{}
-				rwsConf := &WebsocketReverse{
-					MiddleWares: MiddleWares{
-						AccessToken: accessTokenEnv,
-					},
-				}
-				param.SetExcludeDefault(&rwsConf.Disabled, param.EnsureBool(os.Getenv("GCQ_RWS_DISABLE"), false), false)
-				param.SetExcludeDefault(&rwsConf.API, os.Getenv("GCQ_RWS_API"), "")
-				param.SetExcludeDefault(&rwsConf.Event, os.Getenv("GCQ_RWS_EVENT"), "")
-				param.SetExcludeDefault(&rwsConf.Universal, os.Getenv("GCQ_RWS_UNIVERSAL"), "")
-				_ = node.Encode(rwsConf)
-				return "ws-reverse", node
-			}
-			return "", nil
-		},
 	})
 }
 

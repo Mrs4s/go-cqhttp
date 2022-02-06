@@ -24,7 +24,6 @@ import (
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
-	"github.com/Mrs4s/go-cqhttp/internal/param"
 	"github.com/Mrs4s/go-cqhttp/modules/api"
 	"github.com/Mrs4s/go-cqhttp/modules/config"
 	"github.com/Mrs4s/go-cqhttp/modules/filter"
@@ -97,50 +96,8 @@ const httpDefault = `
       #  retries-interval: 1000      # 重试时间，单位毫秒，0 时立即
 `
 
-func nilParseUint(s string, base int, bitSize int) *uint64 {
-	pu, err := strconv.ParseUint(s, base, bitSize)
-	if err != nil {
-		return nil
-	}
-	return &pu
-}
-
-func readEnvConfig() (string, *yaml.Node) {
-	if s, ok := os.LookupEnv("GCQ_HTTP_PORT"); !ok || s == "" {
-		return "", nil
-	}
-
-	// type convert tools
-	toInt64 := func(str string) int64 {
-		i, _ := strconv.ParseInt(str, 10, 64)
-		return i
-	}
-	accessTokenEnv := os.Getenv("GCQ_ACCESS_TOKEN")
-	node := &yaml.Node{}
-	httpConf := &HTTPServer{
-		Host: "0.0.0.0",
-		Port: 5700,
-		MiddleWares: MiddleWares{
-			AccessToken: accessTokenEnv,
-		},
-	}
-	param.SetExcludeDefault(&httpConf.Disabled, param.EnsureBool(os.Getenv("GCQ_HTTP_DISABLE"), false), false)
-	param.SetExcludeDefault(&httpConf.Host, os.Getenv("GCQ_HTTP_HOST"), "")
-	param.SetExcludeDefault(&httpConf.Port, int(toInt64(os.Getenv("GCQ_HTTP_PORT"))), 0)
-	if os.Getenv("GCQ_HTTP_POST_URL") != "" {
-		httpConf.Post = append(httpConf.Post, httpServerPost{
-			os.Getenv("GCQ_HTTP_POST_URL"),
-			os.Getenv("GCQ_HTTP_POST_SECRET"),
-			nilParseUint(os.Getenv("GCQ_HTTP_POST_MAXRETRIES"), 10, 64),
-			nilParseUint(os.Getenv("GCQ_HTTP_POST_RETRIESINTERVAL"), 10, 64),
-		})
-	}
-	_ = node.Encode(httpConf)
-	return "http", node
-}
-
 func init() {
-	config.AddServer(&config.Server{Brief: "HTTP通信", Default: httpDefault, ParseEnv: readEnvConfig})
+	config.AddServer(&config.Server{Brief: "HTTP通信", Default: httpDefault})
 }
 
 var joinQuery = regexp.MustCompile(`\[(.+?),(.+?)]\.0`)
