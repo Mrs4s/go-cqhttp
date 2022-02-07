@@ -796,16 +796,17 @@ func (bot *CQBot) uploadForwardElement(m gjson.Result, groupID int64) *message.F
 	var wg sync.WaitGroup
 	resolveElement := func(elems []message.IMessageElement) []message.IMessageElement {
 		for i, elem := range elems {
-			switch elem.(type) {
+			iescape := i
+			switch o := elem.(type) {
 			case *LocalImageElement, *LocalVideoElement:
 				wg.Add(1)
 				lazyUpload = append(lazyUpload, func() {
 					defer wg.Done()
-					gm, err := bot.uploadMedia(elem, groupID, true)
+					gm, err := bot.uploadMedia(o, groupID, true)
 					if err != nil {
-						log.Warnf("警告: 群 %d %s上传失败: %v", groupID, elem.Type().String(), err)
+						log.Warnf("警告: 群 %d %s上传失败: %v", groupID, o.Type().String(), err)
 					} else {
-						elems[i] = gm
+						elems[iescape] = gm
 					}
 				})
 			}
@@ -864,7 +865,7 @@ func (bot *CQBot) uploadForwardElement(m gjson.Result, groupID int64) *message.F
 				}
 			}
 		}
-		content := bot.ConvertObjectMessage(e.Get("data.content"), MessageSourceGroup)
+		content := bot.ConvertObjectMessage(c, MessageSourceGroup)
 		if uin != 0 && name != "" && len(content) > 0 {
 			return &message.ForwardNode{
 				SenderId:   uin,
