@@ -44,6 +44,7 @@ func (hook *LocalHook) ioWrite(entry *logrus.Entry) error {
 }
 
 func (hook *LocalHook) pathWrite(entry *logrus.Entry) error {
+
 	dir := filepath.Dir(hook.path)
 	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
 		return err
@@ -66,6 +67,7 @@ func (hook *LocalHook) pathWrite(entry *logrus.Entry) error {
 
 // Fire ref: logrus/hooks.go impl Hook interface
 func (hook *LocalHook) Fire(entry *logrus.Entry) error {
+
 	hook.lock.Lock()
 	defer hook.lock.Unlock()
 
@@ -82,6 +84,7 @@ func (hook *LocalHook) Fire(entry *logrus.Entry) error {
 
 // SetFormatter 设置日志格式
 func (hook *LocalHook) SetFormatter(consoleFormatter, fileFormatter logrus.Formatter) {
+
 	hook.lock.Lock()
 	defer hook.lock.Unlock()
 
