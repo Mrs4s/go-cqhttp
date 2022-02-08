@@ -37,4 +37,5 @@ jobs:
         if: ${{ github.event.pull_request }}
         uses: reviewdog/action-suggester@v1
         with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           tool_name: golangci-lint

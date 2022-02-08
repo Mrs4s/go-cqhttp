@@ -2,7 +2,6 @@ package server
 
 import (
 	"bytes"
-	"context"
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/hex"
@@ -359,15 +358,4 @@ func (c *HTTPClient) onBotPushEvent(e *coolq.Event) {
 	if gjson.ValidBytes(r) {
 		c.bot.CQHandleQuickOperation(gjson.Parse(e.JSONString()), gjson.ParseBytes(r))
 	}
-}
-
-func (s *httpServer) ShutDown() {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	if err := s.HTTP.Shutdown(ctx); err != nil {
-		log.Fatal("http Server Shutdown:", err)
-	}
-	<-ctx.Done()
-	log.Println("timeout of 5 seconds.")
-	log.Println("http Server exiting")
 }

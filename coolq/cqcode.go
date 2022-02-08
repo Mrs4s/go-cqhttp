@@ -414,7 +414,7 @@ func ToMessageContent(e []message.IMessageElement) (r []global.MSG) {
 		case *message.RedBagElement:
 			m = global.MSG{
 				"type": "redbag",
-				"data": global.MSG{"title": o.Title, "type": o.MsgType},
+				"data": global.MSG{"title": o.Title, "type": int(o.MsgType)},
 			}
 		case *message.ForwardElement:
 			m = global.MSG{
