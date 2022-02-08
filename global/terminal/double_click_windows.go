@@ -46,13 +46,8 @@ func NoMoreDoubleClick() error {
 	}
 	_ = f.Truncate(0)
 
-	// 获取当前可执行文件的文件名
-	ex, err := os.Executable()
-    if err != nil {
-        panic(err)
-    }
-    exPath := filepath.Base(ex)
-	// 引号兼容了文件名包含空格的情况
+	ex, _ := os.Executable()
+	exPath := filepath.Base(ex)
 	_, err = f.WriteString("%Created by go-cqhttp. DO NOT EDIT ME!%\nstart cmd /K \"" + exPath + "\"")
 	if err != nil {
 		return errors.Errorf("写入go-cqhttp.bat失败: %v", err)
