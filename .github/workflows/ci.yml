@@ -5,8 +5,8 @@ on: [push, pull_request,workflow_dispatch]
 env:
   BINARY_PREFIX: "go-cqhttp_"
   BINARY_SUFFIX: ""
+  COMMIT_ID: "${{ github.sha }}"
   PR_PROMPT: "::warning:: Build artifact will not be uploaded due to the workflow is trigged by pull request."
-  LD_FLAGS: "-w -s"
 
 jobs:
   build:
@@ -46,6 +46,7 @@ jobs:
           if $IS_PR ; then echo $PR_PROMPT; fi
           export BINARY_NAME="$BINARY_PREFIX$GOOS_$GOARCH$BINARY_SUFFIX"
           export CGO_ENABLED=0
+          export LD_FLAGS="-w -s -X github.com/Mrs4s/go-cqhttp/internal/base.Version=${COMMIT_ID::7}"
           go build -o "output/$BINARY_NAME" -trimpath -ldflags "$LD_FLAGS" .
       - name: Upload artifact
         uses: actions/upload-artifact@v2

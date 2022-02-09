@@ -13,6 +13,8 @@ account: # 账号相关
   # 是否使用服务器下发的新地址进行重连
   # 注意, 此设置可能导致在海外服务器上连接情况更差
   use-sso-address: true
+  # 是否允许发送临时会话消息
+  allow-temp-session: false
 
 heartbeat:
   # 心跳频率, 单位秒

@@ -20,7 +20,7 @@ func FeedContentsToArrayMessage(contents []topic.IFeedRichContentElement) []glob
 		case *topic.AtElement:
 			m = global.MSG{
 				"type": "at",
-				"data": global.MSG{"qq": elem.Id},
+				"data": global.MSG{"id": elem.Id, "qq": elem.Id},
 			}
 		case *topic.EmojiElement:
 			m = global.MSG{

@@ -6,14 +6,12 @@ import (
 	_ "embed" // embed the default config file
 	"fmt"
 	"os"
-	"strconv"
+	"regexp"
 	"strings"
 	"sync"
 
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
-
-	"github.com/Mrs4s/go-cqhttp/internal/param"
 )
 
 // defaultConfig 默认配置文件
@@ -30,12 +28,13 @@ type Reconnect struct {
 
 // Account 账号配置
 type Account struct {
-	Uin           int64      `yaml:"uin"`
-	Password      string     `yaml:"password"`
-	Encrypt       bool       `yaml:"encrypt"`
-	Status        int        `yaml:"status"`
-	ReLogin       *Reconnect `yaml:"relogin"`
-	UseSSOAddress bool       `yaml:"use-sso-address"`
+	Uin              int64      `yaml:"uin"`
+	Password         string     `yaml:"password"`
+	Encrypt          bool       `yaml:"encrypt"`
+	Status           int        `yaml:"status"`
+	ReLogin          *Reconnect `yaml:"relogin"`
+	UseSSOAddress    bool       `yaml:"use-sso-address"`
+	AllowTempSession bool       `yaml:"allow-temp-session"`
 }
 
 // Config 总配置文件
@@ -72,9 +71,8 @@ type Config struct {
 
 // Server 的简介和初始配置
 type Server struct {
-	Brief    string
-	Default  string
-	ParseEnv func() (string, *yaml.Node)
+	Brief   string
+	Default string
 }
 
 // LevelDBConfig leveldb 相关配置
@@ -91,57 +89,24 @@ type MongoDBConfig struct {
 
 // Parse 从默认配置文件路径中获取
 func Parse(path string) *Config {
-	fromEnv := os.Getenv("GCQ_UIN") != ""
-
 	file, err := os.ReadFile(path)
 	config := &Config{}
 	if err == nil {
-		err = yaml.NewDecoder(strings.NewReader(os.ExpandEnv(string(file)))).Decode(config)
-		if err != nil && !fromEnv {
+		err = yaml.NewDecoder(strings.NewReader(expand(string(file), os.Getenv))).Decode(config)
+		if err != nil {
 			log.Fatal("配置文件不合法!", err)
 		}
-	} else if !fromEnv {
+	} else {
 		generateConfig()
 		os.Exit(0)
-	}
-	if fromEnv {
-		// type convert tools
-		toInt64 := func(str string) int64 {
-			i, _ := strconv.ParseInt(str, 10, 64)
-			return i
-		}
-
-		// load config from environment variable
-		param.SetAtDefault(&config.Account.Uin, toInt64(os.Getenv("GCQ_UIN")), int64(0))
-		param.SetAtDefault(&config.Account.Password, os.Getenv("GCQ_PWD"), "")
-		param.SetAtDefault(&config.Account.Status, int32(toInt64(os.Getenv("GCQ_STATUS"))), int32(0))
-		param.SetAtDefault(&config.Account.ReLogin.Disabled, !param.EnsureBool(os.Getenv("GCQ_RELOGIN_DISABLED"), true), false)
-		param.SetAtDefault(&config.Account.ReLogin.Delay, uint(toInt64(os.Getenv("GCQ_RELOGIN_DELAY"))), uint(0))
-		param.SetAtDefault(&config.Account.ReLogin.MaxTimes, uint(toInt64(os.Getenv("GCQ_RELOGIN_MAX_TIMES"))), uint(0))
-		dbConf := &LevelDBConfig{Enable: param.EnsureBool(os.Getenv("GCQ_LEVELDB"), true)}
-		if config.Database == nil {
-			config.Database = make(map[string]yaml.Node)
-		}
-		config.Database["leveldb"] = func() yaml.Node {
-			n := &yaml.Node{}
-			_ = n.Encode(dbConf)
-			return *n
-		}()
-
-		for _, s := range serverconfs {
-			if s.ParseEnv != nil {
-				name, node := s.ParseEnv()
-				if node != nil {
-					config.Servers = append(config.Servers, map[string]yaml.Node{name: *node})
-				}
-			}
-		}
 	}
 	return config
 }
 
-var serverconfs []*Server
-var mu sync.Mutex
+var (
+	serverconfs []*Server
+	mu          sync.Mutex
+)
 
 // AddServer 添加该服务的简介和默认配置
 func AddServer(s *Server) {
@@ -181,4 +146,28 @@ func generateConfig() {
 	_ = os.WriteFile("config.yml", []byte(sb.String()), 0o644)
 	fmt.Println("默认配置文件已生成，请修改 config.yml 后重新启动!")
 	_, _ = input.ReadString('\n')
+}
+
+// expand 使用正则进行环境变量展开
+// os.ExpandEnv 字符 $ 无法逃逸
+// https://github.com/golang/go/issues/43482
+func expand(s string, mapping func(string) string) string {
+	r := regexp.MustCompile(`\${([a-zA-Z_]+[a-zA-Z0-9_:/.]*)}`)
+	return r.ReplaceAllStringFunc(s, func(s string) string {
+		s = strings.Trim(s, "${}")
+		// todo: use strings.Cut once go1.18 is released
+		before, after, ok := cut(s, ":")
+		m := mapping(before)
+		if ok && m == "" {
+			return after
+		}
+		return m
+	})
+}
+
+func cut(s, sep string) (before, after string, found bool) {
+	if i := strings.Index(s, sep); i >= 0 {
+		return s[:i], s[i+len(sep):], true
+	}
+	return s, "", false
 }

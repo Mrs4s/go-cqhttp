@@ -3,7 +3,6 @@ package param
 
 import (
 	"math"
-	"reflect"
 	"regexp"
 	"strings"
 	"sync"
@@ -93,38 +92,4 @@ func Base64DecodeString(s string) ([]byte, error) {
 	dst := make([]byte, e.DecodedLen(len(s)))
 	n, err := e.Decode(dst, utils.S2B(s))
 	return dst[:n], err
-}
-
-// SetAtDefault 在变量 variable 为默认值 defaultValue 的时候修改为 value
-func SetAtDefault(variable, value, defaultValue interface{}) {
-	v := reflect.ValueOf(variable)
-	v2 := reflect.ValueOf(value)
-	if v.Kind() != reflect.Ptr || v.IsNil() {
-		return
-	}
-	v = v.Elem()
-	if v.Interface() != defaultValue {
-		return
-	}
-	if v.Kind() != v2.Kind() {
-		return
-	}
-	v.Set(v2)
-}
-
-// SetExcludeDefault 在目标值 value 不为默认值 defaultValue 时修改 variable 为 value
-func SetExcludeDefault(variable, value, defaultValue interface{}) {
-	v := reflect.ValueOf(variable)
-	v2 := reflect.ValueOf(value)
-	if v.Kind() != reflect.Ptr || v.IsNil() {
-		return
-	}
-	v = v.Elem()
-	if reflect.Indirect(v2).Interface() != defaultValue {
-		return
-	}
-	if v.Kind() != v2.Kind() {
-		return
-	}
-	v.Set(v2)
 }

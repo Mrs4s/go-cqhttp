@@ -52,13 +52,17 @@ func convertGroupMemberInfo(groupID int64, m *client.GroupMemberInfo) global.MSG
 	}
 }
 
-func convertGuildMemberInfo(m *client.GuildMemberInfo) global.MSG {
-	return global.MSG{
-		"tiny_id":  fU64(m.TinyId),
-		"title":    m.Title,
-		"nickname": m.Nickname,
-		"role":     m.Role,
+func convertGuildMemberInfo(m []*client.GuildMemberInfo) (r []global.MSG) {
+	for _, mem := range m {
+		r = append(r, global.MSG{
+			"tiny_id":   fU64(mem.TinyId),
+			"title":     mem.Title,
+			"nickname":  mem.Nickname,
+			"role_id":   fU64(mem.Role),
+			"role_name": mem.RoleName,
+		})
 	}
+	return
 }
 
 func (bot *CQBot) formatGroupMessage(m *message.GroupMessage) global.MSG {
@@ -150,7 +154,6 @@ func convertChannelInfo(c *client.ChannelInfo) global.MSG {
 		"channel_type":      c.ChannelType,
 		"channel_name":      c.ChannelName,
 		"owner_guild_id":    fU64(c.Meta.GuildId),
-		"creator_id":        c.Meta.CreatorUin,
 		"creator_tiny_id":   fU64(c.Meta.CreatorTinyId),
 		"create_time":       c.Meta.CreateTime,
 		"current_slow_mode": c.Meta.CurrentSlowMode,
@@ -200,6 +203,21 @@ func convertChannelFeedInfo(f *topic.Feed) global.MSG {
 		"videos": videos,
 	}
 	return m
+}
+
+func convertReactions(reactions []*message.GuildMessageEmojiReaction) (r []global.MSG) {
+	r = make([]global.MSG, len(reactions))
+	for i, re := range reactions {
+		r[i] = global.MSG{
+			"emoji_id":    re.EmojiId,
+			"emoji_index": re.Face.Index,
+			"emoji_type":  re.EmojiType,
+			"emoji_name":  re.Face.Name,
+			"count":       re.Count,
+			"clicked":     re.Clicked,
+		}
+	}
+	return
 }
 
 func fU64(v uint64) string {

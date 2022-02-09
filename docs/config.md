@@ -167,6 +167,16 @@ database: # 数据库相关设置
 
 > 注5：关于MIME扫描， 详见[MIME](file.md#MIME)
 
+### 环境变量
+
+go-cqhttp 配置文件可以使用占位符来读取**环境变量**的值。
+
+```yaml
+account: # 账号相关
+  uin: ${CQ_UIN} # 读取环境变量 CQ_UIN
+  password: ${CQ_PWD:123456} # 当 CQ_PWD 为空时使用默认值 123456
+```
+
 ## 在线状态
 
 | 状态 | 值 |

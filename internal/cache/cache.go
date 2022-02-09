@@ -12,11 +12,6 @@ import (
 	"github.com/Mrs4s/go-cqhttp/internal/btree"
 )
 
-// todo(wdvxdr): always enable db-cache in v1.0.0
-
-// EnableCacheDB 是否启用 btree db缓存图片等
-var EnableCacheDB bool
-
 // Media Cache DBs
 var (
 	Image Cache
@@ -63,17 +58,15 @@ func (c *Cache) Delete(md5 []byte) {
 // Init 初始化 Cache
 func Init() {
 	node, ok := base.Database["cache"]
-	if !ok {
-		return
-	}
-	EnableCacheDB = true
 	var conf map[string]string
-	err := node.Decode(&conf)
-	if err != nil {
-		log.Fatalf("failed to read cache config: %v", err)
+	if ok {
+		err := node.Decode(&conf)
+		if err != nil {
+			log.Fatalf("failed to read cache config: %v", err)
+		}
 	}
 
-	var open = func(typ string, cache *Cache) {
+	open := func(typ string, cache *Cache) {
 		file := conf[typ]
 		if file == "" {
 			file = fmt.Sprintf("data/%s.db", typ)

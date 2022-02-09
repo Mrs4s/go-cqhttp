@@ -6,6 +6,7 @@ import (
 	"crypto/md5"
 	"crypto/sha1"
 	"encoding/hex"
+	"fmt"
 	"os"
 	"path"
 	"sync"
@@ -114,8 +115,6 @@ func Main() {
 					byteKey = []byte(arg[p])
 					para.Hide(p)
 				}
-			case "faststart":
-				base.FastStart = true
 			}
 		}
 	}
@@ -133,9 +132,8 @@ func Main() {
 		log.SetLevel(log.DebugLevel)
 		log.SetReportCaller(true)
 		log.Warnf("已开启Debug模式.")
-		log.Debugf("开发交流群: 192548878")
+		// log.Debugf("开发交流群: 192548878")
 	}
-	log.Info("用户交流群: 721829413")
 	if !global.PathExists("device.json") {
 		log.Warn("虚拟设备信息不存在, 将自动生成随机设备.")
 		client.GenRandomDevice()
@@ -205,21 +203,7 @@ func Main() {
 		time.Sleep(time.Second * 5)
 	}
 	log.Info("开始尝试登录并同步消息...")
-	log.Infof("使用协议: %v", func() string {
-		switch client.SystemDeviceInfo.Protocol {
-		case client.IPad:
-			return "iPad"
-		case client.AndroidPhone:
-			return "Android Phone"
-		case client.AndroidWatch:
-			return "Android Watch"
-		case client.MacOS:
-			return "MacOS"
-		case client.QiDian:
-			return "企点"
-		}
-		return "未知"
-	}())
+	log.Infof("使用协议: %s", client.SystemDeviceInfo.Protocol)
 	cli = newClient()
 	isQRCodeLogin := (base.Account.Uin == 0 || len(base.Account.Password) == 0) && !base.Account.Encrypt
 	isTokenLogin := false
@@ -279,7 +263,7 @@ func Main() {
 		reLoginLock.Lock()
 		defer reLoginLock.Unlock()
 		times = 1
-		if cli.Online {
+		if cli.Online.Load() {
 			return
 		}
 		log.Warnf("Bot已离线: %v", e.Message)
@@ -299,7 +283,7 @@ func Main() {
 			} else {
 				time.Sleep(time.Second)
 			}
-			if cli.Online {
+			if cli.Online.Load() {
 				log.Infof("登录已完成")
 				break
 			}
@@ -407,6 +391,13 @@ func newClient() *client.QQClient {
 			log.Error("Protocol -> " + e.Message)
 		case "DEBUG":
 			log.Debug("Protocol -> " + e.Message)
+		case "DUMP":
+			if !global.PathExists(global.DumpsPath) {
+				_ = os.MkdirAll(global.DumpsPath, 0o755)
+			}
+			dumpFile := path.Join(global.DumpsPath, fmt.Sprintf("%v.dump", time.Now().Unix()))
+			log.Errorf("出现错误 %v. 详细信息已转储至文件 %v 请连同日志提交给开发者处理", e.Message, dumpFile)
+			_ = os.WriteFile(dumpFile, e.Dump, 0o644)
 		}
 	})
 	return c

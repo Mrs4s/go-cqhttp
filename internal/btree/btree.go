@@ -475,15 +475,7 @@ func (d *DB) Insert(chash *byte, data []byte) {
 	d.flushSuper()
 }
 
-// Get look up item with the given key 'hash' in the database file. Length of the
-// item is stored in 'len'. Returns a pointer to the contents of the item.
-// The returned pointer should be released with free() after use.
-func (d *DB) Get(hash *byte) []byte {
-	off := d.lookup(d.top, hash)
-	if off == 0 {
-		return nil
-	}
-
+func (d *DB) readValue(off int64) []byte {
 	d.fd.Seek(off, io.SeekStart)
 	length, err := read32(d.fd)
 	if err != nil {
@@ -495,6 +487,17 @@ func (d *DB) Get(hash *byte) []byte {
 		return nil
 	}
 	return data[:n]
+}
+
+// Get look up item with the given key 'hash' in the database file. Length of the
+// item is stored in 'len'. Returns a pointer to the contents of the item.
+// The returned pointer should be released with free() after use.
+func (d *DB) Get(hash *byte) []byte {
+	off := d.lookup(d.top, hash)
+	if off == 0 {
+		return nil
+	}
+	return d.readValue(off)
 }
 
 // Delete remove item with the given key 'hash' from the database file.
@@ -521,4 +524,30 @@ func (d *DB) Delete(hash *byte) error {
 	freeQueued(d)
 	d.flushSuper()
 	return nil
+}
+
+// Foreach iterates over all items in the database file.
+func (d *DB) Foreach(iter func(key [16]byte, value []byte)) {
+	if d.top != 0 {
+		top := d.get(d.top)
+		d.iterate(top, iter)
+	}
+}
+
+func (d *DB) iterate(table *table, iter func(key [16]byte, value []byte)) {
+	for i := 0; i < table.size; i++ {
+		item := table.items[i]
+		offset := item.offset
+		iter(item.hash, d.readValue(offset))
+
+		if item.child != 0 {
+			child := d.get(item.child)
+			d.iterate(child, iter)
+		}
+	}
+	item := table.items[table.size]
+	if item.child != 0 {
+		child := d.get(item.child)
+		d.iterate(child, iter)
+	}
 }

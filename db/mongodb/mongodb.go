@@ -20,8 +20,9 @@ type MongoDBImpl struct {
 }
 
 const (
-	MongoGroupMessageCollection   = "group-messages"
-	MongoPrivateMessageCollection = "private-messages"
+	MongoGroupMessageCollection        = "group-messages"
+	MongoPrivateMessageCollection      = "private-messages"
+	MongoGuildChannelMessageCollection = "guild-channel-messages"
 )
 
 func init() {
@@ -72,14 +73,29 @@ func (m *MongoDBImpl) GetPrivateMessageByGlobalID(id int32) (*db.StoredPrivateMe
 	return &ret, nil
 }
 
+func (m *MongoDBImpl) GetGuildChannelMessageByID(id string) (*db.StoredGuildChannelMessage, error) {
+	coll := m.mongo.Collection(MongoGuildChannelMessageCollection)
+	var ret db.StoredGuildChannelMessage
+	if err := coll.FindOne(context.Background(), bson.D{{"_id", id}}).Decode(&ret); err != nil {
+		return nil, errors.Wrap(err, "query error")
+	}
+	return &ret, nil
+}
+
 func (m *MongoDBImpl) InsertGroupMessage(msg *db.StoredGroupMessage) error {
 	coll := m.mongo.Collection(MongoGroupMessageCollection)
-	_, err := coll.InsertOne(context.Background(), msg)
+	_, err := coll.UpdateOne(context.Background(), bson.D{{"_id", msg.ID}}, bson.D{{"$set", msg}}, options.Update().SetUpsert(true))
 	return errors.Wrap(err, "insert error")
 }
 
 func (m *MongoDBImpl) InsertPrivateMessage(msg *db.StoredPrivateMessage) error {
 	coll := m.mongo.Collection(MongoPrivateMessageCollection)
-	_, err := coll.InsertOne(context.Background(), msg)
+	_, err := coll.UpdateOne(context.Background(), bson.D{{"_id", msg.ID}}, bson.D{{"$set", msg}}, options.Update().SetUpsert(true))
+	return errors.Wrap(err, "insert error")
+}
+
+func (m *MongoDBImpl) InsertGuildChannelMessage(msg *db.StoredGuildChannelMessage) error {
+	coll := m.mongo.Collection(MongoGuildChannelMessageCollection)
+	_, err := coll.UpdateOne(context.Background(), bson.D{{"_id", msg.ID}}, bson.D{{"$set", msg}}, options.Update().SetUpsert(true))
 	return errors.Wrap(err, "insert error")
 }

@@ -22,10 +22,9 @@ type Param struct {
 }
 
 type Router struct {
-	Func    string
-	Path    string
-	Aliases []string
-	Params  []Param
+	Func   string
+	Path   []string
+	Params []Param
 }
 
 type generator struct {
@@ -53,9 +52,12 @@ func (g *generator) generate(routers []Router) {
 }
 
 func (g *generator) router(router Router) {
-	g.WriteString(`case ` + strconv.Quote(router.Path))
-	for _, alias := range router.Aliases {
-		g.WriteString(`, ` + strconv.Quote(alias))
+	g.WriteString(`case `)
+	for i, p := range router.Path {
+		if i != 0 {
+			g.WriteString(`, `)
+		}
+		g.WriteString(strconv.Quote(p))
 	}
 	g.WriteString(":\n")
 
@@ -92,10 +94,12 @@ func conv(v, t string) string {
 		return v + ".Bool()"
 	case "string":
 		return v + ".String()"
-	case "int32", "uint32", "int":
+	case "int32", "int":
 		return t + "(" + v + ".Int())"
 	case "uint64":
 		return v + ".Uint()"
+	case "uint32":
+		return "uint32(" + v + ".Uint())"
 	}
 }
 
@@ -112,7 +116,7 @@ func main() {
 	for _, decl := range file.Decls {
 		switch decl := decl.(type) {
 		case *ast.FuncDecl:
-			if decl.Recv == nil {
+			if !decl.Name.IsExported() || decl.Recv == nil {
 				continue
 			}
 			if st, ok := decl.Recv.List[0].Type.(*ast.StarExpr); !ok || st.X.(*ast.Ident).Name != "CQBot" {
@@ -137,12 +141,10 @@ func main() {
 			for _, comment := range decl.Doc.List {
 				annotation, args := match(comment.Text)
 				switch annotation {
-				case "":
-					continue
 				case "route":
-					router.Path = args
-				case "alias":
-					router.Aliases = append(router.Aliases, args)
+					for _, route := range strings.Split(args, ",") {
+						router.Path = append(router.Path, unquote(route))
+					}
 				case "default":
 					for name, value := range parseMap(args, "=") {
 						for i, p := range router.Params {
@@ -160,8 +162,11 @@ func main() {
 						}
 					}
 				}
+				sort.Slice(router.Path, func(i, j int) bool {
+					return router.Path[i] < router.Path[j]
+				})
 			}
-			if router.Path != "" {
+			if router.Path != nil {
 				routers = append(routers, router)
 			} else {
 				println(decl.Name.Name)
@@ -170,7 +175,7 @@ func main() {
 	}
 
 	sort.Slice(routers, func(i, j int) bool {
-		return routers[i].Path < routers[j].Path
+		return routers[i].Path[0] < routers[j].Path[0]
 	})
 
 	out := new(bytes.Buffer)

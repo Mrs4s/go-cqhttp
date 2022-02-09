@@ -72,13 +72,14 @@ type MessageSource struct {
 }
 
 // MessageSourceType 消息来源类型
-type MessageSourceType int32
+type MessageSourceType byte
 
 // MessageSourceType 常量
 const (
-	MessageSourcePrivate      MessageSourceType = 0
-	MessageSourceGroup        MessageSourceType = 1
-	MessageSourceGuildChannel MessageSourceType = 2
+	MessageSourcePrivate MessageSourceType = 1 << iota
+	MessageSourceGroup
+	MessageSourceGuildChannel
+	MessageSourceGuildDirect
 )
 
 const (
@@ -110,7 +111,7 @@ func ToArrayMessage(e []message.IMessageElement, source MessageSource) (r []glob
 		_, ok := e.(*message.ReplyElement)
 		return ok
 	})
-	if reply != nil && source.SourceType == MessageSourceGroup {
+	if reply != nil && source.SourceType&(MessageSourceGroup|MessageSourcePrivate) != 0 {
 		replyElem := reply.(*message.ReplyElement)
 		rid := int64(source.PrimaryID)
 		if rid == 0 {
@@ -276,7 +277,7 @@ func ToStringMessage(e []message.IMessageElement, source MessageSource, isRaw ..
 		_, ok := e.(*message.ReplyElement)
 		return ok
 	})
-	if reply != nil && source.SourceType == MessageSourceGroup {
+	if reply != nil && source.SourceType&(MessageSourceGroup|MessageSourcePrivate) != 0 {
 		replyElem := reply.(*message.ReplyElement)
 		rid := int64(source.PrimaryID)
 		if rid == 0 {
@@ -413,7 +414,7 @@ func ToMessageContent(e []message.IMessageElement) (r []global.MSG) {
 		case *message.RedBagElement:
 			m = global.MSG{
 				"type": "redbag",
-				"data": global.MSG{"title": o.Title, "type": o.MsgType},
+				"data": global.MSG{"title": o.Title, "type": int(o.MsgType)},
 			}
 		case *message.ForwardElement:
 			m = global.MSG{
@@ -447,6 +448,11 @@ func ToMessageContent(e []message.IMessageElement) (r []global.MSG) {
 			m = global.MSG{
 				"type": "image",
 				"data": data,
+			}
+		case *message.GuildImageElement:
+			m = global.MSG{
+				"type": "image",
+				"data": global.MSG{"file": hex.EncodeToString(o.Md5) + ".image", "url": o.Url},
 			}
 		case *message.FriendImageElement:
 			data := global.MSG{"file": hex.EncodeToString(o.Md5) + ".image", "url": o.Url}
@@ -666,7 +672,7 @@ func (bot *CQBot) ConvertObjectMessage(m gjson.Result, sourceType MessageSourceT
 	d := make(map[string]string)
 	convertElem := func(e gjson.Result) {
 		t := e.Get("type").Str
-		if t == "reply" && sourceType == MessageSourceGroup {
+		if t == "reply" && sourceType&(MessageSourceGroup|MessageSourcePrivate) != 0 {
 			if len(r) > 0 {
 				if _, ok := r[0].(*message.ReplyElement); ok {
 					log.Warnf("警告: 一条信息只能包含一个 Reply 元素.")
@@ -1303,7 +1309,7 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video bool, sourceTy
 	}
 	rawPath := path.Join(global.ImagePath, f)
 	if video {
-		if strings.HasSuffix(f, ".video") && cache.EnableCacheDB {
+		if strings.HasSuffix(f, ".video") {
 			hash, err := hex.DecodeString(strings.TrimSuffix(f, ".video"))
 			if err == nil {
 				if b := cache.Video.Get(hash); b != nil {
@@ -1328,7 +1334,7 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video bool, sourceTy
 			return &LocalImageElement{File: cacheFile}, nil
 		}
 	}
-	if strings.HasSuffix(f, ".image") && cache.EnableCacheDB {
+	if strings.HasSuffix(f, ".image") {
 		hash, err := hex.DecodeString(strings.TrimSuffix(f, ".image"))
 		if err == nil {
 			if b := cache.Image.Get(hash); b != nil {
