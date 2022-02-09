@@ -163,7 +163,6 @@ func expand(s string, mapping func(string) string) string {
 		}
 		return m
 	})
-
 }
 
 func cut(s, sep string) (before, after string, found bool) {
