@@ -152,14 +152,14 @@ func generateConfig() {
 // os.ExpandEnv 字符 $ 无法逃逸
 // https://github.com/golang/go/issues/43482
 func expand(s string, mapping func(string) string) string {
-	r := regexp.MustCompile(`\${([a-zA-Z_]+[a-zA-Z0-9_:]*)}`)
+	r := regexp.MustCompile(`\${([a-zA-Z_]+[a-zA-Z0-9_:/.]*)}`)
 	return r.ReplaceAllStringFunc(s, func(s string) string {
 		s = strings.Trim(s, "${}")
 		// todo: use strings.Cut once go1.18 is released
-		placeholder, default_, ok := cut(s, ":")
-		m := mapping(placeholder)
+		before, after, ok := cut(s, ":")
+		m := mapping(before)
 		if ok && m == "" {
-			return default_
+			return after
 		}
 		return m
 	})

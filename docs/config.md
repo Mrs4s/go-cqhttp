@@ -174,7 +174,7 @@ go-cqhttp 配置文件可以使用占位符来读取**环境变量**的值。
 ```yaml
 account: # 账号相关
   uin: ${CQ_UIN} # 读取环境变量 CQ_UIN
-  password: ${CQ_PASSWORD} # 读取环境变量 CQ_UIN
+  password: ${CQ_PWD:123456} # 当 CQ_PWD 为空时使用默认值 123456
 ```
 
 ## 在线状态
