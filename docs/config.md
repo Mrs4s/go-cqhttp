@@ -79,13 +79,6 @@ default-middlewares: &default
     frequency: 1  # 令牌回复频率, 单位秒
     bucket: 1     # 令牌桶大小
 
-database: # 数据库相关设置
-  leveldb:
-    # 是否启用内置leveldb数据库
-    # 启用将会增加10-20MB的内存占用和一定的磁盘空间
-    # 关闭将无法使用 撤回 回复 get_msg 等上下文相关功能
-    enable: true
-
 # 连接服务列表
 servers:
   # HTTP 通信设置

@@ -87,11 +87,11 @@ const httpDefault = `
       post:           # 反向HTTP POST地址列表
       #- url: ''                # 地址
       #  secret: ''             # 密钥
-	  #  max-retries: 3         # 最大重试，0 时禁用
+      #  max-retries: 3         # 最大重试，0 时禁用
       #  retries-interval: 1500 # 重试时间，单位毫秒，0 时立即
       #- url: http://127.0.0.1:5701/ # 地址
       #  secret: ''                  # 密钥
-	  #  max-retries: 10             # 最大重试，0 时禁用
+      #  max-retries: 10             # 最大重试，0 时禁用
       #  retries-interval: 1000      # 重试时间，单位毫秒，0 时立即
 `
 
