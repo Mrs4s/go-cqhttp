@@ -954,7 +954,10 @@ func (bot *CQBot) ToElement(t string, d map[string]string, sourceType MessageSou
 		if qq == "all" {
 			return message.AtAll(), nil
 		}
-		t, _ := strconv.ParseInt(qq, 10, 64)
+		t, err := strconv.ParseInt(qq, 10, 64)
+		if err != nil {
+			return nil, err
+		}
 		name := strings.TrimSpace(d["name"])
 		if len(name) > 0 {
 			name = "@" + name
