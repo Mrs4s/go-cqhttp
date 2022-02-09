@@ -21,6 +21,11 @@ func Test_expand(t *testing.T) {
 			mapping:  strings.ToUpper,
 			expected: "$123",
 		},
+		{
+			src:      "foo: ${bar:123456}",
+			mapping:  func(s string) string { return "" },
+			expected: "foo: 123456",
+		},
 	}
 	for i, tt := range tests {
 		if got := expand(tt.src, tt.mapping); got != tt.expected {
