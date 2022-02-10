@@ -244,7 +244,7 @@ Type: `node`
 | `seq`     | message | 具体消息       | 用于自定义消息                                                                         |
 
 特殊说明: **需要使用单独的API `/send_group_forward_msg` 发送，并且由于消息段较为复杂，仅支持Array形式入参。 如果引用消息和自定义消息同时出现，实际查看顺序将取消息段顺序.
-另外按 [CQHTTP](https://git.io/JtxtN) 文档说明, `data` 应全为字符串, 但由于需要接收`message` 类型的消息, 所以 *仅限此Type的content字段* 支持Array套娃**
+另外按 [Onebot v11](https://github.com/botuniverse/onebot-11/blob/master/message/array.md) 文档说明, `data` 应全为字符串, 但由于需要接收`message` 类型的消息, 所以 *仅限此Type的content字段* 支持Array套娃**
 
 示例:
 
