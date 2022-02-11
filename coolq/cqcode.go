@@ -114,7 +114,7 @@ func ToArrayMessage(e []message.IMessageElement, source MessageSource) (r []glob
 	if reply != nil && source.SourceType&(MessageSourceGroup|MessageSourcePrivate) != 0 {
 		replyElem := reply.(*message.ReplyElement)
 		rid := int64(source.PrimaryID)
-		if rid == 0 {
+		if source.SourceType == MessageSourcePrivate {
 			rid = replyElem.Sender
 		}
 		if replyElem.GroupID != 0 {
@@ -280,7 +280,7 @@ func ToStringMessage(e []message.IMessageElement, source MessageSource, isRaw ..
 	if reply != nil && source.SourceType&(MessageSourceGroup|MessageSourcePrivate) != 0 {
 		replyElem := reply.(*message.ReplyElement)
 		rid := int64(source.PrimaryID)
-		if rid == 0 {
+		if source.SourceType == MessageSourcePrivate {
 			rid = replyElem.Sender
 		}
 		if replyElem.GroupID != 0 {
