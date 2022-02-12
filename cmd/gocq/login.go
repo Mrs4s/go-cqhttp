@@ -3,13 +3,14 @@ package gocq
 import (
 	"bufio"
 	"bytes"
+	"image"
+	"image/png"
 	"os"
 	"strings"
 	"time"
 
-	qrcodeTerminal "github.com/Baozisoftware/qrcode-terminal-go"
 	"github.com/Mrs4s/MiraiGo/client"
-	"github.com/gocq/qrcode"
+	"github.com/mattn/go-colorable"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
@@ -53,12 +54,36 @@ func commonLogin() error {
 	return loginResponseProcessor(res)
 }
 
-func qrcodeLogin() error {
-	rsp, err := cli.FetchQRCode()
+func printQRCode(imgData []byte) {
+	const (
+		black = "\033[48;5;0m  \033[0m"
+		white = "\033[48;5;7m  \033[0m"
+	)
+	img, err := png.Decode(bytes.NewReader(imgData))
 	if err != nil {
-		return err
+		log.Panic(err)
 	}
-	fi, err := qrcode.Decode(bytes.NewReader(rsp.ImageData))
+	data := img.(*image.Gray).Pix
+	bound := img.Bounds().Max.X
+	buf := make([]byte, 0, (bound*4+1)*(bound))
+	i := 0
+	for y := 0; y < bound; y++ {
+		i = y * bound
+		for x := 0; x < bound; x++ {
+			if data[i] != 255 {
+				buf = append(buf, white...)
+			} else {
+				buf = append(buf, black...)
+			}
+			i++
+		}
+		buf = append(buf, '\n')
+	}
+	_, _ = colorable.NewColorableStdout().Write(buf)
+}
+
+func qrcodeLogin() error {
+	rsp, err := cli.FetchQRCodeCustomSize(1, 2, 1)
 	if err != nil {
 		return err
 	}
@@ -70,7 +95,7 @@ func qrcodeLogin() error {
 		log.Infof("请使用手机QQ扫描二维码 (qrcode.png) : ")
 	}
 	time.Sleep(time.Second)
-	qrcodeTerminal.New2(qrcodeTerminal.ConsoleColors.BrightBlack, qrcodeTerminal.ConsoleColors.BrightWhite, qrcodeTerminal.QRCodeRecoveryLevels.Low).Get(fi.Content).Print()
+	printQRCode(rsp.ImageData)
 	s, err := cli.QueryQRCodeStatus(rsp.Sig)
 	if err != nil {
 		return err
