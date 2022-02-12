@@ -50,7 +50,7 @@ func init() {
 func (ldb *LevelDBImpl) Open() error {
 	p := path.Join("data", "leveldb-v2")
 	d, err := leveldb.OpenFile(p, &opt.Options{
-		WriteBuffer: 128 * opt.KiB,
+		WriteBuffer: 32 * opt.KiB,
 	})
 	if err != nil {
 		return errors.Wrap(err, "open leveldb error")
