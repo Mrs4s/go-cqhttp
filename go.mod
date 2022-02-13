@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/Microsoft/go-winio v0.5.1
-	github.com/Mrs4s/MiraiGo v0.0.0-20220213090811-8a518ee96c6b
+	github.com/Mrs4s/MiraiGo v0.0.0-20220213165136-d53bf8503e18
 	github.com/RomiChan/websocket v1.4.3-0.20220123145318-307a86b127bc
 	github.com/dustin/go-humanize v1.0.0
 	github.com/fumiama/go-hide-param v0.1.4
@@ -27,7 +27,7 @@ require (
 )
 
 require (
-	github.com/RomiChan/protobuf v0.0.0-20211223055824-048df49a8956 // indirect
+	github.com/RomiChan/protobuf v0.0.0-20220213164748-44b69c8bdec0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fumiama/imgsz v0.0.2 // indirect
 	github.com/go-stack/stack v1.8.0 // indirect

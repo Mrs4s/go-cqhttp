@@ -1,9 +1,9 @@
 github.com/Microsoft/go-winio v0.5.1 h1:aPJp2QD7OOrhO5tQXqQoGSJc+DjDtWTGLOmNyAm6FgY=
 github.com/Microsoft/go-winio v0.5.1/go.mod h1:JPGBdM1cNvN/6ISo+n8V5iA4v8pBzdOpzfwIujj1a84=
-github.com/Mrs4s/MiraiGo v0.0.0-20220213090811-8a518ee96c6b h1:RC+/HdXawl3FWYS7uqFdORHFTO3BNOQT0XQE6zJEdK8=
-github.com/Mrs4s/MiraiGo v0.0.0-20220213090811-8a518ee96c6b/go.mod h1:BNKTKQjbsmv2Coh1u//NfsxsuOq2ByVN2ZbSSMwjQBc=
-github.com/RomiChan/protobuf v0.0.0-20211223055824-048df49a8956 h1:hnaAkKz4t+xpSNVp5mnuloRMd3Rj2Lfg5biZ3emv//c=
-github.com/RomiChan/protobuf v0.0.0-20211223055824-048df49a8956/go.mod h1:CKKOWC7mBxd36zxsCB1V8DTrwlTNRQvkSVbYqyUiGEE=
+github.com/Mrs4s/MiraiGo v0.0.0-20220213165136-d53bf8503e18 h1:eM2KdNvC9DffdhBUSMjSCzdedQp2PmnNkiI+TAM1iDQ=
+github.com/Mrs4s/MiraiGo v0.0.0-20220213165136-d53bf8503e18/go.mod h1:T66Ua3SOfpJMx+DcfQxk95MeR8RmvAVmjYSkoQQ8nwI=
+github.com/RomiChan/protobuf v0.0.0-20220213164748-44b69c8bdec0 h1:8CK7Hg+CRGTFhpjvp5V+7wd8/TkuZ6fSuztLVV3bwoQ=
+github.com/RomiChan/protobuf v0.0.0-20220213164748-44b69c8bdec0/go.mod h1:CKKOWC7mBxd36zxsCB1V8DTrwlTNRQvkSVbYqyUiGEE=
 github.com/RomiChan/websocket v1.4.3-0.20220123145318-307a86b127bc h1:AAx50/fb/xS4lvsdQg+bFbGvqSDhyV1MF+p2PLCamZ0=
 github.com/RomiChan/websocket v1.4.3-0.20220123145318-307a86b127bc/go.mod h1:OMmITAib6POA37xCichWM0aRnoVpSMZO1rB/G01wrr0=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
