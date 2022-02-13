@@ -1,13 +1,12 @@
 package selfupdate
 
 import (
+	"archive/zip"
 	"bytes"
 	"crypto/sha256"
 	"errors"
 	"io"
 	"net/http"
-
-	"github.com/klauspost/compress/zip"
 )
 
 // update go-cqhttp自我更新

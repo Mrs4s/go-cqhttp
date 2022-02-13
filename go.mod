@@ -4,23 +4,22 @@ go 1.17
 
 require (
 	github.com/Microsoft/go-winio v0.5.1
-	github.com/Mrs4s/MiraiGo v0.0.0-20220212081637-6692c4acb8eb
+	github.com/Mrs4s/MiraiGo v0.0.0-20220213090811-8a518ee96c6b
 	github.com/RomiChan/websocket v1.4.3-0.20220123145318-307a86b127bc
 	github.com/dustin/go-humanize v1.0.0
 	github.com/fumiama/go-hide-param v0.1.4
 	github.com/gabriel-vasile/mimetype v1.4.0
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0
-	github.com/klauspost/compress v1.13.6
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
 	github.com/mattn/go-colorable v0.1.12
 	github.com/pkg/errors v0.9.1
 	github.com/segmentio/asm v1.1.3
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.0
-	github.com/syndtr/goleveldb v1.0.0
-	github.com/tidwall/gjson v1.12.1
+	github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
+	github.com/tidwall/gjson v1.14.0
 	github.com/wdvxdr1123/go-silk v0.0.0-20210316130616-d47b553def60
-	go.mongodb.org/mongo-driver v1.8.1
+	go.mongodb.org/mongo-driver v1.8.3
 	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
 	golang.org/x/time v0.0.0-20211116232009-f0f3c7e86c11
@@ -32,9 +31,10 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fumiama/imgsz v0.0.2 // indirect
 	github.com/go-stack/stack v1.8.0 // indirect
-	github.com/golang/snappy v0.0.1 // indirect
+	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/go-cmp v0.5.5 // indirect
 	github.com/jonboulle/clockwork v0.2.2 // indirect
+	github.com/klauspost/compress v1.13.6 // indirect
 	github.com/lestrrat-go/strftime v1.0.5 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/pierrec/lz4/v4 v4.1.11 // indirect

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto/md5"
 	"encoding/hex"
-	xml2 "encoding/xml"
 	"errors"
 	"fmt"
 	"io"
@@ -1044,7 +1043,7 @@ func (bot *CQBot) ToElement(t string, d map[string]string, sourceType MessageSou
 				}, nil
 			}
 			xml := fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="2" templateID="1" action="web" brief="[分享] %s" sourceMsgId="0" url="%s" flag="0" adverSign="0" multiMsgFlag="0"><item layout="2"><audio cover="%s" src="%s"/><title>%s</title><summary>%s</summary></item><source name="音乐" icon="https://i.gtimg.cn/open/app_icon/01/07/98/56/1101079856_100_m.png" url="http://web.p.qq.com/qqmpmobile/aio/app.html?id=1101079856" action="app" a_actionData="com.tencent.qqmusic" i_actionData="tencent1101079856://" appid="1101079856" /></msg>`,
-				XMLEscape(d["title"]), d["url"], d["image"], d["audio"], XMLEscape(d["title"]), XMLEscape(d["content"]))
+				utils.XmlEscape(d["title"]), d["url"], d["image"], d["audio"], utils.XmlEscape(d["title"]), utils.XmlEscape(d["content"]))
 			return &message.ServiceElement{
 				Id:      60,
 				Content: xml,
@@ -1145,14 +1144,6 @@ func (bot *CQBot) ToElement(t string, d map[string]string, sourceType MessageSou
 	default:
 		return nil, errors.New("unsupported cq code: " + t)
 	}
-}
-
-// XMLEscape 将字符串c转义为XML字符串
-func XMLEscape(c string) string {
-	buf := global.NewBuffer()
-	defer global.PutBuffer(buf)
-	_ = xml2.EscapeText(buf, utils.S2B(c))
-	return buf.String()
 }
 
 /*CQCodeEscapeText 将字符串raw中部分字符转义
