@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/pkg/errors"
+
 	"github.com/Mrs4s/go-cqhttp/global"
 )
 
@@ -31,6 +33,8 @@ func (r *intReader) uvarint() uint64 {
 	return i
 }
 
+// reader implements the index read.
+// data format is the same as the writer's
 type reader struct {
 	data        intReader
 	strings     intReader
@@ -84,9 +88,6 @@ func (r *reader) string() string {
 
 func (r *reader) stringNoSync() string {
 	off := r.data.uvarint()
-	if off == 0 {
-		return ""
-	}
 	if s, ok := r.stringIndex[off]; ok {
 		return s
 	}
@@ -154,8 +155,12 @@ func (r *reader) obj() interface{} {
 	}
 }
 
-func newReader(data string) *reader {
+func newReader(data string) (*reader, error) {
 	in := newIntReader(data)
+	v := in.uvarint()
+	if v != dataVersion {
+		return nil, errors.Errorf("db/leveldb: invalid data version %d", v)
+	}
 	sl := int64(in.uvarint())
 	dl := int64(in.uvarint())
 	whence, _ := in.Seek(0, io.SeekCurrent)
@@ -166,5 +171,5 @@ func newReader(data string) *reader {
 		strings:     newIntReader(sData),
 		stringIndex: make(map[uint64]string),
 	}
-	return &r
+	return &r, nil
 }

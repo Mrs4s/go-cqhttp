@@ -3,31 +3,28 @@ package leveldb
 import (
 	"path"
 
-	"github.com/Mrs4s/MiraiGo/utils"
-
 	"github.com/Mrs4s/MiraiGo/binary"
+	"github.com/Mrs4s/MiraiGo/utils"
 	"github.com/pkg/errors"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/opt"
 	"gopkg.in/yaml.v3"
 
 	"github.com/Mrs4s/go-cqhttp/db"
-	"github.com/Mrs4s/go-cqhttp/modules/config"
 )
 
 type database struct {
 	db *leveldb.DB
 }
 
-const (
-	group        = 0x0
-	private      = 0x1
-	guildChannel = 0x2
-)
+// config leveldb 相关配置
+type config struct {
+	Enable bool `yaml:"enable"`
+}
 
 func init() {
 	db.Register("leveldb", func(node yaml.Node) db.Database {
-		conf := new(config.LevelDBConfig)
+		conf := new(config)
 		_ = node.Decode(conf)
 		if !conf.Enable {
 			return nil
@@ -58,7 +55,10 @@ func (ldb *database) GetMessageByGlobalID(id int32) (_ db.StoredMessage, err err
 			err = errors.Errorf("%v", r)
 		}
 	}()
-	r := newReader(utils.B2S(v))
+	r, err := newReader(utils.B2S(v))
+	if err != nil {
+		return nil, err
+	}
 	switch r.uvarint() {
 	case group:
 		return r.readStoredGroupMessage(), nil
@@ -103,7 +103,10 @@ func (ldb *database) GetGuildChannelMessageByID(id string) (*db.StoredGuildChann
 			err = errors.Errorf("%v", r)
 		}
 	}()
-	r := newReader(utils.B2S(v))
+	r, err := newReader(utils.B2S(v))
+	if err != nil {
+		return nil, err
+	}
 	switch r.uvarint() {
 	case guildChannel:
 		return r.readStoredGuildChannelMessage(), nil
@@ -113,9 +116,7 @@ func (ldb *database) GetGuildChannelMessageByID(id string) (*db.StoredGuildChann
 }
 
 func (ldb *database) InsertGroupMessage(msg *db.StoredGroupMessage) error {
-	w := writer{
-		stringIndex: map[string]uint64{},
-	}
+	w := newWriter()
 	w.uvarint(group)
 	w.writeStoredGroupMessage(msg)
 	err := ldb.db.Put(binary.ToBytes(msg.GlobalID), w.bytes(), nil)
@@ -123,9 +124,7 @@ func (ldb *database) InsertGroupMessage(msg *db.StoredGroupMessage) error {
 }
 
 func (ldb *database) InsertPrivateMessage(msg *db.StoredPrivateMessage) error {
-	w := writer{
-		stringIndex: map[string]uint64{},
-	}
+	w := newWriter()
 	w.uvarint(private)
 	w.writeStoredPrivateMessage(msg)
 	err := ldb.db.Put(binary.ToBytes(msg.GlobalID), w.bytes(), nil)
@@ -133,9 +132,7 @@ func (ldb *database) InsertPrivateMessage(msg *db.StoredPrivateMessage) error {
 }
 
 func (ldb *database) InsertGuildChannelMessage(msg *db.StoredGuildChannelMessage) error {
-	w := writer{
-		stringIndex: map[string]uint64{},
-	}
+	w := newWriter()
 	w.uvarint(guildChannel)
 	w.writeStoredGuildChannelMessage(msg)
 	err := ldb.db.Put(utils.S2B(msg.ID), w.bytes(), nil)

@@ -23,10 +23,25 @@ func (w *intWriter) uvarint(x uint64) {
 	w.WriteByte(byte(x))
 }
 
+// writer implements the index write.
+// data format(use uvarint to encode integers):
+// | version | string data length | index data length | string data | index data |
+// for string data part, each string is encoded as:
+// | string length | string |
+// for index data part, each value is encoded as:
+// | coder | value |
+// * coder is the identifier of value's type.
+// * specially for string, it's value is the offset in string data part.
 type writer struct {
 	data        intWriter
 	strings     intWriter
 	stringIndex map[string]uint64
+}
+
+func newWriter() *writer {
+	return &writer{
+		stringIndex: make(map[string]uint64),
+	}
 }
 
 func (w *writer) coder(o coder)    { w.data.WriteByte(byte(o)) }
@@ -68,20 +83,23 @@ func (w *writer) string(s string) {
 	w.coder(coderString)
 	off, ok := w.stringIndex[s]
 	if !ok {
+		// not found write to string data part
+		// | string length | string |
 		off = uint64(w.strings.Len())
 		w.strings.uvarint(uint64(len(s)))
 		_, _ = w.strings.WriteString(s)
 		w.stringIndex[s] = off
 	}
+	// write offset to index data part
 	w.uvarint(off)
 }
 
 func (w *writer) msg(m global.MSG) {
 	w.coder(coderMSG)
 	w.uvarint(uint64(len(m)))
-	for s, coder := range m {
+	for s, obj := range m {
 		w.string(s)
-		w.obj(coder)
+		w.obj(obj)
 	}
 }
 
@@ -120,11 +138,10 @@ func (w *writer) obj(o interface{}) {
 
 func (w *writer) bytes() []byte {
 	var out intWriter
-	buf := bytes.Buffer{}
+	out.uvarint(dataVersion)
 	out.uvarint(uint64(w.strings.Len()))
 	out.uvarint(uint64(w.data.Len()))
 	_, _ = io.Copy(&out, &w.strings)
 	_, _ = io.Copy(&out, &w.data)
-	_, _ = io.Copy(&buf, &out)
-	return buf.Bytes()
+	return out.Bytes()
 }
