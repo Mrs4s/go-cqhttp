@@ -3,7 +3,9 @@
 欢迎来到 go-cqhttp 文档 目前还在咕
 
 # 基础教程
+
 ## 下载
+
 从[release](https://github.com/Mrs4s/go-cqhttp/releases)界面下载最新版本的go-cqhttp
 
 - Windows下32位文件为  `go-cqhttp-v*-windows-386.zip`
@@ -137,7 +139,9 @@ enable ws?(Y/n)
 ### 方法二
 
 使用更新参数，在命令行中打开go-cqhttp所在目录
-#### windows
+
+#### Windows
+
 输入指令
 `go-cqhttp.exe update`
 
@@ -146,10 +150,11 @@ enable ws?(Y/n)
 `go-cqhttp.exe update https://github.rc1844.workers.dev`
 
 几个可用的镜像源
-- `https://hub.fastgit.org`
-- `https://github.com.cnpmjs.org`
+
+- `https://hub.fastgit.xyz`
 - `https://github.bajins.com`
 - `https://github.rc1844.workers.dev`
 
-#### linux
-方法与windows基本一致，将 `go-cqhttp.exe` 替换为 `./go-cqhttp`即可
+#### Linux
+
+方法与 Windows 基本一致，将 `go-cqhttp.exe` 替换为 `./go-cqhttp`即可
