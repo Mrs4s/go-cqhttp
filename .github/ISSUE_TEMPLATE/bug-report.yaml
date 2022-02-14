@@ -9,26 +9,33 @@ body:
     attributes:
       value: |
         ## 感谢您愿意填写错误回报！
-        ## 以下是一些注意事项，请务必阅读让我们能够更容易处理
+
+        ### 以下是一些注意事项，请务必阅读让我们能够更容易处理
+
+        ---
 
         ### ❗ | 确定没有相同问题的ISSUE已被提出. (教程: https://github.com/Mrs4s/go-cqhttp/issues/633)
         ### 🌎| 请准确填写环境信息
         ### ❔ | 打开DEBUG模式复现，并提供出现问题前后至少 10 秒的完整日志内容。请自行删除日志内存在的个人信息及敏感内容。
         ### ⚠ | 如果涉及内存泄漏/CPU占用异常请打开DEBUG模式并下载pprof性能分析.
 
+        ---
+
         ## 如果您不知道如何有效、精准地表述，我们建议您先阅读《提问的智慧》
         链接: [《提问的智慧》](https://github.com/ryanhanwu/How-To-Ask-Questions-The-Smart-Way/blob/main/README-zh_CN.md)
+
+        请确保您已阅读以上注意事项，并勾选下方的确认框。
         ---
   - type: checkboxes
     id: terms
     attributes:
-      label: 请确保您已阅读以上注意事项，并勾选下方的确认框。
+      label: 检查表
       options:
-        - label: "我已经仔细阅读上述教程和 [\"提问前需知\"](https://github.com/Mrs4s/go-cqhttp/issues/633)"
+        - label: "我已经仔细阅读上述教程和 [\"提问前需知\"](https://github.com/Mrs4s/go-cqhttp/issues/633)。"
           required: true
-        - label: "我已经使用 [dev分支版本](https://github.com/Mrs4s/go-cqhttp/actions/workflows/ci.yml) 测试过，问题依旧存在。"
+        - label: "我已经使用 [dev 分支版本](https://github.com/Mrs4s/go-cqhttp/actions/workflows/ci.yml) 测试过，问题依旧存在。"
           required: true
-        - label: "我已经在 [Issue Tracker](https://github.com/Mrs4s/go-cqhttp/issues) 中找过我要提出的问题，没有找到相同问题的ISSUE。"
+        - label: "我已经在 [Issue Tracker](https://github.com/Mrs4s/go-cqhttp/issues) 中找过我要提出的问题，没有找到相同问题的 issue。"
           required: true
         - label: 我已知晓并同意，此处仅用于汇报程序中存在的问题。若这个 Issue 是关于其他非程序本身问题，则我的 Issue 可能会被无条件自动关闭或/并锁定。（这些问题应当在 Discussion 板块提出。）
           required: true
@@ -117,6 +124,10 @@ body:
       description: |
         我们需要执行哪些操作才能让 bug 出现？
         简洁清晰的重现步骤能够帮助我们更迅速地定位问题所在。
+      placeholder: |
+        1.
+        2.
+        3.
     validations:
       required: true
 
@@ -125,6 +136,7 @@ body:
     id: expected
     attributes:
       label: 期望的结果是什么？
+      placeholder: 简单描述成功的结果/输出...
     validations:
       required: true
 
@@ -133,8 +145,21 @@ body:
     id: actual
     attributes:
       label: 实际的结果是什么？
+      placeholder: |
+         [图片]
+         出现XXX错误
+         ...
     validations:
       required: true
+
+  # Optional | Reproduce code framework
+  - type: input
+    id: reproduce-code-framework
+    attributes:
+      label: 复现代码的框架（可选）
+      placeholder: nonebot2
+    validations:
+      required: false
 
   # Optional | Reproduce code
   - type: textarea
@@ -148,6 +173,9 @@ body:
     id: logging
     attributes:
       label: 日志记录（可选）
+      placeholder: |
+          [YYYY-MM-DD HH:MM:SS] [DEBUG]: 
+          ...
       render: golang
 
   # Optional | Extra description
@@ -155,3 +183,4 @@ body:
     id: extra-desc
     attributes:
       label: 补充说明（可选）
+      placeholder: 对上面的信息需要补充的部分...
