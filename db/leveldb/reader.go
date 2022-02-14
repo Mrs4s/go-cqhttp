@@ -52,41 +52,30 @@ func (r *reader) sync(c coder) {
 }
 
 func (r *reader) int() int {
-	r.sync(coderInt)
 	return int(r.varint())
 }
 
 func (r *reader) uint() uint {
-	r.sync(coderUint)
 	return uint(r.uvarint())
 }
 
 func (r *reader) int32() int32 {
-	r.sync(coderInt32)
 	return int32(r.varint())
 }
 
 func (r *reader) uint32() uint32 {
-	r.sync(coderUint32)
 	return uint32(r.uvarint())
 }
 
 func (r *reader) int64() int64 {
-	r.sync(coderInt64)
 	return r.varint()
 }
 
 func (r *reader) uint64() uint64 {
-	r.sync(coderUint64)
 	return r.uvarint()
 }
 
 func (r *reader) string() string {
-	r.sync(coderString)
-	return r.stringNoSync()
-}
-
-func (r *reader) stringNoSync() string {
 	off := r.data.uvarint()
 	if s, ok := r.stringIndex[off]; ok {
 		return s
@@ -100,11 +89,6 @@ func (r *reader) stringNoSync() string {
 }
 
 func (r *reader) msg() global.MSG {
-	r.sync(coderMSG)
-	return r.msgNoSync()
-}
-
-func (r *reader) msgNoSync() global.MSG {
 	length := r.uvarint()
 	msg := make(global.MSG, length)
 	for i := uint64(0); i < length; i++ {
@@ -115,11 +99,6 @@ func (r *reader) msgNoSync() global.MSG {
 }
 
 func (r *reader) arrayMsg() []global.MSG {
-	r.sync(coderArrayMSG)
-	return r.arrayMsgNoSync()
-}
-
-func (r *reader) arrayMsgNoSync() []global.MSG {
 	length := r.uvarint()
 	msgs := make([]global.MSG, length)
 	for i := range msgs {
@@ -145,11 +124,11 @@ func (r *reader) obj() interface{} {
 	case coderUint64:
 		return r.uvarint()
 	case coderString:
-		return r.stringNoSync()
+		return r.string()
 	case coderMSG:
-		return r.msgNoSync()
+		return r.msg()
 	case coderArrayMSG:
-		return r.arrayMsgNoSync()
+		return r.arrayMsg()
 	default:
 		panic("db/leveldb: invalid coder " + strconv.Itoa(int(coder)))
 	}
