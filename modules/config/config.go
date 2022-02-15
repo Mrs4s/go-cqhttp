@@ -75,11 +75,6 @@ type Server struct {
 	Default string
 }
 
-// LevelDBConfig leveldb 相关配置
-type LevelDBConfig struct {
-	Enable bool `yaml:"enable"`
-}
-
 // MongoDBConfig mongodb 相关配置
 type MongoDBConfig struct {
 	Enable   bool   `yaml:"enable"`
