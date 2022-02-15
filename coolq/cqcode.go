@@ -22,6 +22,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 
+	"github.com/Mrs4s/go-cqhttp/coolq/cqcode"
 	"github.com/Mrs4s/go-cqhttp/db"
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
@@ -289,7 +290,7 @@ func ToStringMessage(e []message.IMessageElement, source MessageSource, isRaw ..
 			write("[CQ:reply,id=%d,seq=%d,qq=%d,time=%d,text=%s]",
 				db.ToGlobalID(rid, replyElem.ReplySeq),
 				replyElem.ReplySeq, replyElem.Sender, replyElem.Time,
-				CQCodeEscapeValue(ToStringMessage(replyElem.Elements, source)))
+				cqcode.EscapeValue(ToStringMessage(replyElem.Elements, source)))
 		} else {
 			write("[CQ:reply,id=%d]", db.ToGlobalID(rid, replyElem.ReplySeq))
 		}
@@ -304,7 +305,7 @@ func ToStringMessage(e []message.IMessageElement, source MessageSource, isRaw ..
 				}
 			}
 		case *message.TextElement:
-			sb.WriteString(CQCodeEscapeText(o.Content))
+			sb.WriteString(cqcode.EscapeText(o.Content))
 		case *message.AtElement:
 			if o.Target == 0 {
 				write("[CQ:at,qq=all]")
@@ -321,13 +322,13 @@ func ToStringMessage(e []message.IMessageElement, source MessageSource, isRaw ..
 			if ur {
 				write(`[CQ:record,file=%s]`, o.Name)
 			} else {
-				write(`[CQ:record,file=%s,url=%s]`, o.Name, CQCodeEscapeValue(o.Url))
+				write(`[CQ:record,file=%s,url=%s]`, o.Name, cqcode.EscapeValue(o.Url))
 			}
 		case *message.ShortVideoElement:
 			if ur {
 				write(`[CQ:video,file=%s]`, o.Name)
 			} else {
-				write(`[CQ:video,file=%s,url=%s]`, o.Name, CQCodeEscapeValue(o.Url))
+				write(`[CQ:video,file=%s,url=%s]`, o.Name, cqcode.EscapeValue(o.Url))
 			}
 		case *message.GroupImageElement:
 			var arg string
@@ -340,7 +341,7 @@ func ToStringMessage(e []message.IMessageElement, source MessageSource, isRaw ..
 			if ur {
 				write("[CQ:image,file=%s%s]", hex.EncodeToString(o.Md5)+".image", arg)
 			} else {
-				write("[CQ:image,file=%s,url=%s%s]", hex.EncodeToString(o.Md5)+".image", CQCodeEscapeValue(o.Url), arg)
+				write("[CQ:image,file=%s,url=%s%s]", hex.EncodeToString(o.Md5)+".image", cqcode.EscapeValue(o.Url), arg)
 			}
 		case *message.FriendImageElement:
 			var arg string
@@ -350,22 +351,22 @@ func ToStringMessage(e []message.IMessageElement, source MessageSource, isRaw ..
 			if ur {
 				write("[CQ:image,file=%s%s]", hex.EncodeToString(o.Md5)+".image", arg)
 			} else {
-				write("[CQ:image,file=%s,url=%s%s]", hex.EncodeToString(o.Md5)+".image", CQCodeEscapeValue(o.Url), arg)
+				write("[CQ:image,file=%s,url=%s%s]", hex.EncodeToString(o.Md5)+".image", cqcode.EscapeValue(o.Url), arg)
 			}
 		case *message.GuildImageElement:
-			write("[CQ:image,file=%s,url=%s]", hex.EncodeToString(o.Md5)+".image", CQCodeEscapeValue(o.Url))
+			write("[CQ:image,file=%s,url=%s]", hex.EncodeToString(o.Md5)+".image", cqcode.EscapeValue(o.Url))
 		case *message.DiceElement:
 			write("[CQ:dice,value=%v]", o.Value)
 		case *message.MarketFaceElement:
 			sb.WriteString(o.Name)
 		case *message.ServiceElement:
 			if isOk := strings.Contains(o.Content, "<?xml"); isOk {
-				write(`[CQ:xml,data=%s,resid=%d]`, CQCodeEscapeValue(o.Content), o.Id)
+				write(`[CQ:xml,data=%s,resid=%d]`, cqcode.EscapeValue(o.Content), o.Id)
 			} else {
-				write(`[CQ:json,data=%s,resid=%d]`, CQCodeEscapeValue(o.Content), o.Id)
+				write(`[CQ:json,data=%s,resid=%d]`, cqcode.EscapeValue(o.Content), o.Id)
 			}
 		case *message.LightAppElement:
-			write(`[CQ:json,data=%s]`, CQCodeEscapeValue(o.Content))
+			write(`[CQ:json,data=%s]`, cqcode.EscapeValue(o.Content))
 		case *message.AnimatedSticker:
 			write(`[CQ:face,id=%d,type=sticker]`, o.ID)
 		}
@@ -609,11 +610,11 @@ func (bot *CQBot) ConvertStringMessage(raw string, sourceType MessageSourceType)
 		}
 		if i > 0 {
 			if base.SplitURL {
-				for _, txt := range param.SplitURL(CQCodeUnescapeText(raw[:i])) {
+				for _, txt := range param.SplitURL(cqcode.UnescapeText(raw[:i])) {
 					r = append(r, message.NewText(txt))
 				}
 			} else {
-				r = append(r, message.NewText(CQCodeUnescapeText(raw[:i])))
+				r = append(r, message.NewText(cqcode.UnescapeText(raw[:i])))
 			}
 		}
 
@@ -658,7 +659,7 @@ func (bot *CQBot) ConvertStringMessage(raw string, sourceType MessageSourceType)
 			if i+1 > len(raw) {
 				return
 			}
-			d[key] = CQCodeUnescapeValue(raw[:i])
+			d[key] = cqcode.UnescapeValue(raw[:i])
 			raw = raw[i:]
 			i = 0
 		}
@@ -1060,7 +1061,7 @@ func (bot *CQBot) ToElement(t string, d map[string]string, sourceType MessageSou
 		return message.NewDice(int32(i)), nil
 	case "xml":
 		resID := d["resid"]
-		template := CQCodeEscapeValue(d["data"])
+		template := cqcode.EscapeValue(d["data"])
 		i, _ := strconv.ParseInt(resID, 10, 64)
 		msg := message.NewRichXml(template, i)
 		return msg, nil
@@ -1144,101 +1145,6 @@ func (bot *CQBot) ToElement(t string, d map[string]string, sourceType MessageSou
 	default:
 		return nil, errors.New("unsupported cq code: " + t)
 	}
-}
-
-/*CQCodeEscapeText 将字符串raw中部分字符转义
-
-& -> &amp;
-
-[ -> &#91;
-
-] -> &#93;
-
-*/
-func CQCodeEscapeText(s string) string {
-	count := strings.Count(s, "&")
-	count += strings.Count(s, "[")
-	count += strings.Count(s, "]")
-	if count == 0 {
-		return s
-	}
-
-	// Apply replacements to buffer.
-	var b strings.Builder
-	b.Grow(len(s) + count*4)
-	start := 0
-	for i := 0; i < count; i++ {
-		j := start
-		for index, r := range s[start:] {
-			if r == '&' || r == '[' || r == ']' {
-				j += index
-				break
-			}
-		}
-		b.WriteString(s[start:j])
-		switch s[j] {
-		case '&':
-			b.WriteString("&amp;")
-		case '[':
-			b.WriteString("&#91;")
-		case ']':
-			b.WriteString("&#93;")
-		}
-		start = j + 1
-	}
-	b.WriteString(s[start:])
-	return b.String()
-}
-
-/*CQCodeEscapeValue 将字符串value中部分字符转义
-
-, -> &#44;
-
-& -> &amp;
-
-[ -> &#91;
-
-] -> &#93;
-
-*/
-func CQCodeEscapeValue(value string) string {
-	ret := CQCodeEscapeText(value)
-	ret = strings.ReplaceAll(ret, ",", "&#44;")
-	return ret
-}
-
-/*CQCodeUnescapeText 将字符串content中部分字符反转义
-
-&amp; -> &
-
-&#91; -> [
-
-&#93; -> ]
-
-*/
-func CQCodeUnescapeText(content string) string {
-	ret := content
-	ret = strings.ReplaceAll(ret, "&#91;", "[")
-	ret = strings.ReplaceAll(ret, "&#93;", "]")
-	ret = strings.ReplaceAll(ret, "&amp;", "&")
-	return ret
-}
-
-/*CQCodeUnescapeValue 将字符串content中部分字符反转义
-
-&#44; -> ,
-
-&amp; -> &
-
-&#91; -> [
-
-&#93; -> ]
-
-*/
-func CQCodeUnescapeValue(content string) string {
-	ret := strings.ReplaceAll(content, "&#44;", ",")
-	ret = CQCodeUnescapeText(ret)
-	return ret
 }
 
 // makeImageOrVideoElem 图片 elem 生成器，单独拎出来，用于公用

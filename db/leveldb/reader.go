@@ -44,36 +44,13 @@ type reader struct {
 func (r *reader) coder() coder    { o, _ := r.data.ReadByte(); return coder(o) }
 func (r *reader) varint() int64   { return r.data.varint() }
 func (r *reader) uvarint() uint64 { return r.data.uvarint() }
+func (r *reader) int32() int32    { return int32(r.varint()) }
+func (r *reader) int64() int64    { return r.varint() }
+func (r *reader) uint64() uint64  { return r.uvarint() }
 
-func (r *reader) sync(c coder) {
-	if coder := r.coder(); coder != c {
-		panic("db/leveldb: bad sync expected " + strconv.Itoa(int(c)) + " but got " + strconv.Itoa(int(coder)))
-	}
-}
-
-func (r *reader) int() int {
-	return int(r.varint())
-}
-
-func (r *reader) uint() uint {
-	return uint(r.uvarint())
-}
-
-func (r *reader) int32() int32 {
-	return int32(r.varint())
-}
-
-func (r *reader) uint32() uint32 {
-	return uint32(r.uvarint())
-}
-
-func (r *reader) int64() int64 {
-	return r.varint()
-}
-
-func (r *reader) uint64() uint64 {
-	return r.uvarint()
-}
+// func (r *reader) uint32() uint32 { return uint32(r.uvarint()) }
+// func (r *reader) int() int        { return int(r.varint()) }
+// func (r *reader) uint() uint      { return uint(r.uvarint()) }
 
 func (r *reader) string() string {
 	off := r.data.uvarint()

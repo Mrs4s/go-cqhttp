@@ -48,30 +48,12 @@ func (w *writer) coder(o coder)    { w.data.WriteByte(byte(o)) }
 func (w *writer) varint(x int64)   { w.data.varint(x) }
 func (w *writer) uvarint(x uint64) { w.data.uvarint(x) }
 func (w *writer) nil()             { w.coder(coderNil) }
-
-func (w *writer) int(i int) {
-	w.varint(int64(i))
-}
-
-func (w *writer) uint(i uint) {
-	w.uvarint(uint64(i))
-}
-
-func (w *writer) int32(i int32) {
-	w.varint(int64(i))
-}
-
-func (w *writer) uint32(i uint32) {
-	w.uvarint(uint64(i))
-}
-
-func (w *writer) int64(i int64) {
-	w.varint(i)
-}
-
-func (w *writer) uint64(i uint64) {
-	w.uvarint(i)
-}
+func (w *writer) int(i int)        { w.varint(int64(i)) }
+func (w *writer) uint(i uint)      { w.uvarint(uint64(i)) }
+func (w *writer) int32(i int32)    { w.varint(int64(i)) }
+func (w *writer) uint32(i uint32)  { w.uvarint(uint64(i)) }
+func (w *writer) int64(i int64)    { w.varint(i) }
+func (w *writer) uint64(i uint64)  { w.uvarint(i) }
 
 func (w *writer) string(s string) {
 	off, ok := w.stringIndex[s]

@@ -6,10 +6,8 @@ require (
 	github.com/Microsoft/go-winio v0.5.1
 	github.com/Mrs4s/MiraiGo v0.0.0-20220214082717-0e68a1e7b715
 	github.com/RomiChan/websocket v1.4.3-0.20220123145318-307a86b127bc
-	github.com/dustin/go-humanize v1.0.0
 	github.com/fumiama/go-hide-param v0.1.4
 	github.com/gabriel-vasile/mimetype v1.4.0
-	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
 	github.com/mattn/go-colorable v0.1.12
 	github.com/pkg/errors v0.9.1

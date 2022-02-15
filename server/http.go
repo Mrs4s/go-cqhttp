@@ -51,7 +51,6 @@ type httpServerPost struct {
 }
 
 type httpServer struct {
-	HTTP        *http.Server
 	api         *api.Caller
 	accessToken string
 }
@@ -259,11 +258,11 @@ func runHTTP(bot *coolq.CQBot, node yaml.Node) {
 
 	go func() {
 		log.Infof("CQ HTTP 服务器已启动: %v", addr)
-		s.HTTP = &http.Server{
+		server := &http.Server{
 			Addr:    addr,
 			Handler: s,
 		}
-		if err := s.HTTP.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Error(err)
 			log.Infof("HTTP 服务启动失败, 请检查端口是否被占用.")
 			log.Warnf("将在五秒后退出.")

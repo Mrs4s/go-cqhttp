@@ -13,38 +13,32 @@ import (
 )
 
 func convertGroupMemberInfo(groupID int64, m *client.GroupMemberInfo) global.MSG {
+	sex := "unknown"
+	if m.Gender == 1 { // unknown = 0xff
+		sex = "female"
+	} else if m.Gender == 0 {
+		sex = "male"
+	}
+	role := "member"
+	switch m.Permission { // nolint:exhaustive
+	case client.Owner:
+		role = "owner"
+	case client.Administrator:
+		role = "admin"
+	}
 	return global.MSG{
-		"group_id": groupID,
-		"user_id":  m.Uin,
-		"nickname": m.Nickname,
-		"card":     m.CardName,
-		"sex": func() string {
-			if m.Gender == 1 {
-				return "female"
-			} else if m.Gender == 0 {
-				return "male"
-			}
-			// unknown = 0xff
-			return "unknown"
-		}(),
+		"group_id":          groupID,
+		"user_id":           m.Uin,
+		"nickname":          m.Nickname,
+		"card":              m.CardName,
+		"sex":               sex,
 		"age":               0,
 		"area":              "",
 		"join_time":         m.JoinTime,
 		"last_sent_time":    m.LastSpeakTime,
 		"shut_up_timestamp": m.ShutUpTimestamp,
 		"level":             strconv.FormatInt(int64(m.Level), 10),
-		"role": func() string {
-			switch m.Permission {
-			case client.Owner:
-				return "owner"
-			case client.Administrator:
-				return "admin"
-			case client.Member:
-				return "member"
-			default:
-				return "member"
-			}
-		}(),
+		"role":              role,
 		"unfriendly":        false,
 		"title":             m.SpecialTitle,
 		"title_expire_time": m.SpecialTitleExpireTime,
@@ -71,6 +65,10 @@ func (bot *CQBot) formatGroupMessage(m *message.GroupMessage) global.MSG {
 		PrimaryID:  uint64(m.GroupCode),
 	}
 	cqm := ToStringMessage(m.Elements, source, true)
+	postType := "message"
+	if m.Sender.Uin == bot.Client.Uin {
+		postType = "message_sent"
+	}
 	gm := global.MSG{
 		"anonymous":    nil,
 		"font":         0,
@@ -78,14 +76,9 @@ func (bot *CQBot) formatGroupMessage(m *message.GroupMessage) global.MSG {
 		"message":      ToFormattedMessage(m.Elements, source, false),
 		"message_type": "group",
 		"message_seq":  m.Id,
-		"post_type": func() string {
-			if m.Sender.Uin == bot.Client.Uin {
-				return "message_sent"
-			}
-			return "message"
-		}(),
-		"raw_message": cqm,
-		"self_id":     bot.Client.Uin,
+		"post_type":    postType,
+		"raw_message":  cqm,
+		"self_id":      bot.Client.Uin,
 		"sender": global.MSG{
 			"age":     0,
 			"area":    "",
@@ -122,16 +115,14 @@ func (bot *CQBot) formatGroupMessage(m *message.GroupMessage) global.MSG {
 			}
 		}
 		ms := gm["sender"].(global.MSG)
-		switch mem.Permission {
+		role := "member"
+		switch mem.Permission { // nolint:exhaustive
 		case client.Owner:
-			ms["role"] = "owner"
+			role = "owner"
 		case client.Administrator:
-			ms["role"] = "admin"
-		case client.Member:
-			ms["role"] = "member"
-		default:
-			ms["role"] = "member"
+			role = "admin"
 		}
+		ms["role"] = role
 		ms["nickname"] = mem.Nickname
 		ms["card"] = mem.CardName
 		ms["title"] = mem.SpecialTitle

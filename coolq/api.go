@@ -1984,8 +1984,7 @@ func OK(data interface{}) global.MSG {
 
 // Failed 生成失败返回值
 func Failed(code int, msg ...string) global.MSG {
-	m := ""
-	w := ""
+	m, w := "", ""
 	if len(msg) > 0 {
 		m = msg[0]
 	}
