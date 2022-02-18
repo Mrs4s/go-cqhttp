@@ -45,6 +45,7 @@ type PokeElement struct {
 type LocalImageElement struct {
 	Stream io.ReadSeeker
 	File   string
+	Url    string
 
 	Flash    bool
 	EffectID int32
@@ -353,6 +354,20 @@ func ToStringMessage(e []message.IMessageElement, source MessageSource, isRaw ..
 				write("[CQ:image,file=%s%s]", hex.EncodeToString(o.Md5)+".image", arg)
 			} else {
 				write("[CQ:image,file=%s,url=%s%s]", hex.EncodeToString(o.Md5)+".image", cqcode.EscapeValue(o.Url), arg)
+			}
+		case *LocalImageElement:
+			var arg string
+			if o.Flash {
+				arg = ",type=flash"
+			}
+			data, err := os.ReadFile(o.File)
+			if err == nil {
+				m := md5.Sum(data)
+				if ur {
+					write("[CQ:image,file=%s%s]", hex.EncodeToString(m[:])+".image", arg)
+				} else {
+					write("[CQ:image,file=%s,url=%s%s]", hex.EncodeToString(m[:])+".image", CQCodeEscapeValue(o.Url), arg)
+				}
 			}
 		case *message.GuildImageElement:
 			write("[CQ:image,file=%s,url=%s]", hex.EncodeToString(o.Md5)+".image", cqcode.EscapeValue(o.Url))
@@ -796,7 +811,13 @@ func (bot *CQBot) ConvertContentMessage(content []global.MSG, sourceType Message
 		case "text":
 			r = append(r, message.NewText(data["text"].(string)))
 		case "image":
-			e, err := bot.makeImageOrVideoElem(map[string]string{"file": data["file"].(string)}, false, sourceType)
+			u, ok := data["url"]
+			d := make(map[string]string, 2)
+			if ok {
+				d["url"] = u.(string)
+			}
+			d["file"] = data["file"].(string)
+			e, err := bot.makeImageOrVideoElem(d, false, sourceType)
 			if err != nil {
 				log.Warnf("make image elem error: %v", err)
 				continue
@@ -1151,6 +1172,10 @@ func (bot *CQBot) ToElement(t string, d map[string]string, sourceType MessageSou
 // makeImageOrVideoElem 图片 elem 生成器，单独拎出来，用于公用
 func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video bool, sourceType MessageSourceType) (message.IMessageElement, error) {
 	f := d["file"]
+	u, ok := d["url"]
+	if !ok {
+		u = ""
+	}
 	if strings.HasPrefix(f, "http") {
 		hash := md5.Sum([]byte(f))
 		cacheFile := path.Join(global.CachePath, hex.EncodeToString(hash[:])+".cache")
@@ -1173,7 +1198,7 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video bool, sourceTy
 		if video {
 			return &LocalVideoElement{File: cacheFile}, nil
 		}
-		return &LocalImageElement{File: cacheFile}, nil
+		return &LocalImageElement{File: cacheFile, Url: f}, nil
 	}
 	if strings.HasPrefix(f, "file") {
 		fu, err := url.Parse(f)
@@ -1199,14 +1224,14 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video bool, sourceTy
 		if info.Size() == 0 || info.Size() >= maxImageSize {
 			return nil, errors.New("invalid image size")
 		}
-		return &LocalImageElement{File: fu.Path}, nil
+		return &LocalImageElement{File: fu.Path, Url: f}, nil
 	}
 	if strings.HasPrefix(f, "base64") && !video {
 		b, err := param.Base64DecodeString(strings.TrimPrefix(f, "base64://"))
 		if err != nil {
 			return nil, err
 		}
-		return &LocalImageElement{Stream: bytes.NewReader(b)}, nil
+		return &LocalImageElement{Stream: bytes.NewReader(b), Url: f}, nil
 	}
 	rawPath := path.Join(global.ImagePath, f)
 	if video {
@@ -1255,7 +1280,7 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video bool, sourceTy
 		return nil, errors.New("invalid image")
 	}
 	if path.Ext(rawPath) != ".image" {
-		return &LocalImageElement{File: rawPath}, nil
+		return &LocalImageElement{File: rawPath, Url: u}, nil
 	}
 	b, err := os.ReadFile(rawPath)
 	if err != nil {
