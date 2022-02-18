@@ -103,6 +103,20 @@ func (e *PokeElement) Type() message.ElementType {
 	return message.At
 }
 
+func replyID(r *message.ReplyElement, source MessageSource) int32 {
+	id := int64(source.PrimaryID)
+	seq := r.ReplySeq
+	if source.SourceType == MessageSourcePrivate {
+		// 私聊似乎腾讯服务器有bug?
+		seq = int32(uint16(seq))
+		id = r.Sender
+	}
+	if r.GroupID != 0 {
+		id = r.GroupID
+	}
+	return db.ToGlobalID(id, seq)
+}
+
 // ToArrayMessage 将消息元素数组转为MSG数组以用于消息上报
 func ToArrayMessage(e []message.IMessageElement, source MessageSource) (r []global.MSG) {
 	r = make([]global.MSG, 0, len(e))
@@ -113,18 +127,12 @@ func ToArrayMessage(e []message.IMessageElement, source MessageSource) (r []glob
 	})
 	if reply != nil && source.SourceType&(MessageSourceGroup|MessageSourcePrivate) != 0 {
 		replyElem := reply.(*message.ReplyElement)
-		rid := int64(source.PrimaryID)
-		if source.SourceType == MessageSourcePrivate {
-			rid = replyElem.Sender
-		}
-		if replyElem.GroupID != 0 {
-			rid = replyElem.GroupID
-		}
+		id := replyID(replyElem, source)
 		if base.ExtraReplyData {
 			r = append(r, global.MSG{
 				"type": "reply",
 				"data": map[string]string{
-					"id":   strconv.FormatInt(int64(db.ToGlobalID(rid, replyElem.ReplySeq)), 10),
+					"id":   strconv.FormatInt(int64(id), 10),
 					"seq":  strconv.FormatInt(int64(replyElem.ReplySeq), 10),
 					"qq":   strconv.FormatInt(replyElem.Sender, 10),
 					"time": strconv.FormatInt(int64(replyElem.Time), 10),
@@ -134,7 +142,7 @@ func ToArrayMessage(e []message.IMessageElement, source MessageSource) (r []glob
 		} else {
 			r = append(r, global.MSG{
 				"type": "reply",
-				"data": map[string]string{"id": strconv.FormatInt(int64(db.ToGlobalID(rid, replyElem.ReplySeq)), 10)},
+				"data": map[string]string{"id": strconv.FormatInt(int64(id), 10)},
 			})
 		}
 	}
@@ -279,20 +287,13 @@ func ToStringMessage(e []message.IMessageElement, source MessageSource, isRaw ..
 	})
 	if reply != nil && source.SourceType&(MessageSourceGroup|MessageSourcePrivate) != 0 {
 		replyElem := reply.(*message.ReplyElement)
-		rid := int64(source.PrimaryID)
-		if source.SourceType == MessageSourcePrivate {
-			rid = replyElem.Sender
-		}
-		if replyElem.GroupID != 0 {
-			rid = replyElem.GroupID
-		}
+		id := replyID(replyElem, source)
 		if base.ExtraReplyData {
 			write("[CQ:reply,id=%d,seq=%d,qq=%d,time=%d,text=%s]",
-				db.ToGlobalID(rid, replyElem.ReplySeq),
-				replyElem.ReplySeq, replyElem.Sender, replyElem.Time,
+				id, replyElem.ReplySeq, replyElem.Sender, replyElem.Time,
 				cqcode.EscapeValue(ToStringMessage(replyElem.Elements, source)))
 		} else {
-			write("[CQ:reply,id=%d]", db.ToGlobalID(rid, replyElem.ReplySeq))
+			write("[CQ:reply,id=%d]", id)
 		}
 	}
 	for i, elem := range e {

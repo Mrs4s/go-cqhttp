@@ -103,22 +103,14 @@ func ToGlobalID(code int64, msgID int32) int32 {
 	return int32(crc32.ChecksumIEEE([]byte(fmt.Sprintf("%d-%d", code, msgID))))
 }
 
-func (m *StoredGroupMessage) GetID() string { return m.ID }
-
-func (m *StoredGroupMessage) GetType() string { return "group" }
-
-func (m *StoredGroupMessage) GetGlobalID() int32 { return m.GlobalID }
-
+func (m *StoredGroupMessage) GetID() string                         { return m.ID }
+func (m *StoredGroupMessage) GetType() string                       { return "group" }
+func (m *StoredGroupMessage) GetGlobalID() int32                    { return m.GlobalID }
 func (m *StoredGroupMessage) GetAttribute() *StoredMessageAttribute { return m.Attribute }
+func (m *StoredGroupMessage) GetContent() []global.MSG              { return m.Content }
 
-func (m *StoredGroupMessage) GetContent() []global.MSG { return m.Content }
-
-func (m *StoredPrivateMessage) GetID() string { return m.ID }
-
-func (m *StoredPrivateMessage) GetType() string { return "private" }
-
-func (m *StoredPrivateMessage) GetGlobalID() int32 { return m.GlobalID }
-
+func (m *StoredPrivateMessage) GetID() string                         { return m.ID }
+func (m *StoredPrivateMessage) GetType() string                       { return "private" }
+func (m *StoredPrivateMessage) GetGlobalID() int32                    { return m.GlobalID }
 func (m *StoredPrivateMessage) GetAttribute() *StoredMessageAttribute { return m.Attribute }
-
-func (m *StoredPrivateMessage) GetContent() []global.MSG { return m.Content }
+func (m *StoredPrivateMessage) GetContent() []global.MSG              { return m.Content }
