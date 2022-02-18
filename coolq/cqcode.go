@@ -45,7 +45,7 @@ type PokeElement struct {
 type LocalImageElement struct {
 	Stream io.ReadSeeker
 	File   string
-	Url    string
+	URL    string
 
 	Flash    bool
 	EffectID int32
@@ -366,7 +366,7 @@ func ToStringMessage(e []message.IMessageElement, source MessageSource, isRaw ..
 				if ur {
 					write("[CQ:image,file=%s%s]", hex.EncodeToString(m[:])+".image", arg)
 				} else {
-					write("[CQ:image,file=%s,url=%s%s]", hex.EncodeToString(m[:])+".image", CQCodeEscapeValue(o.Url), arg)
+					write("[CQ:image,file=%s,url=%s%s]", hex.EncodeToString(m[:])+".image", cqcode.EscapeValue(o.URL), arg)
 				}
 			}
 		case *message.GuildImageElement:
@@ -1198,7 +1198,7 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video bool, sourceTy
 		if video {
 			return &LocalVideoElement{File: cacheFile}, nil
 		}
-		return &LocalImageElement{File: cacheFile, Url: f}, nil
+		return &LocalImageElement{File: cacheFile, URL: f}, nil
 	}
 	if strings.HasPrefix(f, "file") {
 		fu, err := url.Parse(f)
@@ -1224,14 +1224,14 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video bool, sourceTy
 		if info.Size() == 0 || info.Size() >= maxImageSize {
 			return nil, errors.New("invalid image size")
 		}
-		return &LocalImageElement{File: fu.Path, Url: f}, nil
+		return &LocalImageElement{File: fu.Path, URL: f}, nil
 	}
 	if strings.HasPrefix(f, "base64") && !video {
 		b, err := param.Base64DecodeString(strings.TrimPrefix(f, "base64://"))
 		if err != nil {
 			return nil, err
 		}
-		return &LocalImageElement{Stream: bytes.NewReader(b), Url: f}, nil
+		return &LocalImageElement{Stream: bytes.NewReader(b), URL: f}, nil
 	}
 	rawPath := path.Join(global.ImagePath, f)
 	if video {
@@ -1280,7 +1280,7 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video bool, sourceTy
 		return nil, errors.New("invalid image")
 	}
 	if path.Ext(rawPath) != ".image" {
-		return &LocalImageElement{File: rawPath, Url: u}, nil
+		return &LocalImageElement{File: rawPath, URL: u}, nil
 	}
 	b, err := os.ReadFile(rawPath)
 	if err != nil {
@@ -1299,38 +1299,27 @@ func (bot *CQBot) readImageCache(b []byte, sourceType MessageSourceType) (messag
 	size := r.ReadInt32()
 	r.ReadString()
 	imageURL := r.ReadString()
-	if size == 0 {
-		if imageURL != "" {
-			return bot.makeImageOrVideoElem(map[string]string{"file": imageURL}, false, sourceType)
-		}
-		return nil, errors.New("img size is 0")
-	}
-	if len(hash) != 16 {
-		return nil, errors.New("invalid hash")
+	if size == 0 && imageURL != "" {
+		return bot.makeImageOrVideoElem(map[string]string{"file": imageURL}, false, sourceType)
 	}
 	var rsp message.IMessageElement
-	if sourceType == MessageSourceGroup {
+	switch sourceType { // nolint:exhaustive
+	case MessageSourceGroup:
 		rsp, err = bot.Client.QueryGroupImage(int64(rand.Uint32()), hash, size)
-		goto ok
-	}
-	if sourceType == MessageSourceGuildChannel {
+	case MessageSourceGuildChannel:
 		if len(bot.Client.GuildService.Guilds) == 0 {
 			err = errors.New("cannot query guild image: not any joined guild")
-			goto ok
+			break
 		}
 		guild := bot.Client.GuildService.Guilds[0]
 		rsp, err = bot.Client.GuildService.QueryImage(guild.GuildId, guild.Channels[0].ChannelId, hash, uint64(size))
-		goto ok
+	default:
+		rsp, err = bot.Client.QueryFriendImage(int64(rand.Uint32()), hash, size)
 	}
-	rsp, err = bot.Client.QueryFriendImage(int64(rand.Uint32()), hash, size)
-ok:
-	if err != nil {
-		if imageURL != "" {
-			return bot.makeImageOrVideoElem(map[string]string{"file": imageURL}, false, sourceType)
-		}
-		return nil, err
+	if err != nil && imageURL != "" {
+		return bot.makeImageOrVideoElem(map[string]string{"file": imageURL}, false, sourceType)
 	}
-	return rsp, nil
+	return rsp, err
 }
 
 func (bot *CQBot) readVideoCache(b []byte) message.IMessageElement {
