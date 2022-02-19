@@ -16,16 +16,21 @@ func tempfile(t *testing.T) string {
 	return temp.Name()
 }
 
+func removedb(name string) {
+	os.Remove(name)
+	os.Remove(name + ".lock")
+}
+
 func TestCreate(t *testing.T) {
 	f := tempfile(t)
 	_, err := Create(f)
 	assert2.NoError(t, err)
-	defer os.Remove(f)
+	defer removedb(f)
 }
 
 func TestBtree(t *testing.T) {
 	f := tempfile(t)
-	defer os.Remove(f)
+	defer removedb(f)
 	bt, err := Create(f)
 	assert := assert2.New(t)
 	assert.NoError(err)
@@ -73,7 +78,7 @@ func testForeach(t *testing.T, elemSize int) {
 		expected[i] = utils.RandomString(20)
 	}
 	f := tempfile(t)
-	defer os.Remove(f)
+	defer removedb(f)
 	bt, err := Create(f)
 	assert2.NoError(t, err)
 	for _, v := range expected {
