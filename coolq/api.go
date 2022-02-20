@@ -1977,6 +1977,14 @@ func (bot *CQBot) CQReloadEventFilter(file string) global.MSG {
 	return OK(nil)
 }
 
+// CQSetQQNickname 设置 QQ 昵称
+//
+// @route(set_qq_nickname)
+func (bot *CQBot) CQSetQQNickname(name string) global.MSG {
+	bot.Client.SetNickname(name)
+	return OK(nil)
+}
+
 // OK 生成成功返回值
 func OK(data interface{}) global.MSG {
 	return global.MSG{"data": data, "retcode": 0, "status": "ok"}
