@@ -51,12 +51,6 @@ type LocalImageElement struct {
 	EffectID int32
 }
 
-// LocalVoiceElement 本地语音
-type LocalVoiceElement struct {
-	message.VoiceElement
-	Stream io.ReadSeeker
-}
-
 // LocalVideoElement 本地视频
 type LocalVideoElement struct {
 	File  string
@@ -85,7 +79,7 @@ func (e *PokeElement) Type() message.ElementType {
 }
 
 func replyID(r *message.ReplyElement, source message.Source) int32 {
-	id := int64(source.PrimaryID)
+	id := source.PrimaryID
 	seq := r.ReplySeq
 	if source.SourceType == message.SourcePrivate {
 		// 私聊似乎腾讯服务器有bug?
@@ -1321,9 +1315,13 @@ func (bot *CQBot) makeShowPic(elem message.IMessageElement, source string, brief
 	if brief == "" {
 		brief = "&#91;分享&#93;我看到一张很赞的图片，分享给你，快来看！"
 	}
-	if _, ok := elem.(*LocalImageElement); ok {
+	if local, ok := elem.(*LocalImageElement); ok {
 		r := rand.Uint32()
-		e, err := bot.uploadMedia(elem, int64(r), group)
+		typ := message.SourceGroup
+		if !group {
+			typ = message.SourcePrivate
+		}
+		e, err := bot.uploadLocalImage(message.Source{SourceType: typ, PrimaryID: int64(r)}, local)
 		if err != nil {
 			log.Warnf("警告: 图片上传失败: %v", err)
 			return nil, err

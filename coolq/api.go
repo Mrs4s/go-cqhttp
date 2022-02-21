@@ -791,6 +791,7 @@ func (bot *CQBot) CQSendGuildChannelMessage(guildID, channelID uint64, m gjson.R
 func (bot *CQBot) uploadForwardElement(m gjson.Result, groupID int64) *message.ForwardElement {
 	ts := time.Now().Add(-time.Minute * 5)
 	fm := message.NewForwardMessage()
+	source := message.Source{SourceType: message.SourceGroup, PrimaryID: groupID}
 
 	var lazyUpload []func()
 	var wg sync.WaitGroup
@@ -798,11 +799,22 @@ func (bot *CQBot) uploadForwardElement(m gjson.Result, groupID int64) *message.F
 		for i, elem := range elems {
 			iescape := i
 			switch o := elem.(type) {
-			case *LocalImageElement, *LocalVideoElement:
+			case *LocalVideoElement:
 				wg.Add(1)
 				lazyUpload = append(lazyUpload, func() {
 					defer wg.Done()
-					gm, err := bot.uploadMedia(o, groupID, true)
+					gm, err := bot.uploadLocalVideo(source, o)
+					if err != nil {
+						log.Warnf("警告: 群 %d %s上传失败: %v", groupID, o.Type().String(), err)
+					} else {
+						elems[iescape] = gm
+					}
+				})
+			case *LocalImageElement:
+				wg.Add(1)
+				lazyUpload = append(lazyUpload, func() {
+					defer wg.Done()
+					gm, err := bot.uploadLocalImage(source, o)
 					if err != nil {
 						log.Warnf("警告: 群 %d %s上传失败: %v", groupID, o.Type().String(), err)
 					} else {
