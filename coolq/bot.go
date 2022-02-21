@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path"
 	"runtime/debug"
 	"sync"
 	"time"
@@ -144,7 +143,7 @@ func (bot *CQBot) UploadLocalImageAsGroup(groupCode int64, img *LocalImageElemen
 	if lawful, mime := base.IsLawfulImage(img.Stream); !lawful {
 		return nil, errors.New("image type error: " + mime)
 	}
-	i, err = bot.Client.UploadGroupImage(groupCode, img.Stream)
+	i, err = bot.Client.UploadGroupImage(groupCode, img.Stream, 4)
 	if i != nil {
 		i.Flash = img.Flash
 		i.EffectID = img.EffectID
@@ -159,11 +158,7 @@ func (bot *CQBot) UploadLocalVideo(target int64, v *LocalVideoElement) (*message
 		return nil, err
 	}
 	defer func() { _ = video.Close() }()
-	hash, _ := utils.ComputeMd5AndLength(io.MultiReader(video, v.thumb))
-	cacheFile := path.Join(global.CachePath, hex.EncodeToString(hash)+".cache")
-	_, _ = video.Seek(0, io.SeekStart)
-	_, _ = v.thumb.Seek(0, io.SeekStart)
-	return bot.Client.UploadGroupShortVideo(target, video, v.thumb, cacheFile)
+	return bot.Client.UploadGroupShortVideo(target, video, v.thumb, 4)
 }
 
 // UploadLocalImageAsPrivate 上传本地图片至私聊
