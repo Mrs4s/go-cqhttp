@@ -712,7 +712,7 @@ func (bot *CQBot) CQSendGroupMessage(groupID int64, m gjson.Result, autoEscape b
 
 	var elem []message.IMessageElement
 	if m.Type == gjson.JSON {
-		elem = bot.ConvertObjectMessage(m, MessageSourceGroup)
+		elem = bot.ConvertObjectMessage(m, message.SourceGroup)
 	} else {
 		str := m.String()
 		if str == "" {
@@ -722,7 +722,7 @@ func (bot *CQBot) CQSendGroupMessage(groupID int64, m gjson.Result, autoEscape b
 		if autoEscape {
 			elem = []message.IMessageElement{message.NewText(str)}
 		} else {
-			elem = bot.ConvertStringMessage(str, MessageSourceGroup)
+			elem = bot.ConvertStringMessage(str, message.SourceGroup)
 		}
 	}
 	fixAt(elem)
@@ -766,7 +766,7 @@ func (bot *CQBot) CQSendGuildChannelMessage(guildID, channelID uint64, m gjson.R
 
 	var elem []message.IMessageElement
 	if m.Type == gjson.JSON {
-		elem = bot.ConvertObjectMessage(m, MessageSourceGuildChannel)
+		elem = bot.ConvertObjectMessage(m, message.SourceGuildChannel)
 	} else {
 		str := m.String()
 		if str == "" {
@@ -776,7 +776,7 @@ func (bot *CQBot) CQSendGuildChannelMessage(guildID, channelID uint64, m gjson.R
 		if autoEscape {
 			elem = []message.IMessageElement{message.NewText(str)}
 		} else {
-			elem = bot.ConvertStringMessage(str, MessageSourceGuildChannel)
+			elem = bot.ConvertStringMessage(str, message.SourceGuildChannel)
 		}
 	}
 	fixAt(elem)
@@ -833,7 +833,7 @@ func (bot *CQBot) uploadForwardElement(m gjson.Result, groupID int64) *message.F
 						}
 						return int32(msgTime)
 					}(),
-					Message: resolveElement(bot.ConvertContentMessage(m.Content, MessageSourceGroup)),
+					Message: resolveElement(bot.ConvertContentMessage(m.Content, message.SourceGroup)),
 				}
 			}
 			log.Warnf("警告: 引用消息 %v 错误或数据库未开启.", e.Get("data.id").Str)
@@ -865,7 +865,7 @@ func (bot *CQBot) uploadForwardElement(m gjson.Result, groupID int64) *message.F
 				}
 			}
 		}
-		content := bot.ConvertObjectMessage(c, MessageSourceGroup)
+		content := bot.ConvertObjectMessage(c, message.SourceGroup)
 		if uin != 0 && name != "" && len(content) > 0 {
 			return &message.ForwardNode{
 				SenderId:   uin,
@@ -932,7 +932,7 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) globa
 func (bot *CQBot) CQSendPrivateMessage(userID int64, groupID int64, m gjson.Result, autoEscape bool) global.MSG {
 	var elem []message.IMessageElement
 	if m.Type == gjson.JSON {
-		elem = bot.ConvertObjectMessage(m, MessageSourcePrivate)
+		elem = bot.ConvertObjectMessage(m, message.SourcePrivate)
 	} else {
 		str := m.String()
 		if str == "" {
@@ -941,7 +941,7 @@ func (bot *CQBot) CQSendPrivateMessage(userID int64, groupID int64, m gjson.Resu
 		if autoEscape {
 			elem = []message.IMessageElement{message.NewText(str)}
 		} else {
-			elem = bot.ConvertStringMessage(str, MessageSourcePrivate)
+			elem = bot.ConvertStringMessage(str, message.SourcePrivate)
 		}
 	}
 	mid := bot.SendPrivateMessage(userID, groupID, &message.SendingMessage{Elements: elem})
@@ -1525,7 +1525,7 @@ func (bot *CQBot) CQGetForwardMessage(resID string) global.MSG {
 		r := make([]global.MSG, len(nodes))
 		for i, n := range nodes {
 			bot.checkMedia(n.Message, 0)
-			content := ToFormattedMessage(n.Message, MessageSource{SourceType: MessageSourceGroup}, false)
+			content := ToFormattedMessage(n.Message, message.Source{SourceType: message.SourceGroup}, false)
 			if len(n.Message) == 1 {
 				if forward, ok := n.Message[0].(*message.ForwardMessage); ok {
 					content = transformNodes(forward.Nodes)
@@ -1573,9 +1573,9 @@ func (bot *CQBot) CQGetMessage(messageID int32) global.MSG {
 	switch o := msg.(type) {
 	case *db.StoredGroupMessage:
 		m["group_id"] = o.GroupCode
-		m["message"] = ToFormattedMessage(bot.ConvertContentMessage(o.Content, MessageSourceGroup), MessageSource{SourceType: MessageSourceGroup, PrimaryID: uint64(o.GroupCode)}, false)
+		m["message"] = ToFormattedMessage(bot.ConvertContentMessage(o.Content, message.SourceGroup), message.Source{SourceType: message.SourceGroup, PrimaryID: o.GroupCode}, false)
 	case *db.StoredPrivateMessage:
-		m["message"] = ToFormattedMessage(bot.ConvertContentMessage(o.Content, MessageSourcePrivate), MessageSource{SourceType: MessageSourcePrivate}, false)
+		m["message"] = ToFormattedMessage(bot.ConvertContentMessage(o.Content, message.SourcePrivate), message.Source{SourceType: message.SourcePrivate}, false)
 	}
 	return OK(m)
 }
@@ -1591,21 +1591,21 @@ func (bot *CQBot) CQGetGuildMessage(messageID string, noCache bool) global.MSG {
 	m := global.MSG{
 		"message_id": messageID,
 		"message_source": func() string {
-			if source.SourceType == MessageSourceGuildDirect {
+			if source.SourceType == message.SourceGuildDirect {
 				return "direct"
 			}
 			return "channel"
 		}(),
 		"message_seq": seq,
-		"guild_id":    fU64(source.PrimaryID),
+		"guild_id":    fU64(uint64(source.PrimaryID)),
 		"reactions":   []int{},
 	}
 	// nolint: exhaustive
 	switch source.SourceType {
-	case MessageSourceGuildChannel:
-		m["channel_id"] = fU64(source.SubID)
+	case message.SourceGuildChannel:
+		m["channel_id"] = fU64(uint64(source.SecondaryID))
 		if noCache {
-			pull, err := bot.Client.GuildService.PullGuildChannelMessage(source.PrimaryID, source.SubID, seq, seq)
+			pull, err := bot.Client.GuildService.PullGuildChannelMessage(uint64(source.PrimaryID), uint64(source.SecondaryID), seq, seq)
 			if err != nil {
 				log.Warnf("获取消息时出现错误: %v", err)
 				return Failed(100, "API_ERROR", err.Error())
@@ -1635,11 +1635,11 @@ func (bot *CQBot) CQGetGuildMessage(messageID string, noCache bool) global.MSG {
 				"tiny_id":  fU64(channelMsgByDB.Attribute.SenderTinyID),
 				"nickname": channelMsgByDB.Attribute.SenderName,
 			}
-			m["message"] = ToFormattedMessage(bot.ConvertContentMessage(channelMsgByDB.Content, MessageSourceGuildChannel), *source)
+			m["message"] = ToFormattedMessage(bot.ConvertContentMessage(channelMsgByDB.Content, message.SourceGuildChannel), *source)
 		}
-	case MessageSourceGuildDirect:
+	case message.SourceGuildDirect:
 		// todo(mrs4s): 支持 direct 消息
-		m["tiny_id"] = fU64(source.SubID)
+		m["tiny_id"] = fU64(uint64(source.SecondaryID))
 	}
 	return OK(m)
 }
@@ -1737,7 +1737,7 @@ func (bot *CQBot) CQCanSendRecord() global.MSG {
 // @route(ocr_image,".ocr_image")
 // @rename(image_id->image)
 func (bot *CQBot) CQOcrImage(imageID string) global.MSG {
-	img, err := bot.makeImageOrVideoElem(map[string]string{"file": imageID}, false, MessageSourceGroup)
+	img, err := bot.makeImageOrVideoElem(map[string]string{"file": imageID}, false, message.SourceGroup)
 	if err != nil {
 		log.Warnf("load image error: %v", err)
 		return Failed(100, "LOAD_FILE_ERROR", err.Error())

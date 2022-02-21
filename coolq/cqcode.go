@@ -63,26 +63,6 @@ type LocalVideoElement struct {
 	thumb io.ReadSeeker
 }
 
-// MessageSource 消息来源
-// 如果为私聊或者群聊, PrimaryID 将代表群号/QQ号
-// 如果为频道, PrimaryID 为 GuildID, SubID 为 ChannelID
-type MessageSource struct {
-	SourceType MessageSourceType
-	PrimaryID  uint64
-	SubID      uint64
-}
-
-// MessageSourceType 消息来源类型
-type MessageSourceType byte
-
-// MessageSourceType 常量
-const (
-	MessageSourcePrivate MessageSourceType = 1 << iota
-	MessageSourceGroup
-	MessageSourceGuildChannel
-	MessageSourceGuildDirect
-)
-
 const (
 	maxImageSize = 1024 * 1024 * 30  // 30MB
 	maxVideoSize = 1024 * 1024 * 100 // 100MB
@@ -104,10 +84,10 @@ func (e *PokeElement) Type() message.ElementType {
 	return message.At
 }
 
-func replyID(r *message.ReplyElement, source MessageSource) int32 {
+func replyID(r *message.ReplyElement, source message.Source) int32 {
 	id := int64(source.PrimaryID)
 	seq := r.ReplySeq
-	if source.SourceType == MessageSourcePrivate {
+	if source.SourceType == message.SourcePrivate {
 		// 私聊似乎腾讯服务器有bug?
 		seq = int32(uint16(seq))
 		id = r.Sender
@@ -119,14 +99,14 @@ func replyID(r *message.ReplyElement, source MessageSource) int32 {
 }
 
 // ToArrayMessage 将消息元素数组转为MSG数组以用于消息上报
-func ToArrayMessage(e []message.IMessageElement, source MessageSource) (r []global.MSG) {
+func ToArrayMessage(e []message.IMessageElement, source message.Source) (r []global.MSG) {
 	r = make([]global.MSG, 0, len(e))
 	m := &message.SendingMessage{Elements: e}
 	reply := m.FirstOrNil(func(e message.IMessageElement) bool {
 		_, ok := e.(*message.ReplyElement)
 		return ok
 	})
-	if reply != nil && source.SourceType&(MessageSourceGroup|MessageSourcePrivate) != 0 {
+	if reply != nil && source.SourceType&(message.SourceGroup|message.SourcePrivate) != 0 {
 		replyElem := reply.(*message.ReplyElement)
 		id := replyID(replyElem, source)
 		if base.ExtraReplyData {
@@ -270,7 +250,7 @@ func ToArrayMessage(e []message.IMessageElement, source MessageSource) (r []glob
 }
 
 // ToStringMessage 将消息元素数组转为字符串以用于消息上报
-func ToStringMessage(e []message.IMessageElement, source MessageSource, isRaw ...bool) (r string) {
+func ToStringMessage(e []message.IMessageElement, source message.Source, isRaw ...bool) (r string) {
 	sb := global.NewBuffer()
 	sb.Reset()
 	write := func(format string, a ...interface{}) {
@@ -286,7 +266,7 @@ func ToStringMessage(e []message.IMessageElement, source MessageSource, isRaw ..
 		_, ok := e.(*message.ReplyElement)
 		return ok
 	})
-	if reply != nil && source.SourceType&(MessageSourceGroup|MessageSourcePrivate) != 0 {
+	if reply != nil && source.SourceType&(message.SourceGroup|message.SourcePrivate) != 0 {
 		replyElem := reply.(*message.ReplyElement)
 		id := replyID(replyElem, source)
 		if base.ExtraReplyData {
@@ -511,7 +491,7 @@ func ToMessageContent(e []message.IMessageElement) (r []global.MSG) {
 }
 
 // ConvertStringMessage 将消息字符串转为消息元素数组
-func (bot *CQBot) ConvertStringMessage(raw string, sourceType MessageSourceType) (r []message.IMessageElement) {
+func (bot *CQBot) ConvertStringMessage(raw string, sourceType message.SourceType) (r []message.IMessageElement) {
 	var t, key string
 	d := map[string]string{}
 
@@ -684,11 +664,11 @@ func (bot *CQBot) ConvertStringMessage(raw string, sourceType MessageSourceType)
 }
 
 // ConvertObjectMessage 将消息JSON对象转为消息元素数组
-func (bot *CQBot) ConvertObjectMessage(m gjson.Result, sourceType MessageSourceType) (r []message.IMessageElement) {
+func (bot *CQBot) ConvertObjectMessage(m gjson.Result, sourceType message.SourceType) (r []message.IMessageElement) {
 	d := make(map[string]string)
 	convertElem := func(e gjson.Result) {
 		t := e.Get("type").Str
-		if t == "reply" && sourceType&(MessageSourceGroup|MessageSourcePrivate) != 0 {
+		if t == "reply" && sourceType&(message.SourceGroup|message.SourcePrivate) != 0 {
 			if len(r) > 0 {
 				if _, ok := r[0].(*message.ReplyElement); ok {
 					log.Warnf("警告: 一条信息只能包含一个 Reply 元素.")
@@ -804,7 +784,7 @@ func (bot *CQBot) ConvertObjectMessage(m gjson.Result, sourceType MessageSourceT
 }
 
 // ConvertContentMessage 将数据库用的 content 转换为消息元素数组
-func (bot *CQBot) ConvertContentMessage(content []global.MSG, sourceType MessageSourceType) (r []message.IMessageElement) {
+func (bot *CQBot) ConvertContentMessage(content []global.MSG, sourceType message.SourceType) (r []message.IMessageElement) {
 	for _, c := range content {
 		data := c["data"].(global.MSG)
 		switch c["type"] {
@@ -883,7 +863,7 @@ func (bot *CQBot) ConvertContentMessage(content []global.MSG, sourceType Message
 // 返回 interface{} 存在三种类型
 //
 // message.IMessageElement []message.IMessageElement nil
-func (bot *CQBot) ToElement(t string, d map[string]string, sourceType MessageSourceType) (m interface{}, err error) {
+func (bot *CQBot) ToElement(t string, d map[string]string, sourceType message.SourceType) (m interface{}, err error) {
 	switch t {
 	case "text":
 		if base.SplitURL {
@@ -1117,7 +1097,7 @@ func (bot *CQBot) ToElement(t string, d map[string]string, sourceType MessageSou
 		if err != nil {
 			return nil, errors.New("send cardimage faild")
 		}
-		return bot.makeShowPic(img, source, brief, icon, minWidth, minHeight, maxWidth, maxHeight, sourceType == MessageSourceGroup)
+		return bot.makeShowPic(img, source, brief, icon, minWidth, minHeight, maxWidth, maxHeight, sourceType == message.SourceGroup)
 	case "video":
 		file, err := bot.makeImageOrVideoElem(d, true, sourceType)
 		if err != nil {
@@ -1170,7 +1150,7 @@ func (bot *CQBot) ToElement(t string, d map[string]string, sourceType MessageSou
 }
 
 // makeImageOrVideoElem 图片 elem 生成器，单独拎出来，用于公用
-func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video bool, sourceType MessageSourceType) (message.IMessageElement, error) {
+func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video bool, sourceType message.SourceType) (message.IMessageElement, error) {
 	f := d["file"]
 	u, ok := d["url"]
 	if !ok {
@@ -1254,7 +1234,7 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video bool, sourceTy
 		return bot.readVideoCache(b), nil
 	}
 	// 目前频道内上传的图片均无法被查询到, 需要单独处理
-	if sourceType == MessageSourceGuildChannel {
+	if sourceType == message.SourceGuildChannel {
 		cacheFile := path.Join(global.ImagePath, "guild-images", f)
 		if global.PathExists(cacheFile) {
 			return &LocalImageElement{File: cacheFile}, nil
@@ -1289,7 +1269,7 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video bool, sourceTy
 	return bot.readImageCache(b, sourceType)
 }
 
-func (bot *CQBot) readImageCache(b []byte, sourceType MessageSourceType) (message.IMessageElement, error) {
+func (bot *CQBot) readImageCache(b []byte, sourceType message.SourceType) (message.IMessageElement, error) {
 	var err error
 	if len(b) < 20 {
 		return nil, errors.New("invalid cache")
@@ -1304,9 +1284,9 @@ func (bot *CQBot) readImageCache(b []byte, sourceType MessageSourceType) (messag
 	}
 	var rsp message.IMessageElement
 	switch sourceType { // nolint:exhaustive
-	case MessageSourceGroup:
+	case message.SourceGroup:
 		rsp, err = bot.Client.QueryGroupImage(int64(rand.Uint32()), hash, size)
-	case MessageSourceGuildChannel:
+	case message.SourceGuildChannel:
 		if len(bot.Client.GuildService.Guilds) == 0 {
 			err = errors.New("cannot query guild image: not any joined guild")
 			break

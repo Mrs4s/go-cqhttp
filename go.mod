@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/Microsoft/go-winio v0.5.1
-	github.com/Mrs4s/MiraiGo v0.0.0-20220220152607-5e8a5126989d
+	github.com/Mrs4s/MiraiGo v0.0.0-20220221093105-1e32793eef06
 	github.com/RomiChan/websocket v1.4.3-0.20220123145318-307a86b127bc
 	github.com/fumiama/go-hide-param v0.1.4
 	github.com/gabriel-vasile/mimetype v1.4.0

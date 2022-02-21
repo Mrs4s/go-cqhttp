@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/Mrs4s/MiraiGo/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/tidwall/gjson"
@@ -15,7 +16,7 @@ import (
 var bot = CQBot{}
 
 func TestCQBot_ConvertStringMessage(t *testing.T) {
-	for _, v := range bot.ConvertStringMessage(`[CQ:face,id=115,text=111][CQ:face,id=217]] [CQ:text,text=123] [`, MessageSourcePrivate) {
+	for _, v := range bot.ConvertStringMessage(`[CQ:face,id=115,text=111][CQ:face,id=217]] [CQ:text,text=123] [`, message.SourcePrivate) {
 		fmt.Println(v)
 	}
 }
@@ -27,14 +28,14 @@ var (
 
 func BenchmarkCQBot_ConvertStringMessage(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		bot.ConvertStringMessage(bench, MessageSourcePrivate)
+		bot.ConvertStringMessage(bench, message.SourcePrivate)
 	}
 	b.SetBytes(int64(len(bench)))
 }
 
 func BenchmarkCQBot_ConvertObjectMessage(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		bot.ConvertObjectMessage(benchArray, MessageSourcePrivate)
+		bot.ConvertObjectMessage(benchArray, message.SourcePrivate)
 	}
 }
 

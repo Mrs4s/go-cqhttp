@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"io"
 	"os"
 	"runtime/debug"
 	"sync"
@@ -152,13 +151,13 @@ func (bot *CQBot) UploadLocalImageAsGroup(groupCode int64, img *LocalImageElemen
 }
 
 // UploadLocalVideo 上传本地短视频至群聊
-func (bot *CQBot) UploadLocalVideo(target int64, v *LocalVideoElement) (*message.ShortVideoElement, error) {
+func (bot *CQBot) UploadLocalVideo(target message.Source, v *LocalVideoElement) (*message.ShortVideoElement, error) {
 	video, err := os.Open(v.File)
 	if err != nil {
 		return nil, err
 	}
 	defer func() { _ = video.Close() }()
-	return bot.Client.UploadGroupShortVideo(target, video, v.thumb, 4)
+	return bot.Client.UploadShortVideo(target, video, v.thumb, 4)
 }
 
 // UploadLocalImageAsPrivate 上传本地图片至私聊
@@ -195,18 +194,6 @@ func (bot *CQBot) UploadLocalImageAsGuildChannel(guildID, channelID uint64, img 
 		return nil, errors.New("image type error: " + mime)
 	}
 	return bot.Client.GuildService.UploadGuildImage(guildID, channelID, img.Stream)
-}
-
-func (bot *CQBot) uploadGuildVideo(i *LocalVideoElement, guildID, channelID uint64) (*message.ShortVideoElement, error) {
-	video, err := os.Open(i.File)
-	if err != nil {
-		return nil, err
-	}
-	defer func() { _ = video.Close() }()
-	_, _ = video.Seek(0, io.SeekStart)
-	_, _ = i.thumb.Seek(0, io.SeekStart)
-	n, err := bot.Client.UploadGuildShortVideo(guildID, channelID, video, i.thumb)
-	return n, err
 }
 
 // SendGroupMessage 发送群消息
@@ -368,7 +355,11 @@ func (bot *CQBot) SendGuildChannelMessage(guildID, channelID uint64, m *message.
 			e = n
 
 		case *LocalVideoElement:
-			n, err := bot.uploadGuildVideo(i, guildID, channelID)
+			n, err := bot.UploadLocalVideo(message.Source{
+				SourceType:  message.SourceGuildChannel,
+				PrimaryID:   int64(guildID),
+				SecondaryID: int64(channelID),
+			}, i)
 			if err != nil {
 				log.Warnf("警告: 频道 %d 消息%s上传失败: %v", channelID, e.Type().String(), err)
 				continue
@@ -518,7 +509,7 @@ func (bot *CQBot) InsertTempMessage(target int64, m *message.TempMessage) int32 
 
 // InsertGuildChannelMessage 频道消息入数据库
 func (bot *CQBot) InsertGuildChannelMessage(m *message.GuildChannelMessage) string {
-	id := encodeGuildMessageID(m.GuildId, m.ChannelId, m.Id, MessageSourceGuildChannel)
+	id := encodeGuildMessageID(m.GuildId, m.ChannelId, m.Id, message.SourceGuildChannel)
 	msg := &db.StoredGuildChannelMessage{
 		ID: id,
 		Attribute: &db.StoredGuildMessageAttribute{
@@ -597,7 +588,11 @@ func (bot *CQBot) uploadMedia(raw message.IMessageElement, target int64, group b
 		}
 		return bot.Client.UploadPrivatePtt(target, bytes.NewReader(m.Data))
 	case *LocalVideoElement:
-		return bot.UploadLocalVideo(target, m)
+		source := message.Source{
+			SourceType: message.SourceGroup,
+			PrimaryID:  target,
+		}
+		return bot.UploadLocalVideo(source, m)
 	}
 	return nil, errors.New("unsupported message element type")
 }
@@ -613,7 +608,7 @@ func encodeMessageID(target int64, seq int32) string {
 // encodeGuildMessageID 将频道信息编码为字符串
 // 当信息来源为 Channel 时 primaryID 为 guildID , subID 为 channelID
 // 当信息来源为 Direct 时 primaryID 为 guildID , subID 为 tinyID
-func encodeGuildMessageID(primaryID, subID, seq uint64, source MessageSourceType) string {
+func encodeGuildMessageID(primaryID, subID, seq uint64, source message.SourceType) string {
 	return base64.StdEncoding.EncodeToString(binary.NewWriterF(func(w *binary.Writer) {
 		w.WriteByte(byte(source))
 		w.WriteUInt64(primaryID)
@@ -622,16 +617,16 @@ func encodeGuildMessageID(primaryID, subID, seq uint64, source MessageSourceType
 	}))
 }
 
-func decodeGuildMessageID(id string) (source *MessageSource, seq uint64) {
+func decodeGuildMessageID(id string) (source *message.Source, seq uint64) {
 	b, _ := base64.StdEncoding.DecodeString(id)
 	if len(b) < 25 {
 		return
 	}
 	r := binary.NewReader(b)
-	source = &MessageSource{
-		SourceType: MessageSourceType(r.ReadByte()),
-		PrimaryID:  uint64(r.ReadInt64()),
-		SubID:      uint64(r.ReadInt64()),
+	source = &message.Source{
+		SourceType:  message.SourceType(r.ReadByte()),
+		PrimaryID:   r.ReadInt64(),
+		SecondaryID: r.ReadInt64(),
 	}
 	seq = uint64(r.ReadInt64())
 	return

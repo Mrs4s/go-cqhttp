@@ -60,9 +60,9 @@ func convertGuildMemberInfo(m []*client.GuildMemberInfo) (r []global.MSG) {
 }
 
 func (bot *CQBot) formatGroupMessage(m *message.GroupMessage) global.MSG {
-	source := MessageSource{
-		SourceType: MessageSourceGroup,
-		PrimaryID:  uint64(m.GroupCode),
+	source := message.Source{
+		SourceType: message.SourceGroup,
+		PrimaryID:  m.GroupCode,
 	}
 	cqm := ToStringMessage(m.Elements, source, true)
 	postType := "message"

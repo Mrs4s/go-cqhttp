@@ -21,7 +21,7 @@ import (
 )
 
 // ToFormattedMessage 将给定[]message.IMessageElement转换为通过coolq.SetMessageFormat所定义的消息上报格式
-func ToFormattedMessage(e []message.IMessageElement, source MessageSource, isRaw ...bool) (r interface{}) {
+func ToFormattedMessage(e []message.IMessageElement, source message.Source, isRaw ...bool) (r interface{}) {
 	if base.PostFormat == "string" {
 		r = ToStringMessage(e, source, isRaw...)
 	} else if base.PostFormat == "array" {
@@ -32,9 +32,9 @@ func ToFormattedMessage(e []message.IMessageElement, source MessageSource, isRaw
 
 func (bot *CQBot) privateMessageEvent(c *client.QQClient, m *message.PrivateMessage) {
 	bot.checkMedia(m.Elements, m.Sender.Uin)
-	source := MessageSource{
-		SourceType: MessageSourcePrivate,
-		PrimaryID:  uint64(m.Sender.Uin),
+	source := message.Source{
+		SourceType: message.SourcePrivate,
+		PrimaryID:  m.Sender.Uin,
 	}
 	cqm := ToStringMessage(m.Elements, source, true)
 	id := bot.InsertPrivateMessage(m)
@@ -89,9 +89,9 @@ func (bot *CQBot) groupMessageEvent(c *client.QQClient, m *message.GroupMessage)
 			return
 		}
 	}
-	source := MessageSource{
-		SourceType: MessageSourceGroup,
-		PrimaryID:  uint64(m.GroupCode),
+	source := message.Source{
+		SourceType: message.SourceGroup,
+		PrimaryID:  m.GroupCode,
 	}
 	cqm := ToStringMessage(m.Elements, source, true)
 	id := bot.InsertGroupMessage(m)
@@ -107,9 +107,9 @@ func (bot *CQBot) groupMessageEvent(c *client.QQClient, m *message.GroupMessage)
 func (bot *CQBot) tempMessageEvent(c *client.QQClient, e *client.TempMessageEvent) {
 	m := e.Message
 	bot.checkMedia(m.Elements, m.Sender.Uin)
-	source := MessageSource{
-		SourceType: MessageSourcePrivate,
-		PrimaryID:  uint64(e.Session.Sender),
+	source := message.Source{
+		SourceType: message.SourcePrivate,
+		PrimaryID:  e.Session.Sender,
 	}
 	cqm := ToStringMessage(m.Elements, source, true)
 	bot.tempSessionCache.Store(m.Sender.Uin, e.Session)
@@ -149,10 +149,10 @@ func (bot *CQBot) guildChannelMessageEvent(c *client.QQClient, m *message.GuildC
 		return
 	}
 	channel := guild.FindChannel(m.ChannelId)
-	source := MessageSource{
-		SourceType: MessageSourceGuildChannel,
-		PrimaryID:  m.GuildId,
-		SubID:      m.ChannelId,
+	source := message.Source{
+		SourceType:  message.SourceGuildChannel,
+		PrimaryID:   int64(m.GuildId),
+		SecondaryID: int64(m.ChannelId),
 	}
 	log.Infof("收到来自频道 %v(%v) 子频道 %v(%v) 内 %v(%v) 的消息: %v", guild.GuildName, guild.GuildId, channel.ChannelName, m.ChannelId, m.Sender.Nickname, m.Sender.TinyId, ToStringMessage(m.Elements, source, true))
 	id := bot.InsertGuildChannelMessage(m)
@@ -181,7 +181,7 @@ func (bot *CQBot) guildMessageReactionsUpdatedEvent(c *client.QQClient, e *clien
 	if guild == nil {
 		return
 	}
-	msgID := encodeGuildMessageID(e.GuildId, e.ChannelId, e.MessageId, MessageSourceGuildChannel)
+	msgID := encodeGuildMessageID(e.GuildId, e.ChannelId, e.MessageId, message.SourceGuildChannel)
 	str := fmt.Sprintf("频道 %v(%v) 消息 %v 表情贴片已更新: ", guild.GuildName, guild.GuildId, msgID)
 	currentReactions := make([]global.MSG, len(e.CurrentReactions))
 	for i, r := range e.CurrentReactions {
@@ -228,7 +228,7 @@ func (bot *CQBot) guildChannelMessageRecalledEvent(c *client.QQClient, e *client
 		log.Errorf("处理频道撤回事件时出现错误: 获取操作者资料时出现错误 %v", err)
 		return
 	}
-	msgID := encodeGuildMessageID(e.GuildId, e.ChannelId, e.MessageId, MessageSourceGuildChannel)
+	msgID := encodeGuildMessageID(e.GuildId, e.ChannelId, e.MessageId, message.SourceGuildChannel)
 	log.Infof("用户 %v(%v) 撤回了频道 %v(%v) 子频道 %v(%v) 的消息 %v", operator.Nickname, operator.TinyId, guild.GuildName, guild.GuildId, channel.ChannelName, channel.ChannelId, msgID)
 	bot.dispatchEventMessage(global.MSG{
 		"post_type":    "notice",
