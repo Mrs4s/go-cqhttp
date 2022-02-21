@@ -1981,7 +1981,7 @@ func (bot *CQBot) CQReloadEventFilter(file string) global.MSG {
 //
 // @route(set_qq_nickname)
 func (bot *CQBot) CQSetQQNickname(name string) global.MSG {
-	bot.Client.SetNickname(name)
+	bot.Client.UpdateProfile(client.NewProfileDetailUpdate().Nick(name))
 	return OK(nil)
 }
 
