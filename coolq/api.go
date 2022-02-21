@@ -1969,6 +1969,32 @@ func (bot *CQBot) CQMarkMessageAsRead(msgID int32) global.MSG {
 	return OK(nil)
 }
 
+// CQSetQQProfile 设置 QQ 资料
+//
+// @route(set_qq_profile)
+func (bot *CQBot) CQSetQQProfile(nickname, company, email, college, personalNote string) global.MSG {
+	u := client.NewProfileDetailUpdate()
+
+	if nickname != "" {
+		u.Nick(nickname)
+	}
+	if company != "" {
+		u.Company(company)
+	}
+	if email != "" {
+		u.Email(email)
+	}
+	if college != "" {
+		u.College(college)
+	}
+	if personalNote != "" {
+		u.PersonalNote(personalNote)
+	}
+
+	bot.Client.UpdateProfile(u)
+	return OK(nil)
+}
+
 // CQReloadEventFilter 重载事件过滤器
 //
 // @route(reload_event_filter)
