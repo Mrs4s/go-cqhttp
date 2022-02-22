@@ -129,6 +129,22 @@ func (bot *CQBot) OnEventPush(f func(e *Event)) {
 	bot.lock.Unlock()
 }
 
+type worker struct {
+	wg sync.WaitGroup
+}
+
+func (w *worker) do(f func()) {
+	w.wg.Add(1)
+	go func() {
+		defer w.wg.Done()
+		f()
+	}()
+}
+
+func (w *worker) wait() {
+	w.wg.Wait()
+}
+
 // uploadLocalImage 上传本地图片
 func (bot *CQBot) uploadLocalImage(target message.Source, img *LocalImageElement) (i message.IMessageElement, err error) {
 	if img.File != "" {
@@ -163,39 +179,70 @@ func (bot *CQBot) uploadLocalVideo(target message.Source, v *LocalVideoElement) 
 	return bot.Client.UploadShortVideo(target, video, v.thumb, 4)
 }
 
-func (bot *CQBot) uploadMedia(target message.Source, elements []message.IMessageElement) []message.IMessageElement {
+func removeLocalElement(elements []message.IMessageElement) []message.IMessageElement {
 	var j int
-	for _, m := range elements {
-		raw := m // upload failed will make m nil, so copy it
-		var err error
-		switch e := m.(type) {
-		case *LocalImageElement:
-			m, err = bot.uploadLocalImage(target, e)
-		case *message.VoiceElement:
-			if target.SourceType == message.SourceGuildChannel {
-				continue // todo
+	for i, e := range elements {
+		switch e.(type) {
+		case *LocalImageElement, *LocalVideoElement:
+		case *message.VoiceElement: // 未上传的语音消息， 也删除
+		default:
+			if j < i {
+				elements[j] = e
 			}
-			m, err = bot.Client.UploadVoice(target, bytes.NewReader(e.Data))
-		case *LocalVideoElement:
-			m, err = bot.uploadLocalVideo(target, e)
+			j++
 		}
-		if err != nil {
-			var source string
-			switch target.SourceType { // nolint:exhaustive
-			case message.SourceGroup:
-				source = "群"
-			case message.SourcePrivate:
-				source = "私聊"
-			case message.SourceGuildChannel:
-				source = "频道"
-			}
-			log.Warnf("警告: %s %d %s上传失败: %v", source, target.PrimaryID, raw.Type().String(), err)
-			continue
-		}
-		elements[j] = m
-		j++
 	}
 	return elements[:j]
+}
+
+const uploadFailedTemplate = "警告: %s %d %s上传失败: %v"
+
+func (bot *CQBot) uploadMedia(target message.Source, elements []message.IMessageElement) []message.IMessageElement {
+	var w worker
+	var source string
+	switch target.SourceType { // nolint:exhaustive
+	case message.SourceGroup:
+		source = "群"
+	case message.SourcePrivate:
+		source = "私聊"
+	case message.SourceGuildChannel:
+		source = "频道"
+	}
+
+	for i, m := range elements {
+		p := &elements[i]
+		switch e := m.(type) {
+		case *LocalImageElement:
+			w.do(func() {
+				m, err := bot.uploadLocalImage(target, e)
+				if err != nil {
+					log.Warnf(uploadFailedTemplate, source, target.PrimaryID, "图片", err)
+				} else {
+					*p = m
+				}
+			})
+		case *message.VoiceElement:
+			w.do(func() {
+				m, err := bot.Client.UploadVoice(target, bytes.NewReader(e.Data))
+				if err != nil {
+					log.Warnf(uploadFailedTemplate, source, target.PrimaryID, "语音", err)
+				} else {
+					*p = m
+				}
+			})
+		case *LocalVideoElement:
+			w.do(func() {
+				m, err := bot.uploadLocalVideo(target, e)
+				if err != nil {
+					log.Warnf(uploadFailedTemplate, source, target.PrimaryID, "视频", err)
+				} else {
+					*p = m
+				}
+			})
+		}
+	}
+	w.wait()
+	return removeLocalElement(elements)
 }
 
 // SendGroupMessage 发送群消息
@@ -512,10 +559,6 @@ func (bot *CQBot) InsertGuildChannelMessage(m *message.GuildChannelMessage) stri
 		return ""
 	}
 	return msg.ID
-}
-
-// Release 释放Bot实例
-func (bot *CQBot) Release() {
 }
 
 func (bot *CQBot) dispatchEventMessage(m global.MSG) {

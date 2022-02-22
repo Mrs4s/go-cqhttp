@@ -12,7 +12,6 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/segmentio/asm/base64"
@@ -793,32 +792,27 @@ func (bot *CQBot) uploadForwardElement(m gjson.Result, groupID int64) *message.F
 	fm := message.NewForwardMessage()
 	source := message.Source{SourceType: message.SourceGroup, PrimaryID: groupID}
 
-	var lazyUpload []func()
-	var wg sync.WaitGroup
+	var w worker
 	resolveElement := func(elems []message.IMessageElement) []message.IMessageElement {
 		for i, elem := range elems {
-			iescape := i
+			p := &elems[i]
 			switch o := elem.(type) {
 			case *LocalVideoElement:
-				wg.Add(1)
-				lazyUpload = append(lazyUpload, func() {
-					defer wg.Done()
+				w.do(func() {
 					gm, err := bot.uploadLocalVideo(source, o)
 					if err != nil {
-						log.Warnf("警告: 群 %d %s上传失败: %v", groupID, o.Type().String(), err)
+						log.Warnf(uploadFailedTemplate, "群", groupID, "视频", err)
 					} else {
-						elems[iescape] = gm
+						*p = gm
 					}
 				})
 			case *LocalImageElement:
-				wg.Add(1)
-				lazyUpload = append(lazyUpload, func() {
-					defer wg.Done()
+				w.do(func() {
 					gm, err := bot.uploadLocalImage(source, o)
 					if err != nil {
-						log.Warnf("警告: 群 %d %s上传失败: %v", groupID, o.Type().String(), err)
+						log.Warnf(uploadFailedTemplate, "群", groupID, "图片", err)
 					} else {
-						elems[iescape] = gm
+						*p = gm
 					}
 				})
 			}
@@ -903,12 +897,7 @@ func (bot *CQBot) uploadForwardElement(m gjson.Result, groupID int64) *message.F
 			fm.AddNode(node)
 		}
 	}
-
-	for _, upload := range lazyUpload {
-		go upload()
-	}
-	wg.Wait()
-
+	w.wait()
 	return bot.Client.UploadGroupForwardMessage(groupID, fm)
 }
 
