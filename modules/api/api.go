@@ -304,6 +304,13 @@ func (c *Caller) call(action string, p Getter) global.MSG {
 		p2 := p.Get("role_id").Uint()
 		p3 := p.Get("users")
 		return c.bot.CQSetGuildMemberRole(p0, p1, p2, p3)
+	case "set_qq_profile":
+		p0 := p.Get("nickname")
+		p1 := p.Get("company")
+		p2 := p.Get("email")
+		p3 := p.Get("college")
+		p4 := p.Get("personal_note")
+		return c.bot.CQSetQQProfile(p0, p1, p2, p3, p4)
 	case "update_guild_role":
 		p0 := p.Get("guild_id").Uint()
 		p1 := p.Get("role_id").Uint()

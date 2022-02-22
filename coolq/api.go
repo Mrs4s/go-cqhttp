@@ -1981,6 +1981,27 @@ func (bot *CQBot) CQMarkMessageAsRead(msgID int32) global.MSG {
 	return OK(nil)
 }
 
+// CQSetQQProfile 设置 QQ 资料
+//
+// @route(set_qq_profile)
+func (bot *CQBot) CQSetQQProfile(nickname, company, email, college, personalNote gjson.Result) global.MSG {
+	u := client.NewProfileDetailUpdate()
+
+	fi := func(f gjson.Result, do func(value string) client.ProfileDetailUpdate) {
+		if f.Exists() {
+			do(f.String())
+		}
+	}
+
+	fi(nickname, u.Nick)
+	fi(company, u.Company)
+	fi(email, u.Email)
+	fi(college, u.College)
+	fi(personalNote, u.PersonalNote)
+	bot.Client.UpdateProfile(u)
+	return OK(nil)
+}
+
 // CQReloadEventFilter 重载事件过滤器
 //
 // @route(reload_event_filter)
