@@ -335,7 +335,7 @@ func (bot *CQBot) SendPrivateMessage(target int64, groupID int64, m *message.Sen
 	var id int32 = -1
 
 	switch {
-	case bot.Client.FindFriend(target) != nil: // 双向好友
+	case bot.Client.FindFriend(target) != nil || target == bot.Client.Uin: // 双向好友
 		msg := bot.Client.SendPrivateMessage(target, m)
 		if msg != nil {
 			id = bot.InsertPrivateMessage(msg)
