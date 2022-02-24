@@ -146,7 +146,7 @@ func (w *worker) wait() {
 }
 
 // uploadLocalImage 上传本地图片
-func (bot *CQBot) uploadLocalImage(target message.Source, img *LocalImageElement) (i message.IMessageElement, err error) {
+func (bot *CQBot) uploadLocalImage(target message.Source, img *LocalImageElement) (message.IMessageElement, error) {
 	if img.File != "" {
 		f, err := os.Open(img.File)
 		if err != nil {
@@ -158,7 +158,10 @@ func (bot *CQBot) uploadLocalImage(target message.Source, img *LocalImageElement
 	if lawful, mime := base.IsLawfulImage(img.Stream); !lawful {
 		return nil, errors.New("image type error: " + mime)
 	}
-	i, err = bot.Client.UploadImage(target, img.Stream, 4)
+	i, err := bot.Client.UploadImage(target, img.Stream, 4)
+	if err != nil {
+		return nil, err
+	}
 	switch i := i.(type) {
 	case *message.GroupImageElement:
 		i.Flash = img.Flash
@@ -166,7 +169,7 @@ func (bot *CQBot) uploadLocalImage(target message.Source, img *LocalImageElement
 	case *message.FriendImageElement:
 		i.Flash = img.Flash
 	}
-	return
+	return i, err
 }
 
 // uploadLocalVideo 上传本地短视频至群聊
@@ -185,6 +188,7 @@ func removeLocalElement(elements []message.IMessageElement) []message.IMessageEl
 		switch e.(type) {
 		case *LocalImageElement, *LocalVideoElement:
 		case *message.VoiceElement: // 未上传的语音消息， 也删除
+		case nil:
 		default:
 			if j < i {
 				elements[j] = e
