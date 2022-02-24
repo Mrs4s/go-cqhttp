@@ -160,12 +160,12 @@ func (bot *CQBot) uploadLocalImage(target message.Source, img *LocalImageElement
 	}
 	i, err = bot.Client.UploadImage(target, img.Stream, 4)
 	if i != nil {
-		switch i := i.(type) {
+		switch e := i.(type) {
 		case *message.GroupImageElement:
-			i.Flash = img.Flash
-			i.EffectID = img.EffectID
+			e.Flash = img.Flash
+			e.EffectID = img.EffectID
 		case *message.FriendImageElement:
-			i.Flash = img.Flash
+			e.Flash = img.Flash
 		}
 	}
 	return
