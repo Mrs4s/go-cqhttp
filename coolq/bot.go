@@ -159,14 +159,15 @@ func (bot *CQBot) uploadLocalImage(target message.Source, img *LocalImageElement
 		return nil, errors.New("image type error: " + mime)
 	}
 	i, err = bot.Client.UploadImage(target, img.Stream, 4)
-	if err == nil {
-		switch i := i.(type) {
-		case *message.GroupImageElement:
-			i.Flash = img.Flash
-			i.EffectID = img.EffectID
-		case *message.FriendImageElement:
-			i.Flash = img.Flash
-		}
+	if err != nil {
+		return
+	}
+	switch i := i.(type) {
+	case *message.GroupImageElement:
+		i.Flash = img.Flash
+		i.EffectID = img.EffectID
+	case *message.FriendImageElement:
+		i.Flash = img.Flash
 	}
 	return
 }
