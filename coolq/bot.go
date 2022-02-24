@@ -187,6 +187,7 @@ func removeLocalElement(elements []message.IMessageElement) []message.IMessageEl
 		switch e.(type) {
 		case *LocalImageElement, *LocalVideoElement:
 		case *message.VoiceElement: // 未上传的语音消息， 也删除
+		case nil:
 		default:
 			if j < i {
 				elements[j] = e
