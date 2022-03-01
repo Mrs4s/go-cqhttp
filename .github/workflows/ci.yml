@@ -28,7 +28,8 @@ jobs:
       - name: Setup Go environment
         uses: actions/setup-go@v2.1.3
         with:
-          go-version: 1.17
+          stable: false
+          go-version: 1.18.0-rc1
       - name: Cache downloaded module
         uses: actions/cache@v2
         with:

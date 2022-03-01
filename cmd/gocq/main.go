@@ -259,7 +259,7 @@ func Main() {
 	}
 	var times uint = 1 // 重试次数
 	var reLoginLock sync.Mutex
-	cli.OnDisconnected(func(q *client.QQClient, e *client.ClientDisconnectedEvent) {
+	cli.DisconnectedEvent.Subscribe(func(q *client.QQClient, e *client.ClientDisconnectedEvent) {
 		reLoginLock.Lock()
 		defer reLoginLock.Unlock()
 		times = 1

@@ -156,7 +156,7 @@ func (bot *CQBot) CQGetGuildMembers(guildID uint64, nextToken string) global.MSG
 		if !exists {
 			return Failed(100, "NEXT_TOKEN_NOT_EXISTS")
 		}
-		token = i.(*guildMemberPageToken)
+		token = i
 		if token.guildID != guildID {
 			return Failed(100, "GUILD_NOT_MATCH")
 		}
