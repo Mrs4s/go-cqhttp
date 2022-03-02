@@ -130,7 +130,6 @@ func Main() {
 	log.Info("当前版本:", base.Version)
 	if base.Debug {
 		log.SetLevel(log.DebugLevel)
-		log.SetReportCaller(true)
 		log.Warnf("已开启Debug模式.")
 		// log.Debugf("开发交流群: 192548878")
 	}
@@ -383,22 +382,36 @@ func newClient() *client.QQClient {
 		}
 		log.Infof("读取到 %v 个自定义地址.", len(addr))
 	}
-	c.OnLog(func(c *client.QQClient, e *client.LogEvent) {
-		switch e.Type {
-		case "INFO":
-			log.Info("Protocol -> " + e.Message)
-		case "ERROR":
-			log.Error("Protocol -> " + e.Message)
-		case "DEBUG":
-			log.Debug("Protocol -> " + e.Message)
-		case "DUMP":
-			if !global.PathExists(global.DumpsPath) {
-				_ = os.MkdirAll(global.DumpsPath, 0o755)
-			}
-			dumpFile := path.Join(global.DumpsPath, fmt.Sprintf("%v.dump", time.Now().Unix()))
-			log.Errorf("出现错误 %v. 详细信息已转储至文件 %v 请连同日志提交给开发者处理", e.Message, dumpFile)
-			_ = os.WriteFile(dumpFile, e.Dump, 0o644)
-		}
-	})
+	c.SetLogger(protocolLogger{})
 	return c
+}
+
+type protocolLogger struct{}
+
+const fromProtocol = "Protocol -> "
+
+func (p protocolLogger) Info(format string, arg ...any) {
+	log.Infof(fromProtocol+format, arg...)
+}
+
+func (p protocolLogger) Warning(format string, arg ...any) {
+	log.Warnf(fromProtocol+format, arg...)
+}
+
+func (p protocolLogger) Debug(format string, arg ...any) {
+	log.Debugf(fromProtocol+format, arg...)
+}
+
+func (p protocolLogger) Error(format string, arg ...any) {
+	log.Errorf(fromProtocol+format, arg...)
+}
+
+func (p protocolLogger) Dump(data []byte, format string, arg ...any) {
+	if !global.PathExists(global.DumpsPath) {
+		_ = os.MkdirAll(global.DumpsPath, 0o755)
+	}
+	dumpFile := path.Join(global.DumpsPath, fmt.Sprintf("%v.dump", time.Now().Unix()))
+	message := fmt.Sprintf(format, arg...)
+	log.Errorf("出现错误 %v. 详细信息已转储至文件 %v 请连同日志提交给开发者处理", message, dumpFile)
+	_ = os.WriteFile(dumpFile, data, 0o644)
 }
