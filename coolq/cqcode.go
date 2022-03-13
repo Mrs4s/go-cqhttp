@@ -928,8 +928,6 @@ func (bot *CQBot) ToElement(t string, d map[string]string, sourceType message.So
 			if !lawful {
 				return nil, errors.New("audio type error: " + mt)
 			}
-		}
-		if !global.IsAMRorSILK(data) {
 			data, err = global.EncoderSilk(data)
 			if err != nil {
 				return nil, err

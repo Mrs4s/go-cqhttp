@@ -43,4 +43,5 @@ func Run(bot *coolq.CQBot) {
 	for _, fn := range nocfgsvr {
 		go fn(bot)
 	}
+	base.Servers = nil
 }
