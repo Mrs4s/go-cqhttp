@@ -1103,21 +1103,18 @@ func (bot *CQBot) ToElement(t string, d map[string]string, sourceType message.So
 		if cover, ok := d["cover"]; ok {
 			data, _ = global.FindFile(cover, d["cache"], global.ImagePath)
 		} else {
-			_ = global.ExtractCover(v.File, v.File+".jpg")
+			err = global.ExtractCover(v.File, v.File+".jpg")
+			if err != nil {
+				return nil, err
+			}
 			data, _ = os.ReadFile(v.File + ".jpg")
 		}
 		v.thumb = bytes.NewReader(data)
 		video, _ := os.Open(v.File)
 		defer video.Close()
-		_, err = video.Seek(4, io.SeekStart)
-		if err != nil {
-			return nil, err
-		}
+		_, _ = video.Seek(4, io.SeekStart)
 		header := make([]byte, 4)
-		_, err = video.Read(header)
-		if err != nil {
-			return nil, err
-		}
+		_, _ = video.Read(header)
 		if !bytes.Equal(header, []byte{0x66, 0x74, 0x79, 0x70}) { // check file header ftyp
 			_, _ = video.Seek(0, io.SeekStart)
 			hash, _ := utils.ComputeMd5AndLength(video)
