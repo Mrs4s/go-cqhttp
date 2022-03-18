@@ -324,10 +324,9 @@ func Main() {
 	log.Info("资源初始化完成, 开始处理信息.")
 	log.Info("アトリは、高性能ですから!")
 
-	go selfupdate.CheckUpdate()
 	go func() {
-		time.Sleep(5 * time.Second)
-		go selfdiagnosis.NetworkDiagnosis(cli)
+		selfupdate.CheckUpdate()
+		selfdiagnosis.NetworkDiagnosis(cli)
 	}()
 
 	<-global.SetupMainSignalHandler()
