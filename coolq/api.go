@@ -995,6 +995,17 @@ func (bot *CQBot) CQSetGroupName(groupID int64, name string) global.MSG {
 	return Failed(100, "GROUP_NOT_FOUND", "群聊不存在")
 }
 
+// CQGetGroupMemo 扩展API-获取群公告
+// @route(_get_group_notice)
+func (bot *CQBot) CQGetGroupMemo(groupID int64) global.MSG {
+	r, err := bot.Client.GetGroupNotice(groupID)
+	if err != nil {
+		return Failed(100, "获取群公告失败", err.Error())
+	}
+
+	return OK(r)
+}
+
 // CQSetGroupMemo 扩展API-发送群公告
 //
 // https://docs.go-cqhttp.org/api/#%E5%8F%91%E9%80%81%E7%BE%A4%E5%85%AC%E5%91%8A
