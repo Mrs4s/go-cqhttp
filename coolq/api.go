@@ -1235,27 +1235,6 @@ func (bot *CQBot) CQSetGroupAdmin(groupID, userID int64, enable bool) global.MSG
 	return OK(nil)
 }
 
-// CQGetVipInfo 扩展API-获取VIP信息
-//
-// https://docs.go-cqhttp.org/api/#%E8%8E%B7%E5%8F%96vip%E4%BF%A1%E6%81%AF
-// @route(_get_vip_info)
-func (bot *CQBot) CQGetVipInfo(userID int64) global.MSG {
-	vip, err := bot.Client.GetVipInfo(userID)
-	if err != nil {
-		return Failed(100, "VIP_API_ERROR", err.Error())
-	}
-	msg := global.MSG{
-		"user_id":          vip.Uin,
-		"nickname":         vip.Name,
-		"level":            vip.Level,
-		"level_speed":      vip.LevelSpeed,
-		"vip_level":        vip.VipLevel,
-		"vip_growth_speed": vip.VipGrowthSpeed,
-		"vip_growth_total": vip.VipGrowthTotal,
-	}
-	return OK(msg)
-}
-
 // CQGetGroupHonorInfo 获取群荣誉信息
 //
 // https://git.io/Jtz1H

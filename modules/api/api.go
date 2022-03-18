@@ -27,9 +27,6 @@ func (c *Caller) call(action string, p Getter) global.MSG {
 	case "_get_model_show":
 		p0 := p.Get("model").String()
 		return c.bot.CQGetModelShow(p0)
-	case "_get_vip_info":
-		p0 := p.Get("user_id").Int()
-		return c.bot.CQGetVipInfo(p0)
 	case "_send_group_notice":
 		p0 := p.Get("group_id").Int()
 		p1 := p.Get("content").String()
