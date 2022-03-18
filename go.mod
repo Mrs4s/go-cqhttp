@@ -1,13 +1,12 @@
 module github.com/Mrs4s/go-cqhttp
 
-go 1.17
+go 1.18
 
 require (
 	github.com/Microsoft/go-winio v0.5.1
 	github.com/Mrs4s/MiraiGo v0.0.0-20220318123613-8fa49fedb994
 	github.com/RomiChan/websocket v1.4.3-0.20220123145318-307a86b127bc
 	github.com/fumiama/go-hide-param v0.1.4
-	github.com/gabriel-vasile/mimetype v1.4.0
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
 	github.com/mattn/go-colorable v0.1.12
 	github.com/pkg/errors v0.9.1
@@ -25,7 +24,7 @@ require (
 )
 
 require (
-	github.com/RomiChan/protobuf v0.0.0-20220227114948-643565fff248 // indirect
+	github.com/RomiChan/protobuf v0.0.0-20220318113238-d8a99598f896 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fumiama/imgsz v0.0.2 // indirect
 	github.com/go-stack/stack v1.8.0 // indirect

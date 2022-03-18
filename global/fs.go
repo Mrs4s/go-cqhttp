@@ -22,27 +22,18 @@ import (
 const (
 	// ImagePath go-cqhttp使用的图片缓存目录
 	ImagePath = "data/images"
-	// ImagePathOld 兼容旧版go-cqhttp使用的图片缓存目录
-	ImagePathOld = "data/image"
 	// VoicePath go-cqhttp使用的语音缓存目录
 	VoicePath = "data/voices"
-	// VoicePathOld 兼容旧版go-cqhttp使用的语音缓存目录
-	VoicePathOld = "data/record"
 	// VideoPath go-cqhttp使用的视频缓存目录
 	VideoPath = "data/videos"
 	// CachePath go-cqhttp使用的缓存目录
 	CachePath = "data/cache"
 	// DumpsPath go-cqhttp使用错误转储目录
 	DumpsPath = "dumps"
-)
-
-var (
-	// ErrSyntax Path语法错误时返回的错误
-	ErrSyntax = errors.New("syntax error")
 	// HeaderAmr AMR文件头
-	HeaderAmr = []byte("#!AMR")
+	HeaderAmr = "#!AMR"
 	// HeaderSilk Silkv3文件头
-	HeaderSilk = []byte("\x02#!SILK_V3")
+	HeaderSilk = "\x02#!SILK_V3"
 )
 
 // PathExists 判断给定path是否存在
@@ -78,13 +69,13 @@ func Check(err error, deleteSession bool) {
 
 // IsAMRorSILK 判断给定文件是否为Amr或Silk格式
 func IsAMRorSILK(b []byte) bool {
-	return bytes.HasPrefix(b, HeaderAmr) || bytes.HasPrefix(b, HeaderSilk)
+	return bytes.HasPrefix(b, []byte(HeaderAmr)) || bytes.HasPrefix(b, []byte(HeaderSilk))
 }
 
 // FindFile 从给定的File寻找文件，并返回文件byte数组。File是一个合法的URL。p为文件寻找位置。
 // 对于HTTP/HTTPS形式的URL，Cache为"1"或空时表示启用缓存
 func FindFile(file, cache, p string) (data []byte, err error) {
-	data, err = nil, ErrSyntax
+	data, err = nil, os.ErrNotExist
 	switch {
 	case strings.HasPrefix(file, "http"): // https also has prefix http
 		hash := md5.Sum([]byte(file))

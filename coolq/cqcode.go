@@ -917,9 +917,6 @@ func (bot *CQBot) ToElement(t string, d map[string]string, sourceType message.So
 	case "record":
 		f := d["file"]
 		data, err := global.FindFile(f, d["cache"], global.VoicePath)
-		if err == global.ErrSyntax {
-			data, err = global.FindFile(f, d["cache"], global.VoicePathOld)
-		}
 		if err != nil {
 			return nil, err
 		}
@@ -928,8 +925,6 @@ func (bot *CQBot) ToElement(t string, d map[string]string, sourceType message.So
 			if !lawful {
 				return nil, errors.New("audio type error: " + mt)
 			}
-		}
-		if !global.IsAMRorSILK(data) {
 			data, err = global.EncoderSilk(data)
 			if err != nil {
 				return nil, err
@@ -1243,10 +1238,6 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video bool, sourceTy
 		}
 	}
 	exist := global.PathExists(rawPath)
-	if !exist && global.PathExists(path.Join(global.ImagePathOld, f)) {
-		exist = true
-		rawPath = path.Join(global.ImagePathOld, f)
-	}
 	if !exist {
 		if d["url"] != "" {
 			return bot.makeImageOrVideoElem(map[string]string{"file": d["url"]}, false, sourceType)

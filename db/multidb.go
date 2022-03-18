@@ -45,6 +45,7 @@ func Open() error {
 			return errors.Wrap(err, "open backend error")
 		}
 	}
+	base.Database = nil
 	return nil
 }
 
