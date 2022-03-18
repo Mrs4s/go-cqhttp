@@ -38,7 +38,7 @@ type guildMemberPageToken struct {
 	nextQueryParam string
 }
 
-var defaultPageToken = &guildMemberPageToken{
+var defaultPageToken = guildMemberPageToken{
 	guildID:    0,
 	nextIndex:  0,
 	nextRoleID: 2,
@@ -150,7 +150,7 @@ func (bot *CQBot) CQGetGuildMembers(guildID uint64, nextToken string) global.MSG
 	if guild == nil {
 		return Failed(100, "GUILD_NOT_FOUND")
 	}
-	token := defaultPageToken
+	token := &defaultPageToken
 	if nextToken != "" {
 		i, exists := bot.nextTokenCache.Get(nextToken)
 		if !exists {

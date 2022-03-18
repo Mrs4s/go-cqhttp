@@ -137,19 +137,11 @@ func expand(s string, mapping func(string) string) string {
 	r := regexp.MustCompile(`\${([a-zA-Z_]+[a-zA-Z0-9_:/.]*)}`)
 	return r.ReplaceAllStringFunc(s, func(s string) string {
 		s = strings.Trim(s, "${}")
-		// todo: use strings.Cut once go1.18 is released
-		before, after, ok := cut(s, ":")
+		before, after, ok := strings.Cut(s, ":")
 		m := mapping(before)
 		if ok && m == "" {
 			return after
 		}
 		return m
 	})
-}
-
-func cut(s, sep string) (before, after string, found bool) {
-	if i := strings.Index(s, sep); i >= 0 {
-		return s[:i], s[i+len(sep):], true
-	}
-	return s, "", false
 }
