@@ -15,7 +15,6 @@ jobs:
           go-version: 1.18
 
       - name: golangci-lint
-        if: ${{ false }}
         uses: golangci/golangci-lint-action@v2
         with:
           version: latest
