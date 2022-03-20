@@ -14,6 +14,7 @@ import (
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/Mrs4s/MiraiGo/utils"
+	"github.com/RomiChan/syncx"
 	"github.com/pkg/errors"
 	"github.com/segmentio/asm/base64"
 	log "github.com/sirupsen/logrus"
@@ -30,8 +31,8 @@ type CQBot struct {
 	lock   sync.RWMutex
 	events []func(*Event)
 
-	friendReqCache   sync.Map
-	tempSessionCache sync.Map
+	friendReqCache   syncx.Map[string, *client.NewFriendRequest]
+	tempSessionCache syncx.Map[int64, *client.TempSessionInfo]
 	nextTokenCache   *utils.Cache[*guildMemberPageToken]
 }
 
@@ -366,7 +367,7 @@ func (bot *CQBot) SendPrivateMessage(target int64, groupID int64, m *message.Sen
 				}
 				break
 			}
-			msg, err := session.(*client.TempSessionInfo).SendMessage(m)
+			msg, err := session.SendMessage(m)
 			if err != nil {
 				log.Errorf("发送临时会话消息失败: %v", err)
 				break

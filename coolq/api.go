@@ -1126,9 +1126,9 @@ func (bot *CQBot) CQProcessFriendRequest(flag string, approve bool) global.MSG {
 		return Failed(100, "FLAG_NOT_FOUND", "FLAG不存在")
 	}
 	if approve {
-		req.(*client.NewFriendRequest).Accept()
+		req.Accept()
 	} else {
-		req.(*client.NewFriendRequest).Reject()
+		req.Reject()
 	}
 	return OK(nil)
 }
