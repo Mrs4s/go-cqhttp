@@ -4,8 +4,8 @@ go 1.18
 
 require (
 	github.com/Microsoft/go-winio v0.5.1
-	github.com/Mrs4s/MiraiGo v0.0.0-20220320070754-38990f6e1cf9
-	github.com/RomiChan/syncx v0.0.0-20220320065321-8d448f958257
+	github.com/Mrs4s/MiraiGo v0.0.0-20220321133915-aa657c0f09d0
+	github.com/RomiChan/syncx v0.0.0-20220320130821-c88644afda9c
 	github.com/RomiChan/websocket v1.4.3-0.20220123145318-307a86b127bc
 	github.com/fumiama/go-hide-param v0.1.4
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
