@@ -5,12 +5,11 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"errors"
-	"net"
+	"net/netip"
 	"net/url"
 	"os"
 	"path"
 	"runtime"
-	"strconv"
 	"strings"
 
 	"github.com/Mrs4s/MiraiGo/utils"
@@ -129,19 +128,18 @@ func DelFile(path string) bool {
 }
 
 // ReadAddrFile 从给定path中读取合法的IP地址与端口,每个IP地址以换行符"\n"作为分隔
-func ReadAddrFile(path string) []*net.TCPAddr {
+func ReadAddrFile(path string) []netip.AddrPort {
 	d, err := os.ReadFile(path)
 	if err != nil {
 		return nil
 	}
 	str := string(d)
 	lines := strings.Split(str, "\n")
-	var ret []*net.TCPAddr
+	var ret []netip.AddrPort
 	for _, l := range lines {
-		ip := strings.Split(strings.TrimSpace(l), ":")
-		if len(ip) == 2 {
-			port, _ := strconv.Atoi(ip[1])
-			ret = append(ret, &net.TCPAddr{IP: net.ParseIP(ip[0]), Port: port})
+		addr, err := netip.ParseAddrPort(l)
+		if err == nil {
+			ret = append(ret, addr)
 		}
 	}
 	return ret
