@@ -221,7 +221,8 @@ func resolveURI(addr string) (network, address string) {
 			network = ext
 			uri.Scheme = scheme // remove `+unix`/`+tcp4`
 			if ext == "unix" {
-				uri.Host = base64.StdEncoding.EncodeToString([]byte(uri.Host + uri.Path))
+				uri.Host, uri.Path, _ = strings.Cut(uri.Path, ":")
+				uri.Host = base64.StdEncoding.EncodeToString([]byte(uri.Host))
 			}
 			address = uri.String()
 		}
