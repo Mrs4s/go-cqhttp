@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -31,6 +32,7 @@ import (
 // HTTPServer HTTP通信相关配置
 type HTTPServer struct {
 	Disabled    bool   `yaml:"disabled"`
+	Address     string `yaml:"address"`
 	Host        string `yaml:"host"`
 	Port        int    `yaml:"port"`
 	Timeout     int32  `yaml:"timeout"`
@@ -242,12 +244,20 @@ func runHTTP(bot *coolq.CQBot, node yaml.Node) {
 		return
 	}
 
-	var addr string
+	network, addr := "tcp", ""
 	s := &httpServer{accessToken: conf.AccessToken}
-	if conf.Host == "" || conf.Port == 0 {
+	if conf.Address != "" {
+		uri, err := url.Parse(conf.Address)
+		if err == nil && uri.Scheme != "" {
+			network = uri.Scheme
+			addr = uri.Host
+		}
+	} else if conf.Host != "" || conf.Port != 0 {
+		addr = fmt.Sprintf("%s:%d", conf.Host, conf.Port)
+		log.Warnln("HTTP 服务器使用了过时的配置格式，请更新配置文件！")
+	} else {
 		goto client
 	}
-	addr = fmt.Sprintf("%s:%d", conf.Host, conf.Port)
 	s.api = api.NewCaller(bot)
 	if conf.RateLimit.Enabled {
 		s.api.Use(rateLimit(conf.RateLimit.Frequency, conf.RateLimit.Bucket))
@@ -255,20 +265,16 @@ func runHTTP(bot *coolq.CQBot, node yaml.Node) {
 	if conf.LongPolling.Enabled {
 		s.api.Use(longPolling(bot, conf.LongPolling.MaxQueueSize))
 	}
-
 	go func() {
-		log.Infof("CQ HTTP 服务器已启动: %v", addr)
-		server := &http.Server{
-			Addr:    addr,
-			Handler: s,
-		}
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Error(err)
-			log.Infof("HTTP 服务启动失败, 请检查端口是否被占用.")
+		listener, err := net.Listen(network, addr)
+		if err != nil {
+			log.Infof("HTTP 服务启动失败, 请检查端口是否被占用: %v", err)
 			log.Warnf("将在五秒后退出.")
 			time.Sleep(time.Second * 5)
 			os.Exit(1)
 		}
+		log.Infof("CQ HTTP 服务器已启动: %v", listener.Addr())
+		log.Fatal(http.Serve(listener, s))
 	}()
 client:
 	for _, c := range conf.Post {

@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
+	"net/url"
 	"runtime/debug"
 	"strconv"
 	"strings"
@@ -100,6 +102,7 @@ const wsReverseDefault = `  # 反向WS设置
 // WebsocketServer 正向WS相关配置
 type WebsocketServer struct {
 	Disabled bool   `yaml:"disabled"`
+	Address  string `yaml:"address"`
 	Host     string `yaml:"host"`
 	Port     int    `yaml:"port"`
 
@@ -139,6 +142,17 @@ func runWSServer(b *coolq.CQBot, node yaml.Node) {
 		return
 	}
 
+	network, address := "tcp", conf.Address
+	if conf.Address == "" && (conf.Host != "" || conf.Port != 0) {
+		log.Warn("正向 Websocket 使用了过时的配置格式，请更新配置文件")
+		address = fmt.Sprintf("%s:%d", conf.Host, conf.Port)
+	} else {
+		addr, err := url.Parse(conf.Address)
+		if err == nil && addr.Scheme != "" {
+			network = addr.Scheme
+			address = addr.Host
+		}
+	}
 	s := &webSocketServer{
 		bot:    b,
 		conf:   &conf,
@@ -146,7 +160,6 @@ func runWSServer(b *coolq.CQBot, node yaml.Node) {
 		filter: conf.Filter,
 	}
 	filter.Add(s.filter)
-	addr := fmt.Sprintf("%s:%d", conf.Host, conf.Port)
 	s.handshake = fmt.Sprintf(`{"_post_method":2,"meta_event_type":"lifecycle","post_type":"meta_event","self_id":%d,"sub_type":"connect","time":%d}`,
 		b.Client.Uin, time.Now().Unix())
 	b.OnEventPush(s.onBotPushEvent)
@@ -154,8 +167,12 @@ func runWSServer(b *coolq.CQBot, node yaml.Node) {
 	mux.HandleFunc("/event", s.event)
 	mux.HandleFunc("/api", s.api)
 	mux.HandleFunc("/", s.any)
-	log.Infof("CQ WebSocket 服务器已启动: %v", addr)
-	log.Fatal(http.ListenAndServe(addr, &mux))
+	listener, err := net.Listen(network, address)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Infof("CQ WebSocket 服务器已启动: %v", listener.Addr())
+	log.Fatal(http.Serve(listener, &mux))
 }
 
 // runWSClient 运行一个反向向WS client
