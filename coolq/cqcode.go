@@ -1171,6 +1171,8 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video bool, sourceTy
 		if err != nil {
 			return nil, err
 		}
+		// 直接使用 Path 会导致文件路径中特殊符号后的路径无法输出，故只删除「[协议类型]://」并覆盖
+		fu.Path = strings.Replace(f, fu.Scheme+"://", "", 1)
 		if runtime.GOOS == `windows` && strings.HasPrefix(fu.Path, "/") {
 			fu.Path = fu.Path[1:]
 		}
