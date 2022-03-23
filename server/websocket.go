@@ -147,10 +147,10 @@ func runWSServer(b *coolq.CQBot, node yaml.Node) {
 		log.Warn("正向 Websocket 使用了过时的配置格式，请更新配置文件")
 		address = fmt.Sprintf("%s:%d", conf.Host, conf.Port)
 	} else {
-		addr, err := url.Parse(conf.Address)
-		if err == nil && addr.Scheme != "" {
-			network = addr.Scheme
-			address = addr.Host
+		uri, err := url.Parse(conf.Address)
+		if err == nil && uri.Scheme != "" {
+			network = uri.Scheme
+			address = uri.Host + uri.Path
 		}
 	}
 	s := &webSocketServer{

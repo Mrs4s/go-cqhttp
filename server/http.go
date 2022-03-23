@@ -244,18 +244,19 @@ func runHTTP(bot *coolq.CQBot, node yaml.Node) {
 		return
 	}
 
-	network, addr := "tcp", ""
+	network, addr := "tcp", conf.Address
 	s := &httpServer{accessToken: conf.AccessToken}
-	if conf.Address != "" {
+	switch {
+	case conf.Address != "":
 		uri, err := url.Parse(conf.Address)
 		if err == nil && uri.Scheme != "" {
 			network = uri.Scheme
-			addr = uri.Host
+			addr = uri.Host + uri.Path
 		}
-	} else if conf.Host != "" || conf.Port != 0 {
+	case conf.Host != "" || conf.Port != 0:
 		addr = fmt.Sprintf("%s:%d", conf.Host, conf.Port)
 		log.Warnln("HTTP 服务器使用了过时的配置格式，请更新配置文件！")
-	} else {
+	default:
 		goto client
 	}
 	s.api = api.NewCaller(bot)
