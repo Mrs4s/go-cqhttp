@@ -2,8 +2,10 @@ package server
 
 import (
 	"bytes"
+	"context"
 	"crypto/hmac"
 	"crypto/sha1"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -65,6 +67,7 @@ type HTTPClient struct {
 	filter          string
 	apiPort         int
 	timeout         int32
+	client          *http.Client
 	MaxRetries      uint64
 	RetriesInterval uint64
 }
@@ -77,8 +80,7 @@ type httpCtx struct {
 
 const httpDefault = `
   - http: # HTTP 通信设置
-      host: 127.0.0.1 # 服务端监听地址
-      port: 5700      # 服务端监听端口
+      address: 0.0.0.0:5700 # HTTP监听地址
       timeout: 5      # 反向 HTTP 超时时间, 单位秒，<5 时将被忽略
       long-polling:   # 长轮询拓展
         enabled: false       # 是否开启
@@ -300,8 +302,30 @@ func (c HTTPClient) Run() {
 	if c.timeout < 5 {
 		c.timeout = 5
 	}
+	rawAddress := c.addr
+	network, address := resolveURI(c.addr)
+	client := &http.Client{
+		Timeout: time.Second * time.Duration(c.timeout),
+		Transport: &http.Transport{
+			DialContext: func(_ context.Context, _, addr string) (net.Conn, error) {
+				if network == "unix" {
+					host, _, err := net.SplitHostPort(addr)
+					if err != nil {
+						host = addr
+					}
+					filepath, err := base64.RawURLEncoding.DecodeString(host)
+					if err == nil {
+						addr = string(filepath)
+					}
+				}
+				return net.Dial(network, addr)
+			},
+		},
+	}
+	c.addr = address // clean path
+	c.client = client
+	log.Infof("HTTP POST上报器已启动: %v", rawAddress)
 	c.bot.OnEventPush(c.onBotPushEvent)
-	log.Infof("HTTP POST上报器已启动: %v", c.addr)
 }
 
 func (c *HTTPClient) onBotPushEvent(e *coolq.Event) {
@@ -313,7 +337,6 @@ func (c *HTTPClient) onBotPushEvent(e *coolq.Event) {
 		}
 	}
 
-	client := http.Client{Timeout: time.Second * time.Duration(c.timeout)}
 	header := make(http.Header)
 	header.Set("X-Self-ID", strconv.FormatInt(c.bot.Client.Uin, 10))
 	header.Set("User-Agent", "CQHttp/4.15.0")
@@ -338,7 +361,7 @@ func (c *HTTPClient) onBotPushEvent(e *coolq.Event) {
 		}
 		req.Header = header
 
-		res, err = client.Do(req)
+		res, err = c.client.Do(req)
 		if res != nil {
 			//goland:noinspection GoDeferInLoop
 			defer res.Body.Close()

@@ -2,6 +2,7 @@ package server
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -77,9 +78,7 @@ var upgrader = websocket.Upgrader{
 const wsDefault = `  # 正向WS设置
   - ws:
       # 正向WS服务器监听地址
-      host: 127.0.0.1
-      # 正向WS服务器监听端口
-      port: 6700
+      address: 0.0.0.0:8080
       middlewares:
         <<: *default # 引用默认中间件
 `
@@ -213,8 +212,25 @@ func runWSClient(b *coolq.CQBot, node yaml.Node) {
 	}
 }
 
-func (c *websocketClient) connect(typ, url string, conptr **wsConn) {
-	log.Infof("开始尝试连接到反向WebSocket %s服务器: %v", typ, url)
+func resolveURI(addr string) (network, address string) {
+	network, address = "tcp", addr
+	uri, err := url.Parse(addr)
+	if err == nil && uri.Scheme != "" {
+		scheme, ext, _ := strings.Cut(uri.Scheme, "+")
+		if ext != "" {
+			network = ext
+			uri.Scheme = scheme // remove `+unix`/`+tcp4`
+			if ext == "unix" {
+				uri.Host = base64.StdEncoding.EncodeToString([]byte(uri.Host + uri.Path))
+			}
+			address = uri.String()
+		}
+	}
+	return
+}
+
+func (c *websocketClient) connect(typ, addr string, conptr **wsConn) {
+	log.Infof("开始尝试连接到反向WebSocket %s服务器: %v", typ, addr)
 	header := http.Header{
 		"X-Client-Role": []string{typ},
 		"X-Self-ID":     []string{strconv.FormatInt(c.bot.Client.Uin, 10)},
@@ -223,12 +239,30 @@ func (c *websocketClient) connect(typ, url string, conptr **wsConn) {
 	if c.token != "" {
 		header["Authorization"] = []string{"Token " + c.token}
 	}
-	conn, _, err := websocket.DefaultDialer.Dial(url, header) // nolint
+
+	network, address := resolveURI(addr)
+	dialer := websocket.Dialer{
+		NetDial: func(_, addr string) (net.Conn, error) {
+			if network == "unix" {
+				host, _, err := net.SplitHostPort(addr)
+				if err != nil {
+					host = addr
+				}
+				filepath, err := base64.RawURLEncoding.DecodeString(host)
+				if err == nil {
+					addr = string(filepath)
+				}
+			}
+			return net.Dial(network, addr) // support unix socket transport
+		},
+	}
+
+	conn, _, err := dialer.Dial(address, header) // nolint
 	if err != nil {
-		log.Warnf("连接到反向WebSocket %s服务器 %v 时出现错误: %v", typ, url, err)
+		log.Warnf("连接到反向WebSocket %s服务器 %v 时出现错误: %v", typ, addr, err)
 		if c.reconnectInterval != 0 {
 			time.Sleep(c.reconnectInterval)
-			c.connect(typ, url, conptr)
+			c.connect(typ, addr, conptr)
 		}
 		return
 	}
@@ -242,7 +276,7 @@ func (c *websocketClient) connect(typ, url string, conptr **wsConn) {
 		}
 	}
 
-	log.Infof("已连接到反向WebSocket %s服务器 %v", typ, url)
+	log.Infof("已连接到反向WebSocket %s服务器 %v", typ, addr)
 
 	var wrappedConn *wsConn
 	if conptr != nil && *conptr != nil {
@@ -261,7 +295,7 @@ func (c *websocketClient) connect(typ, url string, conptr **wsConn) {
 	}
 
 	if typ != "Event" {
-		go c.listenAPI(typ, url, wrappedConn)
+		go c.listenAPI(typ, addr, wrappedConn)
 	}
 }
 
