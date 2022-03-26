@@ -350,36 +350,32 @@ func (c *HTTPClient) onBotPushEvent(e *coolq.Event) {
 		header.Set("X-API-Port", strconv.FormatInt(int64(c.apiPort), 10))
 	}
 
+	var req *http.Request
 	var res *http.Response
+	var err error
 	for i := uint64(0); i <= c.MaxRetries; i++ {
 		// see https://stackoverflow.com/questions/31337891/net-http-http-contentlength-222-with-body-length-0
 		// we should create a new request for every single post trial
-		req, err := http.NewRequest("POST", c.addr, bytes.NewReader(e.JSONBytes()))
+		req, err = http.NewRequest("POST", c.addr, bytes.NewReader(e.JSONBytes()))
 		if err != nil {
 			log.Warnf("上报 Event 数据到 %v 时创建请求失败: %v", c.addr, err)
 			return
 		}
 		req.Header = header
-
 		res, err = c.client.Do(req)
-		if res != nil {
-			//goland:noinspection GoDeferInLoop
-			defer res.Body.Close()
+		if err != nil {
+			if i < c.MaxRetries {
+				log.Warnf("上报 Event 数据到 %v 失败: %v 将进行第 %d 次重试", c.addr, err, i+1)
+			} else {
+				log.Warnf("上报 Event 数据 %s 到 %v 失败: %v 停止上报：已达重试上限", e.JSONBytes(), c.addr, err)
+				return
+			}
+			time.Sleep(time.Millisecond * time.Duration(c.RetriesInterval))
 		}
-		if err == nil {
-			break
-		}
-		if i < c.MaxRetries {
-			log.Warnf("上报 Event 数据到 %v 失败: %v 将进行第 %d 次重试", c.addr, err, i+1)
-		} else {
-			log.Warnf("上报 Event 数据 %s 到 %v 失败: %v 停止上报：已达重试上线", e.JSONBytes(), c.addr, err)
-			return
-		}
-		time.Sleep(time.Millisecond * time.Duration(c.RetriesInterval))
 	}
+	defer res.Body.Close()
 
 	log.Debugf("上报Event数据 %s 到 %v", e.JSONBytes(), c.addr)
-
 	r, err := io.ReadAll(res.Body)
 	if err != nil {
 		return
