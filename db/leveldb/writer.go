@@ -2,7 +2,6 @@ package leveldb
 
 import (
 	"bytes"
-	"io"
 
 	"github.com/Mrs4s/go-cqhttp/global"
 )
@@ -125,7 +124,7 @@ func (w *writer) bytes() []byte {
 	out.uvarint(dataVersion)
 	out.uvarint(uint64(w.strings.Len()))
 	out.uvarint(uint64(w.data.Len()))
-	_, _ = io.Copy(&out, &w.strings)
-	_, _ = io.Copy(&out, &w.data)
+	_, _ = w.strings.WriteTo(&out)
+	_, _ = w.data.WriteTo(&out)
 	return out.Bytes()
 }

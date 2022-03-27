@@ -54,7 +54,7 @@ func (l *lambdaResponseWriter) flush() error {
 	buffer := global.NewBuffer()
 	defer global.PutBuffer(buffer)
 	body := utils.B2S(l.buf.Bytes())
-	header := make(map[string]string)
+	header := make(map[string]string, len(l.header))
 	for k, v := range l.header {
 		header[k] = v[0]
 	}

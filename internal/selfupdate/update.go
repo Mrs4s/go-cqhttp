@@ -188,7 +188,7 @@ func fromStream(updateWith io.Reader) (err error, errRecover error) {
 	}
 	// We won't log this error, because it's always going to happen.
 	defer func() { _ = fp.Close() }()
-	if _, err = io.Copy(fp, bufio.NewReader(updateWith)); err != nil {
+	if _, err = bufio.NewReader(updateWith).WriteTo(fp); err != nil {
 		logrus.Errorf("Unable to copy data: %v\n", err)
 	}
 

@@ -209,7 +209,7 @@ func ToArrayMessage(e []message.IMessageElement, source message.Source) (r []glo
 		case *message.DiceElement:
 			m = global.MSG{
 				"type": "dice",
-				"data": map[string]string{"value": fmt.Sprint(o.Value)},
+				"data": map[string]string{"value": strconv.FormatInt(int64(o.Value), 10)},
 			}
 		case *message.MarketFaceElement:
 			m = global.MSG{
@@ -1192,7 +1192,7 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video bool, sourceTy
 		}
 		return &LocalImageElement{File: fu.Path, URL: f}, nil
 	}
-	if strings.HasPrefix(f, "base64") && !video {
+	if !video && strings.HasPrefix(f, "base64") {
 		b, err := param.Base64DecodeString(strings.TrimPrefix(f, "base64://"))
 		if err != nil {
 			return nil, err

@@ -1342,7 +1342,7 @@ func (bot *CQBot) CQHandleQuickOperation(context, operation gjson.Result) global
 
 		if reply.Exists() {
 			autoEscape := param.EnsureBool(operation.Get("auto_escape"), false)
-			at := operation.Get("at_sender").Bool() && !isAnonymous && msgType == "group"
+			at := !isAnonymous && operation.Get("at_sender").Bool() && msgType == "group"
 			if at && reply.IsArray() {
 				// 在 reply 数组头部插入CQ码
 				replySegments := make([]global.MSG, 0)
@@ -1388,7 +1388,7 @@ func (bot *CQBot) CQHandleQuickOperation(context, operation gjson.Result) global
 			if operation.Get("delete").Bool() {
 				bot.CQDeleteMessage(int32(context.Get("message_id").Int()))
 			}
-			if operation.Get("kick").Bool() && !isAnonymous {
+			if !isAnonymous && operation.Get("kick").Bool() {
 				bot.CQSetGroupKick(context.Get("group_id").Int(), context.Get("user_id").Int(), "", operation.Get("reject_add_request").Bool())
 			}
 			if operation.Get("ban").Bool() {
