@@ -11,7 +11,7 @@ body:
         ## 感谢您愿意填写错误回报！
         ## 以下是一些注意事项，请务必阅读让我们能够更容易处理
 
-        ### ❗ | 确定没有相同问题的ISSUE已被提出. (教程: https://github.com/Mrs4s/go-cqhttp/issues/633)
+        ### ❗ | 确定没有相同问题的ISSUE已被提出. (教程: https://forums.go-cqhttp.org/t/topic/141)
         ### 🌎| 请准确填写环境信息
         ### ❔ | 打开DEBUG模式复现，并提供出现问题前后至少 10 秒的完整日志内容。请自行删除日志内存在的个人信息及敏感内容。
         ### ⚠ | 如果涉及内存泄漏/CPU占用异常请打开DEBUG模式并下载pprof性能分析.
@@ -24,7 +24,7 @@ body:
     attributes:
       label: 请确保您已阅读以上注意事项，并勾选下方的确认框。
       options:
-        - label: "我已经仔细阅读上述教程和 [\"提问前需知\"](https://github.com/Mrs4s/go-cqhttp/issues/633)"
+        - label: "我已经仔细阅读上述教程和 [\"提问前需知\"](https://forums.go-cqhttp.org/t/topic/141)"
           required: true
         - label: "我已经使用 [dev分支版本](https://github.com/Mrs4s/go-cqhttp/actions/workflows/ci.yml) 测试过，问题依旧存在。"
           required: true

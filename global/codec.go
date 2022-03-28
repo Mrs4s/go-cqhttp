@@ -43,6 +43,6 @@ func EncodeMP4(src string, dst string) error { //        -y 覆盖文件
 
 // ExtractCover 获取给定视频文件的Cover
 func ExtractCover(src string, target string) error {
-	cmd := exec.Command("ffmpeg", "-i", src, "-y", "-r", "1", "-f", "image2", target)
+	cmd := exec.Command("ffmpeg", "-i", src, "-y", "-ss", "0", "-frames:v", "1", target)
 	return errors.Wrap(cmd.Run(), "extract video cover failed")
 }
