@@ -1119,14 +1119,12 @@ func (bot *CQBot) ToElement(t string, d map[string]string, sourceType message.So
 			_, _ = video.Seek(0, io.SeekStart)
 			hash, _ := utils.ComputeMd5AndLength(video)
 			cacheFile := path.Join(global.CachePath, hex.EncodeToString(hash)+".mp4")
-			if global.PathExists(cacheFile) && (d["cache"] == "" || d["cache"] == "1") {
-				goto ok
+			if !(d["cache"] == "" || d["cache"] == "1") || !global.PathExists(cacheFile) {
+				err = global.EncodeMP4(v.File, cacheFile)
+				if err != nil {
+					return nil, err
+				}
 			}
-			err = global.EncodeMP4(v.File, cacheFile)
-			if err != nil {
-				return nil, err
-			}
-		ok:
 			v.File = cacheFile
 		}
 		return v, nil
