@@ -19,6 +19,12 @@ jobs:
         with:
           version: latest
 
+      - name: Static Check
+        uses: dominikh/staticcheck-action@v1.2.0
+        with:
+          install-go: false
+          version: "2022.1"
+
       - name: Tests
         run: |
           go test $(go list ./...)
