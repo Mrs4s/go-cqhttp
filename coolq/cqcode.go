@@ -142,16 +142,13 @@ func ToArrayMessage(e []message.IMessageElement, source message.Source) (r []glo
 				"data": map[string]string{"data": o.Content},
 			}
 		case *message.AtElement:
-			if o.Target == 0 {
-				m = global.MSG{
-					"type": "at",
-					"data": map[string]string{"qq": "all"},
-				}
-			} else {
-				m = global.MSG{
-					"type": "at",
-					"data": map[string]string{"qq": strconv.FormatUint(uint64(o.Target), 10)},
-				}
+			target := "all"
+			if o.Target != 0 {
+				target = strconv.FormatUint(uint64(o.Target), 10)
+			}
+			m = global.MSG{
+				"type": "at",
+				"data": map[string]string{"qq": target},
 			}
 		case *message.RedBagElement:
 			m = global.MSG{
@@ -236,9 +233,7 @@ func ToArrayMessage(e []message.IMessageElement, source message.Source) (r []glo
 		default:
 			continue
 		}
-		if m != nil {
-			r = append(r, m)
-		}
+		r = append(r, m)
 	}
 	return
 }
@@ -315,9 +310,9 @@ func ToStringMessage(e []message.IMessageElement, source message.Source, isRaw .
 			}
 			arg += ",subType=" + strconv.FormatInt(int64(o.ImageBizType), 10)
 			if ur {
-				write("[CQ:image,file=%s%s]", hex.EncodeToString(o.Md5)+".image", arg)
+				write("[CQ:image,file=%x.image%s]", o.Md5, arg)
 			} else {
-				write("[CQ:image,file=%s,url=%s%s]", hex.EncodeToString(o.Md5)+".image", cqcode.EscapeValue(o.Url), arg)
+				write("[CQ:image,file=%x.image,url=%s%s]", o.Md5, cqcode.EscapeValue(o.Url), arg)
 			}
 		case *message.FriendImageElement:
 			var arg string
@@ -325,9 +320,9 @@ func ToStringMessage(e []message.IMessageElement, source message.Source, isRaw .
 				arg = ",type=flash"
 			}
 			if ur {
-				write("[CQ:image,file=%s%s]", hex.EncodeToString(o.Md5)+".image", arg)
+				write("[CQ:image,file=%x.image%s]", o.Md5, arg)
 			} else {
-				write("[CQ:image,file=%s,url=%s%s]", hex.EncodeToString(o.Md5)+".image", cqcode.EscapeValue(o.Url), arg)
+				write("[CQ:image,file=%x.image,url=%s%s]", cqcode.EscapeValue(o.Url), arg)
 			}
 		case *LocalImageElement:
 			var arg string
@@ -338,13 +333,13 @@ func ToStringMessage(e []message.IMessageElement, source message.Source, isRaw .
 			if err == nil {
 				m := md5.Sum(data)
 				if ur {
-					write("[CQ:image,file=%s%s]", hex.EncodeToString(m[:])+".image", arg)
+					write("[CQ:image,file=%x.image%s]", m[:], arg)
 				} else {
-					write("[CQ:image,file=%s,url=%s%s]", hex.EncodeToString(m[:])+".image", cqcode.EscapeValue(o.URL), arg)
+					write("[CQ:image,file=%x.image,url=%s%s]", m[:], cqcode.EscapeValue(o.URL), arg)
 				}
 			}
 		case *message.GuildImageElement:
-			write("[CQ:image,file=%s,url=%s]", hex.EncodeToString(o.Md5)+".image", cqcode.EscapeValue(o.Url))
+			write("[CQ:image,file=%x.image,url=%s]", o.Md5, cqcode.EscapeValue(o.Url))
 		case *message.DiceElement:
 			write("[CQ:dice,value=%v]", o.Value)
 		case *message.MarketFaceElement:

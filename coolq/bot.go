@@ -361,6 +361,7 @@ func (bot *CQBot) SendPrivateMessage(target int64, groupID int64, m *message.Sen
 		default:
 			if session == nil && groupID != 0 {
 				msg := bot.Client.SendGroupTempMessage(groupID, target, m)
+				//lint:ignore SA9003
 				if msg != nil { // nolint
 					// todo(Mrs4s)
 					// id = bot.InsertTempMessage(target, msg)
@@ -372,6 +373,7 @@ func (bot *CQBot) SendPrivateMessage(target int64, groupID int64, m *message.Sen
 				log.Errorf("发送临时会话消息失败: %v", err)
 				break
 			}
+			//lint:ignore SA9003
 			if msg != nil { // nolint
 				// todo(Mrs4s)
 				// id = bot.InsertTempMessage(target, msg)
