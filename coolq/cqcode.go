@@ -131,6 +131,7 @@ func ToArrayMessage(e []message.IMessageElement, source message.Source) (r []glo
 					e[i+1] = nil
 				}
 			}
+			continue
 		case *message.TextElement:
 			m = global.MSG{
 				"type": "text",
@@ -472,9 +473,7 @@ func ToMessageContent(e []message.IMessageElement) (r []global.MSG) {
 		default:
 			continue
 		}
-		if m != nil {
-			r = append(r, m)
-		}
+		r = append(r, m)
 	}
 	return
 }
