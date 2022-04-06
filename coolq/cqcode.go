@@ -209,6 +209,11 @@ func ToArrayMessage(e []message.IMessageElement, source message.Source) (r []glo
 				"type": "dice",
 				"data": map[string]string{"value": strconv.FormatInt(int64(o.Value), 10)},
 			}
+		case *message.FingerGuessingElement:
+			m = global.MSG{
+				"type": "rps",
+				"data": map[string]string{"value": strconv.FormatInt(int64(o.Value), 10)},
+			}
 		case *message.MarketFaceElement:
 			m = global.MSG{
 				"type": "text",
@@ -343,6 +348,8 @@ func ToStringMessage(e []message.IMessageElement, source message.Source, isRaw .
 			write("[CQ:image,file=%x.image,url=%s]", o.Md5, cqcode.EscapeValue(o.Url))
 		case *message.DiceElement:
 			write("[CQ:dice,value=%v]", o.Value)
+		case *message.FingerGuessingElement:
+			write("[CQ:rps,value=%v]", o.Value)
 		case *message.MarketFaceElement:
 			sb.WriteString(o.Name)
 		case *message.ServiceElement:
@@ -451,6 +458,8 @@ func ToMessageContent(e []message.IMessageElement) (r []global.MSG) {
 			}
 		case *message.DiceElement:
 			m = global.MSG{"type": "dice", "data": global.MSG{"value": o.Value}}
+		case *message.FingerGuessingElement:
+			m = global.MSG{"type": "rps", "data": global.MSG{"value": o.Value}}
 		case *message.MarketFaceElement:
 			m = global.MSG{"type": "text", "data": global.MSG{"text": o.Name}}
 		case *message.ServiceElement:
@@ -1044,6 +1053,13 @@ func (bot *CQBot) ToElement(t string, d map[string]string, sourceType message.So
 			return nil, errors.New("invalid dice value " + value)
 		}
 		return message.NewDice(int32(i)), nil
+	case "rps":
+		value := d["value"]
+		i, _ := strconv.ParseInt(value, 10, 64)
+		if i < 0 || i > 2 {
+			return nil, errors.New("invalid finger-guessing value " + value)
+		}
+		return message.NewFingerGuessing(int32(i)), nil
 	case "xml":
 		resID := d["resid"]
 		template := cqcode.EscapeValue(d["data"])
