@@ -343,7 +343,7 @@ func (c *HTTPClient) onBotPushEvent(e *coolq.Event) {
 		if i < c.MaxRetries {
 			log.Warnf("上报 Event 数据到 %v 失败: %v 将进行第 %d 次重试", c.addr, err, i+1)
 		} else {
-			log.Warnf("上报 Event 数据 %s 到 %v 失败: %v 停止上报：已达重试上线", e.JSONBytes(), c.addr, err)
+			log.Warnf("上报 Event 数据 %s 到 %v 失败: %v 停止上报：已达重试上限", e.JSONBytes(), c.addr, err)
 			return
 		}
 		time.Sleep(time.Millisecond * time.Duration(c.RetriesInterval))
