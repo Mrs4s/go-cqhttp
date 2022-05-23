@@ -212,9 +212,9 @@ func checkAuth(req *http.Request, token string) int {
 	if auth == "" {
 		auth = req.URL.Query().Get("access_token")
 	} else {
-		authN := strings.SplitN(auth, " ", 2)
-		if len(authN) == 2 {
-			auth = authN[1]
+		_, after, ok := strings.Cut(auth, " ")
+		if ok {
+			auth = after
 		}
 	}
 
