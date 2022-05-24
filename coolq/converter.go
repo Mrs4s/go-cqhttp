@@ -41,7 +41,6 @@ func convertGroupMemberInfo(groupID int64, m *client.GroupMemberInfo) global.MSG
 		"role":              role,
 		"unfriendly":        false,
 		"title":             m.SpecialTitle,
-		"title_expire_time": m.SpecialTitleExpireTime,
 		"card_changeable":   false,
 	}
 }

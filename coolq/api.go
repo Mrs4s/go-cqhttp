@@ -407,7 +407,6 @@ func (bot *CQBot) CQGetGroupList(noCache bool) global.MSG {
 		gs = append(gs, global.MSG{
 			"group_id":          g.Code,
 			"group_name":        g.Name,
-			"group_memo":        g.Memo,
 			"group_create_time": g.GroupCreateTime,
 			"group_level":       g.GroupLevel,
 			"max_member_count":  g.MaxMemberCount,
@@ -449,7 +448,6 @@ func (bot *CQBot) CQGetGroupInfo(groupID int64, noCache bool) global.MSG {
 		return OK(global.MSG{
 			"group_id":          group.Code,
 			"group_name":        group.Name,
-			"group_memo":        group.Memo,
 			"group_create_time": group.GroupCreateTime,
 			"group_level":       group.GroupLevel,
 			"max_member_count":  group.MaxMemberCount,
@@ -1533,6 +1531,7 @@ func (bot *CQBot) CQGetForwardMessage(resID string) global.MSG {
 				},
 				"time":    n.Time,
 				"content": content,
+				"group_id": n.GroupId,
 			}
 		}
 		return r
@@ -1930,6 +1929,15 @@ func (bot *CQBot) CQGetModelShow(model string) global.MSG {
 	return OK(global.MSG{
 		"variants": a,
 	})
+}
+
+// CQSendGroupSign 群打卡
+//
+// https://club.vip.qq.com/onlinestatus/set
+// @route(send_group_sign)
+func (bot *CQBot) CQSendGroupSign(groupId int64) global.MSG {
+	bot.Client.SendGroupSign(groupId)
+	return OK(nil)
 }
 
 // CQSetModelShow 设置在线机型
