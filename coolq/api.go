@@ -1529,8 +1529,8 @@ func (bot *CQBot) CQGetForwardMessage(resID string) global.MSG {
 					"user_id":  n.SenderId,
 					"nickname": n.SenderName,
 				},
-				"time":    n.Time,
-				"content": content,
+				"time":     n.Time,
+				"content":  content,
 				"group_id": n.GroupId,
 			}
 		}
@@ -1935,8 +1935,8 @@ func (bot *CQBot) CQGetModelShow(model string) global.MSG {
 //
 // https://club.vip.qq.com/onlinestatus/set
 // @route(send_group_sign)
-func (bot *CQBot) CQSendGroupSign(groupId int64) global.MSG {
-	bot.Client.SendGroupSign(groupId)
+func (bot *CQBot) CQSendGroupSign(groupID int64) global.MSG {
+	bot.Client.SendGroupSign(groupID)
 	return OK(nil)
 }
 
