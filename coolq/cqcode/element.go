@@ -7,16 +7,19 @@ import (
 	"github.com/Mrs4s/go-cqhttp/global"
 )
 
+// Element single message
 type Element struct {
 	Type string
 	Data []Pair
 }
 
+// Pair key value pair
 type Pair struct {
 	K string
 	V string
 }
 
+// CQCode convert to cqcode
 func (e *Element) CQCode() string {
 	if e.Type == "text" {
 		return EscapeText(e.Data[0].V) // must be {"text": value}
@@ -34,6 +37,7 @@ func (e *Element) CQCode() string {
 	return sb.String()
 }
 
+// MarshalJSON see encoding/json.Marshaler
 func (e *Element) MarshalJSON() ([]byte, error) {
 	buf := global.NewBuffer()
 	defer global.PutBuffer(buf)

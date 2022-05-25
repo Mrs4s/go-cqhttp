@@ -93,6 +93,8 @@ func replyID(r *message.ReplyElement, source message.Source) int32 {
 }
 
 // toElements 将消息元素数组转为MSG数组以用于消息上报
+//
+// nolint:govet
 func toElements(e []message.IMessageElement, source message.Source, raw bool) (r []cqcode.Element) {
 	type pair = cqcode.Pair // simplify code
 	type pairs = []pair
