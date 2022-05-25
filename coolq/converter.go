@@ -2,6 +2,7 @@ package coolq
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/Mrs4s/MiraiGo/topic"
 
@@ -64,7 +65,7 @@ func (bot *CQBot) formatGroupMessage(m *message.GroupMessage) global.MSG {
 		SourceType: message.SourceGroup,
 		PrimaryID:  m.GroupCode,
 	}
-	cqm := ToStringMessage(m.Elements, source, true)
+	cqm := toStringMessage(m.Elements, source, true)
 	postType := "message"
 	if m.Sender.Uin == bot.Client.Uin {
 		postType = "message_sent"
@@ -209,6 +210,15 @@ func convertReactions(reactions []*message.GuildMessageEmojiReaction) (r []globa
 		}
 	}
 	return
+}
+
+func toStringMessage(m []message.IMessageElement, source message.Source, raw bool) string {
+	elems := toElements(m, source, raw)
+	var sb strings.Builder
+	for _, elem := range elems {
+		sb.WriteString(elem.CQCode())
+	}
+	return sb.String()
 }
 
 func fU64(v uint64) string {

@@ -92,9 +92,12 @@ func replyID(r *message.ReplyElement, source message.Source) int32 {
 	return db.ToGlobalID(id, seq)
 }
 
-// ToArrayMessage 将消息元素数组转为MSG数组以用于消息上报
-func ToArrayMessage(e []message.IMessageElement, source message.Source) (r []global.MSG) {
-	r = make([]global.MSG, 0, len(e))
+// toElements 将消息元素数组转为MSG数组以用于消息上报
+func toElements(e []message.IMessageElement, source message.Source, raw bool) (r []cqcode.Element) {
+	type pair = cqcode.Pair // simplify code
+	type pairs = []pair
+
+	r = make([]cqcode.Element, 0, len(e))
 	m := &message.SendingMessage{Elements: e}
 	reply := m.FirstOrNil(func(e message.IMessageElement) bool {
 		_, ok := e.(*message.ReplyElement)
@@ -103,26 +106,24 @@ func ToArrayMessage(e []message.IMessageElement, source message.Source) (r []glo
 	if reply != nil && source.SourceType&(message.SourceGroup|message.SourcePrivate) != 0 {
 		replyElem := reply.(*message.ReplyElement)
 		id := replyID(replyElem, source)
-		if base.ExtraReplyData {
-			r = append(r, global.MSG{
-				"type": "reply",
-				"data": map[string]string{
-					"id":   strconv.FormatInt(int64(id), 10),
-					"seq":  strconv.FormatInt(int64(replyElem.ReplySeq), 10),
-					"qq":   strconv.FormatInt(replyElem.Sender, 10),
-					"time": strconv.FormatInt(int64(replyElem.Time), 10),
-					"text": ToStringMessage(replyElem.Elements, source),
-				},
-			})
-		} else {
-			r = append(r, global.MSG{
-				"type": "reply",
-				"data": map[string]string{"id": strconv.FormatInt(int64(id), 10)},
-			})
+		elem := cqcode.Element{
+			Type: "reply",
+			Data: pairs{
+				{"id", strconv.FormatInt(int64(id), 10)},
+			},
 		}
+		if base.ExtraReplyData {
+			elem.Data = append(elem.Data,
+				pair{K: "seq", V: strconv.FormatInt(int64(replyElem.ReplySeq), 10)},
+				pair{K: "qq", V: strconv.FormatInt(replyElem.Sender, 10)},
+				pair{K: "time", V: strconv.FormatInt(int64(replyElem.Time), 10)},
+				pair{K: "text", V: toStringMessage(replyElem.Elements, source, true)},
+			)
+		}
+		r = append(r, elem)
 	}
 	for i, elem := range e {
-		var m global.MSG
+		var m cqcode.Element
 		switch o := elem.(type) {
 		case *message.ReplyElement:
 			if base.RemoveReplyAt && i+1 < len(e) {
@@ -133,232 +134,149 @@ func ToArrayMessage(e []message.IMessageElement, source message.Source) (r []glo
 			}
 			continue
 		case *message.TextElement:
-			m = global.MSG{
-				"type": "text",
-				"data": map[string]string{"text": o.Content},
+			m = cqcode.Element{
+				Type: "text",
+				Data: pairs{
+					{"text", o.Content},
+				},
 			}
 		case *message.LightAppElement:
-			m = global.MSG{
-				"type": "json",
-				"data": map[string]string{"data": o.Content},
+			m = cqcode.Element{
+				Type: "json",
+				Data: pairs{
+					{"data", o.Content},
+				},
 			}
 		case *message.AtElement:
 			target := "all"
 			if o.Target != 0 {
 				target = strconv.FormatUint(uint64(o.Target), 10)
 			}
-			m = global.MSG{
-				"type": "at",
-				"data": map[string]string{"qq": target},
+			m = cqcode.Element{
+				Type: "at",
+				Data: pairs{
+					{"qq", target},
+				},
 			}
 		case *message.RedBagElement:
-			m = global.MSG{
-				"type": "redbag",
-				"data": map[string]string{"title": o.Title},
+			m = cqcode.Element{
+				Type: "redbag",
+				Data: pairs{
+					{"title", o.Title},
+				},
 			}
 		case *message.ForwardElement:
-			m = global.MSG{
-				"type": "forward",
-				"data": map[string]string{"id": o.ResId},
+			m = cqcode.Element{
+				Type: "forward",
+				Data: pairs{
+					{"id", o.ResId},
+				},
 			}
 		case *message.FaceElement:
-			m = global.MSG{
-				"type": "face",
-				"data": map[string]string{"id": strconv.FormatInt(int64(o.Index), 10)},
+			m = cqcode.Element{
+				Type: "face",
+				Data: pairs{
+					{"id", strconv.FormatInt(int64(o.Index), 10)},
+				},
 			}
 		case *message.VoiceElement:
-			m = global.MSG{
-				"type": "record",
-				"data": map[string]string{"file": o.Name, "url": o.Url},
+			m = cqcode.Element{
+				Type: "record",
+				Data: pairs{
+					{"file", o.Name},
+					{"url", o.Url},
+				},
 			}
 		case *message.ShortVideoElement:
-			m = global.MSG{
-				"type": "video",
-				"data": map[string]string{"file": o.Name, "url": o.Url},
+			m = cqcode.Element{
+				Type: "video",
+				Data: pairs{
+					{"file", o.Name},
+					{"url", o.Url},
+				},
 			}
 		case *message.GroupImageElement:
-			data := map[string]string{"file": hex.EncodeToString(o.Md5) + ".image", "url": o.Url, "subType": strconv.FormatInt(int64(o.ImageBizType), 10)}
+			data := pairs{
+				{"file", hex.EncodeToString(o.Md5) + ".image"},
+				{"subType", strconv.FormatInt(int64(o.ImageBizType), 10)},
+			}
+			if raw {
+				data = append(data, pair{K: "url", V: o.Url})
+			}
 			switch {
 			case o.Flash:
-				data["type"] = "flash"
+				data = append(data, pair{K: "type", V: "flash"})
 			case o.EffectID != 0:
-				data["type"] = "show"
-				data["id"] = strconv.FormatInt(int64(o.EffectID), 10)
+				data = append(data, pair{K: "type", V: "show"})
+				data = append(data, pair{K: "id", V: strconv.FormatInt(int64(o.EffectID), 10)})
 			}
-			m = global.MSG{
-				"type": "image",
-				"data": data,
+			m = cqcode.Element{
+				Type: "image",
+				Data: data,
 			}
 		case *message.GuildImageElement:
-			data := map[string]string{"file": hex.EncodeToString(o.Md5) + ".image", "url": o.Url}
-			m = global.MSG{
-				"type": "image",
-				"data": data,
+			data := pairs{
+				{"file", hex.EncodeToString(o.Md5) + ".image"},
+			}
+			if raw {
+				data = append(data, pair{K: "url", V: o.Url})
+			}
+			m = cqcode.Element{
+				Type: "image",
+				Data: data,
 			}
 		case *message.FriendImageElement:
-			data := map[string]string{"file": hex.EncodeToString(o.Md5) + ".image", "url": o.Url}
-			if o.Flash {
-				data["type"] = "flash"
+			data := pairs{
+				{"file", hex.EncodeToString(o.Md5) + ".image"},
 			}
-			m = global.MSG{
-				"type": "image",
-				"data": data,
+			if raw {
+				data = append(data, pair{K: "url", V: o.Url})
+			}
+			if o.Flash {
+				data = append(data, pair{K: "type", V: "flash"})
+			}
+			m = cqcode.Element{
+				Type: "image",
+				Data: data,
 			}
 		case *message.DiceElement:
-			m = global.MSG{
-				"type": "dice",
-				"data": map[string]string{"value": strconv.FormatInt(int64(o.Value), 10)},
+			m = cqcode.Element{
+				Type: "dice",
+				Data: pairs{
+					{"value", strconv.FormatInt(int64(o.Value), 10)},
+				},
 			}
 		case *message.MarketFaceElement:
-			m = global.MSG{
-				"type": "text",
-				"data": map[string]string{"text": o.Name},
+			m = cqcode.Element{
+				Type: "text",
+				Data: pairs{
+					{"text", o.Name},
+				},
 			}
 		case *message.ServiceElement:
-			if isOk := strings.Contains(o.Content, "<?xml"); isOk {
-				m = global.MSG{
-					"type": "xml",
-					"data": map[string]string{"data": o.Content, "resid": strconv.FormatInt(int64(o.Id), 10)},
-				}
-			} else {
-				m = global.MSG{
-					"type": "json",
-					"data": map[string]string{"data": o.Content, "resid": strconv.FormatInt(int64(o.Id), 10)},
-				}
+			m = cqcode.Element{
+				Type: "xml",
+				Data: pairs{
+					{"data", o.Content},
+					{"resid", o.ResId},
+				},
+			}
+			if !strings.Contains(o.Content, "<?xml") {
+				m.Type = "json"
 			}
 		case *message.AnimatedSticker:
-			m = global.MSG{
-				"type": "face",
-				"data": map[string]string{"id": strconv.FormatInt(int64(o.ID), 10), "type": "sticker"},
+			m = cqcode.Element{
+				Type: "face",
+				Data: pairs{
+					{"id", strconv.FormatInt(int64(o.ID), 10)},
+					{"type", "sticker"},
+				},
 			}
 		default:
 			continue
 		}
 		r = append(r, m)
 	}
-	return
-}
-
-// ToStringMessage 将消息元素数组转为字符串以用于消息上报
-func ToStringMessage(e []message.IMessageElement, source message.Source, isRaw ...bool) (r string) {
-	sb := global.NewBuffer()
-	sb.Reset()
-	write := func(format string, a ...interface{}) {
-		_, _ = fmt.Fprintf(sb, format, a...)
-	}
-	ur := false
-	if len(isRaw) != 0 {
-		ur = isRaw[0]
-	}
-	// 方便
-	m := &message.SendingMessage{Elements: e}
-	reply := m.FirstOrNil(func(e message.IMessageElement) bool {
-		_, ok := e.(*message.ReplyElement)
-		return ok
-	})
-	if reply != nil && source.SourceType&(message.SourceGroup|message.SourcePrivate) != 0 {
-		replyElem := reply.(*message.ReplyElement)
-		id := replyID(replyElem, source)
-		if base.ExtraReplyData {
-			write("[CQ:reply,id=%d,seq=%d,qq=%d,time=%d,text=%s]",
-				id, replyElem.ReplySeq, replyElem.Sender, replyElem.Time,
-				cqcode.EscapeValue(ToStringMessage(replyElem.Elements, source)))
-		} else {
-			write("[CQ:reply,id=%d]", id)
-		}
-	}
-	for i, elem := range e {
-		switch o := elem.(type) {
-		case *message.ReplyElement:
-			if base.RemoveReplyAt && len(e) > i+1 {
-				elem, ok := e[i+1].(*message.AtElement)
-				if ok && elem.Target == o.Sender {
-					e[i+1] = nil
-				}
-			}
-		case *message.TextElement:
-			sb.WriteString(cqcode.EscapeText(o.Content))
-		case *message.AtElement:
-			if o.Target == 0 {
-				write("[CQ:at,qq=all]")
-				continue
-			}
-			write("[CQ:at,qq=%d]", uint64(o.Target))
-		case *message.RedBagElement:
-			write("[CQ:redbag,title=%s]", o.Title)
-		case *message.ForwardElement:
-			write("[CQ:forward,id=%s]", o.ResId)
-		case *message.FaceElement:
-			write(`[CQ:face,id=%d]`, o.Index)
-		case *message.VoiceElement:
-			if ur {
-				write(`[CQ:record,file=%s]`, o.Name)
-			} else {
-				write(`[CQ:record,file=%s,url=%s]`, o.Name, cqcode.EscapeValue(o.Url))
-			}
-		case *message.ShortVideoElement:
-			if ur {
-				write(`[CQ:video,file=%s]`, o.Name)
-			} else {
-				write(`[CQ:video,file=%s,url=%s]`, o.Name, cqcode.EscapeValue(o.Url))
-			}
-		case *message.GroupImageElement:
-			var arg string
-			if o.Flash {
-				arg = ",type=flash"
-			} else if o.EffectID != 0 {
-				arg = ",type=show,id=" + strconv.FormatInt(int64(o.EffectID), 10)
-			}
-			arg += ",subType=" + strconv.FormatInt(int64(o.ImageBizType), 10)
-			if ur {
-				write("[CQ:image,file=%x.image%s]", o.Md5, arg)
-			} else {
-				write("[CQ:image,file=%x.image,url=%s%s]", o.Md5, cqcode.EscapeValue(o.Url), arg)
-			}
-		case *message.FriendImageElement:
-			var arg string
-			if o.Flash {
-				arg = ",type=flash"
-			}
-			if ur {
-				write("[CQ:image,file=%x.image%s]", o.Md5, arg)
-			} else {
-				write("[CQ:image,file=%x.image,url=%s%s]", cqcode.EscapeValue(o.Url), arg)
-			}
-		case *LocalImageElement:
-			var arg string
-			if o.Flash {
-				arg = ",type=flash"
-			}
-			data, err := os.ReadFile(o.File)
-			if err == nil {
-				m := md5.Sum(data)
-				if ur {
-					write("[CQ:image,file=%x.image%s]", m[:], arg)
-				} else {
-					write("[CQ:image,file=%x.image,url=%s%s]", m[:], cqcode.EscapeValue(o.URL), arg)
-				}
-			}
-		case *message.GuildImageElement:
-			write("[CQ:image,file=%x.image,url=%s]", o.Md5, cqcode.EscapeValue(o.Url))
-		case *message.DiceElement:
-			write("[CQ:dice,value=%v]", o.Value)
-		case *message.MarketFaceElement:
-			sb.WriteString(o.Name)
-		case *message.ServiceElement:
-			if isOk := strings.Contains(o.Content, "<?xml"); isOk {
-				write(`[CQ:xml,data=%s,resid=%d]`, cqcode.EscapeValue(o.Content), o.Id)
-			} else {
-				write(`[CQ:json,data=%s,resid=%d]`, cqcode.EscapeValue(o.Content), o.Id)
-			}
-		case *message.LightAppElement:
-			write(`[CQ:json,data=%s]`, cqcode.EscapeValue(o.Content))
-		case *message.AnimatedSticker:
-			write(`[CQ:face,id=%d,type=sticker]`, o.ID)
-		}
-	}
-	r = sb.String() // 内部已拷贝
-	global.PutBuffer(sb)
 	return
 }
 

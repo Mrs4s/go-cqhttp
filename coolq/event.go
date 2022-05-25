@@ -21,11 +21,11 @@ import (
 )
 
 // ToFormattedMessage 将给定[]message.IMessageElement转换为通过coolq.SetMessageFormat所定义的消息上报格式
-func ToFormattedMessage(e []message.IMessageElement, source message.Source, isRaw ...bool) (r interface{}) {
+func ToFormattedMessage(e []message.IMessageElement, source message.Source, raw bool) (r interface{}) {
 	if base.PostFormat == "string" {
-		r = ToStringMessage(e, source, isRaw...)
+		r = toStringMessage(e, source, raw)
 	} else if base.PostFormat == "array" {
-		r = ToArrayMessage(e, source)
+		r = toElements(e, source, raw)
 	}
 	return
 }
@@ -36,7 +36,7 @@ func (bot *CQBot) privateMessageEvent(c *client.QQClient, m *message.PrivateMess
 		SourceType: message.SourcePrivate,
 		PrimaryID:  m.Sender.Uin,
 	}
-	cqm := ToStringMessage(m.Elements, source, true)
+	cqm := toStringMessage(m.Elements, source, true)
 	id := bot.InsertPrivateMessage(m)
 	log.Infof("收到好友 %v(%v) 的消息: %v (%v)", m.Sender.DisplayName(), m.Sender.Uin, cqm, id)
 	fm := global.MSG{
@@ -93,7 +93,7 @@ func (bot *CQBot) groupMessageEvent(c *client.QQClient, m *message.GroupMessage)
 		SourceType: message.SourceGroup,
 		PrimaryID:  m.GroupCode,
 	}
-	cqm := ToStringMessage(m.Elements, source, true)
+	cqm := toStringMessage(m.Elements, source, true)
 	id := bot.InsertGroupMessage(m)
 	log.Infof("收到群 %v(%v) 内 %v(%v) 的消息: %v (%v)", m.GroupName, m.GroupCode, m.Sender.DisplayName(), m.Sender.Uin, cqm, id)
 	gm := bot.formatGroupMessage(m)
@@ -111,7 +111,7 @@ func (bot *CQBot) tempMessageEvent(c *client.QQClient, e *client.TempMessageEven
 		SourceType: message.SourcePrivate,
 		PrimaryID:  e.Session.Sender,
 	}
-	cqm := ToStringMessage(m.Elements, source, true)
+	cqm := toStringMessage(m.Elements, source, true)
 	bot.tempSessionCache.Store(m.Sender.Uin, e.Session)
 	id := m.Id
 	// todo(Mrs4s)
@@ -154,7 +154,7 @@ func (bot *CQBot) guildChannelMessageEvent(c *client.QQClient, m *message.GuildC
 		PrimaryID:   int64(m.GuildId),
 		SecondaryID: int64(m.ChannelId),
 	}
-	log.Infof("收到来自频道 %v(%v) 子频道 %v(%v) 内 %v(%v) 的消息: %v", guild.GuildName, guild.GuildId, channel.ChannelName, m.ChannelId, m.Sender.Nickname, m.Sender.TinyId, ToStringMessage(m.Elements, source, true))
+	log.Infof("收到来自频道 %v(%v) 子频道 %v(%v) 内 %v(%v) 的消息: %v", guild.GuildName, guild.GuildId, channel.ChannelName, m.ChannelId, m.Sender.Nickname, m.Sender.TinyId, toStringMessage(m.Elements, source, true))
 	id := bot.InsertGuildChannelMessage(m)
 	bot.dispatchEventMessage(global.MSG{
 		"post_type":    "message",

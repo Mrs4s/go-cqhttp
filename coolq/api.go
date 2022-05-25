@@ -1577,7 +1577,7 @@ func (bot *CQBot) CQGetMessage(messageID int32) global.MSG {
 // @route(get_guild_msg)
 func (bot *CQBot) CQGetGuildMessage(messageID string, noCache bool) global.MSG {
 	source, seq := decodeGuildMessageID(messageID)
-	if source == nil {
+	if source.SourceType == 0 {
 		log.Warnf("获取消息时出现错误: 无效消息ID")
 		return Failed(100, "INVALID_MESSAGE_ID", "无效消息ID")
 	}
@@ -1613,7 +1613,7 @@ func (bot *CQBot) CQGetGuildMessage(messageID string, noCache bool) global.MSG {
 				"tiny_id":  fU64(pull[0].Sender.TinyId),
 				"nickname": pull[0].Sender.Nickname,
 			}
-			m["message"] = ToFormattedMessage(pull[0].Elements, *source, false)
+			m["message"] = ToFormattedMessage(pull[0].Elements, source, false)
 			m["reactions"] = convertReactions(pull[0].Reactions)
 			bot.InsertGuildChannelMessage(pull[0])
 		} else {
@@ -1628,7 +1628,7 @@ func (bot *CQBot) CQGetGuildMessage(messageID string, noCache bool) global.MSG {
 				"tiny_id":  fU64(channelMsgByDB.Attribute.SenderTinyID),
 				"nickname": channelMsgByDB.Attribute.SenderName,
 			}
-			m["message"] = ToFormattedMessage(bot.ConvertContentMessage(channelMsgByDB.Content, message.SourceGuildChannel), *source)
+			m["message"] = ToFormattedMessage(bot.ConvertContentMessage(channelMsgByDB.Content, message.SourceGuildChannel), source, false)
 		}
 	case message.SourceGuildDirect:
 		// todo(mrs4s): 支持 direct 消息

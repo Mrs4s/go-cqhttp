@@ -630,13 +630,13 @@ func encodeGuildMessageID(primaryID, subID, seq uint64, source message.SourceTyp
 	}))
 }
 
-func decodeGuildMessageID(id string) (source *message.Source, seq uint64) {
+func decodeGuildMessageID(id string) (source message.Source, seq uint64) {
 	b, _ := base64.StdEncoding.DecodeString(id)
 	if len(b) < 25 {
 		return
 	}
 	r := binary.NewReader(b)
-	source = &message.Source{
+	source = message.Source{
 		SourceType:  message.SourceType(r.ReadByte()),
 		PrimaryID:   r.ReadInt64(),
 		SecondaryID: r.ReadInt64(),
