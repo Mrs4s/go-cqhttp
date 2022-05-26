@@ -195,6 +195,12 @@ func (c *Caller) call(action string, p Getter) global.MSG {
 	case "reload_event_filter":
 		p0 := p.Get("file").String()
 		return c.bot.CQReloadEventFilter(p0)
+	case "send_forward_msg":
+		p0 := p.Get("group_id").Int()
+		p1 := p.Get("user_id").Int()
+		p2 := p.Get("message")
+		p3 := p.Get("message_type").String()
+		return c.bot.CQSendForwardMessage(p0, p1, p2, p3)
 	case "send_group_forward_msg":
 		p0 := p.Get("group_id").Int()
 		p1 := p.Get("messages")
@@ -217,6 +223,10 @@ func (c *Caller) call(action string, p Getter) global.MSG {
 		p3 := p.Get("message_type").String()
 		p4 := p.Get("auto_escape").Bool()
 		return c.bot.CQSendMessage(p0, p1, p2, p3, p4)
+	case "send_private_forward_msg":
+		p0 := p.Get("user_id").Int()
+		p1 := p.Get("messages")
+		return c.bot.CQSendPrivateForwardMessage(p0, p1)
 	case "send_private_msg":
 		p0 := p.Get("user_id").Int()
 		p1 := p.Get("group_id").Int()
