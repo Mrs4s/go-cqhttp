@@ -39,7 +39,7 @@ func longPolling(bot *coolq.CQBot, maxSize int) api.Handler {
 	bot.OnEventPush(func(event *coolq.Event) {
 		mutex.Lock()
 		defer mutex.Unlock()
-		queue.PushBack(event.RawMsg)
+		queue.PushBack(event.Raw)
 		for maxSize != 0 && queue.Len() > maxSize {
 			queue.Remove(queue.Front())
 		}

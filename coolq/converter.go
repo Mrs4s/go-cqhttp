@@ -60,15 +60,15 @@ func convertGuildMemberInfo(m []*client.GuildMemberInfo) (r []global.MSG) {
 	return
 }
 
-func (bot *CQBot) formatGroupMessage(m *message.GroupMessage) global.MSG {
+func (bot *CQBot) formatGroupMessage(m *message.GroupMessage) *event {
 	source := message.Source{
 		SourceType: message.SourceGroup,
 		PrimaryID:  m.GroupCode,
 	}
 	cqm := toStringMessage(m.Elements, source, true)
-	postType := "message"
+	typ := "message/group/normal"
 	if m.Sender.Uin == bot.Client.Uin {
-		postType = "message_sent"
+		typ = "message_sent/group/normal"
 	}
 	gm := global.MSG{
 		"anonymous":    nil,
@@ -77,9 +77,7 @@ func (bot *CQBot) formatGroupMessage(m *message.GroupMessage) global.MSG {
 		"message":      ToFormattedMessage(m.Elements, source, false),
 		"message_type": "group",
 		"message_seq":  m.Id,
-		"post_type":    postType,
 		"raw_message":  cqm,
-		"self_id":      bot.Client.Uin,
 		"sender": global.MSG{
 			"age":     0,
 			"area":    "",
@@ -87,9 +85,7 @@ func (bot *CQBot) formatGroupMessage(m *message.GroupMessage) global.MSG {
 			"sex":     "unknown",
 			"user_id": m.Sender.Uin,
 		},
-		"sub_type": "normal",
-		"time":     m.Time,
-		"user_id":  m.Sender.Uin,
+		"user_id": m.Sender.Uin,
 	}
 	if m.Sender.IsAnonymous() {
 		gm["anonymous"] = global.MSG{
@@ -128,7 +124,9 @@ func (bot *CQBot) formatGroupMessage(m *message.GroupMessage) global.MSG {
 		ms["card"] = mem.CardName
 		ms["title"] = mem.SpecialTitle
 	}
-	return gm
+	ev := bot.event(typ, gm)
+	ev.Time = int64(m.Time)
+	return ev
 }
 
 func convertChannelInfo(c *client.ChannelInfo) global.MSG {

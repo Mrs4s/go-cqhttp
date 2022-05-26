@@ -1671,12 +1671,12 @@ func (bot *CQBot) CQGetGroupMessageHistory(groupID int64, seq int64) global.MSG 
 		log.Warnf("获取群历史消息失败: %v", err)
 		return Failed(100, "MESSAGES_API_ERROR", err.Error())
 	}
-	ms := make([]global.MSG, 0, len(msg))
+	ms := make([]*event, 0, len(msg))
 	for _, m := range msg {
 		bot.checkMedia(m.Elements, groupID)
 		id := bot.InsertGroupMessage(m)
 		t := bot.formatGroupMessage(m)
-		t["message_id"] = id
+		t.Others["message_id"] = id
 		ms = append(ms, t)
 	}
 	return OK(global.MSG{

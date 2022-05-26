@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"runtime/debug"
+	"strings"
 	"sync"
 	"time"
 
@@ -38,9 +39,8 @@ type CQBot struct {
 
 // Event 事件
 type Event struct {
-	RawMsg global.MSG
-
 	once   sync.Once
+	Raw    *event
 	buffer *bytes.Buffer
 }
 
@@ -48,7 +48,7 @@ func (e *Event) marshal() {
 	if e.buffer == nil {
 		e.buffer = global.NewBuffer()
 	}
-	_ = json.NewEncoder(e.buffer).Encode(e.RawMsg)
+	_ = json.NewEncoder(e.buffer).Encode(e.Raw)
 }
 
 // JSONBytes return byes of json by lazy marshalling.
@@ -110,13 +110,9 @@ func NewQQBot(cli *client.QQClient) *CQBot {
 		t := time.NewTicker(base.HeartbeatInterval)
 		for {
 			<-t.C
-			bot.dispatchEventMessage(global.MSG{
-				"time":            time.Now().Unix(),
-				"self_id":         bot.Client.Uin,
-				"post_type":       "meta_event",
-				"meta_event_type": "heartbeat",
-				"status":          bot.CQGetStatus()["data"],
-				"interval":        base.HeartbeatInterval.Milliseconds(),
+			bot.dispatchEvent("meta_event/heartbeat", global.MSG{
+				"status":   bot.CQGetStatus()["data"],
+				"interval": base.HeartbeatInterval.Milliseconds(),
 			})
 		}
 	}()
@@ -569,11 +565,31 @@ func (bot *CQBot) InsertGuildChannelMessage(m *message.GuildChannelMessage) stri
 	return msg.ID
 }
 
-func (bot *CQBot) dispatchEventMessage(m global.MSG) {
+func (bot *CQBot) event(typ string, others global.MSG) *event {
+	ev := new(event)
+	post, detail, ok := strings.Cut(typ, "/")
+	ev.PostType = post
+	ev.DetailType = detail
+	if ok {
+		detail, sub, _ := strings.Cut(detail, "/")
+		ev.DetailType = detail
+		ev.SubType = sub
+	}
+	ev.Time = time.Now().Unix()
+	ev.SelfID = bot.Client.Uin
+	ev.Others = others
+	return ev
+}
+
+func (bot *CQBot) dispatchEvent(typ string, others global.MSG) {
+	bot.dispatch(bot.event(typ, others))
+}
+
+func (bot *CQBot) dispatch(ev *event) {
 	bot.lock.RLock()
 	defer bot.lock.RUnlock()
 
-	event := &Event{RawMsg: m}
+	event := &Event{Raw: ev}
 	wg := sync.WaitGroup{}
 	wg.Add(len(bot.events))
 	for _, f := range bot.events {
@@ -581,7 +597,7 @@ func (bot *CQBot) dispatchEventMessage(m global.MSG) {
 			defer func() {
 				wg.Done()
 				if pan := recover(); pan != nil {
-					log.Warnf("处理事件 %v 时出现错误: %v \n%s", m, pan, debug.Stack())
+					log.Warnf("处理事件 %v 时出现错误: %v \n%s", event.JSONString(), pan, debug.Stack())
 				}
 			}()
 
