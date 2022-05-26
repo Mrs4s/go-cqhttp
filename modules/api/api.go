@@ -198,7 +198,7 @@ func (c *Caller) call(action string, p Getter) global.MSG {
 	case "send_forward_msg":
 		p0 := p.Get("group_id").Int()
 		p1 := p.Get("user_id").Int()
-		p2 := p.Get("message")
+		p2 := p.Get("messages")
 		p3 := p.Get("message_type").String()
 		return c.bot.CQSendForwardMessage(p0, p1, p2, p3)
 	case "send_group_forward_msg":

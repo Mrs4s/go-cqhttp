@@ -687,7 +687,7 @@ func (bot *CQBot) CQSendMessage(groupID, userID int64, m gjson.Result, messageTy
 // CQSendForwardMessage 发送合并转发消息
 //
 // @route(send_forward_msg)
-// @rename(m->message)
+// @rename(m->messages)
 func (bot *CQBot) CQSendForwardMessage(groupID, userID int64, m gjson.Result, messageType string) global.MSG {
 	switch {
 	case messageType == "group":
