@@ -625,8 +625,9 @@ func (bot *CQBot) groupDecrease(groupCode, userUin int64, operator *client.Group
 	if operator != nil {
 		if userUin == bot.Client.Uin {
 			subtype = "kick_me"
+		} else {
+			subtype = "kick"
 		}
-		subtype = "kick"
 	}
 	return bot.event("notice/group_decrease/"+subtype, global.MSG{
 		"group_id":    groupCode,
