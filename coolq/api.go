@@ -1572,8 +1572,9 @@ func (bot *CQBot) CQGetForwardMessage(resID string) global.MSG {
 					"user_id":  n.SenderId,
 					"nickname": n.SenderName,
 				},
-				"time":    n.Time,
-				"content": content,
+				"time":     n.Time,
+				"content":  content,
+				"group_id": n.GroupId,
 			}
 		}
 		return r
@@ -1971,6 +1972,15 @@ func (bot *CQBot) CQGetModelShow(model string) global.MSG {
 	return OK(global.MSG{
 		"variants": a,
 	})
+}
+
+// CQSendGroupSign 群打卡
+//
+// https://club.vip.qq.com/onlinestatus/set
+// @route(send_group_sign)
+func (bot *CQBot) CQSendGroupSign(groupID int64) global.MSG {
+	bot.Client.SendGroupSign(groupID)
+	return OK(nil)
 }
 
 // CQSetModelShow 设置在线机型
