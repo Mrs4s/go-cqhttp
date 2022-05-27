@@ -684,6 +684,24 @@ func (bot *CQBot) CQSendMessage(groupID, userID int64, m gjson.Result, messageTy
 	return global.MSG{}
 }
 
+// CQSendForwardMessage 发送合并转发消息
+//
+// @route(send_forward_msg)
+// @rename(m->messages)
+func (bot *CQBot) CQSendForwardMessage(groupID, userID int64, m gjson.Result, messageType string) global.MSG {
+	switch {
+	case messageType == "group":
+		return bot.CQSendGroupForwardMessage(groupID, m)
+	case messageType == "private":
+		fallthrough
+	case userID != 0:
+		return bot.CQSendPrivateForwardMessage(userID, m)
+	case groupID != 0:
+		return bot.CQSendGroupForwardMessage(groupID, m)
+	}
+	return global.MSG{}
+}
+
 // CQSendGroupMessage 发送群消息
 //
 // https://git.io/Jtz1c
@@ -785,9 +803,13 @@ func (bot *CQBot) CQSendGuildChannelMessage(guildID, channelID uint64, m gjson.R
 	return OK(global.MSG{"message_id": mid})
 }
 
-func (bot *CQBot) uploadForwardElement(m gjson.Result, groupID int64) *message.ForwardElement {
+func (bot *CQBot) uploadForwardElement(m gjson.Result, target int64, sourceType message.SourceType) *message.ForwardElement {
 	ts := time.Now().Add(-time.Minute * 5)
-	source := message.Source{SourceType: message.SourceGroup, PrimaryID: groupID}
+	groupID := target
+	source := message.Source{SourceType: sourceType, PrimaryID: target}
+	if sourceType == message.SourcePrivate {
+		groupID = 0
+	}
 	builder := bot.Client.NewForwardMessageBuilder(groupID)
 
 	var convertMessage func(m gjson.Result) *message.ForwardMessage
@@ -802,7 +824,7 @@ func (bot *CQBot) uploadForwardElement(m gjson.Result, groupID int64) *message.F
 					w.do(func() {
 						gm, err := bot.uploadLocalVideo(source, o)
 						if err != nil {
-							log.Warnf(uploadFailedTemplate, "群", groupID, "视频", err)
+							log.Warnf(uploadFailedTemplate, "合并转发", target, "视频", err)
 						} else {
 							*p = gm
 						}
@@ -811,7 +833,7 @@ func (bot *CQBot) uploadForwardElement(m gjson.Result, groupID int64) *message.F
 					w.do(func() {
 						gm, err := bot.uploadLocalImage(source, o)
 						if err != nil {
-							log.Warnf(uploadFailedTemplate, "群", groupID, "图片", err)
+							log.Warnf(uploadFailedTemplate, "合并转发", target, "图片", err)
 						} else {
 							*p = gm
 						}
@@ -913,7 +935,7 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) globa
 		return Failed(100)
 	}
 
-	fe := bot.uploadForwardElement(m, groupID)
+	fe := bot.uploadForwardElement(m, groupID, message.SourceGroup)
 	if fe == nil {
 		return Failed(100, "EMPTY_NODES", "未找到任何可发送的合并转发信息")
 	}
@@ -925,6 +947,27 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) globa
 	return OK(global.MSG{
 		"message_id": bot.InsertGroupMessage(ret),
 	})
+}
+
+// CQSendPrivateForwardMessage 扩展API-发送合并转发(好友)
+//
+// https://docs.go-cqhttp.org/api/#%E5%8F%91%E9%80%81%E5%90%88%E5%B9%B6%E8%BD%AC%E5%8F%91-%E7%BE%A4
+// @route(send_private_forward_msg)
+// @rename(m->messages)
+func (bot *CQBot) CQSendPrivateForwardMessage(userID int64, m gjson.Result) global.MSG {
+	if m.Type != gjson.JSON {
+		return Failed(100)
+	}
+	fe := bot.uploadForwardElement(m, userID, message.SourcePrivate)
+	if fe == nil {
+		return Failed(100, "EMPTY_NODES", "未找到任何可发送的合并转发信息")
+	}
+	mid := bot.SendPrivateMessage(userID, 0, &message.SendingMessage{Elements: []message.IMessageElement{fe}})
+	if mid == -1 {
+		log.Warnf("合并转发(好友)消息发送失败: 账号可能被风控.")
+		return Failed(100, "SEND_MSG_API_ERROR", "请参考 go-cqhttp 端输出")
+	}
+	return OK(global.MSG{"message_id": mid})
 }
 
 // CQSendPrivateMessage 发送私聊消息
