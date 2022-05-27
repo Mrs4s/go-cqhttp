@@ -39,7 +39,7 @@ func longPolling(bot *coolq.CQBot, maxSize int) api.Handler {
 	bot.OnEventPush(func(event *coolq.Event) {
 		mutex.Lock()
 		defer mutex.Unlock()
-		queue.PushBack(event.RawMsg)
+		queue.PushBack(event.Raw)
 		for maxSize != 0 && queue.Len() > maxSize {
 			queue.Remove(queue.Front())
 		}
@@ -50,33 +50,37 @@ func longPolling(bot *coolq.CQBot, maxSize int) api.Handler {
 			return nil
 		}
 		var (
-			once    sync.Once
-			ch      = make(chan []interface{}, 1)
+			ch      = make(chan []interface{})
 			timeout = time.Duration(p.Get("timeout").Int()) * time.Second
 		)
-		defer close(ch)
 		go func() {
 			mutex.Lock()
 			defer mutex.Unlock()
-			if queue.Len() == 0 {
+			for queue.Len() == 0 {
 				cond.Wait()
 			}
-			once.Do(func() {
-				limit := int(p.Get("limit").Int())
-				if limit <= 0 || queue.Len() < limit {
-					limit = queue.Len()
+			limit := int(p.Get("limit").Int())
+			if limit <= 0 || queue.Len() < limit {
+				limit = queue.Len()
+			}
+			ret := make([]interface{}, limit)
+			elem := queue.Front()
+			for i := 0; i < limit; i++ {
+				ret[i] = elem.Value
+				elem = elem.Next()
+			}
+			select {
+			case ch <- ret:
+				for i := 0; i < limit; i++ { // remove sent msg
+					queue.Remove(queue.Front())
 				}
-				ret := make([]interface{}, limit)
-				for i := 0; i < limit; i++ {
-					ret[i] = queue.Remove(queue.Front())
-				}
-				ch <- ret
-			})
+			default:
+				// don't block if parent already return due to timeout
+			}
 		}()
 		if timeout != 0 {
 			select {
 			case <-time.After(timeout):
-				once.Do(func() {})
 				return coolq.OK([]interface{}{})
 			case ret := <-ch:
 				return coolq.OK(ret)

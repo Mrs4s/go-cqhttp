@@ -3,15 +3,11 @@ package cqcode
 
 import "strings"
 
-/*EscapeText 将字符串raw中部分字符转义
-
-& -> &amp;
-
-[ -> &#91;
-
-] -> &#93;
-
-*/
+// EscapeText 将字符串raw中部分字符转义
+//
+//   - & -> &amp;
+//   - [ -> &#91;
+//   - ] -> &#93;
 func EscapeText(s string) string {
 	count := strings.Count(s, "&")
 	count += strings.Count(s, "[")
@@ -47,31 +43,22 @@ func EscapeText(s string) string {
 	return b.String()
 }
 
-/*EscapeValue 将字符串value中部分字符转义
-
-, -> &#44;
-
-& -> &amp;
-
-[ -> &#91;
-
-] -> &#93;
-
-*/
+// EscapeValue 将字符串value中部分字符转义
+//
+//   - , -> &#44;
+//   - & -> &amp;
+//   - [ -> &#91;
+//   - ] -> &#93;
 func EscapeValue(value string) string {
 	ret := EscapeText(value)
 	return strings.ReplaceAll(ret, ",", "&#44;")
 }
 
-/*UnescapeText 将字符串content中部分字符反转义
-
-&amp; -> &
-
-&#91; -> [
-
-&#93; -> ]
-
-*/
+// UnescapeText 将字符串content中部分字符反转义
+//
+//   - &amp; -> &
+//   - &#91; -> [
+//   - &#93; -> ]
 func UnescapeText(content string) string {
 	ret := content
 	ret = strings.ReplaceAll(ret, "&#91;", "[")
@@ -80,17 +67,12 @@ func UnescapeText(content string) string {
 	return ret
 }
 
-/*UnescapeValue 将字符串content中部分字符反转义
-
-&#44; -> ,
-
-&amp; -> &
-
-&#91; -> [
-
-&#93; -> ]
-
-*/
+// UnescapeValue 将字符串content中部分字符反转义
+//
+//   - &#44; -> ,
+//   - &amp; -> &
+//   - &#91; -> [
+//   - &#93; -> ]
 func UnescapeValue(content string) string {
 	ret := strings.ReplaceAll(content, "&#44;", ",")
 	return UnescapeText(ret)
