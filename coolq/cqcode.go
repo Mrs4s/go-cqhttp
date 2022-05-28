@@ -248,6 +248,13 @@ func toElements(e []message.IMessageElement, source message.Source, raw bool) (r
 					{"value", strconv.FormatInt(int64(o.Value), 10)},
 				},
 			}
+		case *message.FingerGuessingElement:
+			m = cqcode.Element{
+				Type: "rps",
+				Data: pairs{
+					{"value", strconv.FormatInt(int64(o.Value), 10)},
+				},
+			}
 		case *message.MarketFaceElement:
 			m = cqcode.Element{
 				Type: "text",
@@ -371,6 +378,8 @@ func ToMessageContent(e []message.IMessageElement) (r []global.MSG) {
 			}
 		case *message.DiceElement:
 			m = global.MSG{"type": "dice", "data": global.MSG{"value": o.Value}}
+		case *message.FingerGuessingElement:
+			m = global.MSG{"type": "rps", "data": global.MSG{"value": o.Value}}
 		case *message.MarketFaceElement:
 			m = global.MSG{"type": "text", "data": global.MSG{"text": o.Name}}
 		case *message.ServiceElement:
@@ -964,6 +973,13 @@ func (bot *CQBot) ToElement(t string, d map[string]string, sourceType message.So
 			return nil, errors.New("invalid dice value " + value)
 		}
 		return message.NewDice(int32(i)), nil
+	case "rps":
+		value := d["value"]
+		i, _ := strconv.ParseInt(value, 10, 64)
+		if i < 0 || i > 2 {
+			return nil, errors.New("invalid finger-guessing value " + value)
+		}
+		return message.NewFingerGuessing(int32(i)), nil
 	case "xml":
 		resID := d["resid"]
 		template := cqcode.EscapeValue(d["data"])
