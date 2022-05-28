@@ -2,6 +2,7 @@
 package base
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -11,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Mrs4s/go-cqhttp/global"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 
@@ -129,6 +129,12 @@ Options:
 	os.Exit(0)
 }
 
+// PathExists 判断给定path是否存在
+func PathExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil || errors.Is(err, os.ErrExist)
+}
+
 // ResetWorkingDir 重设工作路径
 func ResetWorkingDir() {
 	wd := LittleWD
@@ -141,7 +147,7 @@ func ResetWorkingDir() {
 		}
 	}
 	p, _ := filepath.Abs(os.Args[0])
-	if !global.PathExists(p) {
+	if !PathExists(p) {
 		log.Fatalf("重置工作目录时出现错误: 无法找到路径 %v", p)
 	}
 	proc := exec.Command(p, args...)
