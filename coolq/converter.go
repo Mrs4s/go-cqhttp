@@ -1,6 +1,7 @@
 package coolq
 
 import (
+	"bytes"
 	"strconv"
 
 	"github.com/Mrs4s/MiraiGo/binary"
@@ -215,7 +216,7 @@ func toStringMessage(m []message.IMessageElement, source message.Source) string 
 	elems := toElements(m, source)
 	return utils.B2S(binary.NewWriterF(func(sb *binary.Writer) {
 		for _, elem := range elems {
-			sb.WriteString(elem.CQCode())
+			(*bytes.Buffer)(sb).WriteString(elem.CQCode())
 		}
 	}))
 }

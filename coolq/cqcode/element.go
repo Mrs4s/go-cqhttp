@@ -1,6 +1,8 @@
 package cqcode
 
 import (
+	"bytes"
+
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/utils"
 )
@@ -23,7 +25,8 @@ func (e *Element) CQCode() string {
 	if e.Type == "text" {
 		return EscapeText(e.Data[0].V) // must be {"text": value}
 	}
-	return utils.B2S(binary.NewWriterF(func(sb *binary.Writer) {
+	return utils.B2S(binary.NewWriterF(func(w *binary.Writer) {
+		sb := (*bytes.Buffer)(w)
 		sb.WriteString("[CQ:")
 		sb.WriteString(e.Type)
 		for _, data := range e.Data {
@@ -38,7 +41,8 @@ func (e *Element) CQCode() string {
 
 // MarshalJSON see encoding/json.Marshaler
 func (e *Element) MarshalJSON() ([]byte, error) {
-	return binary.NewWriterF(func(buf *binary.Writer) {
+	return binary.NewWriterF(func(w *binary.Writer) {
+		buf := (*bytes.Buffer)(w)
 		// fmt.Fprintf(buf, `{"type":"%s","data":{`, e.Type)
 		buf.WriteString(`{"type":"`)
 		buf.WriteString(e.Type)
