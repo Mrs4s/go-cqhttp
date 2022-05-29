@@ -21,11 +21,11 @@ import (
 )
 
 // ToFormattedMessage 将给定[]message.IMessageElement转换为通过coolq.SetMessageFormat所定义的消息上报格式
-func ToFormattedMessage(e []message.IMessageElement, source message.Source, raw bool) (r interface{}) {
+func ToFormattedMessage(e []message.IMessageElement, source message.Source) (r interface{}) {
 	if base.PostFormat == "string" {
-		r = toStringMessage(e, source, raw)
+		r = toStringMessage(e, source)
 	} else if base.PostFormat == "array" {
-		r = toElements(e, source, raw)
+		r = toElements(e, source)
 	}
 	return
 }
@@ -74,7 +74,7 @@ func (bot *CQBot) privateMessageEvent(_ *client.QQClient, m *message.PrivateMess
 		SourceType: message.SourcePrivate,
 		PrimaryID:  m.Sender.Uin,
 	}
-	cqm := toStringMessage(m.Elements, source, true)
+	cqm := toStringMessage(m.Elements, source)
 	id := bot.InsertPrivateMessage(m)
 	log.Infof("收到好友 %v(%v) 的消息: %v (%v)", m.Sender.DisplayName(), m.Sender.Uin, cqm, id)
 	typ := "message/private/friend"
@@ -85,7 +85,7 @@ func (bot *CQBot) privateMessageEvent(_ *client.QQClient, m *message.PrivateMess
 		"message_id":  id,
 		"user_id":     m.Sender.Uin,
 		"target_id":   m.Target,
-		"message":     ToFormattedMessage(m.Elements, source, false),
+		"message":     ToFormattedMessage(m.Elements, source),
 		"raw_message": cqm,
 		"font":        0,
 		"sender": global.MSG{
@@ -121,7 +121,7 @@ func (bot *CQBot) groupMessageEvent(c *client.QQClient, m *message.GroupMessage)
 		SourceType: message.SourceGroup,
 		PrimaryID:  m.GroupCode,
 	}
-	cqm := toStringMessage(m.Elements, source, true)
+	cqm := toStringMessage(m.Elements, source)
 	id := bot.InsertGroupMessage(m)
 	log.Infof("收到群 %v(%v) 内 %v(%v) 的消息: %v (%v)", m.GroupName, m.GroupCode, m.Sender.DisplayName(), m.Sender.Uin, cqm, id)
 	gm := bot.formatGroupMessage(m)
@@ -139,7 +139,7 @@ func (bot *CQBot) tempMessageEvent(c *client.QQClient, e *client.TempMessageEven
 		SourceType: message.SourcePrivate,
 		PrimaryID:  e.Session.Sender,
 	}
-	cqm := toStringMessage(m.Elements, source, true)
+	cqm := toStringMessage(m.Elements, source)
 	bot.tempSessionCache.Store(m.Sender.Uin, e.Session)
 	id := m.Id
 	// todo(Mrs4s)
@@ -151,7 +151,7 @@ func (bot *CQBot) tempMessageEvent(c *client.QQClient, e *client.TempMessageEven
 		"temp_source": e.Session.Source,
 		"message_id":  id,
 		"user_id":     m.Sender.Uin,
-		"message":     ToFormattedMessage(m.Elements, source, false),
+		"message":     ToFormattedMessage(m.Elements, source),
 		"raw_message": cqm,
 		"font":        0,
 		"sender": global.MSG{
@@ -177,14 +177,14 @@ func (bot *CQBot) guildChannelMessageEvent(c *client.QQClient, m *message.GuildC
 		PrimaryID:   int64(m.GuildId),
 		SecondaryID: int64(m.ChannelId),
 	}
-	log.Infof("收到来自频道 %v(%v) 子频道 %v(%v) 内 %v(%v) 的消息: %v", guild.GuildName, guild.GuildId, channel.ChannelName, m.ChannelId, m.Sender.Nickname, m.Sender.TinyId, toStringMessage(m.Elements, source, true))
+	log.Infof("收到来自频道 %v(%v) 子频道 %v(%v) 内 %v(%v) 的消息: %v", guild.GuildName, guild.GuildId, channel.ChannelName, m.ChannelId, m.Sender.Nickname, m.Sender.TinyId, toStringMessage(m.Elements, source))
 	id := bot.InsertGuildChannelMessage(m)
 	ev := bot.event("message/guild/channel", global.MSG{
 		"guild_id":     fU64(m.GuildId),
 		"channel_id":   fU64(m.ChannelId),
 		"message_id":   id,
 		"user_id":      fU64(m.Sender.TinyId),
-		"message":      ToFormattedMessage(m.Elements, source, false), // todo: 增加对频道消息 Reply 的支持
+		"message":      ToFormattedMessage(m.Elements, source), // todo: 增加对频道消息 Reply 的支持
 		"self_tiny_id": fU64(bot.Client.GuildService.TinyId),
 		"sender": global.MSG{
 			"user_id":  m.Sender.TinyId,

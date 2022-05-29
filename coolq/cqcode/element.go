@@ -1,10 +1,8 @@
 package cqcode
 
 import (
-	"fmt"
-	"strings"
-
-	"github.com/Mrs4s/go-cqhttp/global"
+	"github.com/Mrs4s/MiraiGo/binary"
+	"github.com/Mrs4s/MiraiGo/utils"
 )
 
 // Element single message
@@ -20,36 +18,42 @@ type Pair struct {
 }
 
 // CQCode convert to cqcode
+//    only called by toStringMessage
 func (e *Element) CQCode() string {
 	if e.Type == "text" {
 		return EscapeText(e.Data[0].V) // must be {"text": value}
 	}
-	var sb strings.Builder
-	sb.WriteString("[CQ:")
-	sb.WriteString(e.Type)
-	for _, data := range e.Data {
-		sb.WriteByte(',')
-		sb.WriteString(data.K)
-		sb.WriteByte('=')
-		sb.WriteString(EscapeValue(data.V))
-	}
-	sb.WriteByte(']')
-	return sb.String()
+	return utils.B2S(binary.NewWriterF(func(sb *binary.Writer) {
+		sb.WriteString("[CQ:")
+		sb.WriteString(e.Type)
+		for _, data := range e.Data {
+			sb.WriteByte(',')
+			sb.WriteString(data.K)
+			sb.WriteByte('=')
+			sb.WriteString(EscapeValue(data.V))
+		}
+		sb.WriteByte(']')
+	}))
 }
 
 // MarshalJSON see encoding/json.Marshaler
 func (e *Element) MarshalJSON() ([]byte, error) {
-	buf := global.NewBuffer()
-	defer global.PutBuffer(buf)
-
-	fmt.Fprintf(buf, `{"type":"%s","data":{`, e.Type)
-	for i, data := range e.Data {
-		if i != 0 {
-			buf.WriteByte(',')
+	return binary.NewWriterF(func(buf *binary.Writer) {
+		// fmt.Fprintf(buf, `{"type":"%s","data":{`, e.Type)
+		buf.WriteString(`{"type":"`)
+		buf.WriteString(e.Type)
+		buf.WriteString(`","data":{`)
+		for i, data := range e.Data {
+			if i != 0 {
+				buf.WriteByte(',')
+			}
+			// fmt.Fprintf(buf, `"%s":%q`, data.K, data.V)
+			buf.WriteByte('"')
+			buf.WriteString(data.K)
+			buf.WriteString(`":'`)
+			buf.WriteString(data.V)
+			buf.WriteString(`'`)
 		}
-		fmt.Fprintf(buf, `"%s":%q`, data.K, data.V)
-	}
-	buf.WriteString(`}}`)
-
-	return append([]byte(nil), buf.Bytes()...), nil
+		buf.WriteString(`}}`)
+	}), nil
 }

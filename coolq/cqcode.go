@@ -95,7 +95,7 @@ func replyID(r *message.ReplyElement, source message.Source) int32 {
 // toElements 将消息元素数组转为MSG数组以用于消息上报
 //
 // nolint:govet
-func toElements(e []message.IMessageElement, source message.Source, raw bool) (r []cqcode.Element) {
+func toElements(e []message.IMessageElement, source message.Source) (r []cqcode.Element) {
 	type pair = cqcode.Pair // simplify code
 	type pairs = []pair
 
@@ -119,7 +119,7 @@ func toElements(e []message.IMessageElement, source message.Source, raw bool) (r
 				pair{K: "seq", V: strconv.FormatInt(int64(replyElem.ReplySeq), 10)},
 				pair{K: "qq", V: strconv.FormatInt(replyElem.Sender, 10)},
 				pair{K: "time", V: strconv.FormatInt(int64(replyElem.Time), 10)},
-				pair{K: "text", V: toStringMessage(replyElem.Elements, source, true)},
+				pair{K: "text", V: toStringMessage(replyElem.Elements, source)},
 			)
 		}
 		r = append(r, elem)
@@ -201,9 +201,7 @@ func toElements(e []message.IMessageElement, source message.Source, raw bool) (r
 			data := pairs{
 				{"file", hex.EncodeToString(o.Md5) + ".image"},
 				{"subType", strconv.FormatInt(int64(o.ImageBizType), 10)},
-			}
-			if raw {
-				data = append(data, pair{K: "url", V: o.Url})
+				pair{K: "url", V: o.Url},
 			}
 			switch {
 			case o.Flash:
@@ -219,9 +217,7 @@ func toElements(e []message.IMessageElement, source message.Source, raw bool) (r
 		case *message.GuildImageElement:
 			data := pairs{
 				{"file", hex.EncodeToString(o.Md5) + ".image"},
-			}
-			if raw {
-				data = append(data, pair{K: "url", V: o.Url})
+				pair{K: "url", V: o.Url},
 			}
 			m = cqcode.Element{
 				Type: "image",
@@ -230,9 +226,7 @@ func toElements(e []message.IMessageElement, source message.Source, raw bool) (r
 		case *message.FriendImageElement:
 			data := pairs{
 				{"file", hex.EncodeToString(o.Md5) + ".image"},
-			}
-			if raw {
-				data = append(data, pair{K: "url", V: o.Url})
+				pair{K: "url", V: o.Url},
 			}
 			if o.Flash {
 				data = append(data, pair{K: "type", V: "flash"})
