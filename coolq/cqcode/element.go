@@ -33,18 +33,18 @@ func (e *Element) CQCode() string {
 //    only called by toStringMessage
 func (e *Element) WriteCQCodeTo(w io.Writer) {
 	if e.Type == "text" {
-		w.Write(utils.S2B(EscapeText(e.Data[0].V))) // must be {"text": value}
+		_, _ = w.Write(utils.S2B(EscapeText(e.Data[0].V))) // must be {"text": value}
 		return
 	}
-	w.Write([]byte("[CQ:"))
-	w.Write(utils.S2B(e.Type))
+	_, _ = w.Write([]byte("[CQ:"))
+	_, _ = w.Write(utils.S2B(e.Type))
 	for _, data := range e.Data {
-		w.Write([]byte{','})
-		w.Write(utils.S2B(data.K))
-		w.Write([]byte{'='})
-		w.Write(utils.S2B(EscapeValue(data.V)))
+		_, _ = w.Write([]byte{','})
+		_, _ = w.Write(utils.S2B(data.K))
+		_, _ = w.Write([]byte{'='})
+		_, _ = w.Write(utils.S2B(EscapeValue(data.V)))
 	}
-	w.Write([]byte{']'})
+	_, _ = w.Write([]byte{']'})
 	return
 }
 
