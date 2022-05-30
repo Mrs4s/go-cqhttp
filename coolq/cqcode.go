@@ -95,7 +95,7 @@ func replyID(r *message.ReplyElement, source message.Source) int32 {
 // toElements 将消息元素数组转为MSG数组以用于消息上报
 //
 // nolint:govet
-func toElements(e []message.IMessageElement, source message.Source, raw bool) (r []cqcode.Element) {
+func toElements(e []message.IMessageElement, source message.Source) (r []cqcode.Element) {
 	type pair = cqcode.Pair // simplify code
 	type pairs = []pair
 
@@ -111,7 +111,7 @@ func toElements(e []message.IMessageElement, source message.Source, raw bool) (r
 		elem := cqcode.Element{
 			Type: "reply",
 			Data: pairs{
-				{"id", strconv.FormatInt(int64(id), 10)},
+				{K: "id", V: strconv.FormatInt(int64(id), 10)},
 			},
 		}
 		if base.ExtraReplyData {
@@ -119,7 +119,7 @@ func toElements(e []message.IMessageElement, source message.Source, raw bool) (r
 				pair{K: "seq", V: strconv.FormatInt(int64(replyElem.ReplySeq), 10)},
 				pair{K: "qq", V: strconv.FormatInt(replyElem.Sender, 10)},
 				pair{K: "time", V: strconv.FormatInt(int64(replyElem.Time), 10)},
-				pair{K: "text", V: toStringMessage(replyElem.Elements, source, true)},
+				pair{K: "text", V: toStringMessage(replyElem.Elements, source)},
 			)
 		}
 		r = append(r, elem)
@@ -139,14 +139,14 @@ func toElements(e []message.IMessageElement, source message.Source, raw bool) (r
 			m = cqcode.Element{
 				Type: "text",
 				Data: pairs{
-					{"text", o.Content},
+					{K: "text", V: o.Content},
 				},
 			}
 		case *message.LightAppElement:
 			m = cqcode.Element{
 				Type: "json",
 				Data: pairs{
-					{"data", o.Content},
+					{K: "data", V: o.Content},
 				},
 			}
 		case *message.AtElement:
@@ -157,53 +157,51 @@ func toElements(e []message.IMessageElement, source message.Source, raw bool) (r
 			m = cqcode.Element{
 				Type: "at",
 				Data: pairs{
-					{"qq", target},
+					{K: "qq", V: target},
 				},
 			}
 		case *message.RedBagElement:
 			m = cqcode.Element{
 				Type: "redbag",
 				Data: pairs{
-					{"title", o.Title},
+					{K: "title", V: o.Title},
 				},
 			}
 		case *message.ForwardElement:
 			m = cqcode.Element{
 				Type: "forward",
 				Data: pairs{
-					{"id", o.ResId},
+					{K: "id", V: o.ResId},
 				},
 			}
 		case *message.FaceElement:
 			m = cqcode.Element{
 				Type: "face",
 				Data: pairs{
-					{"id", strconv.FormatInt(int64(o.Index), 10)},
+					{K: "id", V: strconv.FormatInt(int64(o.Index), 10)},
 				},
 			}
 		case *message.VoiceElement:
 			m = cqcode.Element{
 				Type: "record",
 				Data: pairs{
-					{"file", o.Name},
-					{"url", o.Url},
+					{K: "file", V: o.Name},
+					{K: "url", V: o.Url},
 				},
 			}
 		case *message.ShortVideoElement:
 			m = cqcode.Element{
 				Type: "video",
 				Data: pairs{
-					{"file", o.Name},
-					{"url", o.Url},
+					{K: "file", V: o.Name},
+					{K: "url", V: o.Url},
 				},
 			}
 		case *message.GroupImageElement:
 			data := pairs{
-				{"file", hex.EncodeToString(o.Md5) + ".image"},
-				{"subType", strconv.FormatInt(int64(o.ImageBizType), 10)},
-			}
-			if raw {
-				data = append(data, pair{K: "url", V: o.Url})
+				{K: "file", V: hex.EncodeToString(o.Md5) + ".image"},
+				{K: "subType", V: strconv.FormatInt(int64(o.ImageBizType), 10)},
+				{K: "url", V: o.Url},
 			}
 			switch {
 			case o.Flash:
@@ -218,10 +216,8 @@ func toElements(e []message.IMessageElement, source message.Source, raw bool) (r
 			}
 		case *message.GuildImageElement:
 			data := pairs{
-				{"file", hex.EncodeToString(o.Md5) + ".image"},
-			}
-			if raw {
-				data = append(data, pair{K: "url", V: o.Url})
+				{K: "file", V: hex.EncodeToString(o.Md5) + ".image"},
+				{K: "url", V: o.Url},
 			}
 			m = cqcode.Element{
 				Type: "image",
@@ -229,10 +225,8 @@ func toElements(e []message.IMessageElement, source message.Source, raw bool) (r
 			}
 		case *message.FriendImageElement:
 			data := pairs{
-				{"file", hex.EncodeToString(o.Md5) + ".image"},
-			}
-			if raw {
-				data = append(data, pair{K: "url", V: o.Url})
+				{K: "file", V: hex.EncodeToString(o.Md5) + ".image"},
+				{K: "url", V: o.Url},
 			}
 			if o.Flash {
 				data = append(data, pair{K: "type", V: "flash"})
@@ -245,29 +239,29 @@ func toElements(e []message.IMessageElement, source message.Source, raw bool) (r
 			m = cqcode.Element{
 				Type: "dice",
 				Data: pairs{
-					{"value", strconv.FormatInt(int64(o.Value), 10)},
+					{K: "value", V: strconv.FormatInt(int64(o.Value), 10)},
 				},
 			}
 		case *message.FingerGuessingElement:
 			m = cqcode.Element{
 				Type: "rps",
 				Data: pairs{
-					{"value", strconv.FormatInt(int64(o.Value), 10)},
+					{K: "value", V: strconv.FormatInt(int64(o.Value), 10)},
 				},
 			}
 		case *message.MarketFaceElement:
 			m = cqcode.Element{
 				Type: "text",
 				Data: pairs{
-					{"text", o.Name},
+					{K: "text", V: o.Name},
 				},
 			}
 		case *message.ServiceElement:
 			m = cqcode.Element{
 				Type: "xml",
 				Data: pairs{
-					{"data", o.Content},
-					{"resid", o.ResId},
+					{K: "data", V: o.Content},
+					{K: "resid", V: o.ResId},
 				},
 			}
 			if !strings.Contains(o.Content, "<?xml") {
@@ -277,8 +271,8 @@ func toElements(e []message.IMessageElement, source message.Source, raw bool) (r
 			m = cqcode.Element{
 				Type: "face",
 				Data: pairs{
-					{"id", strconv.FormatInt(int64(o.ID), 10)},
-					{"type", "sticker"},
+					{K: "id", V: strconv.FormatInt(int64(o.ID), 10)},
+					{K: "type", V: "sticker"},
 				},
 			}
 		default:

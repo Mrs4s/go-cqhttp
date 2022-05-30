@@ -1561,7 +1561,7 @@ func (bot *CQBot) CQGetForwardMessage(resID string) global.MSG {
 		r := make([]global.MSG, len(nodes))
 		for i, n := range nodes {
 			bot.checkMedia(n.Message, 0)
-			content := ToFormattedMessage(n.Message, message.Source{SourceType: message.SourceGroup}, false)
+			content := ToFormattedMessage(n.Message, message.Source{SourceType: message.SourceGroup})
 			if len(n.Message) == 1 {
 				if forward, ok := n.Message[0].(*message.ForwardMessage); ok {
 					content = transformNodes(forward.Nodes)
@@ -1610,9 +1610,9 @@ func (bot *CQBot) CQGetMessage(messageID int32) global.MSG {
 	switch o := msg.(type) {
 	case *db.StoredGroupMessage:
 		m["group_id"] = o.GroupCode
-		m["message"] = ToFormattedMessage(bot.ConvertContentMessage(o.Content, message.SourceGroup), message.Source{SourceType: message.SourceGroup, PrimaryID: o.GroupCode}, false)
+		m["message"] = ToFormattedMessage(bot.ConvertContentMessage(o.Content, message.SourceGroup), message.Source{SourceType: message.SourceGroup, PrimaryID: o.GroupCode})
 	case *db.StoredPrivateMessage:
-		m["message"] = ToFormattedMessage(bot.ConvertContentMessage(o.Content, message.SourcePrivate), message.Source{SourceType: message.SourcePrivate}, false)
+		m["message"] = ToFormattedMessage(bot.ConvertContentMessage(o.Content, message.SourcePrivate), message.Source{SourceType: message.SourcePrivate})
 	}
 	return OK(m)
 }
@@ -1657,7 +1657,7 @@ func (bot *CQBot) CQGetGuildMessage(messageID string, noCache bool) global.MSG {
 				"tiny_id":  fU64(pull[0].Sender.TinyId),
 				"nickname": pull[0].Sender.Nickname,
 			}
-			m["message"] = ToFormattedMessage(pull[0].Elements, source, false)
+			m["message"] = ToFormattedMessage(pull[0].Elements, source)
 			m["reactions"] = convertReactions(pull[0].Reactions)
 			bot.InsertGuildChannelMessage(pull[0])
 		} else {
@@ -1672,7 +1672,7 @@ func (bot *CQBot) CQGetGuildMessage(messageID string, noCache bool) global.MSG {
 				"tiny_id":  fU64(channelMsgByDB.Attribute.SenderTinyID),
 				"nickname": channelMsgByDB.Attribute.SenderName,
 			}
-			m["message"] = ToFormattedMessage(bot.ConvertContentMessage(channelMsgByDB.Content, message.SourceGuildChannel), source, false)
+			m["message"] = ToFormattedMessage(bot.ConvertContentMessage(channelMsgByDB.Content, message.SourceGuildChannel), source)
 		}
 	case message.SourceGuildDirect:
 		// todo(mrs4s): 支持 direct 消息

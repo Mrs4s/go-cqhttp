@@ -65,7 +65,7 @@ func (bot *CQBot) formatGroupMessage(m *message.GroupMessage) *event {
 		SourceType: message.SourceGroup,
 		PrimaryID:  m.GroupCode,
 	}
-	cqm := toStringMessage(m.Elements, source, true)
+	cqm := toStringMessage(m.Elements, source)
 	typ := "message/group/normal"
 	if m.Sender.Uin == bot.Client.Uin {
 		typ = "message_sent/group/normal"
@@ -74,7 +74,7 @@ func (bot *CQBot) formatGroupMessage(m *message.GroupMessage) *event {
 		"anonymous":    nil,
 		"font":         0,
 		"group_id":     m.GroupCode,
-		"message":      ToFormattedMessage(m.Elements, source, false),
+		"message":      ToFormattedMessage(m.Elements, source),
 		"message_type": "group",
 		"message_seq":  m.Id,
 		"raw_message":  cqm,
@@ -210,11 +210,11 @@ func convertReactions(reactions []*message.GuildMessageEmojiReaction) (r []globa
 	return
 }
 
-func toStringMessage(m []message.IMessageElement, source message.Source, raw bool) string {
-	elems := toElements(m, source, raw)
+func toStringMessage(m []message.IMessageElement, source message.Source) string {
+	elems := toElements(m, source)
 	var sb strings.Builder
 	for _, elem := range elems {
-		sb.WriteString(elem.CQCode())
+		elem.WriteCQCodeTo(&sb)
 	}
 	return sb.String()
 }
