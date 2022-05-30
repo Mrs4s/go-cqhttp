@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/Mrs4s/MiraiGo/binary"
-	"github.com/Mrs4s/MiraiGo/utils"
 )
 
 // Element single message
@@ -31,18 +30,18 @@ func (e *Element) CQCode() string {
 // WriteCQCodeTo write element's cqcode into sb
 func (e *Element) WriteCQCodeTo(sb *strings.Builder) {
 	if e.Type == "text" {
-		sb.Write(utils.S2B(EscapeText(e.Data[0].V))) // must be {"text": value}
+		sb.WriteString(EscapeText(e.Data[0].V)) // must be {"text": value}
 		return
 	}
-	sb.Write([]byte("[CQ:"))
-	sb.Write(utils.S2B(e.Type))
+	sb.WriteString("[CQ:")
+	sb.WriteString(e.Type)
 	for _, data := range e.Data {
-		sb.Write([]byte{','})
-		sb.Write(utils.S2B(data.K))
-		sb.Write([]byte{'='})
-		sb.Write(utils.S2B(EscapeValue(data.V)))
+		sb.WriteByte(',')
+		sb.WriteString(data.K)
+		sb.WriteByte('=')
+		sb.WriteString(EscapeValue(data.V))
 	}
-	sb.Write([]byte{']'})
+	sb.WriteByte(']')
 }
 
 // MarshalJSON see encoding/json.Marshaler
