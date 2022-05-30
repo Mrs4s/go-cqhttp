@@ -214,7 +214,7 @@ func toStringMessage(m []message.IMessageElement, source message.Source) string 
 	elems := toElements(m, source)
 	var sb, tmp strings.Builder
 	for _, elem := range elems {
-		sb.WriteString(elem.CQCode(tmp))
+		sb.WriteString(elem.CQCode(&tmp))
 		tmp.Reset()
 	}
 	return sb.String()

@@ -22,7 +22,7 @@ type Pair struct {
 
 // CQCode convert to cqcode
 //    only called by toStringMessage
-func (e *Element) CQCode(sb strings.Builder) string {
+func (e *Element) CQCode(sb *strings.Builder) string {
 	if e.Type == "text" {
 		return EscapeText(e.Data[0].V) // must be {"text": value}
 	}
