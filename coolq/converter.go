@@ -1,12 +1,10 @@
 package coolq
 
 import (
-	"bytes"
 	"strconv"
+	"strings"
 
-	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/topic"
-	"github.com/Mrs4s/MiraiGo/utils"
 
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/MiraiGo/message"
@@ -214,11 +212,12 @@ func convertReactions(reactions []*message.GuildMessageEmojiReaction) (r []globa
 
 func toStringMessage(m []message.IMessageElement, source message.Source) string {
 	elems := toElements(m, source)
-	return utils.B2S(binary.NewWriterF(func(sb *binary.Writer) {
-		for _, elem := range elems {
-			(*bytes.Buffer)(sb).WriteString(elem.CQCode())
-		}
-	}))
+	var sb, tmp strings.Builder
+	for _, elem := range elems {
+		sb.WriteString(elem.CQCode(tmp))
+		tmp.Reset()
+	}
+	return sb.String()
 }
 
 func fU64(v uint64) string {
