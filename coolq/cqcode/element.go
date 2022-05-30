@@ -2,10 +2,12 @@ package cqcode
 
 import (
 	"bytes"
+	"io"
 	"strconv"
 	"strings"
 
 	"github.com/Mrs4s/MiraiGo/binary"
+	"github.com/Mrs4s/MiraiGo/utils"
 )
 
 // Element single message
@@ -21,21 +23,29 @@ type Pair struct {
 }
 
 // CQCode convert to cqcode
+func (e *Element) CQCode() string {
+	buf := strings.Builder{}
+	e.WriteCQCodeTo(&buf)
+	return buf.String()
+}
+
+// WriteCQCodeTo convert to cqcode
 //    only called by toStringMessage
-func (e *Element) CQCode(sb *strings.Builder) string {
+func (e *Element) WriteCQCodeTo(w io.Writer) {
 	if e.Type == "text" {
-		return EscapeText(e.Data[0].V) // must be {"text": value}
+		w.Write(utils.S2B(EscapeText(e.Data[0].V))) // must be {"text": value}
+		return
 	}
-	sb.WriteString("[CQ:")
-	sb.WriteString(e.Type)
+	w.Write([]byte("[CQ:"))
+	w.Write(utils.S2B(e.Type))
 	for _, data := range e.Data {
-		sb.WriteByte(',')
-		sb.WriteString(data.K)
-		sb.WriteByte('=')
-		sb.WriteString(EscapeValue(data.V))
+		w.Write([]byte{','})
+		w.Write(utils.S2B(data.K))
+		w.Write([]byte{'='})
+		w.Write(utils.S2B(EscapeValue(data.V)))
 	}
-	sb.WriteByte(']')
-	return sb.String()
+	w.Write([]byte{']'})
+	return
 }
 
 // MarshalJSON see encoding/json.Marshaler
