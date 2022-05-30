@@ -2,7 +2,6 @@ package cqcode
 
 import (
 	"bytes"
-	"io"
 	"strconv"
 	"strings"
 
@@ -22,30 +21,28 @@ type Pair struct {
 	V string
 }
 
-// CQCode convert to cqcode
+// CQCode convert element to cqcode
 func (e *Element) CQCode() string {
 	buf := strings.Builder{}
 	e.WriteCQCodeTo(&buf)
 	return buf.String()
 }
 
-// WriteCQCodeTo convert to cqcode
-//    only called by toStringMessage
-func (e *Element) WriteCQCodeTo(w io.Writer) {
+// WriteCQCodeTo write element's cqcode into sb
+func (e *Element) WriteCQCodeTo(sb *strings.Builder) {
 	if e.Type == "text" {
-		_, _ = w.Write(utils.S2B(EscapeText(e.Data[0].V))) // must be {"text": value}
+		sb.Write(utils.S2B(EscapeText(e.Data[0].V))) // must be {"text": value}
 		return
 	}
-	_, _ = w.Write([]byte("[CQ:"))
-	_, _ = w.Write(utils.S2B(e.Type))
+	sb.Write([]byte("[CQ:"))
+	sb.Write(utils.S2B(e.Type))
 	for _, data := range e.Data {
-		_, _ = w.Write([]byte{','})
-		_, _ = w.Write(utils.S2B(data.K))
-		_, _ = w.Write([]byte{'='})
-		_, _ = w.Write(utils.S2B(EscapeValue(data.V)))
+		sb.Write([]byte{','})
+		sb.Write(utils.S2B(data.K))
+		sb.Write([]byte{'='})
+		sb.Write(utils.S2B(EscapeValue(data.V)))
 	}
-	_, _ = w.Write([]byte{']'})
-	return
+	sb.Write([]byte{']'})
 }
 
 // MarshalJSON see encoding/json.Marshaler
