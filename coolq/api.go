@@ -870,7 +870,7 @@ func (bot *CQBot) uploadForwardElement(m gjson.Result, target int64, sourceType 
 			if msgTime == 0 {
 				msgTime = ts.Unix()
 			}
-			name := e.Get("data.name").Str
+			name := e.Get("data.[name,nickname].0").Str
 			c := e.Get("data.content")
 			if c.IsArray() {
 				nested := false
