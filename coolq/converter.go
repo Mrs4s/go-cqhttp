@@ -2,6 +2,7 @@ package coolq
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/Mrs4s/MiraiGo/topic"
 
@@ -13,41 +14,35 @@ import (
 )
 
 func convertGroupMemberInfo(groupID int64, m *client.GroupMemberInfo) global.MSG {
+	sex := "unknown"
+	if m.Gender == 1 { // unknown = 0xff
+		sex = "female"
+	} else if m.Gender == 0 {
+		sex = "male"
+	}
+	role := "member"
+	switch m.Permission { // nolint:exhaustive
+	case client.Owner:
+		role = "owner"
+	case client.Administrator:
+		role = "admin"
+	}
 	return global.MSG{
-		"group_id": groupID,
-		"user_id":  m.Uin,
-		"nickname": m.Nickname,
-		"card":     m.CardName,
-		"sex": func() string {
-			if m.Gender == 1 {
-				return "female"
-			} else if m.Gender == 0 {
-				return "male"
-			}
-			// unknown = 0xff
-			return "unknown"
-		}(),
+		"group_id":          groupID,
+		"user_id":           m.Uin,
+		"nickname":          m.Nickname,
+		"card":              m.CardName,
+		"sex":               sex,
 		"age":               0,
 		"area":              "",
 		"join_time":         m.JoinTime,
 		"last_sent_time":    m.LastSpeakTime,
 		"shut_up_timestamp": m.ShutUpTimestamp,
 		"level":             strconv.FormatInt(int64(m.Level), 10),
-		"role": func() string {
-			switch m.Permission {
-			case client.Owner:
-				return "owner"
-			case client.Administrator:
-				return "admin"
-			case client.Member:
-				return "member"
-			default:
-				return "member"
-			}
-		}(),
+		"role":              role,
 		"unfriendly":        false,
 		"title":             m.SpecialTitle,
-		"title_expire_time": m.SpecialTitleExpireTime,
+		"title_expire_time": 0,
 		"card_changeable":   false,
 	}
 }
@@ -65,27 +60,24 @@ func convertGuildMemberInfo(m []*client.GuildMemberInfo) (r []global.MSG) {
 	return
 }
 
-func (bot *CQBot) formatGroupMessage(m *message.GroupMessage) global.MSG {
-	source := MessageSource{
-		SourceType: MessageSourceGroup,
-		PrimaryID:  uint64(m.GroupCode),
+func (bot *CQBot) formatGroupMessage(m *message.GroupMessage) *event {
+	source := message.Source{
+		SourceType: message.SourceGroup,
+		PrimaryID:  m.GroupCode,
 	}
-	cqm := ToStringMessage(m.Elements, source, true)
+	cqm := toStringMessage(m.Elements, source)
+	typ := "message/group/normal"
+	if m.Sender.Uin == bot.Client.Uin {
+		typ = "message_sent/group/normal"
+	}
 	gm := global.MSG{
 		"anonymous":    nil,
 		"font":         0,
 		"group_id":     m.GroupCode,
-		"message":      ToFormattedMessage(m.Elements, source, false),
+		"message":      ToFormattedMessage(m.Elements, source),
 		"message_type": "group",
 		"message_seq":  m.Id,
-		"post_type": func() string {
-			if m.Sender.Uin == bot.Client.Uin {
-				return "message_sent"
-			}
-			return "message"
-		}(),
-		"raw_message": cqm,
-		"self_id":     bot.Client.Uin,
+		"raw_message":  cqm,
 		"sender": global.MSG{
 			"age":     0,
 			"area":    "",
@@ -93,9 +85,7 @@ func (bot *CQBot) formatGroupMessage(m *message.GroupMessage) global.MSG {
 			"sex":     "unknown",
 			"user_id": m.Sender.Uin,
 		},
-		"sub_type": "normal",
-		"time":     m.Time,
-		"user_id":  m.Sender.Uin,
+		"user_id": m.Sender.Uin,
 	}
 	if m.Sender.IsAnonymous() {
 		gm["anonymous"] = global.MSG{
@@ -122,21 +112,21 @@ func (bot *CQBot) formatGroupMessage(m *message.GroupMessage) global.MSG {
 			}
 		}
 		ms := gm["sender"].(global.MSG)
-		switch mem.Permission {
+		role := "member"
+		switch mem.Permission { // nolint:exhaustive
 		case client.Owner:
-			ms["role"] = "owner"
+			role = "owner"
 		case client.Administrator:
-			ms["role"] = "admin"
-		case client.Member:
-			ms["role"] = "member"
-		default:
-			ms["role"] = "member"
+			role = "admin"
 		}
+		ms["role"] = role
 		ms["nickname"] = mem.Nickname
 		ms["card"] = mem.CardName
 		ms["title"] = mem.SpecialTitle
 	}
-	return gm
+	ev := bot.event(typ, gm)
+	ev.Time = int64(m.Time)
+	return ev
 }
 
 func convertChannelInfo(c *client.ChannelInfo) global.MSG {
@@ -218,6 +208,15 @@ func convertReactions(reactions []*message.GuildMessageEmojiReaction) (r []globa
 		}
 	}
 	return
+}
+
+func toStringMessage(m []message.IMessageElement, source message.Source) string {
+	elems := toElements(m, source)
+	var sb strings.Builder
+	for _, elem := range elems {
+		elem.WriteCQCodeTo(&sb)
+	}
+	return sb.String()
 }
 
 func fU64(v uint64) string {

@@ -195,7 +195,8 @@ func (f LogFormat) Format(entry *logrus.Entry) ([]byte, error) {
 		buf.WriteString(colorReset)
 	}
 
-	ret := append([]byte(nil), buf.Bytes()...) // copy buffer
+	ret := make([]byte, len(buf.Bytes()))
+	copy(ret, buf.Bytes()) // copy buffer
 	return ret, nil
 }
 

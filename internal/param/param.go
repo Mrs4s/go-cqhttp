@@ -30,7 +30,7 @@ func EnsureBool(p interface{}, defaultVal bool) bool {
 		if !j.Exists() {
 			return defaultVal
 		}
-		switch j.Type { // nolint
+		switch j.Type { // nolint: exhaustive
 		case gjson.True:
 			return true
 		case gjson.False:

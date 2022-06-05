@@ -3,9 +3,9 @@ package server
 // daemon 功能写在这，目前仅支持了-d 作为后台运行参数，stop，start，restart这些功能目前看起来并不需要，可以通过api控制，后续需要的话再补全。
 
 import (
-	"fmt"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 
 	"github.com/Mrs4s/go-cqhttp/global"
@@ -36,7 +36,7 @@ func Daemon() {
 
 	log.Info("[PID] ", proc.Process.Pid)
 	// pid写入到pid文件中，方便后续stop的时候kill
-	pidErr := savePid("go-cqhttp.pid", fmt.Sprintf("%d", proc.Process.Pid))
+	pidErr := savePid("go-cqhttp.pid", strconv.FormatInt(int64(proc.Process.Pid), 10))
 	if pidErr != nil {
 		log.Errorf("save pid file error: %v", pidErr)
 	}

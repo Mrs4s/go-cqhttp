@@ -12,12 +12,18 @@ jobs:
       - name: Setup Go environment
         uses: actions/setup-go@v2.1.3
         with:
-          go-version: 1.17
+          go-version: 1.18
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v2
         with:
           version: latest
+
+      - name: Static Check
+        uses: dominikh/staticcheck-action@v1.2.0
+        with:
+          install-go: false
+          version: "2022.1"
 
       - name: Tests
         run: |

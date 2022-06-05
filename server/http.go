@@ -2,12 +2,15 @@ package server
 
 import (
 	"bytes"
+	"context"
 	"crypto/hmac"
 	"crypto/sha1"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -31,6 +34,7 @@ import (
 // HTTPServer HTTP通信相关配置
 type HTTPServer struct {
 	Disabled    bool   `yaml:"disabled"`
+	Address     string `yaml:"address"`
 	Host        string `yaml:"host"`
 	Port        int    `yaml:"port"`
 	Timeout     int32  `yaml:"timeout"`
@@ -51,7 +55,6 @@ type httpServerPost struct {
 }
 
 type httpServer struct {
-	HTTP        *http.Server
 	api         *api.Caller
 	accessToken string
 }
@@ -64,6 +67,7 @@ type HTTPClient struct {
 	filter          string
 	apiPort         int
 	timeout         int32
+	client          *http.Client
 	MaxRetries      uint64
 	RetriesInterval uint64
 }
@@ -76,8 +80,7 @@ type httpCtx struct {
 
 const httpDefault = `
   - http: # HTTP 通信设置
-      host: 127.0.0.1 # 服务端监听地址
-      port: 5700      # 服务端监听端口
+      address: 0.0.0.0:5700 # HTTP监听地址
       timeout: 5      # 反向 HTTP 超时时间, 单位秒，<5 时将被忽略
       long-polling:   # 长轮询拓展
         enabled: false       # 是否开启
@@ -87,11 +90,11 @@ const httpDefault = `
       post:           # 反向HTTP POST地址列表
       #- url: ''                # 地址
       #  secret: ''             # 密钥
-	  #  max-retries: 3         # 最大重试，0 时禁用
+      #  max-retries: 3         # 最大重试，0 时禁用
       #  retries-interval: 1500 # 重试时间，单位毫秒，0 时立即
       #- url: http://127.0.0.1:5701/ # 地址
       #  secret: ''                  # 密钥
-	  #  max-retries: 10             # 最大重试，0 时禁用
+      #  max-retries: 10             # 最大重试，0 时禁用
       #  retries-interval: 1000      # 重试时间，单位毫秒，0 时立即
 `
 
@@ -209,9 +212,9 @@ func checkAuth(req *http.Request, token string) int {
 	if auth == "" {
 		auth = req.URL.Query().Get("access_token")
 	} else {
-		authN := strings.SplitN(auth, " ", 2)
-		if len(authN) == 2 {
-			auth = authN[1]
+		_, after, ok := strings.Cut(auth, " ")
+		if ok {
+			auth = after
 		}
 	}
 
@@ -243,12 +246,21 @@ func runHTTP(bot *coolq.CQBot, node yaml.Node) {
 		return
 	}
 
-	var addr string
+	network, addr := "tcp", conf.Address
 	s := &httpServer{accessToken: conf.AccessToken}
-	if conf.Host == "" || conf.Port == 0 {
+	switch {
+	case conf.Address != "":
+		uri, err := url.Parse(conf.Address)
+		if err == nil && uri.Scheme != "" {
+			network = uri.Scheme
+			addr = uri.Host + uri.Path
+		}
+	case conf.Host != "" || conf.Port != 0:
+		addr = fmt.Sprintf("%s:%d", conf.Host, conf.Port)
+		log.Warnln("HTTP 服务器使用了过时的配置格式，请更新配置文件！")
+	default:
 		goto client
 	}
-	addr = fmt.Sprintf("%s:%d", conf.Host, conf.Port)
 	s.api = api.NewCaller(bot)
 	if conf.RateLimit.Enabled {
 		s.api.Use(rateLimit(conf.RateLimit.Frequency, conf.RateLimit.Bucket))
@@ -256,20 +268,16 @@ func runHTTP(bot *coolq.CQBot, node yaml.Node) {
 	if conf.LongPolling.Enabled {
 		s.api.Use(longPolling(bot, conf.LongPolling.MaxQueueSize))
 	}
-
 	go func() {
-		log.Infof("CQ HTTP 服务器已启动: %v", addr)
-		s.HTTP = &http.Server{
-			Addr:    addr,
-			Handler: s,
-		}
-		if err := s.HTTP.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Error(err)
-			log.Infof("HTTP 服务启动失败, 请检查端口是否被占用.")
+		listener, err := net.Listen(network, addr)
+		if err != nil {
+			log.Infof("HTTP 服务启动失败, 请检查端口是否被占用: %v", err)
 			log.Warnf("将在五秒后退出.")
 			time.Sleep(time.Second * 5)
 			os.Exit(1)
 		}
+		log.Infof("CQ HTTP 服务器已启动: %v", listener.Addr())
+		log.Fatal(http.Serve(listener, s))
 	}()
 client:
 	for _, c := range conf.Post {
@@ -294,8 +302,30 @@ func (c HTTPClient) Run() {
 	if c.timeout < 5 {
 		c.timeout = 5
 	}
+	rawAddress := c.addr
+	network, address := resolveURI(c.addr)
+	client := &http.Client{
+		Timeout: time.Second * time.Duration(c.timeout),
+		Transport: &http.Transport{
+			DialContext: func(_ context.Context, _, addr string) (net.Conn, error) {
+				if network == "unix" {
+					host, _, err := net.SplitHostPort(addr)
+					if err != nil {
+						host = addr
+					}
+					filepath, err := base64.RawURLEncoding.DecodeString(host)
+					if err == nil {
+						addr = string(filepath)
+					}
+				}
+				return net.Dial(network, addr)
+			},
+		},
+	}
+	c.addr = address // clean path
+	c.client = client
+	log.Infof("HTTP POST上报器已启动: %v", rawAddress)
 	c.bot.OnEventPush(c.onBotPushEvent)
-	log.Infof("HTTP POST上报器已启动: %v", c.addr)
 }
 
 func (c *HTTPClient) onBotPushEvent(e *coolq.Event) {
@@ -307,7 +337,6 @@ func (c *HTTPClient) onBotPushEvent(e *coolq.Event) {
 		}
 	}
 
-	client := http.Client{Timeout: time.Second * time.Duration(c.timeout)}
 	header := make(http.Header)
 	header.Set("X-Self-ID", strconv.FormatInt(c.bot.Client.Uin, 10))
 	header.Set("User-Agent", "CQHttp/4.15.0")
@@ -321,22 +350,19 @@ func (c *HTTPClient) onBotPushEvent(e *coolq.Event) {
 		header.Set("X-API-Port", strconv.FormatInt(int64(c.apiPort), 10))
 	}
 
+	var req *http.Request
 	var res *http.Response
+	var err error
 	for i := uint64(0); i <= c.MaxRetries; i++ {
 		// see https://stackoverflow.com/questions/31337891/net-http-http-contentlength-222-with-body-length-0
 		// we should create a new request for every single post trial
-		req, err := http.NewRequest("POST", c.addr, bytes.NewReader(e.JSONBytes()))
+		req, err = http.NewRequest("POST", c.addr, bytes.NewReader(e.JSONBytes()))
 		if err != nil {
 			log.Warnf("上报 Event 数据到 %v 时创建请求失败: %v", c.addr, err)
 			return
 		}
 		req.Header = header
-
-		res, err = client.Do(req)
-		if res != nil {
-			//goland:noinspection GoDeferInLoop
-			defer res.Body.Close()
-		}
+		res, err = c.client.Do(req)
 		if err == nil {
 			break
 		}
@@ -348,9 +374,9 @@ func (c *HTTPClient) onBotPushEvent(e *coolq.Event) {
 		}
 		time.Sleep(time.Millisecond * time.Duration(c.RetriesInterval))
 	}
+	defer res.Body.Close()
 
 	log.Debugf("上报Event数据 %s 到 %v", e.JSONBytes(), c.addr)
-
 	r, err := io.ReadAll(res.Body)
 	if err != nil {
 		return

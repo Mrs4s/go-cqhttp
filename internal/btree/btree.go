@@ -18,6 +18,10 @@ const (
 	tableStructSize = int(unsafe.Sizeof(table{}))
 )
 
+type fileLock interface {
+	release() error
+}
+
 type item struct {
 	hash   [hashSize]byte
 	offset int64
@@ -48,6 +52,7 @@ type DB struct {
 	alloc   int64
 	cache   [cacheSlots]cache
 
+	flock        fileLock
 	inAllocator  bool
 	deleteLarger bool
 	fqueue       [freeQueueLen]chunk
@@ -108,6 +113,10 @@ func (d *DB) flushSuper() {
 
 // Open opens an existed btree file
 func Open(name string) (*DB, error) {
+	lock, err := newFileLock(name + ".lock")
+	if err != nil {
+		return nil, errors.New("文件被其他进程占用")
+	}
 	btree := new(DB)
 	fd, err := os.OpenFile(name, os.O_RDWR, 0o644)
 	if err != nil {
@@ -120,17 +129,23 @@ func Open(name string) (*DB, error) {
 	btree.top = super.top
 	btree.freeTop = super.freeTop
 	btree.alloc = super.alloc
+	btree.flock = lock
 	return btree, errors.Wrap(err, "btree read meta info failed")
 }
 
 // Create creates a database
 func Create(name string) (*DB, error) {
+	lock, err := newFileLock(name + ".lock")
+	if err != nil {
+		return nil, errors.New("文件被其他进程占用")
+	}
 	btree := new(DB)
 	fd, err := os.OpenFile(name, os.O_RDWR|os.O_TRUNC|os.O_CREATE, 0o644)
 	if err != nil {
 		return nil, errors.Wrap(err, "btree open file failed")
 	}
 
+	btree.flock = lock
 	btree.fd = fd
 	btree.alloc = int64(superSize)
 	btree.flushSuper()
@@ -140,6 +155,9 @@ func Create(name string) (*DB, error) {
 // Close closes the database
 func (d *DB) Close() error {
 	_ = d.fd.Sync()
+	if err := d.flock.release(); err != nil {
+		return err
+	}
 	err := d.fd.Close()
 	for i := 0; i < cacheSlots; i++ {
 		d.cache[i] = cache{}

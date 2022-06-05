@@ -8,13 +8,13 @@ import (
 	"os"
 	"regexp"
 	"strings"
-	"sync"
 
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 )
 
 // defaultConfig 默认配置文件
+//
 //go:embed default_config.yml
 var defaultConfig string
 
@@ -75,18 +75,6 @@ type Server struct {
 	Default string
 }
 
-// LevelDBConfig leveldb 相关配置
-type LevelDBConfig struct {
-	Enable bool `yaml:"enable"`
-}
-
-// MongoDBConfig mongodb 相关配置
-type MongoDBConfig struct {
-	Enable   bool   `yaml:"enable"`
-	URI      string `yaml:"uri"`
-	Database string `yaml:"database"`
-}
-
 // Parse 从默认配置文件路径中获取
 func Parse(path string) *Config {
 	file, err := os.ReadFile(path)
@@ -103,16 +91,11 @@ func Parse(path string) *Config {
 	return config
 }
 
-var (
-	serverconfs []*Server
-	mu          sync.Mutex
-)
+var serverconfs []*Server
 
 // AddServer 添加该服务的简介和默认配置
 func AddServer(s *Server) {
-	mu.Lock()
 	serverconfs = append(serverconfs, s)
-	mu.Unlock()
 }
 
 // generateConfig 生成配置文件
@@ -155,19 +138,11 @@ func expand(s string, mapping func(string) string) string {
 	r := regexp.MustCompile(`\${([a-zA-Z_]+[a-zA-Z0-9_:/.]*)}`)
 	return r.ReplaceAllStringFunc(s, func(s string) string {
 		s = strings.Trim(s, "${}")
-		// todo: use strings.Cut once go1.18 is released
-		before, after, ok := cut(s, ":")
+		before, after, ok := strings.Cut(s, ":")
 		m := mapping(before)
 		if ok && m == "" {
 			return after
 		}
 		return m
 	})
-}
-
-func cut(s, sep string) (before, after string, found bool) {
-	if i := strings.Index(s, sep); i >= 0 {
-		return s[:i], s[i+len(sep):], true
-	}
-	return s, "", false
 }

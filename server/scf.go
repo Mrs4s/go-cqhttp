@@ -54,7 +54,7 @@ func (l *lambdaResponseWriter) flush() error {
 	buffer := global.NewBuffer()
 	defer global.PutBuffer(buffer)
 	body := utils.B2S(l.buf.Bytes())
-	header := make(map[string]string)
+	header := make(map[string]string, len(l.header))
 	for k, v := range l.header {
 		header[k] = v[0]
 	}
@@ -190,9 +190,9 @@ func (c *lambdaClient) next() *http.Request {
 	if resp.StatusCode != http.StatusOK {
 		return nil
 	}
-	req := new(http.Request)
-	invoke := new(lambdaInvoke)
-	_ = json.NewDecoder(resp.Body).Decode(invoke)
+	var req http.Request
+	var invoke lambdaInvoke
+	_ = json.NewDecoder(resp.Body).Decode(&invoke)
 	if invoke.HTTPMethod == "" { // 不是 api 网关
 		return nil
 	}
@@ -211,5 +211,5 @@ func (c *lambdaClient) next() *http.Request {
 		query[k] = []string{v}
 	}
 	req.URL.RawQuery = query.Encode()
-	return req
+	return &req
 }
