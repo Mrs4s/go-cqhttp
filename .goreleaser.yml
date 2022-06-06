@@ -3,6 +3,9 @@ env:
 before:
   hooks:
     - go mod tidy
+release:
+  draft: true
+  discussion_category_name: General
 builds:
   - id: nowin
     env:
