@@ -81,7 +81,7 @@ func Main() {
 
 	mkCacheDir := func(path string, _type string) {
 		if !global.PathExists(path) {
-			if err := os.MkdirAll(path, 0o644); err != nil {
+			if err := os.MkdirAll(path, 0o755); err != nil {
 				log.Fatalf("创建%s缓存文件夹失败: %v", _type, err)
 			}
 		}
