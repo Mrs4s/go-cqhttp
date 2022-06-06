@@ -31,6 +31,9 @@ func checkImage(r io.ReadSeeker) (ok bool, t string) {
 	if base.SkipMimeScan {
 		return true, ""
 	}
+	if r == nil {
+		return false, "image/nil-stream"
+	}
 	t = scan(r)
 	switch t {
 	case "image/bmp", "image/gif", "image/jpeg", "image/png", "image/webp":
