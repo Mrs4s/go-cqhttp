@@ -71,13 +71,12 @@ func (bot *CQBot) formatGroupMessage(m *message.GroupMessage) *event {
 		typ = "message_sent/group/normal"
 	}
 	gm := global.MSG{
-		"anonymous":    nil,
-		"font":         0,
-		"group_id":     m.GroupCode,
-		"message":      ToFormattedMessage(m.Elements, source),
-		"message_type": "group",
-		"message_seq":  m.Id,
-		"raw_message":  cqm,
+		"anonymous":   nil,
+		"font":        0,
+		"group_id":    m.GroupCode,
+		"message":     ToFormattedMessage(m.Elements, source),
+		"message_seq": m.Id,
+		"raw_message": cqm,
 		"sender": global.MSG{
 			"age":     0,
 			"area":    "",
