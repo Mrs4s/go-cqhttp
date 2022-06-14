@@ -595,10 +595,10 @@ func (bot *CQBot) dispatch(ev *event) {
 	for _, f := range bot.events {
 		go func(fn func(*Event)) {
 			defer func() {
-				wg.Done()
 				if pan := recover(); pan != nil {
 					log.Warnf("处理事件 %v 时出现错误: %v \n%s", event.JSONString(), pan, debug.Stack())
 				}
+				wg.Done()
 			}()
 
 			start := time.Now()
