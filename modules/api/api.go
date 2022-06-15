@@ -7,13 +7,40 @@ import (
 	"github.com/Mrs4s/go-cqhttp/global"
 )
 
-func (c *Caller) call(action string, p Getter) global.MSG {
+func (c *Caller) call(action string, version uint16, p Getter) global.MSG {
+	if version == 12 {
+		if action == "get_supported_actions" {
+			return coolq.OK([]string{".get_word_slices", ".handle_quick_operation", ".ocr_image", "ocr_image", "_get_group_notice", "_get_model_show", "_send_group_notice", "_set_model_show", "check_url_safely", "create_group_file_folder", "create_guild_role", "delete_essence_msg", "delete_friend", "delete_group_file", "delete_group_folder", "delete_guild_role", "delete_msg", "delete_unidirectional_friend", "download_file", "get_essence_msg_list", "get_forward_msg", "get_friend_list", "get_group_at_all_remain", "get_group_file_system_info", "get_group_file_url", "get_group_files_by_folder", "get_group_honor_info", "get_group_info", "get_group_list", "get_group_member_info", "get_group_member_list", "get_group_msg_history", "get_group_root_files", "get_group_system_msg", "get_guild_channel_list", "get_guild_list", "get_guild_member_list", "get_guild_member_profile", "get_guild_meta_by_guest", "get_guild_msg", "get_guild_roles", "get_guild_service_profile", "get_image", "get_self_info", "get_msg", "get_online_clients", "get_status", "get_user_info", "get_topic_channel_feeds", "get_unidirectional_friend_list", "get_version", "mark_msg_as_read", "qidian_get_account_info", "reload_event_filter", "send_forward_msg", "send_group_forward_msg", "send_group_msg", "send_group_sign", "send_guild_channel_msg", "send_msg", "send_private_forward_msg", "send_private_msg", "set_essence_msg", "set_friend_add_request", "set_group_add_request", "set_group_admin", "set_group_anonymous_ban", "set_group_ban", "set_group_card", "set_group_kick", "set_group_leave", "set_group_name", "set_group_portrait", "set_group_special_title", "set_group_whole_ban", "set_guild_member_role", "set_qq_profile", "update_guild_role", "upload_group_file"})
+		}
+		switch action {
+		case "get_self_info":
+			return c.bot.CQGetLoginInfo()
+		case "get_user_info":
+			p0 := p.Get("user_id").Int()
+			return c.bot.CQGetStrangerInfo(p0)
+		case "get_version":
+			return c.bot.CQGetVersion()
+		}
+	}
+	if version == 11 {
+		switch action {
+		case "can_send_image":
+			return c.bot.CQCanSendImage()
+		case "can_send_record":
+			return c.bot.CQCanSendRecord()
+		case "get_login_info":
+			return c.bot.CQGetLoginInfo()
+		case "get_stranger_info":
+			p0 := p.Get("user_id").Int()
+			return c.bot.CQGetStrangerInfo(p0)
+		case "get_version_info":
+			return c.bot.CQGetVersionInfo()
+		}
+	}
 	switch action {
-	default:
-		return coolq.Failed(404, "API_NOT_FOUND", "API不存在")
 	case ".get_word_slices":
 		p0 := p.Get("content").String()
-		return c.bot.CQGetWordSlices(p0)
+		return c.bot.CQGetWordSlices(p0, version)
 	case ".handle_quick_operation":
 		p0 := p.Get("context")
 		p1 := p.Get("operation")
@@ -36,10 +63,6 @@ func (c *Caller) call(action string, p Getter) global.MSG {
 		p0 := p.Get("model").String()
 		p1 := p.Get("model_show").String()
 		return c.bot.CQSetModelShow(p0, p1)
-	case "can_send_image":
-		return c.bot.CQCanSendImage()
-	case "can_send_record":
-		return c.bot.CQCanSendRecord()
 	case "check_url_safely":
 		p0 := p.Get("url").String()
 		return c.bot.CQCheckURLSafely(p0)
@@ -166,8 +189,6 @@ func (c *Caller) call(action string, p Getter) global.MSG {
 	case "get_image":
 		p0 := p.Get("file").String()
 		return c.bot.CQGetImage(p0)
-	case "get_login_info":
-		return c.bot.CQGetLoginInfo()
 	case "get_msg":
 		p0 := int32(p.Get("message_id").Int())
 		return c.bot.CQGetMessage(p0)
@@ -175,18 +196,13 @@ func (c *Caller) call(action string, p Getter) global.MSG {
 		p0 := p.Get("no_cache").Bool()
 		return c.bot.CQGetOnlineClients(p0)
 	case "get_status":
-		return c.bot.CQGetStatus()
-	case "get_stranger_info":
-		p0 := p.Get("user_id").Int()
-		return c.bot.CQGetStrangerInfo(p0)
+		return c.bot.CQGetStatus(version)
 	case "get_topic_channel_feeds":
 		p0 := p.Get("guild_id").Uint()
 		p1 := p.Get("channel_id").Uint()
 		return c.bot.CQGetTopicChannelFeeds(p0, p1)
 	case "get_unidirectional_friend_list":
 		return c.bot.CQGetUnidirectionalFriendList()
-	case "get_version_info":
-		return c.bot.CQGetVersionInfo()
 	case "mark_msg_as_read":
 		p0 := int32(p.Get("message_id").Int())
 		return c.bot.CQMarkMessageAsRead(p0)
@@ -338,4 +354,5 @@ func (c *Caller) call(action string, p Getter) global.MSG {
 		p3 := p.Get("folder").String()
 		return c.bot.CQUploadGroupFile(p0, p1, p2, p3)
 	}
+	return coolq.Failed(404, "API_NOT_FOUND", "API不存在")
 }

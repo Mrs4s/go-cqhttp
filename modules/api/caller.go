@@ -8,7 +8,7 @@ import (
 	"github.com/Mrs4s/go-cqhttp/global"
 )
 
-//go:generate go run github.com/Mrs4s/go-cqhttp/cmd/api-generator -path=./../../coolq/api.go
+//go:generate go run github.com/Mrs4s/go-cqhttp/cmd/api-generator -path=./../../coolq/api.go,./../../coolq/api_v12.go
 
 // Getter 参数获取
 type Getter interface {
@@ -25,13 +25,13 @@ type Caller struct {
 }
 
 // Call specific API
-func (c *Caller) Call(action string, p Getter) global.MSG {
+func (c *Caller) Call(action string, version uint16, p Getter) global.MSG {
 	for _, fn := range c.handlers {
 		if ret := fn(action, p); ret != nil {
 			return ret
 		}
 	}
-	return c.call(action, p)
+	return c.call(action, version, p)
 }
 
 // Use add handlers to the API caller

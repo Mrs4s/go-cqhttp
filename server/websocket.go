@@ -470,7 +470,7 @@ func (c *wsConn) handleRequest(_ *coolq.CQBot, payload []byte) {
 	j := gjson.Parse(utils.B2S(payload))
 	t := strings.TrimSuffix(j.Get("action").Str, "_async")
 	log.Debugf("WS接收到API调用: %v 参数: %v", t, j.Get("params").Raw)
-	ret := c.apiCaller.Call(t, j.Get("params"))
+	ret := c.apiCaller.Call(t, 11, j.Get("params"))
 	if j.Get("echo").Exists() {
 		ret["echo"] = j.Get("echo").Value()
 	}

@@ -111,7 +111,7 @@ func NewQQBot(cli *client.QQClient) *CQBot {
 		for {
 			<-t.C
 			bot.dispatchEvent("meta_event/heartbeat", global.MSG{
-				"status":   bot.CQGetStatus()["data"],
+				"status":   bot.CQGetStatus(11)["data"],
 				"interval": base.HeartbeatInterval.Milliseconds(),
 			})
 		}

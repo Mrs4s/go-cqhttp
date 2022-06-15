@@ -34,6 +34,7 @@ import (
 // HTTPServer HTTP通信相关配置
 type HTTPServer struct {
 	Disabled    bool   `yaml:"disabled"`
+	Version     uint16 `yaml:"version"`
 	Address     string `yaml:"address"`
 	Host        string `yaml:"host"`
 	Port        int    `yaml:"port"`
@@ -57,6 +58,7 @@ type httpServerPost struct {
 type httpServer struct {
 	api         *api.Caller
 	accessToken string
+	version     uint16
 }
 
 // HTTPClient 反向HTTP上报客户端
@@ -81,6 +83,7 @@ type httpCtx struct {
 const httpDefault = `
   - http: # HTTP 通信设置
       address: 0.0.0.0:5700 # HTTP监听地址
+      version: 11     # OneBot协议版本, 支持 11/12
       timeout: 5      # 反向 HTTP 超时时间, 单位秒，<5 时将被忽略
       long-polling:   # 长轮询拓展
         enabled: false       # 是否开启
@@ -150,6 +153,13 @@ func (s *httpServer) ServeHTTP(writer http.ResponseWriter, request *http.Request
 	contentType := request.Header.Get("Content-Type")
 	switch request.Method {
 	case http.MethodPost:
+		// todo: msg pack
+		if s.version == 12 && strings.Contains(contentType, "application/msgpack") {
+			log.Warnf("请求 %v 数据类型暂不支持: MsgPack", request.RequestURI)
+			writer.WriteHeader(http.StatusUnsupportedMediaType)
+			return
+		}
+
 		if strings.Contains(contentType, "application/json") {
 			body, err := io.ReadAll(request.Body)
 			if err != nil {
@@ -190,12 +200,12 @@ func (s *httpServer) ServeHTTP(writer http.ResponseWriter, request *http.Request
 	if request.URL.Path == "/" {
 		action := strings.TrimSuffix(ctx.Get("action").Str, "_async")
 		log.Debugf("HTTPServer接收到API调用: %v", action)
-		response = s.api.Call(action, ctx.Get("params"))
+		response = s.api.Call(action, s.version, ctx.Get("params"))
 	} else {
 		action := strings.TrimPrefix(request.URL.Path, "/")
 		action = strings.TrimSuffix(action, "_async")
 		log.Debugf("HTTPServer接收到API调用: %v", action)
-		response = s.api.Call(action, &ctx)
+		response = s.api.Call(action, s.version, &ctx)
 	}
 
 	writer.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -245,9 +255,11 @@ func runHTTP(bot *coolq.CQBot, node yaml.Node) {
 	case conf.Disabled:
 		return
 	}
-
+	if conf.Version != 11 && conf.Version != 12 {
+		conf.Version = 11
+	}
 	network, addr := "tcp", conf.Address
-	s := &httpServer{accessToken: conf.AccessToken}
+	s := &httpServer{accessToken: conf.AccessToken, version: conf.Version}
 	switch {
 	case conf.Address != "":
 		uri, err := url.Parse(conf.Address)

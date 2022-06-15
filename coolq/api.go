@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Mrs4s/go-cqhttp/internal/base"
 	"github.com/segmentio/asm/base64"
 
 	"github.com/Mrs4s/MiraiGo/binary"
@@ -25,7 +26,6 @@ import (
 
 	"github.com/Mrs4s/go-cqhttp/db"
 	"github.com/Mrs4s/go-cqhttp/global"
-	"github.com/Mrs4s/go-cqhttp/internal/base"
 	"github.com/Mrs4s/go-cqhttp/internal/cache"
 	"github.com/Mrs4s/go-cqhttp/internal/param"
 	"github.com/Mrs4s/go-cqhttp/modules/filter"
@@ -47,7 +47,8 @@ var defaultPageToken = guildMemberPageToken{
 // CQGetLoginInfo 获取登录号信息
 //
 // https://git.io/Jtz1I
-// @route(get_login_info)
+// @route11(get_login_info)
+// @route12(get_self_info)
 func (bot *CQBot) CQGetLoginInfo() global.MSG {
 	return OK(global.MSG{"user_id": bot.Client.Uin, "nickname": bot.Client.Nickname})
 }
@@ -655,7 +656,7 @@ func (bot *CQBot) CQGroupFileDeleteFile(groupID int64, id string, busID int32) g
 //
 // https://docs.go-cqhttp.org/api/#%E8%8E%B7%E5%8F%96%E4%B8%AD%E6%96%87%E5%88%86%E8%AF%8D-%E9%9A%90%E8%97%8F-api
 // @route(.get_word_slices)
-func (bot *CQBot) CQGetWordSlices(content string) global.MSG {
+func (bot *CQBot) CQGetWordSlices(content string, version uint16) global.MSG {
 	slices, err := bot.Client.GetWordSegmentation(content)
 	if err != nil {
 		return Failed(100, "WORD_SEGMENTATION_API_ERROR", err.Error())
@@ -1342,7 +1343,8 @@ func (bot *CQBot) CQGetGroupHonorInfo(groupID int64, t string) global.MSG {
 // CQGetStrangerInfo 获取陌生人信息
 //
 // https://git.io/Jtz17
-// @route(get_stranger_info)
+// @route11(get_stranger_info)
+// @route12(get_user_info)
 func (bot *CQBot) CQGetStrangerInfo(userID int64) global.MSG {
 	info, err := bot.Client.GetSummaryInfo(userID)
 	if err != nil {
@@ -1755,7 +1757,7 @@ func (bot *CQBot) CQGetOnlineClients(noCache bool) global.MSG {
 // CQCanSendImage 检查是否可以发送图片(此处永远返回true)
 //
 // https://git.io/Jtz1N
-// @route(can_send_image)
+// @route11(can_send_image)
 func (bot *CQBot) CQCanSendImage() global.MSG {
 	return OK(global.MSG{"yes": true})
 }
@@ -1763,7 +1765,7 @@ func (bot *CQBot) CQCanSendImage() global.MSG {
 // CQCanSendRecord 检查是否可以发送语音(此处永远返回true)
 //
 // https://git.io/Jtz1x
-// @route(can_send_record)
+// @route11(can_send_record)
 func (bot *CQBot) CQCanSendRecord() global.MSG {
 	return OK(global.MSG{"yes": true})
 }
@@ -1831,15 +1833,22 @@ func (bot *CQBot) CQSetGroupAnonymousBan(groupID int64, flag string, duration in
 //
 // https://git.io/JtzMe
 // @route(get_status)
-func (bot *CQBot) CQGetStatus() global.MSG {
+func (bot *CQBot) CQGetStatus(version uint16) global.MSG {
+	if version == 11 {
+		return OK(global.MSG{
+			"app_initialized": true,
+			"app_enabled":     true,
+			"plugins_good":    nil,
+			"app_good":        true,
+			"online":          bot.Client.Online.Load(),
+			"good":            bot.Client.Online.Load(),
+			"stat":            bot.Client.GetStatistics(),
+		})
+	}
 	return OK(global.MSG{
-		"app_initialized": true,
-		"app_enabled":     true,
-		"plugins_good":    nil,
-		"app_good":        true,
-		"online":          bot.Client.Online.Load(),
-		"good":            bot.Client.Online.Load(),
-		"stat":            bot.Client.GetStatistics(),
+		"online": bot.Client.Online.Load(),
+		"good":   bot.Client.Online.Load(),
+		"stat":   bot.Client.GetStatistics(),
 	})
 }
 
@@ -1917,7 +1926,7 @@ func (bot *CQBot) CQCheckURLSafely(url string) global.MSG {
 // CQGetVersionInfo 获取版本信息
 //
 // https://git.io/JtwUs
-// @route(get_version_info)
+// @route11(get_version_info)
 func (bot *CQBot) CQGetVersionInfo() global.MSG {
 	wd, _ := os.Getwd()
 	return OK(global.MSG{
@@ -2044,7 +2053,7 @@ func (bot *CQBot) CQReloadEventFilter(file string) global.MSG {
 
 // OK 生成成功返回值
 func OK(data interface{}) global.MSG {
-	return global.MSG{"data": data, "retcode": 0, "status": "ok"}
+	return global.MSG{"data": data, "retcode": 0, "status": "ok", "message": ""}
 }
 
 // Failed 生成失败返回值
@@ -2056,7 +2065,7 @@ func Failed(code int, msg ...string) global.MSG {
 	if len(msg) > 1 {
 		w = msg[1]
 	}
-	return global.MSG{"data": nil, "retcode": code, "msg": m, "wording": w, "status": "failed"}
+	return global.MSG{"data": nil, "retcode": code, "msg": m, "wording": w, "message": w, "status": "failed"}
 }
 
 func limitedString(str string) string {
