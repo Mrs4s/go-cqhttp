@@ -65,6 +65,9 @@ func (g *generator) generate(routers []Router) {
 	g.WriteString("\"github.com/Mrs4s/go-cqhttp/global\"\n")
 	g.WriteString(")\n\n")
 	g.WriteString(fmt.Sprintf(`func (c *Caller) call(action string, version uint16, p Getter) global.MSG {
+	var converter coolq.IDConverter = func(id any) any {
+		return coolq.ConvertIDWithVersion(id,version)
+	}
 	if version == 12 {
 		if action == "get_supported_actions" {
 			return coolq.OK([]string{%v})
@@ -135,7 +138,7 @@ func (g *generator) router(router Router, pathVersion int) {
 	}
 
 	for i, p := range router.Params {
-		if p.Name == "version" {
+		if p.Name == "version" || p.Name == "converter" {
 			continue
 		}
 		if p.Default == "" {
@@ -157,6 +160,10 @@ func (g *generator) router(router Router, pathVersion int) {
 			fmt.Fprintf(g.out, "version")
 			continue
 		}
+		if p.Name == "converter" {
+			fmt.Fprintf(g.out, "converter")
+			continue
+		}
 		fmt.Fprintf(g.out, "p%d", i)
 	}
 	g.WriteString(")\n")
@@ -166,7 +173,7 @@ func conv(v, t string) string {
 	switch t {
 	default:
 		panic("unknown type: " + t)
-	case "gjson.Result":
+	case "gjson.Result", "IDConverter":
 		return v
 	case "int64":
 		return v + ".Int()"

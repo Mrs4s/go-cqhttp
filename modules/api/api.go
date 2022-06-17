@@ -8,9 +8,12 @@ import (
 )
 
 func (c *Caller) call(action string, version uint16, p Getter) global.MSG {
+	var converter coolq.IDConverter = func(id any) any {
+		return coolq.ConvertIDWithVersion(id, version)
+	}
 	if version == 12 {
 		if action == "get_supported_actions" {
-			return coolq.OK([]string{".get_word_slices", ".handle_quick_operation", ".ocr_image", "ocr_image", "_get_group_notice", "_get_model_show", "_send_group_notice", "_set_model_show", "check_url_safely", "create_group_file_folder", "create_guild_role", "delete_essence_msg", "delete_friend", "delete_group_file", "delete_group_folder", "delete_guild_role", "delete_msg", "delete_unidirectional_friend", "download_file", "get_essence_msg_list", "get_forward_msg", "get_friend_list", "get_group_at_all_remain", "get_group_file_system_info", "get_group_file_url", "get_group_files_by_folder", "get_group_honor_info", "get_group_info", "get_group_list", "get_group_member_info", "get_group_member_list", "get_group_msg_history", "get_group_root_files", "get_group_system_msg", "get_guild_channel_list", "get_guild_list", "get_guild_member_list", "get_guild_member_profile", "get_guild_meta_by_guest", "get_guild_msg", "get_guild_roles", "get_guild_service_profile", "get_image", "get_self_info", "get_msg", "get_online_clients", "get_status", "get_user_info", "get_topic_channel_feeds", "get_unidirectional_friend_list", "get_version", "mark_msg_as_read", "qidian_get_account_info", "reload_event_filter", "send_forward_msg", "send_group_forward_msg", "send_group_msg", "send_group_sign", "send_guild_channel_msg", "send_msg", "send_private_forward_msg", "send_private_msg", "set_essence_msg", "set_friend_add_request", "set_group_add_request", "set_group_admin", "set_group_anonymous_ban", "set_group_ban", "set_group_card", "set_group_kick", "set_group_leave", "set_group_name", "set_group_portrait", "set_group_special_title", "set_group_whole_ban", "set_guild_member_role", "set_qq_profile", "update_guild_role", "upload_group_file"})
+			return coolq.OK([]string{".get_word_slices", ".handle_quick_operation", ".ocr_image", "ocr_image", "_get_group_notice", "_get_model_show", "_send_group_notice", "_set_model_show", "check_url_safely", "create_group_file_folder", "create_guild_role", "delete_essence_msg", "delete_friend", "delete_group_file", "delete_group_folder", "delete_guild_role", "delete_msg", "delete_unidirectional_friend", "download_file", "get_essence_msg_list", "get_forward_msg", "get_friend_list", "get_group_at_all_remain", "get_group_file_system_info", "get_group_file_url", "get_group_files_by_folder", "get_group_honor_info", "get_group_info", "get_group_list", "get_group_member_info", "get_group_member_list", "get_group_msg_history", "get_group_root_files", "get_group_system_msg", "get_guild_channel_list", "get_guild_list", "get_guild_member_list", "get_guild_member_profile", "get_guild_meta_by_guest", "get_guild_msg", "get_guild_roles", "get_guild_service_profile", "get_image", "get_self_info", "get_msg", "get_online_clients", "get_status", "get_user_info", "get_topic_channel_feeds", "get_unidirectional_friend_list", "get_version", "mark_msg_as_read", "qidian_get_account_info", "reload_event_filter", "send_group_sign", "send_guild_channel_msg", "send_message", "set_essence_msg", "set_friend_add_request", "set_group_add_request", "set_group_admin", "set_group_anonymous_ban", "set_group_ban", "set_group_card", "set_group_kick", "set_group_leave", "set_group_name", "set_group_portrait", "set_group_special_title", "set_group_whole_ban", "set_guild_member_role", "set_qq_profile", "update_guild_role", "upload_group_file"})
 		}
 		switch action {
 		case "get_self_info":
@@ -20,6 +23,12 @@ func (c *Caller) call(action string, version uint16, p Getter) global.MSG {
 			return c.bot.CQGetStrangerInfo(p0)
 		case "get_version":
 			return c.bot.CQGetVersion()
+		case "send_message":
+			p0 := p.Get("group_id").String()
+			p1 := p.Get("user_id").String()
+			p2 := p.Get("detail_type").String()
+			p3 := p.Get("message")
+			return c.bot.CQSendMessageV12(p0, p1, p2, p3)
 		}
 	}
 	if version == 11 {
@@ -35,12 +44,44 @@ func (c *Caller) call(action string, version uint16, p Getter) global.MSG {
 			return c.bot.CQGetStrangerInfo(p0)
 		case "get_version_info":
 			return c.bot.CQGetVersionInfo()
+		case "send_forward_msg":
+			p0 := p.Get("group_id").Int()
+			p1 := p.Get("user_id").Int()
+			p2 := p.Get("messages")
+			p3 := p.Get("message_type").String()
+			return c.bot.CQSendForwardMessage(p0, p1, p2, p3)
+		case "send_group_forward_msg":
+			p0 := p.Get("group_id").Int()
+			p1 := p.Get("messages")
+			return c.bot.CQSendGroupForwardMessage(p0, p1)
+		case "send_group_msg":
+			p0 := p.Get("group_id").Int()
+			p1 := p.Get("message")
+			p2 := p.Get("auto_escape").Bool()
+			return c.bot.CQSendGroupMessage(p0, p1, p2)
+		case "send_msg":
+			p0 := p.Get("group_id").Int()
+			p1 := p.Get("user_id").Int()
+			p2 := p.Get("message")
+			p3 := p.Get("message_type").String()
+			p4 := p.Get("auto_escape").Bool()
+			return c.bot.CQSendMessage(p0, p1, p2, p3, p4)
+		case "send_private_forward_msg":
+			p0 := p.Get("user_id").Int()
+			p1 := p.Get("messages")
+			return c.bot.CQSendPrivateForwardMessage(p0, p1)
+		case "send_private_msg":
+			p0 := p.Get("user_id").Int()
+			p1 := p.Get("group_id").Int()
+			p2 := p.Get("message")
+			p3 := p.Get("auto_escape").Bool()
+			return c.bot.CQSendPrivateMessage(p0, p1, p2, p3)
 		}
 	}
 	switch action {
 	case ".get_word_slices":
 		p0 := p.Get("content").String()
-		return c.bot.CQGetWordSlices(p0, version)
+		return c.bot.CQGetWordSlices(p0)
 	case ".handle_quick_operation":
 		p0 := p.Get("context")
 		p1 := p.Get("operation")
@@ -115,7 +156,7 @@ func (c *Caller) call(action string, version uint16, p Getter) global.MSG {
 		p0 := p.Get("[message_id,id].0").String()
 		return c.bot.CQGetForwardMessage(p0)
 	case "get_friend_list":
-		return c.bot.CQGetFriendList()
+		return c.bot.CQGetFriendList(version)
 	case "get_group_at_all_remain":
 		p0 := p.Get("group_id").Int()
 		return c.bot.CQGetAtAllRemain(p0)
@@ -138,10 +179,10 @@ func (c *Caller) call(action string, version uint16, p Getter) global.MSG {
 	case "get_group_info":
 		p0 := p.Get("group_id").Int()
 		p1 := p.Get("no_cache").Bool()
-		return c.bot.CQGetGroupInfo(p0, p1)
+		return c.bot.CQGetGroupInfo(p0, p1, converter)
 	case "get_group_list":
 		p0 := p.Get("no_cache").Bool()
-		return c.bot.CQGetGroupList(p0)
+		return c.bot.CQGetGroupList(p0, converter)
 	case "get_group_member_info":
 		p0 := p.Get("group_id").Int()
 		p1 := p.Get("user_id").Int()
@@ -211,21 +252,6 @@ func (c *Caller) call(action string, version uint16, p Getter) global.MSG {
 	case "reload_event_filter":
 		p0 := p.Get("file").String()
 		return c.bot.CQReloadEventFilter(p0)
-	case "send_forward_msg":
-		p0 := p.Get("group_id").Int()
-		p1 := p.Get("user_id").Int()
-		p2 := p.Get("messages")
-		p3 := p.Get("message_type").String()
-		return c.bot.CQSendForwardMessage(p0, p1, p2, p3)
-	case "send_group_forward_msg":
-		p0 := p.Get("group_id").Int()
-		p1 := p.Get("messages")
-		return c.bot.CQSendGroupForwardMessage(p0, p1)
-	case "send_group_msg":
-		p0 := p.Get("group_id").Int()
-		p1 := p.Get("message")
-		p2 := p.Get("auto_escape").Bool()
-		return c.bot.CQSendGroupMessage(p0, p1, p2)
 	case "send_group_sign":
 		p0 := p.Get("group_id").Int()
 		return c.bot.CQSendGroupSign(p0)
@@ -235,23 +261,6 @@ func (c *Caller) call(action string, version uint16, p Getter) global.MSG {
 		p2 := p.Get("message")
 		p3 := p.Get("auto_escape").Bool()
 		return c.bot.CQSendGuildChannelMessage(p0, p1, p2, p3)
-	case "send_msg":
-		p0 := p.Get("group_id").Int()
-		p1 := p.Get("user_id").Int()
-		p2 := p.Get("message")
-		p3 := p.Get("message_type").String()
-		p4 := p.Get("auto_escape").Bool()
-		return c.bot.CQSendMessage(p0, p1, p2, p3, p4)
-	case "send_private_forward_msg":
-		p0 := p.Get("user_id").Int()
-		p1 := p.Get("messages")
-		return c.bot.CQSendPrivateForwardMessage(p0, p1)
-	case "send_private_msg":
-		p0 := p.Get("user_id").Int()
-		p1 := p.Get("group_id").Int()
-		p2 := p.Get("message")
-		p3 := p.Get("auto_escape").Bool()
-		return c.bot.CQSendPrivateMessage(p0, p1, p2, p3)
 	case "set_essence_msg":
 		p0 := int32(p.Get("message_id").Int())
 		return c.bot.CQSetEssenceMessage(p0)

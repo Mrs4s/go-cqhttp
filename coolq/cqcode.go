@@ -832,7 +832,7 @@ func (bot *CQBot) ToElement(t string, d map[string]string, sourceType message.So
 			return nil, err
 		}
 		return &message.VoiceElement{Data: base.ResampleSilk(data)}, nil
-	case "record":
+	case "record", "audio":
 		f := d["file"]
 		data, err := global.FindFile(f, d["cache"], global.VoicePath)
 		if err != nil {
@@ -858,7 +858,10 @@ func (bot *CQBot) ToElement(t string, d map[string]string, sourceType message.So
 			return &message.AnimatedSticker{ID: int32(id)}, nil
 		}
 		return message.NewFace(int32(id)), nil
-	case "at":
+	case "mention_all":
+		d["qq"] = "all"
+		fallthrough
+	case "at", "mention":
 		qq := d["qq"]
 		if qq == "all" {
 			return message.AtAll(), nil

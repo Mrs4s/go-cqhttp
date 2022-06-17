@@ -328,13 +328,13 @@ func (bot *CQBot) CQGetTopicChannelFeeds(guildID, channelID uint64) global.MSG {
 //
 // https://git.io/Jtz1L
 // @route(get_friend_list)
-func (bot *CQBot) CQGetFriendList() global.MSG {
+func (bot *CQBot) CQGetFriendList(version uint16) global.MSG {
 	fs := make([]global.MSG, 0, len(bot.Client.FriendList))
 	for _, f := range bot.Client.FriendList {
 		fs = append(fs, global.MSG{
 			"nickname": f.Nickname,
 			"remark":   f.Remark,
-			"user_id":  f.Uin,
+			"user_id":  ConvertIDWithVersion(f.Uin, version),
 		})
 	}
 	return OK(fs)
@@ -400,14 +400,14 @@ func (bot *CQBot) CQDeleteFriend(uin int64) global.MSG {
 //
 // https://git.io/Jtz1t
 // @route(get_group_list)
-func (bot *CQBot) CQGetGroupList(noCache bool) global.MSG {
+func (bot *CQBot) CQGetGroupList(noCache bool, converter IDConverter) global.MSG {
 	gs := make([]global.MSG, 0, len(bot.Client.GroupList))
 	if noCache {
 		_ = bot.Client.ReloadGroupList()
 	}
 	for _, g := range bot.Client.GroupList {
 		gs = append(gs, global.MSG{
-			"group_id":          g.Code,
+			"group_id":          converter(g.Code),
 			"group_name":        g.Name,
 			"group_create_time": g.GroupCreateTime,
 			"group_level":       g.GroupLevel,
@@ -422,7 +422,7 @@ func (bot *CQBot) CQGetGroupList(noCache bool) global.MSG {
 //
 // https://git.io/Jtz1O
 // @route(get_group_info)
-func (bot *CQBot) CQGetGroupInfo(groupID int64, noCache bool) global.MSG {
+func (bot *CQBot) CQGetGroupInfo(groupID int64, noCache bool, converter IDConverter) global.MSG {
 	group := bot.Client.FindGroup(groupID)
 	if group == nil || noCache {
 		group, _ = bot.Client.GetGroupInfo(groupID)
@@ -436,7 +436,7 @@ func (bot *CQBot) CQGetGroupInfo(groupID int64, noCache bool) global.MSG {
 		for _, g := range info {
 			if g.Code == groupID {
 				return OK(global.MSG{
-					"group_id":          g.Code,
+					"group_id":          converter(g.Code),
 					"group_name":        g.Name,
 					"group_memo":        g.Memo,
 					"group_create_time": 0,
@@ -448,7 +448,7 @@ func (bot *CQBot) CQGetGroupInfo(groupID int64, noCache bool) global.MSG {
 		}
 	} else {
 		return OK(global.MSG{
-			"group_id":          group.Code,
+			"group_id":          converter(group.Code),
 			"group_name":        group.Name,
 			"group_create_time": group.GroupCreateTime,
 			"group_level":       group.GroupLevel,
@@ -657,7 +657,7 @@ func (bot *CQBot) CQGroupFileDeleteFile(groupID int64, id string, busID int32) g
 //
 // https://docs.go-cqhttp.org/api/#%E8%8E%B7%E5%8F%96%E4%B8%AD%E6%96%87%E5%88%86%E8%AF%8D-%E9%9A%90%E8%97%8F-api
 // @route(.get_word_slices)
-func (bot *CQBot) CQGetWordSlices(content string, version uint16) global.MSG {
+func (bot *CQBot) CQGetWordSlices(content string) global.MSG {
 	slices, err := bot.Client.GetWordSegmentation(content)
 	if err != nil {
 		return Failed(100, "WORD_SEGMENTATION_API_ERROR", err.Error())
@@ -670,7 +670,7 @@ func (bot *CQBot) CQGetWordSlices(content string, version uint16) global.MSG {
 
 // CQSendMessage 发送消息
 //
-// @route(send_msg)
+// @route11(send_msg)
 // @rename(m->message)
 func (bot *CQBot) CQSendMessage(groupID, userID int64, m gjson.Result, messageType string, autoEscape bool) global.MSG {
 	switch {
@@ -688,7 +688,7 @@ func (bot *CQBot) CQSendMessage(groupID, userID int64, m gjson.Result, messageTy
 
 // CQSendForwardMessage 发送合并转发消息
 //
-// @route(send_forward_msg)
+// @route11(send_forward_msg)
 // @rename(m->messages)
 func (bot *CQBot) CQSendForwardMessage(groupID, userID int64, m gjson.Result, messageType string) global.MSG {
 	switch {
@@ -707,7 +707,7 @@ func (bot *CQBot) CQSendForwardMessage(groupID, userID int64, m gjson.Result, me
 // CQSendGroupMessage 发送群消息
 //
 // https://git.io/Jtz1c
-// @route(send_group_msg)
+// @route11(send_group_msg)
 // @rename(m->message)
 func (bot *CQBot) CQSendGroupMessage(groupID int64, m gjson.Result, autoEscape bool) global.MSG {
 	group := bot.Client.FindGroup(groupID)
@@ -930,7 +930,7 @@ func (bot *CQBot) uploadForwardElement(m gjson.Result, target int64, sourceType 
 // CQSendGroupForwardMessage 扩展API-发送合并转发(群)
 //
 // https://docs.go-cqhttp.org/api/#%E5%8F%91%E9%80%81%E5%90%88%E5%B9%B6%E8%BD%AC%E5%8F%91-%E7%BE%A4
-// @route(send_group_forward_msg)
+// @route11(send_group_forward_msg)
 // @rename(m->messages)
 func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) global.MSG {
 	if m.Type != gjson.JSON {
@@ -954,7 +954,7 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) globa
 // CQSendPrivateForwardMessage 扩展API-发送合并转发(好友)
 //
 // https://docs.go-cqhttp.org/api/#%E5%8F%91%E9%80%81%E5%90%88%E5%B9%B6%E8%BD%AC%E5%8F%91-%E7%BE%A4
-// @route(send_private_forward_msg)
+// @route11(send_private_forward_msg)
 // @rename(m->messages)
 func (bot *CQBot) CQSendPrivateForwardMessage(userID int64, m gjson.Result) global.MSG {
 	if m.Type != gjson.JSON {
@@ -975,7 +975,7 @@ func (bot *CQBot) CQSendPrivateForwardMessage(userID int64, m gjson.Result) glob
 // CQSendPrivateMessage 发送私聊消息
 //
 // https://git.io/Jtz1l
-// @route(send_private_msg)
+// @route11(send_private_msg)
 // @rename(m->message)
 func (bot *CQBot) CQSendPrivateMessage(userID int64, groupID int64, m gjson.Result, autoEscape bool) global.MSG {
 	var elem []message.IMessageElement

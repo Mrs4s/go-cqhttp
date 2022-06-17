@@ -5,6 +5,7 @@ import (
 
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
+	"github.com/tidwall/gjson"
 )
 
 // CQGetVersion 获取版本信息 OneBotV12
@@ -20,4 +21,12 @@ func (bot *CQBot) CQGetVersion() global.MSG {
 		"runtime_version": runtime.Version(),
 		"runtime_os":      runtime.GOOS,
 	})
+}
+
+// CQSendMessageV12 发送消息
+//
+// @route12(send_message)
+// @rename(m->message)
+func (bot *CQBot) CQSendMessageV12(groupID, userID, detailType string, m gjson.Result) global.MSG {
+	return OK(nil)
 }
