@@ -601,6 +601,30 @@ func (bot *CQBot) CQUploadGroupFile(groupID int64, file, name, folder string) gl
 	return OK(nil)
 }
 
+// CQUploadPrivateFile 扩展API-上传私聊文件
+//
+// @route(upload_private_file)
+func (bot *CQBot) CQUploadPrivateFile(userID int64, file, name string) global.MSG {
+	target := message.Source{
+		SourceType: message.SourcePrivate,
+		PrimaryID:  userID,
+	}
+	fileBody, err := os.Open(file)
+	if err != nil {
+		log.Warnf("上传私聊文件 %v 失败: %+v", file, err)
+		return Failed(100, "OPEN_FILE_ERROR", "打开文件失败")
+	}
+	localFile := &client.LocalFile{
+		FileName: name,
+		Body:     fileBody,
+	}
+	if err := bot.Client.UploadFile(target, localFile); err != nil {
+		log.Warnf("上传私聊 %v 文件 %v 失败: %+v", userID, file, err)
+		return Failed(100, "FILE_SYSTEM_UPLOAD_API_ERROR", err.Error())
+	}
+	return OK(nil)
+}
+
 // CQGroupFileCreateFolder 拓展API-创建群文件文件夹
 //
 // @route(create_group_file_folder)

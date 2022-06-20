@@ -337,5 +337,10 @@ func (c *Caller) call(action string, p Getter) global.MSG {
 		p2 := p.Get("name").String()
 		p3 := p.Get("folder").String()
 		return c.bot.CQUploadGroupFile(p0, p1, p2, p3)
+	case "upload_private_file":
+		p0 := p.Get("user_id").Int()
+		p1 := p.Get("file").String()
+		p2 := p.Get("name").String()
+		return c.bot.CQUploadPrivateFile(p0, p1, p2)
 	}
 }
