@@ -222,7 +222,7 @@ func sliderCaptchaProcessor(u string) string {
 	id := utils.RandomString(8)
 	log.Warnf("请前往该地址验证 -> %v", strings.ReplaceAll(u, "https://ssl.captcha.qq.com/template/wireless_mqq_captcha.html?", fmt.Sprintf("https://captcha.go-cqhttp.org/captcha?id=%v&", id)))
 	start := time.Now()
-	for time.Now().Sub(start).Minutes() < 2 {
+	for time.Since(start).Minutes() < 2 {
 		time.Sleep(time.Second)
 		data, err := global.GetBytes("https://captcha.go-cqhttp.org/captcha/ticket?id=" + id)
 		if err != nil {
