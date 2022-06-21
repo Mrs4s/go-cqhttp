@@ -192,8 +192,7 @@ func loginResponseProcessor(res *client.LoginResponse) error {
 			msg := res.ErrorMessage
 			if strings.Contains(msg, "版本") {
 				msg = "密码错误或账号被冻结"
-			}
-			if strings.Contains(msg, "冻结") {
+			} else if strings.Contains(msg, "冻结") {
 				log.Fatalf("账号被冻结")
 			}
 			log.Warnf("登录失败: %v", msg)
