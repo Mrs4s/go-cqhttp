@@ -1388,6 +1388,7 @@ func (bot *CQBot) CQGetStrangerInfo(userID int64) global.MSG {
 		"age":        info.Age,
 		"level":      info.Level,
 		"login_days": info.LoginDays,
+		"vip_level":  info.VipLevel,
 	})
 }
 
