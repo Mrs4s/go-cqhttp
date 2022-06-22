@@ -184,7 +184,7 @@ func DownloadFileMultiThreading(url, path string, limit int64, threadCount int, 
 			req.Header.Set(k, v)
 		}
 
-		if _, ok := headers["User-Agent"]; ok {
+		if _, ok := headers["User-Agent"]; !ok {
 			req.Header["User-Agent"] = []string{UserAgent}
 		}
 		req.Header.Set("range", "bytes="+strconv.FormatInt(block.BeginOffset, 10)+"-"+strconv.FormatInt(block.EndOffset, 10))
