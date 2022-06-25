@@ -873,17 +873,17 @@ func (bot *CQBot) uploadForwardElement(m gjson.Result, target int64, sourceType 
 			}
 			if e.Get("data.id").Exists() {
 				i := e.Get("data.id").Int()
-				m, _ := db.GetGroupMessageByGlobalID(int32(i))
+				m, _ := db.GetMessageByGlobalID(int32(i))
 				if m != nil {
-					msgTime := m.Attribute.Timestamp
+					msgTime := m.GetAttribute().Timestamp
 					if msgTime == 0 {
 						msgTime = ts.Unix()
 					}
 					return &message.ForwardNode{
-						SenderId:   m.Attribute.SenderUin,
-						SenderName: m.Attribute.SenderName,
+						SenderId:   m.GetAttribute().SenderUin,
+						SenderName: m.GetAttribute().SenderName,
 						Time:       int32(msgTime),
-						Message:    resolveElement(bot.ConvertContentMessage(m.Content, message.SourceGroup)),
+						Message:    resolveElement(bot.ConvertContentMessage(m.GetContent(), message.SourceGroup)),
 					}
 				}
 				log.Warnf("警告: 引用消息 %v 错误或数据库未开启.", e.Get("data.id").Str)
