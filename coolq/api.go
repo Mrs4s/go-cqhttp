@@ -832,7 +832,12 @@ func (bot *CQBot) uploadForwardElement(m gjson.Result, target int64, sourceType 
 	groupID := target
 	source := message.Source{SourceType: sourceType, PrimaryID: target}
 	if sourceType == message.SourcePrivate {
-		groupID = 0
+		// ios 设备的合并转发来源群号不能为 0
+		if len(bot.Client.GroupList) == 0 {
+			groupID = 1
+		} else {
+			groupID = bot.Client.GroupList[1].Uin
+		}
 	}
 	builder := bot.Client.NewForwardMessageBuilder(groupID)
 
@@ -875,12 +880,10 @@ func (bot *CQBot) uploadForwardElement(m gjson.Result, target int64, sourceType 
 				i := e.Get("data.id").Int()
 				m, _ := db.GetMessageByGlobalID(int32(i))
 				if m != nil {
-					mSource := func() message.SourceType {
-						if m.GetType() == "group" {
-							return message.SourceGroup
-						}
-						return message.SourcePrivate
-					}()
+					mSource := message.SourcePrivate
+					if m.GetType() == "group" {
+						mSource = message.SourceGroup
+					}
 					msgTime := m.GetAttribute().Timestamp
 					if msgTime == 0 {
 						msgTime = ts.Unix()
