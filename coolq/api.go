@@ -875,6 +875,12 @@ func (bot *CQBot) uploadForwardElement(m gjson.Result, target int64, sourceType 
 				i := e.Get("data.id").Int()
 				m, _ := db.GetMessageByGlobalID(int32(i))
 				if m != nil {
+					mSource := func() message.SourceType {
+						if m.GetType() == "group" {
+							return message.SourceGroup
+						}
+						return message.SourcePrivate
+					}()
 					msgTime := m.GetAttribute().Timestamp
 					if msgTime == 0 {
 						msgTime = ts.Unix()
@@ -883,7 +889,7 @@ func (bot *CQBot) uploadForwardElement(m gjson.Result, target int64, sourceType 
 						SenderId:   m.GetAttribute().SenderUin,
 						SenderName: m.GetAttribute().SenderName,
 						Time:       int32(msgTime),
-						Message:    resolveElement(bot.ConvertContentMessage(m.GetContent(), message.SourceGroup)),
+						Message:    resolveElement(bot.ConvertContentMessage(m.GetContent(), mSource)),
 					}
 				}
 				log.Warnf("警告: 引用消息 %v 错误或数据库未开启.", e.Get("data.id").Str)
@@ -916,7 +922,7 @@ func (bot *CQBot) uploadForwardElement(m gjson.Result, target int64, sourceType 
 					}
 				}
 			}
-			content := bot.ConvertObjectMessage(c, message.SourceGroup)
+			content := bot.ConvertObjectMessage(c, sourceType)
 			if uin != 0 && name != "" && len(content) > 0 {
 				return &message.ForwardNode{
 					SenderId:   uin,
