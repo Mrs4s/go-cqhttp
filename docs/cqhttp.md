@@ -898,7 +898,7 @@ Type: `rps`
 
 ### 上传私聊文件
 
-终结点: `/upload_group_file`
+终结点: `/upload_private_file`
 
 **参数**
 
