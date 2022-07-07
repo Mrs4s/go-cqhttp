@@ -14,6 +14,7 @@ RUN set -ex \
 
 FROM alpine:latest
 
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories
 RUN apk add --no-cache ffmpeg
 
 COPY --from=builder /build/cqhttp /usr/bin/cqhttp
