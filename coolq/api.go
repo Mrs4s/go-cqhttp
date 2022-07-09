@@ -1114,6 +1114,23 @@ func (bot *CQBot) CQSetGroupMemo(groupID int64, msg, img string) global.MSG {
 	return Failed(100, "GROUP_NOT_FOUND", "群聊不存在")
 }
 
+// CQDelGroupMemo 扩展API-删除群公告
+// @route(_del_group_notice)
+// @rename(fid->notice_id)
+func (bot *CQBot) CQDelGroupMemo(groupID int64, fid string) global.MSG {
+	if g := bot.Client.FindGroup(groupID); g != nil {
+		if g.SelfPermission() == client.Member {
+			return Failed(100, "PERMISSION_DENIED", "权限不足")
+		}
+		err := bot.Client.DelGroupNotice(groupID, fid)
+		if err != nil {
+			return Failed(100, "DELETE_NOTICE_ERROR", err.Error())
+		}
+		return OK(nil)
+	}
+	return Failed(100, "GROUP_NOT_FOUND", "群聊不存在")
+}
+
 // CQSetGroupKick 群组踢人
 //
 // https://git.io/Jtz1V
