@@ -733,7 +733,12 @@ func (bot *CQBot) ConvertContentMessage(content []global.MSG, sourceType message
 			case *message.GroupImageElement:
 				img.Flash = flash
 				img.EffectID = id
-				img.ImageBizType = message.ImageBizType(data["subType"].(uint32))
+				switch data["subType"].(type) {
+				case int64:
+					img.ImageBizType = message.ImageBizType(data["subType"].(int64))
+				default:
+					img.ImageBizType = message.ImageBizType(data["subType"].(uint32))
+				}
 			case *message.FriendImageElement:
 				img.Flash = flash
 			}
