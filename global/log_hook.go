@@ -201,13 +201,13 @@ func (f LogFormat) Format(entry *logrus.Entry) ([]byte, error) {
 }
 
 const (
-	colorCodePanic = "\x1b[1;31m" // color.Style{color.Bold, color.Red}.String()
-	colorCodeFatal = "\x1b[1;31m" // color.Style{color.Bold, color.Red}.String()
-	colorCodeError = "\x1b[31m"   // color.Style{color.Red}.String()
-	colorCodeWarn  = "\x1b[33m"   // color.Style{color.Yellow}.String()
-	colorCodeInfo  = "\x1b[37m"   // color.Style{color.White}.String()
-	colorCodeDebug = "\x1b[32m"   // color.Style{color.Green}.String()
-	colorCodeTrace = "\x1b[36m"   // color.Style{color.Cyan}.String()
+	colorCodePanic = "\x1b[1;91m" // color.Style{color.Bold, color.LightRed}.String()
+	colorCodeFatal = "\x1b[1;91m" // color.Style{color.Bold, color.LightRed}.String()
+	colorCodeError = "\x1b[91m"   // color.Style{color.LightRed}.String()
+	colorCodeWarn  = "\x1b[93m"   // color.Style{color.LightYellow}.String()
+	colorCodeInfo  = "\x1b[97m"   // color.Style{color.LightWhite}.String()
+	colorCodeDebug = "\x1b[92m"   // color.Style{color.LightGreen}.String()
+	colorCodeTrace = "\x1b[96m"   // color.Style{color.LightCyan}.String()
 	colorReset     = "\x1b[0m"
 )
 
