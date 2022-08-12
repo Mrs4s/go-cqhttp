@@ -151,7 +151,7 @@ func loginResponseProcessor(res *client.LoginResponse) error {
 			log.Warn("请输入(1 - 2) (将在10秒后自动选择1)：")
 			text = readLineTimeout(time.Second*10, "1")
 			if strings.Contains(text, "1") {
-				ticket := sliderCaptchaProcessor(res.VerifyUrl)
+				ticket := getTicket(res.VerifyUrl)
 				if ticket == "" {
 					os.Exit(0)
 				}
@@ -218,9 +218,19 @@ func loginResponseProcessor(res *client.LoginResponse) error {
 	}
 }
 
-func sliderCaptchaProcessor(u string) string {
+func getTicket(u string) (str string) {
 	id := utils.RandomString(8)
-	log.Warnf("请前往该地址验证 -> %v", strings.ReplaceAll(u, "https://ssl.captcha.qq.com/template/wireless_mqq_captcha.html?", fmt.Sprintf("https://captcha.go-cqhttp.org/captcha?id=%v&", id)))
+	log.Warnf("请前往该地址验证 -> %v <- 或输入手动抓取的 ticket：（Enter 提交）", strings.ReplaceAll(u, "https://ssl.captcha.qq.com/template/wireless_mqq_captcha.html?", fmt.Sprintf("https://captcha.go-cqhttp.org/captcha?id=%v&", id)))
+	r := make(chan string)
+	select {
+	case r <- readLine():
+	case r <- sliderCaptchaProcessor(id):
+	}
+	str = <-r
+	return
+}
+
+func sliderCaptchaProcessor(id string) string {
 	start := time.Now()
 	for time.Since(start).Minutes() < 2 {
 		time.Sleep(time.Second)
