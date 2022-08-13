@@ -151,7 +151,7 @@ func loginResponseProcessor(res *client.LoginResponse) error {
 			log.Warn("请输入(1 - 2) (将在10秒后自动选择1)：")
 			text = readLineTimeout(time.Second*10, "1")
 			if strings.Contains(text, "1") {
-				ticket := sliderCaptchaProcessor(res.VerifyUrl)
+				ticket := getTicket(res.VerifyUrl)
 				if ticket == "" {
 					os.Exit(0)
 				}
@@ -218,22 +218,39 @@ func loginResponseProcessor(res *client.LoginResponse) error {
 	}
 }
 
-func sliderCaptchaProcessor(u string) string {
+func getTicket(u string) (str string) {
 	id := utils.RandomString(8)
-	log.Warnf("请前往该地址验证 -> %v", strings.ReplaceAll(u, "https://ssl.captcha.qq.com/template/wireless_mqq_captcha.html?", fmt.Sprintf("https://captcha.go-cqhttp.org/captcha?id=%v&", id)))
-	start := time.Now()
-	for time.Since(start).Minutes() < 2 {
-		time.Sleep(time.Second)
-		data, err := global.GetBytes("https://captcha.go-cqhttp.org/captcha/ticket?id=" + id)
-		if err != nil {
-			log.Warnf("获取 Ticket 时出现错误: %v", err)
-			return ""
-		}
-		g := gjson.ParseBytes(data)
-		if g.Get("ticket").Exists() {
-			return g.Get("ticket").String()
+	log.Warnf("请前往该地址验证 -> %v <- 或输入手动抓取的 ticket：（Enter 提交）", strings.ReplaceAll(u, "https://ssl.captcha.qq.com/template/wireless_mqq_captcha.html?", fmt.Sprintf("https://captcha.go-cqhttp.org/captcha?id=%v&", id)))
+	manual := make(chan string, 1)
+	go func() {
+		manual <- readLine()
+	}()
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+	for count := 120; count > 0; count-- {
+		select {
+		case <-ticker.C:
+			str = fetchCaptcha(id)
+			if str != "" {
+				return
+			}
+		case str = <-manual:
+			return
 		}
 	}
 	log.Warnf("验证超时")
+	return ""
+}
+
+func fetchCaptcha(id string) string {
+	data, err := global.GetBytes("https://captcha.go-cqhttp.org/captcha/ticket?id=" + id)
+	if err != nil {
+		log.Warnf("获取 Ticket 时出现错误: %v", err)
+		return ""
+	}
+	g := gjson.ParseBytes(data)
+	if g.Get("ticket").Exists() {
+		return g.Get("ticket").String()
+	}
 	return ""
 }
