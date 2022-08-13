@@ -248,7 +248,7 @@ func (bot *CQBot) uploadMedia(target message.Source, elements []message.IMessage
 }
 
 // SendGroupMessage 发送群消息
-func (bot *CQBot) SendGroupMessage(groupID int64, m *message.SendingMessage) int32 {
+func (bot *CQBot) SendGroupMessage(groupID int64, m *message.SendingMessage) (int32, error) {
 	newElem := make([]message.IMessageElement, 0, len(m.Elements))
 	group := bot.Client.FindGroup(groupID)
 	source := message.Source{
@@ -264,14 +264,14 @@ func (bot *CQBot) SendGroupMessage(groupID int64, m *message.SendingMessage) int
 					mem.Poke()
 				}
 			}
-			return 0
+			return 0, nil
 		case *message.MusicShareElement:
 			ret, err := bot.Client.SendGroupMusicShare(groupID, i)
 			if err != nil {
 				log.Warnf("警告: 群 %v 富文本消息发送失败: %v", groupID, err)
-				return -1
+				return -1, errors.Wrap(err, "send group music share error")
 			}
-			return bot.InsertGroupMessage(ret)
+			return bot.InsertGroupMessage(ret), nil
 		case *message.AtElement:
 			if i.Target == 0 && group.SelfPermission() == client.Member {
 				e = message.NewText("@全体成员")
@@ -281,16 +281,16 @@ func (bot *CQBot) SendGroupMessage(groupID int64, m *message.SendingMessage) int
 	}
 	if len(newElem) == 0 {
 		log.Warnf("群消息发送失败: 消息为空.")
-		return -1
+		return -1, errors.New("empty message")
 	}
 	m.Elements = newElem
 	bot.checkMedia(newElem, groupID)
 	ret := bot.Client.SendGroupMessage(groupID, m)
 	if ret == nil || ret.Id == -1 {
 		log.Warnf("群消息发送失败: 账号可能被风控.")
-		return -1
+		return -1, errors.New("send group message failed: blocked by server")
 	}
-	return bot.InsertGroupMessage(ret)
+	return bot.InsertGroupMessage(ret), nil
 }
 
 // SendPrivateMessage 发送私聊消息

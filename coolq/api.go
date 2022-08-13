@@ -765,9 +765,9 @@ func (bot *CQBot) CQSendGroupMessage(groupID int64, m gjson.Result, autoEscape b
 		}
 	}
 	fixAt(elem)
-	mid := bot.SendGroupMessage(groupID, &message.SendingMessage{Elements: elem})
-	if mid == -1 {
-		return Failed(100, "SEND_MSG_API_ERROR", "请参考 go-cqhttp 端输出")
+	mid, err := bot.SendGroupMessage(groupID, &message.SendingMessage{Elements: elem})
+	if err != nil {
+		return Failed(100, "SEND_MSG_API_ERROR", err.Error())
 	}
 	log.Infof("发送群 %v(%v) 的消息: %v (%v)", group.Name, groupID, limitedString(m.String()), mid)
 	return OK(global.MSG{"message_id": mid})
