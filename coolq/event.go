@@ -657,19 +657,22 @@ func (bot *CQBot) checkMedia(e []message.IMessageElement, sourceID int64) {
 			cache.Image.Insert(i.Md5, data)
 
 		case *message.GuildImageElement:
-			data := binary.NewWriterF(func(w *binary.Writer) {
-				w.Write(i.Md5)
-				w.WriteUInt32(uint32(i.Size))
-				w.WriteString(i.DownloadIndex)
-				w.WriteString(i.Url)
-			})
-			filename := hex.EncodeToString(i.Md5) + ".image"
-			cache.Image.Insert(i.Md5, data)
-			if i.Url != "" && !global.PathExists(path.Join(global.ImagePath, "guild-images", filename)) {
-				if err := global.DownloadFile(i.Url, path.Join(global.ImagePath, "guild-images", filename), -1, nil); err != nil {
-					log.Warnf("下载频道图片时出现错误: %v", err)
+			if base.ChannelImageCache {
+				data := binary.NewWriterF(func(w *binary.Writer) {
+					w.Write(i.Md5)
+					w.WriteUInt32(uint32(i.Size))
+					w.WriteString(i.DownloadIndex)
+					w.WriteString(i.Url)
+				})
+				filename := hex.EncodeToString(i.Md5) + ".image"
+				cache.Image.Insert(i.Md5, data)
+				if i.Url != "" && !global.PathExists(path.Join(global.ImagePath, "guild-images", filename)) {
+					if err := global.DownloadFile(i.Url, path.Join(global.ImagePath, "guild-images", filename), -1, nil); err != nil {
+						log.Warnf("下载频道图片时出现错误: %v", err)
+					}
 				}
 			}
+
 		case *message.FriendImageElement:
 			data := binary.NewWriterF(func(w *binary.Writer) {
 				w.Write(i.Md5)
