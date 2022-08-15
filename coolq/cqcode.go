@@ -1151,9 +1151,14 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video bool, sourceTy
 	}
 	// 目前频道内上传的图片均无法被查询到, 需要单独处理
 	if sourceType == message.SourceGuildChannel {
-		cacheFile := path.Join(global.ImagePath, "guild-images", f)
-		if global.PathExists(cacheFile) {
-			return &LocalImageElement{File: cacheFile}, nil
+		// 部分人不需要保存頻道圖片，判斷配置文件是否打開頻道下載完整圖片，是保持，否不保存
+		if base.ChannelImageCache {
+			cacheFile := path.Join(global.ImagePath, "guild-images", f)
+			if global.PathExists(cacheFile) {
+				return &LocalImageElement{File: cacheFile}, nil
+			}
+		} else {
+			return nil, nil
 		}
 	}
 	if strings.HasSuffix(f, ".image") {

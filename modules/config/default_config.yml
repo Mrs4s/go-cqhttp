@@ -43,6 +43,8 @@ message:
   extra-reply-data: false
   # 跳过 Mime 扫描, 忽略错误数据
   skip-mime-scan: false
+  # 是否完全下载频道图片
+  channel-image-cache: true
 
 output:
   # 日志等级 trace,debug,info,warn,error

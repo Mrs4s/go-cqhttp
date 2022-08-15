@@ -41,6 +41,7 @@ var (
 	LogColorful         bool // 是否启用日志颜色
 	FastStart           bool // 是否为快速启动
 	AllowTempSession    bool // 是否允许发送临时会话信息
+	ChannelImageCache   bool // 是否完全下载频道图片
 
 	PostFormat        string                 // 上报格式 string or array
 	Proxy             string                 // 存储 proxy_rewrite,用于设置代理
@@ -83,6 +84,7 @@ func Init() {
 		IgnoreInvalidCQCode = conf.Message.IgnoreInvalidCQCode
 		SplitURL = conf.Message.FixURL
 		RemoveReplyAt = conf.Message.RemoveReplyAt
+		ChannelImageCache = conf.Message.ChannelImageCache
 		ExtraReplyData = conf.Message.ExtraReplyData
 		ForceFragmented = conf.Message.ForceFragment
 		SkipMimeScan = conf.Message.SkipMimeScan
