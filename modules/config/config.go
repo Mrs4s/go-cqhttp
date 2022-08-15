@@ -55,6 +55,7 @@ type Config struct {
 		RemoveReplyAt       bool   `yaml:"remove-reply-at"`
 		ExtraReplyData      bool   `yaml:"extra-reply-data"`
 		SkipMimeScan        bool   `yaml:"skip-mime-scan"`
+		ChannelImageCache   bool   `yaml:"channel-image-cache"`
 	} `yaml:"message"`
 
 	Output struct {

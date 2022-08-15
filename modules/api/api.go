@@ -48,7 +48,7 @@ func (c *Caller) call(action string, p Getter) global.MSG {
 		p1 := p.Get("parent_id").String()
 		p2 := p.Get("name").String()
 		return c.bot.CQGroupFileCreateFolder(p0, p1, p2)
-	case "create_guild_role":
+	case "create_guild_role": //创建频道角色
 		p0 := p.Get("guild_id").Uint()
 		p1 := p.Get("name").String()
 		p2 := uint32(p.Get("color").Uint())
@@ -70,14 +70,14 @@ func (c *Caller) call(action string, p Getter) global.MSG {
 		p0 := p.Get("group_id").Int()
 		p1 := p.Get("folder_id").String()
 		return c.bot.CQGroupFileDeleteFolder(p0, p1)
-	case "delete_guild_role":
+	case "delete_guild_role": // 删除频道角色
 		p0 := p.Get("guild_id").Uint()
 		p1 := p.Get("role_id").Uint()
 		return c.bot.CQDeleteGuildRole(p0, p1)
 	case "delete_msg":
 		p0 := int32(p.Get("message_id").Int())
 		return c.bot.CQDeleteMessage(p0)
-	case "delete_unidirectional_friend":
+	case "delete_unidirectional_friend": //删除单项好友
 		p0 := p.Get("user_id").Int()
 		return c.bot.CQDeleteUnidirectionalFriend(p0)
 	case "download_file":
@@ -154,11 +154,11 @@ func (c *Caller) call(action string, p Getter) global.MSG {
 	case "get_guild_meta_by_guest":
 		p0 := p.Get("guild_id").Uint()
 		return c.bot.CQGetGuildMetaByGuest(p0)
-	case "get_guild_msg":
+	case "get_guild_msg": //获取频道信息
 		p0 := p.Get("message_id").String()
 		p1 := p.Get("no_cache").Bool()
 		return c.bot.CQGetGuildMessage(p0, p1)
-	case "get_guild_roles":
+	case "get_guild_roles": //获取频道角色列表,角色，不是成员，关键是role_name和role_id
 		p0 := p.Get("guild_id").Uint()
 		return c.bot.CQGetGuildRoles(p0)
 	case "get_guild_service_profile":
@@ -195,7 +195,7 @@ func (c *Caller) call(action string, p Getter) global.MSG {
 	case "reload_event_filter":
 		p0 := p.Get("file").String()
 		return c.bot.CQReloadEventFilter(p0)
-	case "send_forward_msg":
+	case "send_forward_msg": //发送合并转发消息私聊群，到，自定义转发消息，类型private，可能无用
 		p0 := p.Get("group_id").Int()
 		p1 := p.Get("user_id").Int()
 		p2 := p.Get("messages")
@@ -226,7 +226,7 @@ func (c *Caller) call(action string, p Getter) global.MSG {
 		p3 := p.Get("message_type").String()
 		p4 := p.Get("auto_escape").Bool()
 		return c.bot.CQSendMessage(p0, p1, p2, p3, p4)
-	case "send_private_forward_msg":
+	case "send_private_forward_msg": //发送合并转发消息私聊
 		p0 := p.Get("user_id").Int()
 		p1 := p.Get("messages")
 		return c.bot.CQSendPrivateForwardMessage(p0, p1)
@@ -311,7 +311,7 @@ func (c *Caller) call(action string, p Getter) global.MSG {
 			p1 = pt.Bool()
 		}
 		return c.bot.CQSetGroupWholeBan(p0, p1)
-	case "set_guild_member_role":
+	case "set_guild_member_role": //设置用户在频道中的角色
 		p0 := p.Get("guild_id").Uint()
 		p1 := p.Get("set").Bool()
 		p2 := p.Get("role_id").Uint()
@@ -324,7 +324,7 @@ func (c *Caller) call(action string, p Getter) global.MSG {
 		p3 := p.Get("college")
 		p4 := p.Get("personal_note")
 		return c.bot.CQSetQQProfile(p0, p1, p2, p3, p4)
-	case "update_guild_role":
+	case "update_guild_role": //修改频道角色
 		p0 := p.Get("guild_id").Uint()
 		p1 := p.Get("role_id").Uint()
 		p2 := p.Get("name").String()
