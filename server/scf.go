@@ -65,7 +65,7 @@ func (l *lambdaResponseWriter) flush() error {
 		Body:            body,
 	})
 
-	r, _ := http.NewRequest("POST", cli.responseURL, buffer)
+	r, _ := http.NewRequest(http.MethodPost, cli.responseURL, buffer)
 	do, err := cli.client.Do(r)
 	if err != nil {
 		return err

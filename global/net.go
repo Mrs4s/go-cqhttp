@@ -5,7 +5,6 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -52,7 +51,7 @@ func GetBytes(url string) ([]byte, error) {
 	defer func() {
 		_ = reader.Close()
 	}()
-	return ioutil.ReadAll(reader)
+	return io.ReadAll(reader)
 }
 
 // DownloadFile 将给定URL对应的文件下载至给定Path
@@ -62,7 +61,7 @@ func DownloadFile(url, path string, limit int64, headers map[string]string) erro
 		return err
 	}
 	defer file.Close()
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return err
 	}
@@ -112,7 +111,7 @@ func DownloadFileMultiThreading(url, path string, limit int64, threadCount int, 
 			}
 			return errUnsupportedMultiThreading
 		}
-		req, err := http.NewRequest("GET", url, nil)
+		req, err := http.NewRequest(http.MethodGet, url, nil)
 		if err != nil {
 			return err
 		}
@@ -132,23 +131,21 @@ func DownloadFileMultiThreading(url, path string, limit int64, threadCount int, 
 		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 			return errors.New("response status unsuccessful: " + strconv.FormatInt(int64(resp.StatusCode), 10))
 		}
-		if resp.StatusCode == 200 {
+		if resp.StatusCode == http.StatusOK {
 			if limit > 0 && resp.ContentLength > limit {
 				return ErrOverSize
 			}
 			return copyStream(resp.Body)
 		}
-		if resp.StatusCode == 206 {
+		if resp.StatusCode == http.StatusPartialContent {
 			contentLength = resp.ContentLength
 			if limit > 0 && resp.ContentLength > limit {
 				return ErrOverSize
 			}
-			blockSize := func() int64 {
-				if contentLength > 1024*1024 {
-					return (contentLength / int64(threadCount)) - 10
-				}
-				return contentLength
-			}()
+			blockSize := contentLength
+			if contentLength > 1024*1024 {
+				blockSize = (contentLength / int64(threadCount)) - 10
+			}
 			if blockSize == contentLength {
 				return copyStream(resp.Body)
 			}
@@ -170,7 +167,7 @@ func DownloadFileMultiThreading(url, path string, limit int64, threadCount int, 
 	}
 	// 下载分块
 	downloadBlock := func(block *BlockMetaData) error {
-		req, _ := http.NewRequest("GET", url, nil)
+		req, _ := http.NewRequest(http.MethodGet, url, nil)
 		file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, 0o666)
 		if err != nil {
 			return err
@@ -291,7 +288,7 @@ func (g *gzipCloser) Close() error {
 
 // HTTPGetReadCloser 从 Http url 获取 io.ReadCloser
 func HTTPGetReadCloser(url string) (io.ReadCloser, error) {
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
 	}
