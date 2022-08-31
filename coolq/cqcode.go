@@ -20,6 +20,7 @@ import (
 	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/Mrs4s/MiraiGo/utils"
 	b14 "github.com/fumiama/go-base16384"
+	"github.com/segmentio/asm/base64"
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 
@@ -1122,7 +1123,7 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video bool, sourceTy
 		return &LocalImageElement{File: fu.Path, URL: f}, nil
 	}
 	if !video && strings.HasPrefix(f, "base64") {
-		b, err := param.Base64DecodeString(strings.TrimPrefix(f, "base64://"))
+		b, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(f, "base64://"))
 		if err != nil {
 			return nil, err
 		}

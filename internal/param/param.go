@@ -7,8 +7,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/Mrs4s/MiraiGo/utils"
-	"github.com/segmentio/asm/base64"
 	"github.com/tidwall/gjson"
 )
 
@@ -82,14 +80,4 @@ func SplitURL(s string) []string {
 	}
 	result = append(result, s[last:])
 	return result
-}
-
-// Base64DecodeString decode base64 with avx2
-// see https://github.com/segmentio/asm/issues/50
-// avoid incorrect unsafe usage in origin library
-func Base64DecodeString(s string) ([]byte, error) {
-	e := base64.StdEncoding
-	dst := make([]byte, e.DecodedLen(len(s)))
-	n, err := e.Decode(dst, utils.S2B(s))
-	return dst[:n], err
 }
