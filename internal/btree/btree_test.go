@@ -40,6 +40,7 @@ func TestBtree(t *testing.T) {
 		"123",
 		"We are met on a great battle-field of that war.",
 		"Abraham Lincoln, November 19, 1863, Gettysburg, Pennsylvania",
+		// "00", // TODO: fix this
 	}
 	sha := make([]*byte, len(tests))
 	for i, tt := range tests {

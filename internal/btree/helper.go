@@ -37,11 +37,6 @@ func copyhash(dst *byte, src *byte) {
 	*(*[hashSize]byte)(pa) = *(*[hashSize]byte)(pb)
 }
 
-func resethash(sha1 *byte) {
-	p := unsafe.Pointer(sha1)
-	*(*[hashSize]byte)(p) = [hashSize]byte{}
-}
-
 // reading table
 
 func read32(r io.Reader) (int32, error) {

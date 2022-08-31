@@ -1,6 +1,7 @@
 package btree
 
 import (
+	"encoding/binary"
 	"math/rand"
 	"unsafe"
 )
@@ -31,9 +32,8 @@ func (d *DB) allocChunk(size int) int64 {
 
 		/* create fake size SHA-1 */
 		var sha1 [hashSize]byte
-		p := unsafe.Pointer(&sha1[0])
-		*(*int32)(p) = -1                              // *(uint32_t *) hash = -1;
-		*(*uint32)(unsafe.Add(p, i32s)) = uint32(size) // ((__be32 *) hash)[1] = to_be32(size);
+		binary.LittleEndian.PutUint32(sha1[0*4:1*4], ^uint32(0))   // *(uint32_t *) hash = -1;
+		binary.LittleEndian.PutUint32(sha1[1*4:2*4], uint32(size)) // ((__be32 *) hash)[1] = to_be32(size);
 
 		/* find free chunk with the larger or the same size/SHA-1 */
 		d.inAllocator = true
@@ -41,14 +41,13 @@ func (d *DB) allocChunk(size int) int64 {
 		offset = d.delete(d.freeTop, &sha1[0])
 		d.deleteLarger = false
 		if offset != 0 {
-			assert(*(*int32)(p) == -1)                   // assert(*(uint32_t *) hash == (uint32_t) -1)
-			flen := int(*(*uint32)(unsafe.Add(p, i32s))) // size_t free_len = from_be32(((__be32 *) hash)[1])
+			flen := int(binary.LittleEndian.Uint32(sha1[:4])) // size_t free_len = from_be32(((__be32 *) hash)[1])
 			assert(power2(flen) == flen)
 			assert(flen >= size)
 
 			/* delete buddy information */
-			resethash(&sha1[0])
-			*(*int64)(p) = offset
+			sha1 = [hashSize]byte{}
+			binary.LittleEndian.PutUint64(sha1[0*8:1*8], uint64(offset))
 			buddyLen := d.delete(d.freeTop, &sha1[0])
 			assert(buddyLen == int64(size))
 
@@ -98,17 +97,12 @@ func (d *DB) freeChunk(offset int64, size int) {
 
 	/* create fake offset SHA-1 for buddy allocation */
 	var sha1 [hashSize]byte
-	p := unsafe.Pointer(&sha1[0])
 	d.inAllocator = true
-
-	const i32s = unsafe.Sizeof(int32(0))
-
 	/* add buddy information */
-	resethash(&sha1[0])
-	*(*int32)(p) = -1                                 // *(uint32_t *) hash = -1;
-	*(*uint32)(unsafe.Add(p, i32s)) = uint32(size)    // ((__be32 *) hash)[1] = to_be32(size);
-	*(*uint32)(unsafe.Add(p, i32s*2)) = rand.Uint32() /* to make SHA-1 unique */
-	*(*uint32)(unsafe.Add(p, i32s*3)) = rand.Uint32()
+	binary.LittleEndian.PutUint32(sha1[0*4:1*4], ^uint32(0))    // *(uint32_t *) hash = -1;
+	binary.LittleEndian.PutUint32(sha1[1*4:2*4], uint32(size))  // ((__be32 *) hash)[1] = to_be32(size);
+	binary.LittleEndian.PutUint32(sha1[2*4:3*4], rand.Uint32()) /* to make SHA-1 unique */
+	binary.LittleEndian.PutUint32(sha1[3*4:4*4], rand.Uint32())
 
 	// insert_toplevel(btree, &btree->free_top, hash, NULL, offset);
 	_ = d.insertTopLevel(&d.freeTop, &sha1[0], nil, int(offset))
