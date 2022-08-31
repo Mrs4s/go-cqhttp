@@ -9,11 +9,6 @@ import (
 	"github.com/Mrs4s/go-cqhttp/internal/base"
 )
 
-func init() {
-	base.IsLawfulImage = checkImage
-	base.IsLawfulAudio = checkAudio
-}
-
 const limit = 4 * 1024
 
 func scan(r io.ReadSeeker) string {
@@ -24,15 +19,15 @@ func scan(r io.ReadSeeker) string {
 	return http.DetectContentType(in)
 }
 
-// checkImage 判断给定流是否为合法图片
+// CheckImage 判断给定流是否为合法图片
 // 返回 是否合法, 实际Mime
 // 判断后会自动将 Stream Seek 至 0
-func checkImage(r io.ReadSeeker) (ok bool, t string) {
+func CheckImage(r io.ReadSeeker) (t string, ok bool) {
 	if base.SkipMimeScan {
-		return true, ""
+		return "", true
 	}
 	if r == nil {
-		return false, "image/nil-stream"
+		return "image/nil-stream", false
 	}
 	t = scan(r)
 	switch t {
@@ -42,15 +37,15 @@ func checkImage(r io.ReadSeeker) (ok bool, t string) {
 	return
 }
 
-// checkImage 判断给定流是否为合法音频
-func checkAudio(r io.ReadSeeker) (bool, string) {
+// CheckAudio 判断给定流是否为合法音频
+func CheckAudio(r io.ReadSeeker) (string, bool) {
 	if base.SkipMimeScan {
-		return true, ""
+		return "", true
 	}
 	t := scan(r)
 	// std mime type detection is not full supported for audio
 	if strings.Contains(t, "text") || strings.Contains(t, "image") {
-		return false, t
+		return t, false
 	}
-	return true, t
+	return t, true
 }

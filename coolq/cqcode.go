@@ -28,6 +28,7 @@ import (
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
 	"github.com/Mrs4s/go-cqhttp/internal/cache"
+	"github.com/Mrs4s/go-cqhttp/internal/mime"
 	"github.com/Mrs4s/go-cqhttp/internal/param"
 )
 
@@ -844,8 +845,8 @@ func (bot *CQBot) ToElement(t string, d map[string]string, sourceType message.So
 			return nil, err
 		}
 		if !global.IsAMRorSILK(data) {
-			lawful, mt := base.IsLawfulAudio(bytes.NewReader(data))
-			if !lawful {
+			mt, ok := mime.CheckAudio(bytes.NewReader(data))
+			if !ok {
 				return nil, errors.New("audio type error: " + mt)
 			}
 			data, err = global.EncoderSilk(data)
