@@ -333,60 +333,110 @@ func (bot *CQBot) SendPrivateMessage(target int64, groupID int64, m *message.Sen
 		return false
 	}
 
-	session, ok := bot.tempSessionCache.Load(target)
 	var id int32 = -1
+	session, ok := bot.tempSessionCache.Load(target)
 
-	switch {
-	case bot.Client.FindFriend(target) != nil: // 双向好友
-		msg := bot.Client.SendPrivateMessage(target, m)
-		if msg != nil {
-			id = bot.InsertPrivateMessage(msg)
-		}
-	case ok || groupID != 0: // 临时会话
-		if !base.AllowTempSession {
-			log.Warnf("发送临时会话消息失败: 已关闭临时会话信息发送功能")
-			return -1
-		}
+	// 检查协议是否为企点
+	if bot.Client.QiDian == nil {
 		switch {
-		case groupID != 0 && bot.Client.FindGroup(groupID) == nil:
-			log.Errorf("错误: 找不到群(%v)", groupID)
-		case groupID != 0 && !bot.Client.FindGroup(groupID).AdministratorOrOwner():
-			log.Errorf("错误: 机器人在群(%v) 为非管理员或群主, 无法主动发起临时会话", groupID)
-		case groupID != 0 && bot.Client.FindGroup(groupID).FindMember(target) == nil:
-			log.Errorf("错误: 群员(%v) 不在 群(%v), 无法发起临时会话", target, groupID)
-		default:
-			if session == nil && groupID != 0 {
-				msg := bot.Client.SendGroupTempMessage(groupID, target, m)
+		case bot.Client.FindFriend(target) != nil: // 双向好友
+			msg := bot.Client.SendPrivateMessage(target, m)
+			if msg != nil {
+				id = bot.InsertPrivateMessage(msg)
+			}
+		case ok || groupID != 0: // 临时会话
+			if !base.AllowTempSession {
+				log.Warnf("发送临时会话消息失败: 已关闭临时会话信息发送功能")
+				return -1
+			}
+			switch {
+			case groupID != 0 && bot.Client.FindGroup(groupID) == nil:
+				log.Errorf("错误: 找不到群(%v)", groupID)
+			case groupID != 0 && !bot.Client.FindGroup(groupID).AdministratorOrOwner():
+				log.Errorf("错误: 机器人在群(%v) 为非管理员或群主, 无法主动发起临时会话", groupID)
+			case groupID != 0 && bot.Client.FindGroup(groupID).FindMember(target) == nil:
+				log.Errorf("错误: 群员(%v) 不在 群(%v), 无法发起临时会话", target, groupID)
+			default:
+				if session == nil && groupID != 0 {
+					msg := bot.Client.SendGroupTempMessage(groupID, target, m)
+					//lint:ignore SA9003 there is a todo
+					if msg != nil { // nolint
+						// todo(Mrs4s)
+						// id = bot.InsertTempMessage(target, msg)
+					}
+					break
+				}
+				msg, err := session.SendMessage(m)
+				if err != nil {
+					log.Errorf("发送临时会话消息失败: %v", err)
+					break
+				}
 				//lint:ignore SA9003 there is a todo
 				if msg != nil { // nolint
 					// todo(Mrs4s)
-					// id = bot.InsertTempMessage(target, msg)
+					//id = bot.InsertTempMessage(target, msg)
+
+					// 设置一个ID避免返回-1
+					return msg.Id
 				}
-				break
 			}
-			msg, err := session.SendMessage(m)
-			if err != nil {
-				log.Errorf("发送临时会话消息失败: %v", err)
-				break
+		case unidirectionalFriendExists(): // 单向好友
+			msg := bot.Client.SendPrivateMessage(target, m)
+			if msg != nil {
+				id = bot.InsertPrivateMessage(msg)
 			}
-			//lint:ignore SA9003 there is a todo
-			if msg != nil { // nolint
-				// todo(Mrs4s)
-				// id = bot.InsertTempMessage(target, msg)
+		default:
+			nickname := "Unknown"
+			if summaryInfo, _ := bot.Client.GetSummaryInfo(target); summaryInfo != nil {
+				nickname = summaryInfo.Nickname
+			}
+			log.Errorf("错误: 请先添加 %v(%v) 为好友", nickname, target)
+		}
+	} else {
+		switch {
+		case ok || groupID != 0: // 临时会话
+			if !base.AllowTempSession {
+				log.Warnf("发送临时会话消息失败: 已关闭临时会话信息发送功能")
+				return -1
+			}
+			switch {
+			case groupID != 0 && bot.Client.FindGroup(groupID) == nil:
+				log.Errorf("错误: 找不到群(%v)", groupID)
+			case groupID != 0 && !bot.Client.FindGroup(groupID).AdministratorOrOwner():
+				log.Errorf("错误: 机器人在群(%v) 为非管理员或群主, 无法主动发起临时会话", groupID)
+			case groupID != 0 && bot.Client.FindGroup(groupID).FindMember(target) == nil:
+				log.Errorf("错误: 群员(%v) 不在 群(%v), 无法发起临时会话", target, groupID)
+			default:
+				if session == nil && groupID != 0 {
+					msg := bot.Client.SendGroupTempMessage(groupID, target, m)
+					//lint:ignore SA9003 there is a todo
+					if msg != nil { // nolint
+						// todo(Mrs4s)
+						// id = bot.InsertTempMessage(target, msg)
+					}
+					break
+				}
+				msg, err := session.SendMessage(m)
+				if err != nil {
+					log.Errorf("发送临时会话消息失败: %v", err)
+					break
+				}
+				//lint:ignore SA9003 there is a todo
+				if msg != nil { // nolint
+					// todo(Mrs4s)
+					//id = bot.InsertTempMessage(target, msg)
+					return msg.Id
+				}
+			}
+		//case bot.Client.FindFriend(target) != nil: // 双向好友
+		default: // 双向好友
+			msg := bot.Client.SendPrivateMessage(target, m)
+			if msg != nil {
+				id = bot.InsertPrivateMessage(msg)
 			}
 		}
-	case unidirectionalFriendExists(): // 单向好友
-		msg := bot.Client.SendPrivateMessage(target, m)
-		if msg != nil {
-			id = bot.InsertPrivateMessage(msg)
-		}
-	default:
-		nickname := "Unknown"
-		if summaryInfo, _ := bot.Client.GetSummaryInfo(target); summaryInfo != nil {
-			nickname = summaryInfo.Nickname
-		}
-		log.Errorf("错误: 请先添加 %v(%v) 为好友", nickname, target)
 	}
+
 	return id
 }
 
