@@ -409,6 +409,7 @@ func (bot *CQBot) CQGetGroupList(noCache bool) global.MSG {
 			"group_name":        g.Name,
 			"group_create_time": g.GroupCreateTime,
 			"group_level":       g.GroupLevel,
+			"group_memo":        g.Memo,
 			"max_member_count":  g.MaxMemberCount,
 			"member_count":      g.MemberCount,
 		})
@@ -450,6 +451,7 @@ func (bot *CQBot) CQGetGroupInfo(groupID int64, noCache bool) global.MSG {
 			"group_name":        group.Name,
 			"group_create_time": group.GroupCreateTime,
 			"group_level":       group.GroupLevel,
+			"group_memo":        group.Memo,
 			"max_member_count":  group.MaxMemberCount,
 			"member_count":      group.MemberCount,
 		})
