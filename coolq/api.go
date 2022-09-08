@@ -981,6 +981,7 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) globa
 	log.Infof("发送群 %v(%v)  的合并转发消息: %v (%v)", groupID, groupID, limitedString(m.String()), mid)
 	return OK(global.MSG{
 		"message_id": mid,
+		"forward_id": fe.ResId,
 	})
 }
 
@@ -1003,7 +1004,10 @@ func (bot *CQBot) CQSendPrivateForwardMessage(userID int64, m gjson.Result) glob
 		return Failed(100, "SEND_MSG_API_ERROR", "请参考 go-cqhttp 端输出")
 	}
 	log.Infof("发送好友 %v(%v)  的合并转发消息: %v (%v)", userID, userID, limitedString(m.String()), mid)
-	return OK(global.MSG{"message_id": mid})
+	return OK(global.MSG{
+		"message_id": mid,
+		"forward_id": fe.ResId,
+	})
 }
 
 // CQSendPrivateMessage 发送私聊消息
