@@ -23,6 +23,7 @@ import (
 	"github.com/Mrs4s/go-cqhttp/db"
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
+	"github.com/Mrs4s/go-cqhttp/internal/mime"
 )
 
 // CQBot CQBot结构体,存储Bot实例相关配置
@@ -152,10 +153,9 @@ func (bot *CQBot) uploadLocalImage(target message.Source, img *LocalImageElement
 		defer func() { _ = f.Close() }()
 		img.Stream = f
 	}
-	if lawful, mime := base.IsLawfulImage(img.Stream); !lawful {
-		return nil, errors.New("image type error: " + mime)
+	if mt, ok := mime.CheckImage(img.Stream); !ok {
+		return nil, errors.New("image type error: " + mt)
 	}
-	// todo: enable multi-thread upload, now got error code 81
 	i, err := bot.Client.UploadImage(target, img.Stream, 4)
 	if err != nil {
 		return nil, err

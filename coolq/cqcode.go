@@ -20,6 +20,7 @@ import (
 	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/Mrs4s/MiraiGo/utils"
 	b14 "github.com/fumiama/go-base16384"
+	"github.com/segmentio/asm/base64"
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 
@@ -28,6 +29,7 @@ import (
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
 	"github.com/Mrs4s/go-cqhttp/internal/cache"
+	"github.com/Mrs4s/go-cqhttp/internal/mime"
 	"github.com/Mrs4s/go-cqhttp/internal/param"
 )
 
@@ -733,11 +735,11 @@ func (bot *CQBot) ConvertContentMessage(content []global.MSG, sourceType message
 			case *message.GroupImageElement:
 				img.Flash = flash
 				img.EffectID = id
-				switch data["subType"].(type) {
+				switch sub := data["subType"].(type) {
 				case int64:
-					img.ImageBizType = message.ImageBizType(data["subType"].(int64))
-				default:
-					img.ImageBizType = message.ImageBizType(data["subType"].(uint32))
+					img.ImageBizType = message.ImageBizType(sub)
+				case uint32:
+					img.ImageBizType = message.ImageBizType(sub)
 				}
 			case *message.FriendImageElement:
 				img.Flash = flash
@@ -844,8 +846,8 @@ func (bot *CQBot) ToElement(t string, d map[string]string, sourceType message.So
 			return nil, err
 		}
 		if !global.IsAMRorSILK(data) {
-			lawful, mt := base.IsLawfulAudio(bytes.NewReader(data))
-			if !lawful {
+			mt, ok := mime.CheckAudio(bytes.NewReader(data))
+			if !ok {
 				return nil, errors.New("audio type error: " + mt)
 			}
 			data, err = global.EncoderSilk(data)
@@ -1121,7 +1123,7 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video bool, sourceTy
 		return &LocalImageElement{File: fu.Path, URL: f}, nil
 	}
 	if !video && strings.HasPrefix(f, "base64") {
-		b, err := param.Base64DecodeString(strings.TrimPrefix(f, "base64://"))
+		b, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(f, "base64://"))
 		if err != nil {
 			return nil, err
 		}
