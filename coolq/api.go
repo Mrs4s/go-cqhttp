@@ -836,7 +836,7 @@ func (bot *CQBot) uploadForwardElement(m gjson.Result, target int64, sourceType 
 		if len(bot.Client.GroupList) == 0 {
 			groupID = 1
 		} else {
-			groupID = bot.Client.GroupList[1].Uin
+			groupID = bot.Client.GroupList[0].Uin
 		}
 	}
 	builder := bot.Client.NewForwardMessageBuilder(groupID)
