@@ -836,7 +836,7 @@ func (bot *CQBot) uploadForwardElement(m gjson.Result, target int64, sourceType 
 		if len(bot.Client.GroupList) == 0 {
 			groupID = 1
 		} else {
-			groupID = bot.Client.GroupList[1].Uin
+			groupID = bot.Client.GroupList[0].Uin
 		}
 	}
 	builder := bot.Client.NewForwardMessageBuilder(groupID)
@@ -977,8 +977,10 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) globa
 		log.Warnf("合并转发(群)消息发送失败: 账号可能被风控.")
 		return Failed(100, "SEND_MSG_API_ERROR", "请参考 go-cqhttp 端输出")
 	}
+	mid := bot.InsertGroupMessage(ret)
+	log.Infof("发送群 %v(%v)  的合并转发消息: %v (%v)", groupID, groupID, limitedString(m.String()), mid)
 	return OK(global.MSG{
-		"message_id": bot.InsertGroupMessage(ret),
+		"message_id": mid,
 	})
 }
 
@@ -1000,6 +1002,7 @@ func (bot *CQBot) CQSendPrivateForwardMessage(userID int64, m gjson.Result) glob
 		log.Warnf("合并转发(好友)消息发送失败: 账号可能被风控.")
 		return Failed(100, "SEND_MSG_API_ERROR", "请参考 go-cqhttp 端输出")
 	}
+	log.Infof("发送好友 %v(%v)  的合并转发消息: %v (%v)", userID, userID, limitedString(m.String()), mid)
 	return OK(global.MSG{"message_id": mid})
 }
 
