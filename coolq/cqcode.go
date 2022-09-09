@@ -84,13 +84,13 @@ func (e *PokeElement) Type() message.ElementType {
 func replyID(r *message.ReplyElement, source message.Source) int32 {
 	id := source.PrimaryID
 	seq := r.ReplySeq
-	if source.SourceType == message.SourcePrivate {
+	if r.GroupID != 0 {
+		id = r.GroupID
+	}
+	if source.SourceType == message.SourcePrivate && r.Sender == source.PrimaryID {
 		// 私聊似乎腾讯服务器有bug?
 		seq = int32(uint16(seq))
 		id = r.Sender
-	}
-	if r.GroupID != 0 {
-		id = r.GroupID
 	}
 	return db.ToGlobalID(id, seq)
 }
