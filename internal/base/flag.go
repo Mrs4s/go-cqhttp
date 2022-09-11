@@ -140,7 +140,8 @@ func ResetWorkingDir() {
 			args = append(args, os.Args[i])
 		}
 	}
-	p, _ := filepath.Abs(os.Args[0])
+	ex, _ := os.Executable()
+	p, _ := filepath.Abs(ex)
 	_, err := os.Stat(p)
 	if !(err == nil || errors.Is(err, os.ErrExist)) {
 		log.Fatalf("重置工作目录时出现错误: 无法找到路径 %v", p)
