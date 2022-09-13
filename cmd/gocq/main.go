@@ -55,10 +55,10 @@ func Main() {
 	switch {
 	case base.LittleH:
 		base.Help()
-	case base.LittleD:
-		server.Daemon()
 	case base.LittleWD != "":
 		base.ResetWorkingDir()
+	case base.LittleD:
+		server.Daemon()
 	}
 	base.Init()
 
