@@ -87,7 +87,9 @@ func replyID(r *message.ReplyElement, source message.Source) int32 {
 	if r.GroupID != 0 {
 		id = r.GroupID
 	}
-	if source.SourceType == message.SourcePrivate && r.Sender == source.PrimaryID {
+	// 私聊时，部分（不确定）的账号会在 ReplyElement 中带有 GroupID 字段。
+	// 这里需要判断是由于 “直接回复” 功能，GroupID 为触发直接回复的来源那个群。
+	if source.SourceType == message.SourcePrivate && (r.Sender == source.PrimaryID || r.GroupID == source.PrimaryID) {
 		// 私聊似乎腾讯服务器有bug?
 		seq = int32(uint16(seq))
 		id = r.Sender
