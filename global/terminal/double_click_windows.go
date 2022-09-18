@@ -6,15 +6,16 @@ package terminal
 import (
 	"os"
 	"path/filepath"
-	"syscall"
 	"unsafe"
+
+	"golang.org/x/sys/windows"
 
 	"github.com/pkg/errors"
 )
 
 // RunningByDoubleClick 检查是否通过双击直接运行
 func RunningByDoubleClick() bool {
-	kernel32 := syscall.NewLazyDLL("kernel32.dll")
+	kernel32 := windows.NewLazySystemDLL("kernel32.dll")
 	lp := kernel32.NewProc("GetConsoleProcessList")
 	if lp != nil {
 		var ids [2]uint32
@@ -29,7 +30,8 @@ func RunningByDoubleClick() bool {
 
 // NoMoreDoubleClick 提示用户不要双击运行，并生成安全启动脚本
 func NoMoreDoubleClick() error {
-	r := boxW(0, "请勿通过双击直接运行本程序, 这将导致一些非预料的后果.\n请在shell中运行./go-cqhttp.exe\n点击确认将释出安全启动脚本，点击取消则关闭程序", "警告", 0x00000030|0x00000001)
+	toHighDPI()
+	r := boxW(getConsoleWindows(), "请勿通过双击直接运行本程序, 这将导致一些非预料的后果.\n请在shell中运行./go-cqhttp.exe\n点击确认将释出安全启动脚本，点击取消则关闭程序", "警告", 0x00000030|0x00000001)
 	if r == 2 {
 		return nil
 	}
@@ -59,13 +61,34 @@ func NoMoreDoubleClick() error {
 
 // BoxW of Win32 API. Check https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-messageboxw for more detail.
 func boxW(hwnd uintptr, caption, title string, flags uint) int {
-	captionPtr, _ := syscall.UTF16PtrFromString(caption)
-	titlePtr, _ := syscall.UTF16PtrFromString(title)
-	ret, _, _ := syscall.NewLazyDLL("user32.dll").NewProc("MessageBoxW").Call(
+	captionPtr, _ := windows.UTF16PtrFromString(caption)
+	titlePtr, _ := windows.UTF16PtrFromString(title)
+	u32 := windows.NewLazySystemDLL("user32.dll")
+	ret, _, _ := u32.NewProc("MessageBoxW").Call(
 		hwnd,
 		uintptr(unsafe.Pointer(captionPtr)),
 		uintptr(unsafe.Pointer(titlePtr)),
 		uintptr(flags))
 
 	return int(ret)
+}
+
+// GetConsoleWindows retrieves the window handle used by the console associated with the calling process.
+func getConsoleWindows() (hWnd uintptr) {
+	hWnd, _, _ = windows.NewLazySystemDLL("kernel32.dll").NewProc("GetConsoleWindow").Call()
+	return
+}
+
+// toHighDPI tries to raise DPI awareness context to DPI_AWARENESS_CONTEXT_UNAWARE_GDISCALED
+func toHighDPI() {
+	systemAware := ^uintptr(2) + 1
+	unawareGDIScaled := ^uintptr(5) + 1
+	u32 := windows.NewLazySystemDLL("user32.dll")
+	proc := u32.NewProc("SetThreadDpiAwarenessContext")
+	if proc.Find() != nil {
+		return
+	}
+	for i := unawareGDIScaled; i <= systemAware; i++ {
+		_, _, _ = u32.NewProc("SetThreadDpiAwarenessContext").Call(i)
+	}
 }
