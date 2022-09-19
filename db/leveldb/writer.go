@@ -10,11 +10,11 @@ type intWriter struct {
 	bytes.Buffer
 }
 
-func (w *intWriter) varint(x int64) {
-	w.uvarint(uint64(x)<<1 ^ uint64(x>>63))
+func (w *intWriter) varInt(x int64) {
+	w.varUint(uint64(x)<<1 ^ uint64(x>>63))
 }
 
-func (w *intWriter) uvarint(x uint64) {
+func (w *intWriter) varUint(x uint64) {
 	for x >= 0x80 {
 		w.WriteByte(byte(x) | 0x80)
 		x >>= 7
@@ -24,7 +24,7 @@ func (w *intWriter) uvarint(x uint64) {
 
 // writer implements the index write.
 //
-// data format(use uvarint to encode integers):
+// data format(use varUint to encode integers):
 //
 //   - version
 //   - string data length
@@ -57,15 +57,15 @@ func newWriter() *writer {
 }
 
 func (w *writer) coder(o coder)    { w.data.WriteByte(byte(o)) }
-func (w *writer) varint(x int64)   { w.data.varint(x) }
-func (w *writer) uvarint(x uint64) { w.data.uvarint(x) }
+func (w *writer) varInt(x int64)   { w.data.varInt(x) }
+func (w *writer) varUint(x uint64) { w.data.varUint(x) }
 func (w *writer) nil()             { w.coder(coderNil) }
-func (w *writer) int(i int)        { w.varint(int64(i)) }
-func (w *writer) uint(i uint)      { w.uvarint(uint64(i)) }
-func (w *writer) int32(i int32)    { w.varint(int64(i)) }
-func (w *writer) uint32(i uint32)  { w.uvarint(uint64(i)) }
-func (w *writer) int64(i int64)    { w.varint(i) }
-func (w *writer) uint64(i uint64)  { w.uvarint(i) }
+func (w *writer) int(i int)        { w.varInt(int64(i)) }
+func (w *writer) uint(i uint)      { w.varUint(uint64(i)) }
+func (w *writer) int32(i int32)    { w.varInt(int64(i)) }
+func (w *writer) uint32(i uint32)  { w.varUint(uint64(i)) }
+func (w *writer) int64(i int64)    { w.varInt(i) }
+func (w *writer) uint64(i uint64)  { w.varUint(i) }
 
 func (w *writer) string(s string) {
 	off, ok := w.stringIndex[s]
@@ -73,16 +73,16 @@ func (w *writer) string(s string) {
 		// not found write to string data part
 		// | string length | string |
 		off = uint64(w.strings.Len())
-		w.strings.uvarint(uint64(len(s)))
+		w.strings.varUint(uint64(len(s)))
 		_, _ = w.strings.WriteString(s)
 		w.stringIndex[s] = off
 	}
 	// write offset to index data part
-	w.uvarint(off)
+	w.varUint(off)
 }
 
 func (w *writer) msg(m global.MSG) {
-	w.uvarint(uint64(len(m)))
+	w.varUint(uint64(len(m)))
 	for s, obj := range m {
 		w.string(s)
 		w.obj(obj)
@@ -90,7 +90,7 @@ func (w *writer) msg(m global.MSG) {
 }
 
 func (w *writer) arrayMsg(a []global.MSG) {
-	w.uvarint(uint64(len(a)))
+	w.varUint(uint64(len(a)))
 	for _, v := range a {
 		w.msg(v)
 	}
@@ -134,9 +134,9 @@ func (w *writer) obj(o interface{}) {
 
 func (w *writer) bytes() []byte {
 	var out intWriter
-	out.uvarint(dataVersion)
-	out.uvarint(uint64(w.strings.Len()))
-	out.uvarint(uint64(w.data.Len()))
+	out.varUint(dataVersion)
+	out.varUint(uint64(w.strings.Len()))
+	out.varUint(uint64(w.data.Len()))
 	_, _ = w.strings.WriteTo(&out)
 	_, _ = w.data.WriteTo(&out)
 	return out.Bytes()
