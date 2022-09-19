@@ -59,7 +59,7 @@ func (ldb *database) GetMessageByGlobalID(id int32) (_ db.StoredMessage, err err
 	if err != nil {
 		return nil, err
 	}
-	switch r.varUint() {
+	switch r.uvarint() {
 	case group:
 		return r.readStoredGroupMessage(), nil
 	case private:
@@ -107,7 +107,7 @@ func (ldb *database) GetGuildChannelMessageByID(id string) (*db.StoredGuildChann
 	if err != nil {
 		return nil, err
 	}
-	switch r.varUint() {
+	switch r.uvarint() {
 	case guildChannel:
 		return r.readStoredGuildChannelMessage(), nil
 	default:
@@ -117,7 +117,7 @@ func (ldb *database) GetGuildChannelMessageByID(id string) (*db.StoredGuildChann
 
 func (ldb *database) InsertGroupMessage(msg *db.StoredGroupMessage) error {
 	w := newWriter()
-	w.varUint(group)
+	w.uvarint(group)
 	w.writeStoredGroupMessage(msg)
 	err := ldb.db.Put(binary.ToBytes(msg.GlobalID), w.bytes(), nil)
 	return errors.Wrap(err, "put data error")
@@ -125,7 +125,7 @@ func (ldb *database) InsertGroupMessage(msg *db.StoredGroupMessage) error {
 
 func (ldb *database) InsertPrivateMessage(msg *db.StoredPrivateMessage) error {
 	w := newWriter()
-	w.varUint(private)
+	w.uvarint(private)
 	w.writeStoredPrivateMessage(msg)
 	err := ldb.db.Put(binary.ToBytes(msg.GlobalID), w.bytes(), nil)
 	return errors.Wrap(err, "put data error")
@@ -133,7 +133,7 @@ func (ldb *database) InsertPrivateMessage(msg *db.StoredPrivateMessage) error {
 
 func (ldb *database) InsertGuildChannelMessage(msg *db.StoredGuildChannelMessage) error {
 	w := newWriter()
-	w.varUint(guildChannel)
+	w.uvarint(guildChannel)
 	w.writeStoredGuildChannelMessage(msg)
 	err := ldb.db.Put(utils.S2B(msg.ID), w.bytes(), nil)
 	return errors.Wrap(err, "put data error")
