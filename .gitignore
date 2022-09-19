@@ -9,3 +9,6 @@ data/
 logs/
 internal/btree/*.lock
 internal/btree/*.db
+
+# binary builds
+go-cqhttp
