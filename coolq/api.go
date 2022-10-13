@@ -27,6 +27,7 @@ import (
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
 	"github.com/Mrs4s/go-cqhttp/internal/cache"
+	"github.com/Mrs4s/go-cqhttp/internal/download"
 	"github.com/Mrs4s/go-cqhttp/internal/param"
 	"github.com/Mrs4s/go-cqhttp/modules/filter"
 )
@@ -1545,12 +1546,8 @@ func (bot *CQBot) CQGetImage(file string) global.MSG {
 		}
 		local := path.Join(global.CachePath, file+path.Ext(msg["filename"].(string)))
 		if !global.PathExists(local) {
-			if body, err := global.HTTPGetReadCloser(msg["url"].(string)); err == nil {
-				f, _ := os.OpenFile(local, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o0644)
-				_, _ = f.ReadFrom(body)
-				_ = body.Close()
-				_ = f.Close()
-			} else {
+			r := download.Request{URL: msg["url"].(string)}
+			if err := r.WriteToFile(local); err != nil {
 				log.Warnf("下载图片 %v 时出现错误: %v", msg["url"], err)
 				return Failed(100, "DOWNLOAD_IMAGE_ERROR", err.Error())
 			}
@@ -1593,7 +1590,8 @@ func (bot *CQBot) CQDownloadFile(url string, headers gjson.Result, threadCount i
 			return Failed(100, "DELETE_FILE_ERROR", err.Error())
 		}
 	}
-	if err := global.DownloadFileMultiThreading(url, file, 0, threadCount, h); err != nil {
+	r := download.Request{URL: url, Header: h}
+	if err := r.WriteToFileMultiThreading(file, threadCount); err != nil {
 		log.Warnf("下载链接 %v 时出现错误: %v", url, err)
 		return Failed(100, "DOWNLOAD_FILE_ERROR", err.Error())
 	}

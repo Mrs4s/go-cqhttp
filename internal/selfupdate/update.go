@@ -3,6 +3,7 @@ package selfupdate
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/hex"
 	"fmt"
 	"hash"
@@ -14,10 +15,10 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
-	"github.com/tidwall/gjson"
 
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
+	"github.com/Mrs4s/go-cqhttp/internal/download"
 )
 
 func readLine() (str string) {
@@ -28,11 +29,11 @@ func readLine() (str string) {
 }
 
 func lastVersion() (string, error) {
-	r, err := global.GetBytes("https://api.github.com/repos/Mrs4s/go-cqhttp/releases/latest")
+	r, err := download.Request{URL: "https://api.github.com/repos/Mrs4s/go-cqhttp/releases/latest"}.JSON()
 	if err != nil {
 		return "", err
 	}
-	return gjson.GetBytes(r, "tag_name").Str, nil
+	return r.Get("tag_name").Str, nil
 }
 
 // CheckUpdate 检查更新
@@ -69,12 +70,12 @@ func binaryName() string {
 
 func checksum(github, version string) []byte {
 	sumURL := fmt.Sprintf("%v/Mrs4s/go-cqhttp/releases/download/%v/go-cqhttp_checksums.txt", github, version)
-	closer, err := global.HTTPGetReadCloser(sumURL)
+	sum, err := download.Request{URL: sumURL}.Bytes()
 	if err != nil {
 		return nil
 	}
 
-	rd := bufio.NewReader(closer)
+	rd := bufio.NewReader(bytes.NewReader(sum))
 	for {
 		str, err := rd.ReadString('\n')
 		if err != nil {
