@@ -1,3 +1,4 @@
+// Package download provide download utility functions
 package download
 
 import (
@@ -39,6 +40,7 @@ var ErrOverSize = errors.New("oversize")
 // UserAgent HTTP请求时使用的UA
 const UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36 Edg/87.0.664.66"
 
+// Request is a file download request
 type Request struct {
 	URL    string
 	Header map[string]string
@@ -87,6 +89,7 @@ func (r Request) Bytes() ([]byte, error) {
 	return io.ReadAll(rd)
 }
 
+// JSON 发送GET请求， 并转换响应为JSON
 func (r Request) JSON() (gjson.Result, error) {
 	rd, err := r.body()
 	if err != nil {
@@ -112,6 +115,7 @@ func writeToFile(reader io.ReadCloser, path string) error {
 	return err
 }
 
+// WriteToFile 下载到制定目录
 func (r Request) WriteToFile(path string) error {
 	rd, err := r.body()
 	if err != nil {
@@ -121,6 +125,7 @@ func (r Request) WriteToFile(path string) error {
 	return writeToFile(rd, path)
 }
 
+// WriteToFileMultiThreading 多线程下载到制定目录
 func (r Request) WriteToFileMultiThreading(path string, thread int) error {
 	if thread < 2 {
 		return r.WriteToFile(path)
