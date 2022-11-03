@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"path"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -54,9 +53,7 @@ var (
 
 // Parse parse flags
 func Parse() {
-	wd, _ := os.Getwd()
-	dc := path.Join(wd, "config.yml")
-	flag.StringVar(&LittleC, "c", dc, "configuration filename")
+	flag.StringVar(&LittleC, "c", "config.yml", "configuration filename")
 	flag.BoolVar(&LittleD, "d", false, "running as a daemon")
 	flag.BoolVar(&LittleH, "h", false, "this Help")
 	flag.StringVar(&LittleWD, "w", "", "cover the working directory")
