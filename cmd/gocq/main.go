@@ -55,13 +55,14 @@ func Main() {
 	switch {
 	case base.LittleH:
 		base.Help()
-	case base.LittleWD != "":
+	case base.LittleD:
+		server.Daemon()
+	}
+	if base.LittleWD != "" {
 		err := os.Chdir(base.LittleWD)
 		if err != nil {
 			log.Fatalf("重置工作目录时出现错误: %v", err)
 		}
-	case base.LittleD:
-		server.Daemon()
 	}
 	base.Init()
 
