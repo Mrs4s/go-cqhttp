@@ -4,6 +4,7 @@
 package sqlite3
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"hash/crc64"
 	"os"
@@ -179,10 +180,14 @@ func (s *database) GetPrivateMessageByGlobalID(id int32) (*db.StoredPrivateMessa
 }
 
 func (s *database) GetGuildChannelMessageByID(id string) (*db.StoredGuildChannelMessage, error) {
+	_, err := base64.StdEncoding.DecodeString(id)
+	if err != nil {
+		return nil, errors.Wrap(err, "query invalid id error")
+	}
 	var ret db.StoredGuildChannelMessage
 	var guildmsg StoredGuildChannelMessage
 	s.RLock()
-	err := s.db.Find(Sqlite3GuildChannelMessageTableName, &guildmsg, "WHERE ID='"+id+"'")
+	err = s.db.Find(Sqlite3GuildChannelMessageTableName, &guildmsg, "WHERE ID='"+id+"'")
 	s.RUnlock()
 	if err != nil {
 		return nil, errors.Wrap(err, "query error")
