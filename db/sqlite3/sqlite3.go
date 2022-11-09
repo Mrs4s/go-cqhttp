@@ -1,5 +1,5 @@
-//go:build !((windows || arm) && (windows || arm64))
-// +build !windows,!arm !windows,!arm64
+//go:build !(windows && (arm || arm64))
+// +build !windows !arm,!arm64
 
 package sqlite3
 
