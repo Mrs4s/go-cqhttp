@@ -44,6 +44,7 @@ func init() {
 func (s *database) Open() error {
 	s.db.DBPath = path.Join("data", "sqlite3")
 	_ = os.MkdirAll(s.db.DBPath, 0755)
+	s.db.DBPath += "/msg.db"
 	err := s.db.Open(s.ttl)
 	if err != nil {
 		return errors.Wrap(err, "open sqlite3 error")
