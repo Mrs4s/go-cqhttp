@@ -1,3 +1,6 @@
+//go:build !((windows || arm) && (windows || arm64))
+// +build !windows,!arm !windows,!arm64
+
 package sqlite3
 
 const (
