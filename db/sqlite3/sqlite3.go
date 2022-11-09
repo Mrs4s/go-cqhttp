@@ -180,9 +180,12 @@ func (s *database) GetPrivateMessageByGlobalID(id int32) (*db.StoredPrivateMessa
 }
 
 func (s *database) GetGuildChannelMessageByID(id string) (*db.StoredGuildChannelMessage, error) {
-	_, err := base64.StdEncoding.DecodeString(id)
+	b, err := base64.StdEncoding.DecodeString(id)
 	if err != nil {
 		return nil, errors.Wrap(err, "query invalid id error")
+	}
+	if len(b) < 25 {
+		return nil, errors.New("query invalid id error: content too short")
 	}
 	var ret db.StoredGuildChannelMessage
 	var guildmsg StoredGuildChannelMessage
