@@ -73,29 +73,33 @@ func (s *database) GetGroupMessageByGlobalID(id int32) (*db.StoredGroupMessage, 
 	ret.GroupCode = grpmsg.GroupCode
 	ret.AnonymousID = grpmsg.AnonymousID
 	_ = json.Unmarshal(utils.S2B(grpmsg.Content), &ret.Content)
-	var attr StoredMessageAttribute
-	s.RLock()
-	err = s.db.Find(Sqlite3MessageAttributeTableName, &attr, "WHERE ID="+strconv.FormatInt(grpmsg.AttributeID, 10))
-	s.RUnlock()
-	if err == nil {
-		ret.Attribute = &db.StoredMessageAttribute{
-			MessageSeq: attr.MessageSeq,
-			InternalID: attr.InternalID,
-			SenderUin:  attr.SenderUin,
-			SenderName: attr.SenderName,
-			Timestamp:  attr.Timestamp,
+	if grpmsg.AttributeID != 0 {
+		var attr StoredMessageAttribute
+		s.RLock()
+		err = s.db.Find(Sqlite3MessageAttributeTableName, &attr, "WHERE ID="+strconv.FormatInt(grpmsg.AttributeID, 10))
+		s.RUnlock()
+		if err == nil {
+			ret.Attribute = &db.StoredMessageAttribute{
+				MessageSeq: attr.MessageSeq,
+				InternalID: attr.InternalID,
+				SenderUin:  attr.SenderUin,
+				SenderName: attr.SenderName,
+				Timestamp:  attr.Timestamp,
+			}
 		}
 	}
-	var quoinf QuotedInfo
-	s.RLock()
-	err = s.db.Find(Sqlite3QuotedInfoTableName, &quoinf, "WHERE ID="+strconv.FormatInt(grpmsg.QuotedInfoID, 10))
-	s.RUnlock()
-	if err == nil {
-		ret.QuotedInfo = &db.QuotedInfo{
-			PrevID:       quoinf.PrevID,
-			PrevGlobalID: quoinf.PrevGlobalID,
+	if grpmsg.QuotedInfoID != 0 {
+		var quoinf QuotedInfo
+		s.RLock()
+		err = s.db.Find(Sqlite3QuotedInfoTableName, &quoinf, "WHERE ID="+strconv.FormatInt(grpmsg.QuotedInfoID, 10))
+		s.RUnlock()
+		if err == nil {
+			ret.QuotedInfo = &db.QuotedInfo{
+				PrevID:       quoinf.PrevID,
+				PrevGlobalID: quoinf.PrevGlobalID,
+			}
+			_ = json.Unmarshal(utils.S2B(quoinf.QuotedContent), &ret.QuotedInfo.QuotedContent)
 		}
-		_ = json.Unmarshal(utils.S2B(quoinf.QuotedContent), &ret.QuotedInfo.QuotedContent)
 	}
 	return &ret, nil
 }
@@ -115,29 +119,33 @@ func (s *database) GetPrivateMessageByGlobalID(id int32) (*db.StoredPrivateMessa
 	ret.SessionUin = privmsg.SessionUin
 	ret.TargetUin = privmsg.TargetUin
 	_ = json.Unmarshal(utils.S2B(privmsg.Content), &ret.Content)
-	var attr StoredMessageAttribute
-	s.RLock()
-	err = s.db.Find(Sqlite3MessageAttributeTableName, &attr, "WHERE ID="+strconv.FormatInt(privmsg.AttributeID, 10))
-	s.RUnlock()
-	if err == nil {
-		ret.Attribute = &db.StoredMessageAttribute{
-			MessageSeq: attr.MessageSeq,
-			InternalID: attr.InternalID,
-			SenderUin:  attr.SenderUin,
-			SenderName: attr.SenderName,
-			Timestamp:  attr.Timestamp,
+	if privmsg.AttributeID != 0 {
+		var attr StoredMessageAttribute
+		s.RLock()
+		err = s.db.Find(Sqlite3MessageAttributeTableName, &attr, "WHERE ID="+strconv.FormatInt(privmsg.AttributeID, 10))
+		s.RUnlock()
+		if err == nil {
+			ret.Attribute = &db.StoredMessageAttribute{
+				MessageSeq: attr.MessageSeq,
+				InternalID: attr.InternalID,
+				SenderUin:  attr.SenderUin,
+				SenderName: attr.SenderName,
+				Timestamp:  attr.Timestamp,
+			}
 		}
 	}
-	var quoinf QuotedInfo
-	s.RLock()
-	err = s.db.Find(Sqlite3QuotedInfoTableName, &quoinf, "WHERE ID="+strconv.FormatInt(privmsg.QuotedInfoID, 10))
-	s.RUnlock()
-	if err == nil {
-		ret.QuotedInfo = &db.QuotedInfo{
-			PrevID:       quoinf.PrevID,
-			PrevGlobalID: quoinf.PrevGlobalID,
+	if privmsg.QuotedInfoID != 0 {
+		var quoinf QuotedInfo
+		s.RLock()
+		err = s.db.Find(Sqlite3QuotedInfoTableName, &quoinf, "WHERE ID="+strconv.FormatInt(privmsg.QuotedInfoID, 10))
+		s.RUnlock()
+		if err == nil {
+			ret.QuotedInfo = &db.QuotedInfo{
+				PrevID:       quoinf.PrevID,
+				PrevGlobalID: quoinf.PrevGlobalID,
+			}
+			_ = json.Unmarshal(utils.S2B(quoinf.QuotedContent), &ret.QuotedInfo.QuotedContent)
 		}
-		_ = json.Unmarshal(utils.S2B(quoinf.QuotedContent), &ret.QuotedInfo.QuotedContent)
 	}
 	return &ret, nil
 }
@@ -155,29 +163,33 @@ func (s *database) GetGuildChannelMessageByID(id string) (*db.StoredGuildChannel
 	ret.GuildID = uint64(guildmsg.GuildID)
 	ret.ChannelID = uint64(guildmsg.ChannelID)
 	_ = json.Unmarshal(utils.S2B(guildmsg.Content), &ret.Content)
-	var attr StoredGuildMessageAttribute
-	s.RLock()
-	err = s.db.Find(Sqlite3GuildMessageAttributeTableName, &attr, "WHERE ID="+strconv.FormatInt(guildmsg.AttributeID, 10))
-	s.RUnlock()
-	if err == nil {
-		ret.Attribute = &db.StoredGuildMessageAttribute{
-			MessageSeq:   uint64(attr.MessageSeq),
-			InternalID:   uint64(attr.InternalID),
-			SenderTinyID: uint64(attr.SenderTinyID),
-			SenderName:   attr.SenderName,
-			Timestamp:    attr.Timestamp,
+	if guildmsg.AttributeID != 0 {
+		var attr StoredGuildMessageAttribute
+		s.RLock()
+		err = s.db.Find(Sqlite3GuildMessageAttributeTableName, &attr, "WHERE ID="+strconv.FormatInt(guildmsg.AttributeID, 10))
+		s.RUnlock()
+		if err == nil {
+			ret.Attribute = &db.StoredGuildMessageAttribute{
+				MessageSeq:   uint64(attr.MessageSeq),
+				InternalID:   uint64(attr.InternalID),
+				SenderTinyID: uint64(attr.SenderTinyID),
+				SenderName:   attr.SenderName,
+				Timestamp:    attr.Timestamp,
+			}
 		}
 	}
-	var quoinf QuotedInfo
-	s.RLock()
-	err = s.db.Find(Sqlite3QuotedInfoTableName, &quoinf, "WHERE ID="+strconv.FormatInt(guildmsg.QuotedInfoID, 10))
-	s.RUnlock()
-	if err == nil {
-		ret.QuotedInfo = &db.QuotedInfo{
-			PrevID:       quoinf.PrevID,
-			PrevGlobalID: quoinf.PrevGlobalID,
+	if guildmsg.QuotedInfoID != 0 {
+		var quoinf QuotedInfo
+		s.RLock()
+		err = s.db.Find(Sqlite3QuotedInfoTableName, &quoinf, "WHERE ID="+strconv.FormatInt(guildmsg.QuotedInfoID, 10))
+		s.RUnlock()
+		if err == nil {
+			ret.QuotedInfo = &db.QuotedInfo{
+				PrevID:       quoinf.PrevID,
+				PrevGlobalID: quoinf.PrevGlobalID,
+			}
+			_ = json.Unmarshal(utils.S2B(quoinf.QuotedContent), &ret.QuotedInfo.QuotedContent)
 		}
-		_ = json.Unmarshal(utils.S2B(quoinf.QuotedContent), &ret.QuotedInfo.QuotedContent)
 	}
 	return &ret, nil
 }
@@ -200,6 +212,9 @@ func (s *database) InsertGroupMessage(msg *db.StoredGroupMessage) error {
 		}))
 		h.Write(utils.S2B(msg.Attribute.SenderName))
 		id := int64(h.Sum64())
+		if id == 0 {
+			id++
+		}
 		s.Lock()
 		err := s.db.Insert(Sqlite3MessageAttributeTableName, &StoredMessageAttribute{
 			ID:         id,
@@ -226,6 +241,9 @@ func (s *database) InsertGroupMessage(msg *db.StoredGroupMessage) error {
 		}
 		h.Write(content)
 		id := int64(h.Sum64())
+		if id == 0 {
+			id++
+		}
 		s.Lock()
 		err = s.db.Insert(Sqlite3QuotedInfoTableName, &QuotedInfo{
 			ID:            id,
@@ -270,6 +288,9 @@ func (s *database) InsertPrivateMessage(msg *db.StoredPrivateMessage) error {
 		}))
 		h.Write(utils.S2B(msg.Attribute.SenderName))
 		id := int64(h.Sum64())
+		if id == 0 {
+			id++
+		}
 		s.Lock()
 		err := s.db.Insert(Sqlite3MessageAttributeTableName, &StoredMessageAttribute{
 			ID:         id,
@@ -296,6 +317,9 @@ func (s *database) InsertPrivateMessage(msg *db.StoredPrivateMessage) error {
 		}
 		h.Write(content)
 		id := int64(h.Sum64())
+		if id == 0 {
+			id++
+		}
 		s.Lock()
 		err = s.db.Insert(Sqlite3QuotedInfoTableName, &QuotedInfo{
 			ID:            id,
@@ -338,6 +362,9 @@ func (s *database) InsertGuildChannelMessage(msg *db.StoredGuildChannelMessage) 
 		}))
 		h.Write(utils.S2B(msg.Attribute.SenderName))
 		id := int64(h.Sum64())
+		if id == 0 {
+			id++
+		}
 		s.Lock()
 		err := s.db.Insert(Sqlite3MessageAttributeTableName, &StoredGuildMessageAttribute{
 			ID:           id,
@@ -364,6 +391,9 @@ func (s *database) InsertGuildChannelMessage(msg *db.StoredGuildChannelMessage) 
 		}
 		h.Write(content)
 		id := int64(h.Sum64())
+		if id == 0 {
+			id++
+		}
 		s.Lock()
 		err = s.db.Insert(Sqlite3QuotedInfoTableName, &QuotedInfo{
 			ID:            id,
