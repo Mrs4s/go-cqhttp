@@ -48,6 +48,30 @@ func (s *database) Open() error {
 	if err != nil {
 		return errors.Wrap(err, "open sqlite3 error")
 	}
+	err = s.db.Create(Sqlite3GroupMessageTableName, &StoredGroupMessage{})
+	if err != nil {
+		return errors.Wrap(err, "create sqlite3 table error")
+	}
+	err = s.db.Create(Sqlite3MessageAttributeTableName, &StoredMessageAttribute{})
+	if err != nil {
+		return errors.Wrap(err, "create sqlite3 table error")
+	}
+	err = s.db.Create(Sqlite3GuildMessageAttributeTableName, &StoredGuildMessageAttribute{})
+	if err != nil {
+		return errors.Wrap(err, "create sqlite3 table error")
+	}
+	err = s.db.Create(Sqlite3QuotedInfoTableName, &QuotedInfo{})
+	if err != nil {
+		return errors.Wrap(err, "create sqlite3 table error")
+	}
+	err = s.db.Create(Sqlite3PrivateMessageTableName, &StoredPrivateMessage{})
+	if err != nil {
+		return errors.Wrap(err, "create sqlite3 table error")
+	}
+	err = s.db.Create(Sqlite3GuildChannelMessageTableName, &StoredGuildChannelMessage{})
+	if err != nil {
+		return errors.Wrap(err, "create sqlite3 table error")
+	}
 	return nil
 }
 
