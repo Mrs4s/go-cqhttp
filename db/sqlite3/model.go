@@ -10,6 +10,8 @@ const (
 	Sqlite3QuotedInfoTableName            = "quoinf"
 	Sqlite3PrivateMessageTableName        = "privmsg"
 	Sqlite3GuildChannelMessageTableName   = "guildmsg"
+	Sqlite3UinInfoTableName               = "uininf"
+	Sqlite3TinyInfoTableName              = "tinyinf"
 )
 
 // StoredMessageAttribute 持久化消息属性
@@ -18,7 +20,6 @@ type StoredMessageAttribute struct {
 	MessageSeq int32
 	InternalID int32
 	SenderUin  int64
-	SenderName string
 	Timestamp  int64
 }
 
@@ -28,7 +29,6 @@ type StoredGuildMessageAttribute struct {
 	MessageSeq   int64
 	InternalID   int64
 	SenderTinyID int64
-	SenderName   string
 	Timestamp    int64
 }
 
@@ -38,6 +38,18 @@ type QuotedInfo struct {
 	PrevID        string
 	PrevGlobalID  int32
 	QuotedContent string // QuotedContent is json of original content
+}
+
+// UinInfo QQ 与 昵称
+type UinInfo struct {
+	Uin  int64
+	Name string
+}
+
+// TinyInfo Tiny 与 昵称
+type TinyInfo struct {
+	ID   int64
+	Name string
 }
 
 // StoredGroupMessage 持久化群消息

@@ -77,6 +77,14 @@ func (s *database) Open() error {
 	if err != nil {
 		return errors.Wrap(err, "create sqlite3 table error")
 	}
+	err = s.db.Create(Sqlite3UinInfoTableName, &UinInfo{})
+	if err != nil {
+		return errors.Wrap(err, "create sqlite3 table error")
+	}
+	err = s.db.Create(Sqlite3TinyInfoTableName, &TinyInfo{})
+	if err != nil {
+		return errors.Wrap(err, "create sqlite3 table error")
+	}
 	return nil
 }
 
@@ -108,12 +116,18 @@ func (s *database) GetGroupMessageByGlobalID(id int32) (*db.StoredGroupMessage, 
 		err = s.db.Find(Sqlite3MessageAttributeTableName, &attr, "WHERE ID="+strconv.FormatInt(grpmsg.AttributeID, 10))
 		s.RUnlock()
 		if err == nil {
-			ret.Attribute = &db.StoredMessageAttribute{
-				MessageSeq: attr.MessageSeq,
-				InternalID: attr.InternalID,
-				SenderUin:  attr.SenderUin,
-				SenderName: attr.SenderName,
-				Timestamp:  attr.Timestamp,
+			var uin UinInfo
+			s.RLock()
+			err = s.db.Find(Sqlite3UinInfoTableName, &attr, "WHERE Uin="+strconv.FormatInt(attr.SenderUin, 10))
+			s.RUnlock()
+			if err == nil {
+				ret.Attribute = &db.StoredMessageAttribute{
+					MessageSeq: attr.MessageSeq,
+					InternalID: attr.InternalID,
+					SenderUin:  attr.SenderUin,
+					SenderName: uin.Name,
+					Timestamp:  attr.Timestamp,
+				}
 			}
 		}
 	}
@@ -154,12 +168,18 @@ func (s *database) GetPrivateMessageByGlobalID(id int32) (*db.StoredPrivateMessa
 		err = s.db.Find(Sqlite3MessageAttributeTableName, &attr, "WHERE ID="+strconv.FormatInt(privmsg.AttributeID, 10))
 		s.RUnlock()
 		if err == nil {
-			ret.Attribute = &db.StoredMessageAttribute{
-				MessageSeq: attr.MessageSeq,
-				InternalID: attr.InternalID,
-				SenderUin:  attr.SenderUin,
-				SenderName: attr.SenderName,
-				Timestamp:  attr.Timestamp,
+			var uin UinInfo
+			s.RLock()
+			err = s.db.Find(Sqlite3UinInfoTableName, &attr, "WHERE Uin="+strconv.FormatInt(attr.SenderUin, 10))
+			s.RUnlock()
+			if err == nil {
+				ret.Attribute = &db.StoredMessageAttribute{
+					MessageSeq: attr.MessageSeq,
+					InternalID: attr.InternalID,
+					SenderUin:  attr.SenderUin,
+					SenderName: uin.Name,
+					Timestamp:  attr.Timestamp,
+				}
 			}
 		}
 	}
@@ -205,12 +225,18 @@ func (s *database) GetGuildChannelMessageByID(id string) (*db.StoredGuildChannel
 		err = s.db.Find(Sqlite3GuildMessageAttributeTableName, &attr, "WHERE ID="+strconv.FormatInt(guildmsg.AttributeID, 10))
 		s.RUnlock()
 		if err == nil {
-			ret.Attribute = &db.StoredGuildMessageAttribute{
-				MessageSeq:   uint64(attr.MessageSeq),
-				InternalID:   uint64(attr.InternalID),
-				SenderTinyID: uint64(attr.SenderTinyID),
-				SenderName:   attr.SenderName,
-				Timestamp:    attr.Timestamp,
+			var tiny TinyInfo
+			s.RLock()
+			err = s.db.Find(Sqlite3TinyInfoTableName, &attr, "WHERE ID="+strconv.FormatInt(attr.SenderTinyID, 10))
+			s.RUnlock()
+			if err == nil {
+				ret.Attribute = &db.StoredGuildMessageAttribute{
+					MessageSeq:   uint64(attr.MessageSeq),
+					InternalID:   uint64(attr.InternalID),
+					SenderTinyID: uint64(attr.SenderTinyID),
+					SenderName:   tiny.Name,
+					Timestamp:    attr.Timestamp,
+				}
 			}
 		}
 	}
@@ -252,14 +278,19 @@ func (s *database) InsertGroupMessage(msg *db.StoredGroupMessage) error {
 			id++
 		}
 		s.Lock()
-		err := s.db.Insert(Sqlite3MessageAttributeTableName, &StoredMessageAttribute{
-			ID:         id,
-			MessageSeq: msg.Attribute.MessageSeq,
-			InternalID: msg.Attribute.InternalID,
-			SenderUin:  msg.Attribute.SenderUin,
-			SenderName: msg.Attribute.SenderName,
-			Timestamp:  msg.Attribute.Timestamp,
+		err := s.db.Insert(Sqlite3UinInfoTableName, &UinInfo{
+			Uin:  msg.Attribute.SenderUin,
+			Name: msg.Attribute.SenderName,
 		})
+		if err == nil {
+			err = s.db.Insert(Sqlite3MessageAttributeTableName, &StoredMessageAttribute{
+				ID:         id,
+				MessageSeq: msg.Attribute.MessageSeq,
+				InternalID: msg.Attribute.InternalID,
+				SenderUin:  msg.Attribute.SenderUin,
+				Timestamp:  msg.Attribute.Timestamp,
+			})
+		}
 		s.Unlock()
 		if err == nil {
 			grpmsg.AttributeID = id
@@ -328,14 +359,19 @@ func (s *database) InsertPrivateMessage(msg *db.StoredPrivateMessage) error {
 			id++
 		}
 		s.Lock()
-		err := s.db.Insert(Sqlite3MessageAttributeTableName, &StoredMessageAttribute{
-			ID:         id,
-			MessageSeq: msg.Attribute.MessageSeq,
-			InternalID: msg.Attribute.InternalID,
-			SenderUin:  msg.Attribute.SenderUin,
-			SenderName: msg.Attribute.SenderName,
-			Timestamp:  msg.Attribute.Timestamp,
+		err := s.db.Insert(Sqlite3UinInfoTableName, &UinInfo{
+			Uin:  msg.Attribute.SenderUin,
+			Name: msg.Attribute.SenderName,
 		})
+		if err == nil {
+			err = s.db.Insert(Sqlite3MessageAttributeTableName, &StoredMessageAttribute{
+				ID:         id,
+				MessageSeq: msg.Attribute.MessageSeq,
+				InternalID: msg.Attribute.InternalID,
+				SenderUin:  msg.Attribute.SenderUin,
+				Timestamp:  msg.Attribute.Timestamp,
+			})
+		}
 		s.Unlock()
 		if err == nil {
 			privmsg.AttributeID = id
@@ -402,14 +438,19 @@ func (s *database) InsertGuildChannelMessage(msg *db.StoredGuildChannelMessage) 
 			id++
 		}
 		s.Lock()
-		err := s.db.Insert(Sqlite3MessageAttributeTableName, &StoredGuildMessageAttribute{
-			ID:           id,
-			MessageSeq:   int64(msg.Attribute.MessageSeq),
-			InternalID:   int64(msg.Attribute.InternalID),
-			SenderTinyID: int64(msg.Attribute.SenderTinyID),
-			SenderName:   msg.Attribute.SenderName,
-			Timestamp:    msg.Attribute.Timestamp,
+		err := s.db.Insert(Sqlite3TinyInfoTableName, &TinyInfo{
+			ID:   int64(msg.Attribute.SenderTinyID),
+			Name: msg.Attribute.SenderName,
 		})
+		if err == nil {
+			err = s.db.Insert(Sqlite3MessageAttributeTableName, &StoredGuildMessageAttribute{
+				ID:           id,
+				MessageSeq:   int64(msg.Attribute.MessageSeq),
+				InternalID:   int64(msg.Attribute.InternalID),
+				SenderTinyID: int64(msg.Attribute.SenderTinyID),
+				Timestamp:    msg.Attribute.Timestamp,
+			})
+		}
 		s.Unlock()
 		if err == nil {
 			guildmsg.AttributeID = id
