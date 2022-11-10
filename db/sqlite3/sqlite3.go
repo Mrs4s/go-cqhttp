@@ -5,7 +5,6 @@ package sqlite3
 
 import (
 	"encoding/base64"
-	"encoding/json"
 	"hash/crc64"
 	"os"
 	"path"
@@ -146,7 +145,7 @@ func (s *database) GetGroupMessageByGlobalID(id int32) (*db.StoredGroupMessage, 
 	ret.SubType = grpmsg.SubType
 	ret.GroupCode = grpmsg.GroupCode
 	ret.AnonymousID = grpmsg.AnonymousID
-	_ = json.Unmarshal(utils.S2B(grpmsg.Content), &ret.Content)
+	_ = yaml.Unmarshal(utils.S2B(grpmsg.Content), &ret)
 	if grpmsg.AttributeID != 0 {
 		var attr StoredMessageAttribute
 		s.RLock()
@@ -178,7 +177,7 @@ func (s *database) GetGroupMessageByGlobalID(id int32) (*db.StoredGroupMessage, 
 				PrevID:       quoinf.PrevID,
 				PrevGlobalID: quoinf.PrevGlobalID,
 			}
-			_ = json.Unmarshal(utils.S2B(quoinf.QuotedContent), &ret.QuotedInfo.QuotedContent)
+			_ = yaml.Unmarshal(utils.S2B(quoinf.QuotedContent), &ret.QuotedInfo)
 		}
 	}
 	return &ret, nil
@@ -198,7 +197,7 @@ func (s *database) GetPrivateMessageByGlobalID(id int32) (*db.StoredPrivateMessa
 	ret.SubType = privmsg.SubType
 	ret.SessionUin = privmsg.SessionUin
 	ret.TargetUin = privmsg.TargetUin
-	_ = json.Unmarshal(utils.S2B(privmsg.Content), &ret.Content)
+	_ = yaml.Unmarshal(utils.S2B(privmsg.Content), &ret)
 	if privmsg.AttributeID != 0 {
 		var attr StoredMessageAttribute
 		s.RLock()
@@ -230,7 +229,7 @@ func (s *database) GetPrivateMessageByGlobalID(id int32) (*db.StoredPrivateMessa
 				PrevID:       quoinf.PrevID,
 				PrevGlobalID: quoinf.PrevGlobalID,
 			}
-			_ = json.Unmarshal(utils.S2B(quoinf.QuotedContent), &ret.QuotedInfo.QuotedContent)
+			_ = yaml.Unmarshal(utils.S2B(quoinf.QuotedContent), &ret.QuotedInfo)
 		}
 	}
 	return &ret, nil
@@ -255,7 +254,7 @@ func (s *database) GetGuildChannelMessageByID(id string) (*db.StoredGuildChannel
 	ret.ID = guildmsg.ID
 	ret.GuildID = uint64(guildmsg.GuildID)
 	ret.ChannelID = uint64(guildmsg.ChannelID)
-	_ = json.Unmarshal(utils.S2B(guildmsg.Content), &ret.Content)
+	_ = yaml.Unmarshal(utils.S2B(guildmsg.Content), &ret)
 	if guildmsg.AttributeID != 0 {
 		var attr StoredGuildMessageAttribute
 		s.RLock()
@@ -287,7 +286,7 @@ func (s *database) GetGuildChannelMessageByID(id string) (*db.StoredGuildChannel
 				PrevID:       quoinf.PrevID,
 				PrevGlobalID: quoinf.PrevGlobalID,
 			}
-			_ = json.Unmarshal(utils.S2B(quoinf.QuotedContent), &ret.QuotedInfo.QuotedContent)
+			_ = yaml.Unmarshal(utils.S2B(quoinf.QuotedContent), &ret.QuotedInfo)
 		}
 	}
 	return &ret, nil
@@ -339,7 +338,7 @@ func (s *database) InsertGroupMessage(msg *db.StoredGroupMessage) error {
 		h.Write(binary.NewWriterF(func(w *binary.Writer) {
 			w.WriteUInt32(uint32(msg.QuotedInfo.PrevGlobalID))
 		}))
-		content, err := json.Marshal(&msg.QuotedInfo.QuotedContent)
+		content, err := yaml.Marshal(&msg.QuotedInfo)
 		if err != nil {
 			return errors.Wrap(err, "insert marshal QuotedContent error")
 		}
@@ -360,7 +359,7 @@ func (s *database) InsertGroupMessage(msg *db.StoredGroupMessage) error {
 			grpmsg.QuotedInfoID = id
 		}
 	}
-	content, err := json.Marshal(&msg.Content)
+	content, err := yaml.Marshal(&msg)
 	if err != nil {
 		return errors.Wrap(err, "insert marshal Content error")
 	}
@@ -420,7 +419,7 @@ func (s *database) InsertPrivateMessage(msg *db.StoredPrivateMessage) error {
 		h.Write(binary.NewWriterF(func(w *binary.Writer) {
 			w.WriteUInt32(uint32(msg.QuotedInfo.PrevGlobalID))
 		}))
-		content, err := json.Marshal(&msg.QuotedInfo.QuotedContent)
+		content, err := yaml.Marshal(&msg.QuotedInfo)
 		if err != nil {
 			return errors.Wrap(err, "insert marshal QuotedContent error")
 		}
@@ -441,7 +440,7 @@ func (s *database) InsertPrivateMessage(msg *db.StoredPrivateMessage) error {
 			privmsg.QuotedInfoID = id
 		}
 	}
-	content, err := json.Marshal(&msg.Content)
+	content, err := yaml.Marshal(&msg)
 	if err != nil {
 		return errors.Wrap(err, "insert marshal Content error")
 	}
@@ -499,7 +498,7 @@ func (s *database) InsertGuildChannelMessage(msg *db.StoredGuildChannelMessage) 
 		h.Write(binary.NewWriterF(func(w *binary.Writer) {
 			w.WriteUInt32(uint32(msg.QuotedInfo.PrevGlobalID))
 		}))
-		content, err := json.Marshal(&msg.QuotedInfo.QuotedContent)
+		content, err := yaml.Marshal(&msg.QuotedInfo)
 		if err != nil {
 			return errors.Wrap(err, "insert marshal QuotedContent error")
 		}
@@ -520,7 +519,7 @@ func (s *database) InsertGuildChannelMessage(msg *db.StoredGuildChannelMessage) 
 			guildmsg.QuotedInfoID = id
 		}
 	}
-	content, err := json.Marshal(&msg.Content)
+	content, err := yaml.Marshal(&msg)
 	if err != nil {
 		return errors.Wrap(err, "insert marshal Content error")
 	}
