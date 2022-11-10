@@ -155,7 +155,7 @@ func (s *database) GetGroupMessageByGlobalID(id int32) (*db.StoredGroupMessage, 
 		if err == nil {
 			var uin UinInfo
 			s.RLock()
-			err = s.db.Find(Sqlite3UinInfoTableName, &attr, "WHERE Uin="+strconv.FormatInt(attr.SenderUin, 10))
+			err = s.db.Find(Sqlite3UinInfoTableName, &uin, "WHERE Uin="+strconv.FormatInt(attr.SenderUin, 10))
 			s.RUnlock()
 			if err == nil {
 				ret.Attribute = &db.StoredMessageAttribute{
@@ -207,7 +207,7 @@ func (s *database) GetPrivateMessageByGlobalID(id int32) (*db.StoredPrivateMessa
 		if err == nil {
 			var uin UinInfo
 			s.RLock()
-			err = s.db.Find(Sqlite3UinInfoTableName, &attr, "WHERE Uin="+strconv.FormatInt(attr.SenderUin, 10))
+			err = s.db.Find(Sqlite3UinInfoTableName, &uin, "WHERE Uin="+strconv.FormatInt(attr.SenderUin, 10))
 			s.RUnlock()
 			if err == nil {
 				ret.Attribute = &db.StoredMessageAttribute{
@@ -264,7 +264,7 @@ func (s *database) GetGuildChannelMessageByID(id string) (*db.StoredGuildChannel
 		if err == nil {
 			var tiny TinyInfo
 			s.RLock()
-			err = s.db.Find(Sqlite3TinyInfoTableName, &attr, "WHERE ID="+strconv.FormatInt(attr.SenderTinyID, 10))
+			err = s.db.Find(Sqlite3TinyInfoTableName, &tiny, "WHERE ID="+strconv.FormatInt(attr.SenderTinyID, 10))
 			s.RUnlock()
 			if err == nil {
 				ret.Attribute = &db.StoredGuildMessageAttribute{
