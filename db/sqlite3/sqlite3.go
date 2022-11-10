@@ -53,15 +53,27 @@ func (s *database) Open() error {
 	if err != nil {
 		return errors.Wrap(err, "open sqlite3 error")
 	}
-	err = s.db.Create(Sqlite3GroupMessageTableName, &StoredGroupMessage{})
+	_, err = s.db.DB.Exec("PRAGMA foreign_keys = ON;")
+	if err != nil {
+		return errors.Wrap(err, "enable foreign_keys error")
+	}
+	err = s.db.Create(Sqlite3UinInfoTableName, &UinInfo{})
 	if err != nil {
 		return errors.Wrap(err, "create sqlite3 table error")
 	}
-	err = s.db.Create(Sqlite3MessageAttributeTableName, &StoredMessageAttribute{})
+	err = s.db.Create(Sqlite3TinyInfoTableName, &TinyInfo{})
 	if err != nil {
 		return errors.Wrap(err, "create sqlite3 table error")
 	}
-	err = s.db.Create(Sqlite3GuildMessageAttributeTableName, &StoredGuildMessageAttribute{})
+	err = s.db.Create(Sqlite3MessageAttributeTableName, &StoredMessageAttribute{},
+		"FOREIGN KEY(SenderUin) REFERENCES "+Sqlite3UinInfoTableName+"(Uin)",
+	)
+	if err != nil {
+		return errors.Wrap(err, "create sqlite3 table error")
+	}
+	err = s.db.Create(Sqlite3GuildMessageAttributeTableName, &StoredGuildMessageAttribute{},
+		"FOREIGN KEY(SenderTinyID) REFERENCES "+Sqlite3TinyInfoTableName+"(ID)",
+	)
 	if err != nil {
 		return errors.Wrap(err, "create sqlite3 table error")
 	}
@@ -69,19 +81,24 @@ func (s *database) Open() error {
 	if err != nil {
 		return errors.Wrap(err, "create sqlite3 table error")
 	}
-	err = s.db.Create(Sqlite3PrivateMessageTableName, &StoredPrivateMessage{})
+	err = s.db.Create(Sqlite3GroupMessageTableName, &StoredGroupMessage{},
+		"FOREIGN KEY(AttributeID) REFERENCES "+Sqlite3MessageAttributeTableName+"(ID)",
+		"FOREIGN KEY(QuotedInfoID) REFERENCES "+Sqlite3QuotedInfoTableName+"(ID)",
+	)
 	if err != nil {
 		return errors.Wrap(err, "create sqlite3 table error")
 	}
-	err = s.db.Create(Sqlite3GuildChannelMessageTableName, &StoredGuildChannelMessage{})
+	err = s.db.Create(Sqlite3PrivateMessageTableName, &StoredPrivateMessage{},
+		"FOREIGN KEY(AttributeID) REFERENCES "+Sqlite3MessageAttributeTableName+"(ID)",
+		"FOREIGN KEY(QuotedInfoID) REFERENCES "+Sqlite3QuotedInfoTableName+"(ID)",
+	)
 	if err != nil {
 		return errors.Wrap(err, "create sqlite3 table error")
 	}
-	err = s.db.Create(Sqlite3UinInfoTableName, &UinInfo{})
-	if err != nil {
-		return errors.Wrap(err, "create sqlite3 table error")
-	}
-	err = s.db.Create(Sqlite3TinyInfoTableName, &TinyInfo{})
+	err = s.db.Create(Sqlite3GuildChannelMessageTableName, &StoredGuildChannelMessage{},
+		"FOREIGN KEY(AttributeID) REFERENCES "+Sqlite3MessageAttributeTableName+"(ID)",
+		"FOREIGN KEY(QuotedInfoID) REFERENCES "+Sqlite3QuotedInfoTableName+"(ID)",
+	)
 	if err != nil {
 		return errors.Wrap(err, "create sqlite3 table error")
 	}

@@ -1,5 +1,5 @@
-github.com/FloatTech/sqlite v0.5.0 h1:U7J5Omc534PqmH6csfu+ypCo3DS8L91l5lTsxUu3b/U=
-github.com/FloatTech/sqlite v0.5.0/go.mod h1:i33d92OtR8jcp5fBUvQtospf27+MkfUxnGwnZ95E/dA=
+github.com/FloatTech/sqlite v0.5.1 h1:IjTdnqMVIVIoIEFXhvh/KKBfYxFvG0tk7Rghz65/DAU=
+github.com/FloatTech/sqlite v0.5.1/go.mod h1:i33d92OtR8jcp5fBUvQtospf27+MkfUxnGwnZ95E/dA=
 github.com/FloatTech/ttl v0.0.0-20220715042055-15612be72f5b h1:tvciXWq2nuvTbFeJGLDNIdRX3BI546D3O7k7vrVueZw=
 github.com/FloatTech/ttl v0.0.0-20220715042055-15612be72f5b/go.mod h1:fHZFWGquNXuHttu9dUYoKuNbm3dzLETnIOnm1muSfDs=
 github.com/Microsoft/go-winio v0.5.1 h1:aPJp2QD7OOrhO5tQXqQoGSJc+DjDtWTGLOmNyAm6FgY=

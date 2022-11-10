@@ -3,7 +3,7 @@ module github.com/Mrs4s/go-cqhttp
 go 1.19
 
 require (
-	github.com/FloatTech/sqlite v0.5.0
+	github.com/FloatTech/sqlite v0.5.1
 	github.com/Microsoft/go-winio v0.5.1
 	github.com/Mrs4s/MiraiGo v0.0.0-20220828090150-a3c348100dfe
 	github.com/RomiChan/syncx v0.0.0-20220404072119-d7ea0ae15a4c
