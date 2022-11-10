@@ -61,9 +61,17 @@ func (s *database) Open() error {
 	if err != nil {
 		return errors.Wrap(err, "create sqlite3 table error")
 	}
+	err = s.db.Insert(Sqlite3UinInfoTableName, &UinInfo{Name: "null"})
+	if err != nil {
+		return errors.Wrap(err, "insert into sqlite3 table "+Sqlite3UinInfoTableName+" error")
+	}
 	err = s.db.Create(Sqlite3TinyInfoTableName, &TinyInfo{})
 	if err != nil {
 		return errors.Wrap(err, "create sqlite3 table error")
+	}
+	err = s.db.Insert(Sqlite3TinyInfoTableName, &TinyInfo{Name: "null"})
+	if err != nil {
+		return errors.Wrap(err, "insert into sqlite3 table "+Sqlite3TinyInfoTableName+" error")
 	}
 	err = s.db.Create(Sqlite3MessageAttributeTableName, &StoredMessageAttribute{},
 		"FOREIGN KEY(SenderUin) REFERENCES "+Sqlite3UinInfoTableName+"(Uin)",
@@ -71,15 +79,27 @@ func (s *database) Open() error {
 	if err != nil {
 		return errors.Wrap(err, "create sqlite3 table error")
 	}
+	err = s.db.Insert(Sqlite3MessageAttributeTableName, &StoredMessageAttribute{})
+	if err != nil {
+		return errors.Wrap(err, "insert into sqlite3 table "+Sqlite3MessageAttributeTableName+" error")
+	}
 	err = s.db.Create(Sqlite3GuildMessageAttributeTableName, &StoredGuildMessageAttribute{},
 		"FOREIGN KEY(SenderTinyID) REFERENCES "+Sqlite3TinyInfoTableName+"(ID)",
 	)
 	if err != nil {
 		return errors.Wrap(err, "create sqlite3 table error")
 	}
+	err = s.db.Insert(Sqlite3GuildMessageAttributeTableName, &StoredGuildMessageAttribute{})
+	if err != nil {
+		return errors.Wrap(err, "insert into sqlite3 table "+Sqlite3GuildMessageAttributeTableName+" error")
+	}
 	err = s.db.Create(Sqlite3QuotedInfoTableName, &QuotedInfo{})
 	if err != nil {
 		return errors.Wrap(err, "create sqlite3 table error")
+	}
+	err = s.db.Insert(Sqlite3QuotedInfoTableName, &QuotedInfo{QuotedContent: "null"})
+	if err != nil {
+		return errors.Wrap(err, "insert into sqlite3 table "+Sqlite3QuotedInfoTableName+" error")
 	}
 	err = s.db.Create(Sqlite3GroupMessageTableName, &StoredGroupMessage{},
 		"FOREIGN KEY(AttributeID) REFERENCES "+Sqlite3MessageAttributeTableName+"(ID)",

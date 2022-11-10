@@ -19,7 +19,7 @@ type StoredMessageAttribute struct {
 	ID         int64 // ID is the crc64 of 字段s below
 	MessageSeq int32
 	InternalID int32
-	SenderUin  int64
+	SenderUin  int64 // SenderUin is fk to UinInfo
 	Timestamp  int64
 }
 
@@ -28,7 +28,7 @@ type StoredGuildMessageAttribute struct {
 	ID           int64 // ID is the crc64 of 字段s below
 	MessageSeq   int64
 	InternalID   int64
-	SenderTinyID int64
+	SenderTinyID int64 // SenderTinyID is fk to TinyInfo
 	Timestamp    int64
 }
 
