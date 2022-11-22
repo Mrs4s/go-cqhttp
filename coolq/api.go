@@ -1152,6 +1152,8 @@ func (bot *CQBot) CQSetGroupKick(groupID int64, userID int64, msg string, block 
 				return Failed(100, "NOT_MANAGEABLE", "机器人权限不足")
 			}
 			return OK(nil)
+		}else{
+			return Failed(100, "Member_NOT_FOUND", "人员不存在")
 		}
 	}
 	return Failed(100, "GROUP_NOT_FOUND", "群聊不存在")
