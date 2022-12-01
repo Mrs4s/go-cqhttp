@@ -1,7 +1,7 @@
 github.com/Microsoft/go-winio v0.5.1 h1:aPJp2QD7OOrhO5tQXqQoGSJc+DjDtWTGLOmNyAm6FgY=
 github.com/Microsoft/go-winio v0.5.1/go.mod h1:JPGBdM1cNvN/6ISo+n8V5iA4v8pBzdOpzfwIujj1a84=
-github.com/Mrs4s/MiraiGo v0.0.0-20220828090150-a3c348100dfe h1:KpRbU5MRL2dplf01Cbgo8m0+ST1V1A+4cFBQkQA/YAk=
-github.com/Mrs4s/MiraiGo v0.0.0-20220828090150-a3c348100dfe/go.mod h1:lecSP26qedhinCceWn1x02dLDxGotH5nTFlpIMilmVM=
+github.com/Mrs4s/MiraiGo v0.0.0-20221201090748-23f637d2954e h1:PvTvu1c9R8XCDGysBYGF+TSO+UfX347NJkNblifC4C8=
+github.com/Mrs4s/MiraiGo v0.0.0-20221201090748-23f637d2954e/go.mod h1:lecSP26qedhinCceWn1x02dLDxGotH5nTFlpIMilmVM=
 github.com/RomiChan/protobuf v0.1.1-0.20220624030127-3310cba9dbc0 h1:+UGPBYVjssFsdahLJIiNPwpmmwgl/OaVdv1oc5NonC0=
 github.com/RomiChan/protobuf v0.1.1-0.20220624030127-3310cba9dbc0/go.mod h1:2Ie+hdBFQpQFDHfeklgxoFmQRCE7O+KwFpISeXq7OwA=
 github.com/RomiChan/syncx v0.0.0-20220404072119-d7ea0ae15a4c h1:cNPOdTNiVwxLpROLjXCgbIPvdkE+BwvxDvgmdYmWx6Q=

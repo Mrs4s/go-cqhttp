@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/Microsoft/go-winio v0.5.1
-	github.com/Mrs4s/MiraiGo v0.0.0-20220828090150-a3c348100dfe
+	github.com/Mrs4s/MiraiGo v0.0.0-20221201090748-23f637d2954e
 	github.com/RomiChan/syncx v0.0.0-20220404072119-d7ea0ae15a4c
 	github.com/RomiChan/websocket v1.4.3-0.20220123145318-307a86b127bc
 	github.com/fumiama/go-base16384 v1.5.2
