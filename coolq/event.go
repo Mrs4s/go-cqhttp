@@ -4,7 +4,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"os"
 	"path"
 	"strconv"
 	"strings"
@@ -18,6 +17,7 @@ import (
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
 	"github.com/Mrs4s/go-cqhttp/internal/cache"
+	"github.com/Mrs4s/go-cqhttp/internal/download"
 )
 
 // ToFormattedMessage 将给定[]message.IMessageElement转换为通过coolq.SetMessageFormat所定义的消息上报格式
@@ -666,7 +666,8 @@ func (bot *CQBot) checkMedia(e []message.IMessageElement, sourceID int64) {
 			filename := hex.EncodeToString(i.Md5) + ".image"
 			cache.Image.Insert(i.Md5, data)
 			if i.Url != "" && !global.PathExists(path.Join(global.ImagePath, "guild-images", filename)) {
-				if err := global.DownloadFile(i.Url, path.Join(global.ImagePath, "guild-images", filename), -1, nil); err != nil {
+				r := download.Request{URL: i.Url}
+				if err := r.WriteToFile(path.Join(global.ImagePath, "guild-images", filename)); err != nil {
 					log.Warnf("下载频道图片时出现错误: %v", err)
 				}
 			}
@@ -684,12 +685,11 @@ func (bot *CQBot) checkMedia(e []message.IMessageElement, sourceID int64) {
 			i.Name = strings.ReplaceAll(i.Name, "{", "")
 			i.Name = strings.ReplaceAll(i.Name, "}", "")
 			if !global.PathExists(path.Join(global.VoicePath, i.Name)) {
-				b, err := global.GetBytes(i.Url)
+				err := download.Request{URL: i.Url}.WriteToFile(path.Join(global.VoicePath, i.Name))
 				if err != nil {
 					log.Warnf("语音文件 %v 下载失败: %v", i.Name, err)
 					continue
 				}
-				_ = os.WriteFile(path.Join(global.VoicePath, i.Name), b, 0o644)
 			}
 		case *message.ShortVideoElement:
 			data := binary.NewWriterF(func(w *binary.Writer) {

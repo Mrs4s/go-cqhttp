@@ -15,9 +15,9 @@ import (
 	"github.com/mattn/go-colorable"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"github.com/tidwall/gjson"
 
 	"github.com/Mrs4s/go-cqhttp/global"
+	"github.com/Mrs4s/go-cqhttp/internal/download"
 )
 
 var console = bufio.NewReader(os.Stdin)
@@ -243,12 +243,11 @@ func getTicket(u string) (str string) {
 }
 
 func fetchCaptcha(id string) string {
-	data, err := global.GetBytes("https://captcha.go-cqhttp.org/captcha/ticket?id=" + id)
+	g, err := download.Request{URL: "https://captcha.go-cqhttp.org/captcha/ticket?id=" + id}.JSON()
 	if err != nil {
 		log.Warnf("获取 Ticket 时出现错误: %v", err)
 		return ""
 	}
-	g := gjson.ParseBytes(data)
 	if g.Get("ticket").Exists() {
 		return g.Get("ticket").String()
 	}

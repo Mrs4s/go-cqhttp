@@ -16,6 +16,8 @@ import (
 	b14 "github.com/fumiama/go-base16384"
 	"github.com/segmentio/asm/base64"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/Mrs4s/go-cqhttp/internal/download"
 )
 
 const (
@@ -82,8 +84,7 @@ func FindFile(file, cache, p string) (data []byte, err error) {
 		if (cache == "" || cache == "1") && PathExists(cacheFile) {
 			return os.ReadFile(cacheFile)
 		}
-		data, err = GetBytes(file)
-		_ = os.WriteFile(cacheFile, data, 0o644)
+		err = download.Request{URL: file}.WriteToFile(cacheFile)
 		if err != nil {
 			return nil, err
 		}
