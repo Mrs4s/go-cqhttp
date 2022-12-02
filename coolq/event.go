@@ -61,7 +61,11 @@ func (ev *event) MarshalJSON() ([]byte, error) {
 		fmt.Fprintf(buf, `,"sub_type":"%s"`, ev.SubType)
 	}
 	for k, v := range ev.Others {
-		v, _ := json.Marshal(v)
+		v, err := json.Marshal(v)
+		if err != nil {
+			log.Warnf("marshal message payload error: %v", err)
+			return nil, err
+		}
 		fmt.Fprintf(buf, `,"%s":%s`, k, v)
 	}
 	buf.WriteByte('}')
