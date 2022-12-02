@@ -1,6 +1,3 @@
-//go:build !(windows && (arm || arm64))
-// +build !windows !arm,!arm64
-
 package sqlite3
 
 import (
@@ -34,6 +31,7 @@ type config struct {
 }
 
 func init() {
+	sql.DriverName = "sqlite"
 	db.Register("sqlite3", func(node yaml.Node) db.Database {
 		conf := new(config)
 		_ = node.Decode(conf)
