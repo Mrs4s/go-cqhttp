@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"reflect"
 	"runtime"
 	"strconv"
 	"strings"
@@ -725,7 +726,17 @@ func (bot *CQBot) ConvertContentMessage(content []global.MSG, sourceType message
 					flash = true
 				}
 				if t.(string) == "show" {
-					id = data["id"].(int32)
+					id := 0
+					switch idn := data["id"].(type) {
+					case int32:
+						id = int(idn)
+					case int:
+						id = idn
+					case int64:
+						id = int(idn)
+					default:
+						id = int(reflect.ValueOf(data["id"]).Convert(reflect.TypeOf(0)).Int())
+					}
 					if id < 40000 || id >= 40006 {
 						id = 40000
 					}
@@ -753,7 +764,7 @@ func (bot *CQBot) ConvertContentMessage(content []global.MSG, sourceType message
 			case "all":
 				r = append(r, message.NewAt(0))
 			case "user":
-				r = append(r, message.NewAt(data["target"].(int64), data["display"].(string)))
+				r = append(r, message.NewAt(reflect.ValueOf(data["target"]).Int(), data["display"].(string)))
 			default:
 				continue
 			}
@@ -767,7 +778,18 @@ func (bot *CQBot) ConvertContentMessage(content []global.MSG, sourceType message
 				ResId: data["id"].(string),
 			})
 		case "face":
-			r = append(r, message.NewFace(data["id"].(int32)))
+			id := int32(0)
+			switch idn := data["id"].(type) {
+			case int32:
+				id = idn
+			case int:
+				id = int32(idn)
+			case int64:
+				id = int32(idn)
+			default:
+				id = int32(reflect.ValueOf(data["id"]).Convert(reflect.TypeOf(0)).Int())
+			}
+			r = append(r, message.NewFace(id))
 		case "video":
 			e, err := bot.makeImageOrVideoElem(map[string]string{"file": data["file"].(string)}, true, sourceType)
 			if err != nil {

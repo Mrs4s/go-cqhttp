@@ -40,61 +40,61 @@ type (
 
 	// StoredGroupMessage 持久化群消息
 	StoredGroupMessage struct {
-		ID          string                  `bson:"_id"`
-		GlobalID    int32                   `bson:"globalId"`
-		Attribute   *StoredMessageAttribute `bson:"attribute"`
-		SubType     string                  `bson:"subType"`
-		QuotedInfo  *QuotedInfo             `bson:"quotedInfo"`
-		GroupCode   int64                   `bson:"groupCode"`
-		AnonymousID string                  `bson:"anonymousId"`
-		Content     []global.MSG            `bson:"content"`
+		ID          string                  `bson:"_id" yaml:"-"`
+		GlobalID    int32                   `bson:"globalId" yaml:"-"`
+		Attribute   *StoredMessageAttribute `bson:"attribute" yaml:"-"`
+		SubType     string                  `bson:"subType" yaml:"-"`
+		QuotedInfo  *QuotedInfo             `bson:"quotedInfo" yaml:"-"`
+		GroupCode   int64                   `bson:"groupCode" yaml:"-"`
+		AnonymousID string                  `bson:"anonymousId" yaml:"-"`
+		Content     []global.MSG            `bson:"content" yaml:"content"`
 	}
 
 	// StoredPrivateMessage 持久化私聊消息
 	StoredPrivateMessage struct {
-		ID         string                  `bson:"_id"`
-		GlobalID   int32                   `bson:"globalId"`
-		Attribute  *StoredMessageAttribute `bson:"attribute"`
-		SubType    string                  `bson:"subType"`
-		QuotedInfo *QuotedInfo             `bson:"quotedInfo"`
-		SessionUin int64                   `bson:"sessionUin"`
-		TargetUin  int64                   `bson:"targetUin"`
-		Content    []global.MSG            `bson:"content"`
+		ID         string                  `bson:"_id" yaml:"-"`
+		GlobalID   int32                   `bson:"globalId" yaml:"-"`
+		Attribute  *StoredMessageAttribute `bson:"attribute" yaml:"-"`
+		SubType    string                  `bson:"subType" yaml:"-"`
+		QuotedInfo *QuotedInfo             `bson:"quotedInfo" yaml:"-"`
+		SessionUin int64                   `bson:"sessionUin" yaml:"-"`
+		TargetUin  int64                   `bson:"targetUin" yaml:"-"`
+		Content    []global.MSG            `bson:"content" yaml:"content"`
 	}
 
 	// StoredGuildChannelMessage 持久化频道消息
 	StoredGuildChannelMessage struct {
-		ID         string                       `bson:"_id"`
-		Attribute  *StoredGuildMessageAttribute `bson:"attribute"`
-		GuildID    uint64                       `bson:"guildId"`
-		ChannelID  uint64                       `bson:"channelId"`
-		QuotedInfo *QuotedInfo                  `bson:"quotedInfo"`
-		Content    []global.MSG                 `bson:"content"`
+		ID         string                       `bson:"_id" yaml:"-"`
+		Attribute  *StoredGuildMessageAttribute `bson:"attribute" yaml:"-"`
+		GuildID    uint64                       `bson:"guildId" yaml:"-"`
+		ChannelID  uint64                       `bson:"channelId" yaml:"-"`
+		QuotedInfo *QuotedInfo                  `bson:"quotedInfo" yaml:"-"`
+		Content    []global.MSG                 `bson:"content" yaml:"content"`
 	}
 
 	// StoredMessageAttribute 持久化消息属性
 	StoredMessageAttribute struct {
-		MessageSeq int32  `bson:"messageSeq"`
-		InternalID int32  `bson:"internalId"`
-		SenderUin  int64  `bson:"senderUin"`
-		SenderName string `bson:"senderName"`
-		Timestamp  int64  `bson:"timestamp"`
+		MessageSeq int32  `bson:"messageSeq" yaml:"-"`
+		InternalID int32  `bson:"internalId" yaml:"-"`
+		SenderUin  int64  `bson:"senderUin" yaml:"-"`
+		SenderName string `bson:"senderName" yaml:"-"`
+		Timestamp  int64  `bson:"timestamp" yaml:"-"`
 	}
 
 	// StoredGuildMessageAttribute 持久化频道消息属性
 	StoredGuildMessageAttribute struct {
-		MessageSeq   uint64 `bson:"messageSeq"`
-		InternalID   uint64 `bson:"internalId"`
-		SenderTinyID uint64 `bson:"senderTinyId"`
-		SenderName   string `bson:"senderName"`
-		Timestamp    int64  `bson:"timestamp"`
+		MessageSeq   uint64 `bson:"messageSeq" yaml:"-"`
+		InternalID   uint64 `bson:"internalId" yaml:"-"`
+		SenderTinyID uint64 `bson:"senderTinyId" yaml:"-"`
+		SenderName   string `bson:"senderName" yaml:"-"`
+		Timestamp    int64  `bson:"timestamp" yaml:"-"`
 	}
 
 	// QuotedInfo 引用回复
 	QuotedInfo struct {
-		PrevID        string       `bson:"prevId"`
-		PrevGlobalID  int32        `bson:"prevGlobalId"`
-		QuotedContent []global.MSG `bson:"quotedContent"`
+		PrevID        string       `bson:"prevId" yaml:"-"`
+		PrevGlobalID  int32        `bson:"prevGlobalId" yaml:"-"`
+		QuotedContent []global.MSG `bson:"quotedContent" yaml:"quoted_content"`
 	}
 )
 
