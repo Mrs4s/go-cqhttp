@@ -1990,22 +1990,7 @@ func (bot *CQBot) CQGetVersionInfo() global.MSG {
 		"runtime_version":            runtime.Version(),
 		"runtime_os":                 runtime.GOOS,
 		"version":                    base.Version,
-		"protocol": func() int {
-			switch client.SystemDeviceInfo.Protocol {
-			case client.Unset, client.IPad:
-				return 0
-			case client.AndroidPhone:
-				return 1
-			case client.AndroidWatch:
-				return 2
-			case client.MacOS:
-				return 3
-			case client.QiDian:
-				return 4
-			default:
-				return -1
-			}
-		}(),
+		"protocol_name":              client.SystemDeviceInfo.Protocol,
 	})
 }
 
