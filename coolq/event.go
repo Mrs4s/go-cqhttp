@@ -543,10 +543,11 @@ func (bot *CQBot) groupInvitedEvent(c *client.QQClient, e *client.GroupInvitedRe
 	log.Infof("收到来自群 %v(%v) 内用户 %v(%v) 的加群邀请.", e.GroupName, e.GroupCode, e.InvitorNick, e.InvitorUin)
 	flag := strconv.FormatInt(e.RequestId, 10)
 	bot.dispatchEvent("request/group/invite", global.MSG{
-		"group_id": e.GroupCode,
-		"user_id":  e.InvitorUin,
-		"comment":  "",
-		"flag":     flag,
+		"group_id":   e.GroupCode,
+		"user_id":    e.InvitorUin,
+		"invitor_id": 0,
+		"comment":    "",
+		"flag":       flag,
 	})
 }
 
@@ -554,10 +555,11 @@ func (bot *CQBot) groupJoinReqEvent(c *client.QQClient, e *client.UserJoinGroupR
 	log.Infof("群 %v(%v) 收到来自用户 %v(%v) 的加群请求.", e.GroupName, e.GroupCode, e.RequesterNick, e.RequesterUin)
 	flag := strconv.FormatInt(e.RequestId, 10)
 	bot.dispatchEvent("request/group/add", global.MSG{
-		"group_id": e.GroupCode,
-		"user_id":  e.RequesterUin,
-		"comment":  e.Message,
-		"flag":     flag,
+		"group_id":   e.GroupCode,
+		"user_id":    e.RequesterUin,
+		"invitor_id": e.ActionUin,
+		"comment":    e.Message,
+		"flag":       flag,
 	})
 }
 
