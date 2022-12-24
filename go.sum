@@ -110,8 +110,8 @@ github.com/tidwall/match v1.1.1/go.mod h1:eRSPERbgtNPcGhD8UCthc6PmLEQXEWd3PRB5JT
 github.com/tidwall/pretty v1.0.0/go.mod h1:XNkn88O1ChpSDQmQeStsy+sBenx6DDtFZJxhVysOjyk=
 github.com/tidwall/pretty v1.2.0 h1:RWIZEg2iJ8/g6fDDYzMpobmaoGh5OLl4AXtGUGPcqCs=
 github.com/tidwall/pretty v1.2.0/go.mod h1:ITEVvHYasfjBbM0u2Pg8T2nJnzm8xPwvNhhsoaGGjNU=
-github.com/wdvxdr1123/go-silk v0.0.0-20220304095002-f67345df09ea h1:sl1pYm1kHtIndckTY8YDt+QFt77vI0JnKHP0U8rZtKc=
-github.com/wdvxdr1123/go-silk v0.0.0-20220304095002-f67345df09ea/go.mod h1:ecFKZPX81BaB70I6ruUgEwYcDOtuNgJGnjdK+MIl5ko=
+github.com/wdvxdr1123/go-silk v0.0.0-20210316130616-d47b553def60 h1:lRKf10iIOW0VsH5WDF621ihzR+R2wEBZVtNRHuLLCb4=
+github.com/wdvxdr1123/go-silk v0.0.0-20210316130616-d47b553def60/go.mod h1:ecFKZPX81BaB70I6ruUgEwYcDOtuNgJGnjdK+MIl5ko=
 github.com/xdg-go/pbkdf2 v1.0.0 h1:Su7DPu48wXMwC3bs7MCNG+z4FhcyEuz5dlvchbq0B0c=
 github.com/xdg-go/pbkdf2 v1.0.0/go.mod h1:jrpuAogTd400dnrH08LKmI/xc1MbPOebTwRqcT5RDeI=
 github.com/xdg-go/scram v1.1.1 h1:VOMT+81stJgXW3CpHyqHN3AXDYIMsx56mEFrB37Mb/E=

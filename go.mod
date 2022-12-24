@@ -18,7 +18,7 @@ require (
 	github.com/stretchr/testify v1.8.1
 	github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
 	github.com/tidwall/gjson v1.14.4
-	github.com/wdvxdr1123/go-silk v0.0.0-20220304095002-f67345df09ea
+	github.com/wdvxdr1123/go-silk v0.0.0-20210316130616-d47b553def60
 	go.mongodb.org/mongo-driver v1.11.0
 	golang.org/x/crypto v0.3.0
 	golang.org/x/sys v0.2.0
