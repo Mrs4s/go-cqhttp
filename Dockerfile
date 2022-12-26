@@ -1,8 +1,8 @@
-FROM golang:1.18-alpine AS builder
+FROM golang:1.19-alpine AS builder
 
 RUN go env -w GO111MODULE=auto \
   && go env -w CGO_ENABLED=0 \
-  && go env -w GOPROXY=https://goproxy.cn,direct 
+  && go env -w GOPROXY=https://goproxy.cn,direct
 
 WORKDIR /build
 
@@ -14,11 +14,31 @@ RUN set -ex \
 
 FROM alpine:latest
 
-RUN apk add --no-cache ffmpeg
+COPY docker-entrypoint.sh /docker-entrypoint.sh
 
-COPY --from=builder /build/cqhttp /usr/bin/cqhttp
-RUN chmod +x /usr/bin/cqhttp
+RUN chmod +x /docker-entrypoint.sh && \
+    apk add --no-cache --update \
+      ffmpeg \
+      coreutils \
+      shadow \
+      su-exec && \
+    rm -rf /var/cache/apk/* && \
+    mkdir -p /app && \
+    mkdir -p /data && \
+    mkdir -p /config && \
+    useradd -d /config -s /bin/sh abc && \
+    chown -R abc /config && \
+    chown -R abc /data
+
+ENV TZ="Asia/Shanghai"
+ENV UID=99
+ENV GID=100
+ENV UMASK=002
+
+COPY --from=builder /build/cqhttp /app/
 
 WORKDIR /data
 
-ENTRYPOINT [ "/usr/bin/cqhttp" ]
+VOLUME [ "/data" ]
+
+ENTRYPOINT [ "/docker-entrypoint.sh" ]

@@ -27,6 +27,7 @@ import (
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
 	"github.com/Mrs4s/go-cqhttp/internal/cache"
+	"github.com/Mrs4s/go-cqhttp/internal/download"
 	"github.com/Mrs4s/go-cqhttp/internal/param"
 	"github.com/Mrs4s/go-cqhttp/modules/filter"
 )
@@ -765,9 +766,9 @@ func (bot *CQBot) CQSendGroupMessage(groupID int64, m gjson.Result, autoEscape b
 		}
 	}
 	fixAt(elem)
-	mid := bot.SendGroupMessage(groupID, &message.SendingMessage{Elements: elem})
-	if mid == -1 {
-		return Failed(100, "SEND_MSG_API_ERROR", "请参考 go-cqhttp 端输出")
+	mid, err := bot.SendGroupMessage(groupID, &message.SendingMessage{Elements: elem})
+	if err != nil {
+		return Failed(100, "SEND_MSG_API_ERROR", err.Error())
 	}
 	log.Infof("发送群 %v(%v) 的消息: %v (%v)", group.Name, groupID, limitedString(m.String()), mid)
 	return OK(global.MSG{"message_id": mid})
@@ -832,7 +833,12 @@ func (bot *CQBot) uploadForwardElement(m gjson.Result, target int64, sourceType 
 	groupID := target
 	source := message.Source{SourceType: sourceType, PrimaryID: target}
 	if sourceType == message.SourcePrivate {
-		groupID = 0
+		// ios 设备的合并转发来源群号不能为 0
+		if len(bot.Client.GroupList) == 0 {
+			groupID = 1
+		} else {
+			groupID = bot.Client.GroupList[0].Uin
+		}
 	}
 	builder := bot.Client.NewForwardMessageBuilder(groupID)
 
@@ -873,17 +879,21 @@ func (bot *CQBot) uploadForwardElement(m gjson.Result, target int64, sourceType 
 			}
 			if e.Get("data.id").Exists() {
 				i := e.Get("data.id").Int()
-				m, _ := db.GetGroupMessageByGlobalID(int32(i))
+				m, _ := db.GetMessageByGlobalID(int32(i))
 				if m != nil {
-					msgTime := m.Attribute.Timestamp
+					mSource := message.SourcePrivate
+					if m.GetType() == "group" {
+						mSource = message.SourceGroup
+					}
+					msgTime := m.GetAttribute().Timestamp
 					if msgTime == 0 {
 						msgTime = ts.Unix()
 					}
 					return &message.ForwardNode{
-						SenderId:   m.Attribute.SenderUin,
-						SenderName: m.Attribute.SenderName,
+						SenderId:   m.GetAttribute().SenderUin,
+						SenderName: m.GetAttribute().SenderName,
 						Time:       int32(msgTime),
-						Message:    resolveElement(bot.ConvertContentMessage(m.Content, message.SourceGroup)),
+						Message:    resolveElement(bot.ConvertContentMessage(m.GetContent(), mSource)),
 					}
 				}
 				log.Warnf("警告: 引用消息 %v 错误或数据库未开启.", e.Get("data.id").Str)
@@ -916,7 +926,7 @@ func (bot *CQBot) uploadForwardElement(m gjson.Result, target int64, sourceType 
 					}
 				}
 			}
-			content := bot.ConvertObjectMessage(c, message.SourceGroup)
+			content := bot.ConvertObjectMessage(c, sourceType)
 			if uin != 0 && name != "" && len(content) > 0 {
 				return &message.ForwardNode{
 					SenderId:   uin,
@@ -968,8 +978,11 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) globa
 		log.Warnf("合并转发(群)消息发送失败: 账号可能被风控.")
 		return Failed(100, "SEND_MSG_API_ERROR", "请参考 go-cqhttp 端输出")
 	}
+	mid := bot.InsertGroupMessage(ret)
+	log.Infof("发送群 %v(%v)  的合并转发消息: %v (%v)", groupID, groupID, limitedString(m.String()), mid)
 	return OK(global.MSG{
-		"message_id": bot.InsertGroupMessage(ret),
+		"message_id": mid,
+		"forward_id": fe.ResId,
 	})
 }
 
@@ -991,7 +1004,11 @@ func (bot *CQBot) CQSendPrivateForwardMessage(userID int64, m gjson.Result) glob
 		log.Warnf("合并转发(好友)消息发送失败: 账号可能被风控.")
 		return Failed(100, "SEND_MSG_API_ERROR", "请参考 go-cqhttp 端输出")
 	}
-	return OK(global.MSG{"message_id": mid})
+	log.Infof("发送好友 %v(%v)  的合并转发消息: %v (%v)", userID, userID, limitedString(m.String()), mid)
+	return OK(global.MSG{
+		"message_id": mid,
+		"forward_id": fe.ResId,
+	})
 }
 
 // CQSendPrivateMessage 发送私聊消息
@@ -1099,6 +1116,23 @@ func (bot *CQBot) CQSetGroupMemo(groupID int64, msg, img string) global.MSG {
 			if err != nil {
 				return Failed(100, "SEND_NOTICE_ERROR", err.Error())
 			}
+		}
+		return OK(nil)
+	}
+	return Failed(100, "GROUP_NOT_FOUND", "群聊不存在")
+}
+
+// CQDelGroupMemo 扩展API-删除群公告
+// @route(_del_group_notice)
+// @rename(fid->notice_id)
+func (bot *CQBot) CQDelGroupMemo(groupID int64, fid string) global.MSG {
+	if g := bot.Client.FindGroup(groupID); g != nil {
+		if g.SelfPermission() == client.Member {
+			return Failed(100, "PERMISSION_DENIED", "权限不足")
+		}
+		err := bot.Client.DelGroupNotice(groupID, fid)
+		if err != nil {
+			return Failed(100, "DELETE_NOTICE_ERROR", err.Error())
 		}
 		return OK(nil)
 	}
@@ -1388,6 +1422,7 @@ func (bot *CQBot) CQGetStrangerInfo(userID int64) global.MSG {
 		"age":        info.Age,
 		"level":      info.Level,
 		"login_days": info.LoginDays,
+		"vip_level":  info.VipLevel,
 	})
 }
 
@@ -1511,12 +1546,8 @@ func (bot *CQBot) CQGetImage(file string) global.MSG {
 		}
 		local := path.Join(global.CachePath, file+path.Ext(msg["filename"].(string)))
 		if !global.PathExists(local) {
-			if body, err := global.HTTPGetReadCloser(msg["url"].(string)); err == nil {
-				f, _ := os.OpenFile(local, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o0644)
-				_, _ = f.ReadFrom(body)
-				_ = body.Close()
-				_ = f.Close()
-			} else {
+			r := download.Request{URL: msg["url"].(string)}
+			if err := r.WriteToFile(local); err != nil {
 				log.Warnf("下载图片 %v 时出现错误: %v", msg["url"], err)
 				return Failed(100, "DOWNLOAD_IMAGE_ERROR", err.Error())
 			}
@@ -1559,7 +1590,8 @@ func (bot *CQBot) CQDownloadFile(url string, headers gjson.Result, threadCount i
 			return Failed(100, "DELETE_FILE_ERROR", err.Error())
 		}
 	}
-	if err := global.DownloadFileMultiThreading(url, file, 0, threadCount, h); err != nil {
+	r := download.Request{URL: url, Header: h}
+	if err := r.WriteToFileMultiThreading(file, threadCount); err != nil {
 		log.Warnf("下载链接 %v 时出现错误: %v", url, err)
 		return Failed(100, "DOWNLOAD_FILE_ERROR", err.Error())
 	}
@@ -1958,22 +1990,7 @@ func (bot *CQBot) CQGetVersionInfo() global.MSG {
 		"runtime_version":            runtime.Version(),
 		"runtime_os":                 runtime.GOOS,
 		"version":                    base.Version,
-		"protocol": func() int {
-			switch client.SystemDeviceInfo.Protocol {
-			case client.Unset, client.IPad:
-				return 0
-			case client.AndroidPhone:
-				return 1
-			case client.AndroidWatch:
-				return 2
-			case client.MacOS:
-				return 3
-			case client.QiDian:
-				return 4
-			default:
-				return -1
-			}
-		}(),
+		"protocol_name":              client.SystemDeviceInfo.Protocol,
 	})
 }
 

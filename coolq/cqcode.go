@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"reflect"
 	"runtime"
 	"strconv"
 	"strings"
@@ -20,6 +21,7 @@ import (
 	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/Mrs4s/MiraiGo/utils"
 	b14 "github.com/fumiama/go-base16384"
+	"github.com/segmentio/asm/base64"
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 
@@ -28,6 +30,8 @@ import (
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
 	"github.com/Mrs4s/go-cqhttp/internal/cache"
+	"github.com/Mrs4s/go-cqhttp/internal/download"
+	"github.com/Mrs4s/go-cqhttp/internal/mime"
 	"github.com/Mrs4s/go-cqhttp/internal/param"
 )
 
@@ -82,13 +86,15 @@ func (e *PokeElement) Type() message.ElementType {
 func replyID(r *message.ReplyElement, source message.Source) int32 {
 	id := source.PrimaryID
 	seq := r.ReplySeq
-	if source.SourceType == message.SourcePrivate {
+	if r.GroupID != 0 {
+		id = r.GroupID
+	}
+	// 私聊时，部分（不确定）的账号会在 ReplyElement 中带有 GroupID 字段。
+	// 这里需要判断是由于 “直接回复” 功能，GroupID 为触发直接回复的来源那个群。
+	if source.SourceType == message.SourcePrivate && (r.Sender == source.PrimaryID || r.GroupID == source.PrimaryID) {
 		// 私聊似乎腾讯服务器有bug?
 		seq = int32(uint16(seq))
 		id = r.Sender
-	}
-	if r.GroupID != 0 {
-		id = r.GroupID
 	}
 	return db.ToGlobalID(id, seq)
 }
@@ -720,7 +726,17 @@ func (bot *CQBot) ConvertContentMessage(content []global.MSG, sourceType message
 					flash = true
 				}
 				if t.(string) == "show" {
-					id = data["id"].(int32)
+					id := 0
+					switch idn := data["id"].(type) {
+					case int32:
+						id = int(idn)
+					case int:
+						id = idn
+					case int64:
+						id = int(idn)
+					default:
+						id = int(reflect.ValueOf(data["id"]).Convert(reflect.TypeOf(0)).Int())
+					}
 					if id < 40000 || id >= 40006 {
 						id = 40000
 					}
@@ -733,7 +749,12 @@ func (bot *CQBot) ConvertContentMessage(content []global.MSG, sourceType message
 			case *message.GroupImageElement:
 				img.Flash = flash
 				img.EffectID = id
-				img.ImageBizType = message.ImageBizType(data["subType"].(uint32))
+				switch sub := data["subType"].(type) {
+				case int64:
+					img.ImageBizType = message.ImageBizType(sub)
+				case uint32:
+					img.ImageBizType = message.ImageBizType(sub)
+				}
 			case *message.FriendImageElement:
 				img.Flash = flash
 			}
@@ -743,7 +764,7 @@ func (bot *CQBot) ConvertContentMessage(content []global.MSG, sourceType message
 			case "all":
 				r = append(r, message.NewAt(0))
 			case "user":
-				r = append(r, message.NewAt(data["target"].(int64), data["display"].(string)))
+				r = append(r, message.NewAt(reflect.ValueOf(data["target"]).Int(), data["display"].(string)))
 			default:
 				continue
 			}
@@ -757,7 +778,18 @@ func (bot *CQBot) ConvertContentMessage(content []global.MSG, sourceType message
 				ResId: data["id"].(string),
 			})
 		case "face":
-			r = append(r, message.NewFace(data["id"].(int32)))
+			id := int32(0)
+			switch idn := data["id"].(type) {
+			case int32:
+				id = idn
+			case int:
+				id = int32(idn)
+			case int64:
+				id = int32(idn)
+			default:
+				id = int32(reflect.ValueOf(data["id"]).Convert(reflect.TypeOf(0)).Int())
+			}
+			r = append(r, message.NewFace(id))
 		case "video":
 			e, err := bot.makeImageOrVideoElem(map[string]string{"file": data["file"].(string)}, true, sourceType)
 			if err != nil {
@@ -839,8 +871,8 @@ func (bot *CQBot) ToElement(t string, d map[string]string, sourceType message.So
 			return nil, err
 		}
 		if !global.IsAMRorSILK(data) {
-			lawful, mt := base.IsLawfulAudio(bytes.NewReader(data))
-			if !lawful {
+			mt, ok := mime.CheckAudio(bytes.NewReader(data))
+			if !ok {
 				return nil, errors.New("audio type error: " + mt)
 			}
 			data, err = global.EncoderSilk(data)
@@ -886,9 +918,9 @@ func (bot *CQBot) ToElement(t string, d map[string]string, sourceType message.So
 			name := info.Get("track_info.name").Str
 			mid := info.Get("track_info.mid").Str
 			albumMid := info.Get("track_info.album.mid").Str
-			pinfo, _ := global.GetBytes("http://u.y.qq.com/cgi-bin/musicu.fcg?g_tk=2034008533&uin=0&format=json&data={\"comm\":{\"ct\":23,\"cv\":0},\"url_mid\":{\"module\":\"vkey.GetVkeyServer\",\"method\":\"CgiGetVkey\",\"param\":{\"guid\":\"4311206557\",\"songmid\":[\"" + mid + "\"],\"songtype\":[0],\"uin\":\"0\",\"loginflag\":1,\"platform\":\"23\"}}}&_=1599039471576")
+			pinfo, _ := download.Request{URL: "http://u.y.qq.com/cgi-bin/musicu.fcg?g_tk=2034008533&uin=0&format=json&data={\"comm\":{\"ct\":23,\"cv\":0},\"url_mid\":{\"module\":\"vkey.GetVkeyServer\",\"method\":\"CgiGetVkey\",\"param\":{\"guid\":\"4311206557\",\"songmid\":[\"" + mid + "\"],\"songtype\":[0],\"uin\":\"0\",\"loginflag\":1,\"platform\":\"23\"}}}&_=1599039471576"}.JSON()
 			jumpURL := "https://i.y.qq.com/v8/playsong.html?platform=11&appshare=android_qq&appversion=10030010&hosteuin=oKnlNenz7i-s7c**&songmid=" + mid + "&type=0&appsongtype=1&_wv=1&source=qq&ADTAG=qfshare"
-			purl := gjson.ParseBytes(pinfo).Get("url_mid.data.midurlinfo.0.purl").Str
+			purl := pinfo.Get("url_mid.data.midurlinfo.0.purl").Str
 			preview := "http://y.gtimg.cn/music/photo_new/T002R180x180M000" + albumMid + ".jpg"
 			content := info.Get("track_info.singer.0.name").Str
 			if d["content"] != "" {
@@ -1080,8 +1112,11 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video bool, sourceTy
 		if exist {
 			_ = os.Remove(cacheFile)
 		}
-		if err := global.DownloadFileMultiThreading(f, cacheFile, maxSize, thread, nil); err != nil {
-			return nil, err
+		{
+			r := download.Request{URL: f, Limit: maxSize}
+			if err := r.WriteToFileMultiThreading(cacheFile, thread); err != nil {
+				return nil, err
+			}
 		}
 	useCacheFile:
 		if video {
@@ -1116,7 +1151,7 @@ func (bot *CQBot) makeImageOrVideoElem(d map[string]string, video bool, sourceTy
 		return &LocalImageElement{File: fu.Path, URL: f}, nil
 	}
 	if !video && strings.HasPrefix(f, "base64") {
-		b, err := param.Base64DecodeString(strings.TrimPrefix(f, "base64://"))
+		b, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(f, "base64://"))
 		if err != nil {
 			return nil, err
 		}

@@ -5,13 +5,8 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"os/exec"
-	"path"
-	"path/filepath"
-	"strings"
 	"time"
 
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 
@@ -58,9 +53,7 @@ var (
 
 // Parse parse flags
 func Parse() {
-	wd, _ := os.Getwd()
-	dc := path.Join(wd, "config.yml")
-	flag.StringVar(&LittleC, "c", dc, "configuration filename")
+	flag.StringVar(&LittleC, "c", "config.yml", "configuration filename")
 	flag.BoolVar(&LittleD, "d", false, "running as a daemon")
 	flag.BoolVar(&LittleH, "h", false, "this Help")
 	flag.StringVar(&LittleWD, "w", "", "cover the working directory")
@@ -126,33 +119,5 @@ Options:
 `, Version)
 
 	flag.PrintDefaults()
-	os.Exit(0)
-}
-
-// ResetWorkingDir 重设工作路径
-func ResetWorkingDir() {
-	wd := LittleWD
-	args := make([]string, 0, len(os.Args))
-	for i := 1; i < len(os.Args); i++ {
-		if os.Args[i] == "-w" {
-			i++ // skip value field
-		} else if !strings.HasPrefix(os.Args[i], "-w") {
-			args = append(args, os.Args[i])
-		}
-	}
-	p, _ := filepath.Abs(os.Args[0])
-	_, err := os.Stat(p)
-	if !(err == nil || errors.Is(err, os.ErrExist)) {
-		log.Fatalf("重置工作目录时出现错误: 无法找到路径 %v", p)
-	}
-	proc := exec.Command(p, args...)
-	proc.Stdin = os.Stdin
-	proc.Stdout = os.Stdout
-	proc.Stderr = os.Stderr
-	proc.Dir = wd
-	err = proc.Run()
-	if err != nil {
-		panic(err)
-	}
 	os.Exit(0)
 }

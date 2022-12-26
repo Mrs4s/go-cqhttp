@@ -78,11 +78,12 @@ database: # 数据库相关设置
     # 启用将会增加10-20MB的内存占用和一定的磁盘空间
     # 关闭将无法使用 撤回 回复 get_msg 等上下文相关功能
     enable: true
-
-  # 媒体文件缓存， 删除此项则使用缓存文件(旧版行为)
-  cache:
-    image: data/image.db
-    video: data/video.db
+  sqlite3:
+    # 是否启用内置sqlite3数据库
+    # 启用将会增加一定的内存占用和一定的磁盘空间
+    # 关闭将无法使用 撤回 回复 get_msg 等上下文相关功能
+    enable: false
+    cachettl: 3600000000000 # 1h
 
 # 连接服务列表
 servers:

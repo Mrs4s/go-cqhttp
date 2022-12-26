@@ -2,10 +2,10 @@ package cqcode
 
 import (
 	"bytes"
-	"strconv"
 	"strings"
 
 	"github.com/Mrs4s/MiraiGo/binary"
+	"github.com/Mrs4s/go-cqhttp/global"
 )
 
 // Element single message
@@ -60,7 +60,7 @@ func (e *Element) MarshalJSON() ([]byte, error) {
 			buf.WriteByte('"')
 			buf.WriteString(data.K)
 			buf.WriteString(`":`)
-			buf.WriteString(strconv.Quote(data.V))
+			buf.WriteString(global.Quote(data.V))
 		}
 		buf.WriteString(`}}`)
 	}), nil

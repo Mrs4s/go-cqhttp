@@ -21,10 +21,8 @@ linters:
   disable-all: true
   fast: false
   enable:
-    #- bodyclose
-    #- deadcode
-    #- depguard
-    #- dogsled
+    - bodyclose
+    - durationcheck
     - gofmt
     - goimports
     - errcheck
@@ -32,18 +30,16 @@ linters:
     - exhaustive
     - bidichk
     - gocritic
-    #- gosimple
+    - gosimple
     - govet
     - ineffassign
     #- nolintlint
-    #- rowserrcheck
-    #- staticcheck
-    - structcheck
-    #- stylecheck
+    - staticcheck
+    - stylecheck
     - unconvert
-    #- unparam
-    #- unused
-    - varcheck
+    - usestdlibvars
+    - unparam
+    - unused
     - whitespace
     - prealloc
     - predeclared

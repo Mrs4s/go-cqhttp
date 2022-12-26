@@ -163,9 +163,9 @@
 
 ## 过滤时的事件数据对象
 
-过滤器在go-cqhttp构建好事件数据后运行，各事件的数据字段见[OneBot标准]( https://github.com/howmanybots/onebot/blob/master/v11/specs/event/README.md )。
+过滤器在go-cqhttp构建好事件数据后运行，各事件的数据字段见[OneBot标准]( https://github.com/botuniverse/onebot-11/blob/master/event/README.md )。
 
 这里有几点需要注意：
 
-- `message` 字段在运行过滤器时和上报信息类型相同（见 [消息格式]( https://github.com/howmanybots/onebot/blob/master/v11/specs/message/array.md )）
+- `message` 字段在运行过滤器时和上报信息类型相同（见 [消息格式]( https://github.com/botuniverse/onebot-11/blob/master/message/array.md )）
 - `raw_message` 字段为未经**CQ码**处理的原始消息字符串，这意味着其中可能会出现形如 `[CQ:face,id=123]` 的 CQ 码

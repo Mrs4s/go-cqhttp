@@ -356,13 +356,13 @@ func (c *HTTPClient) onBotPushEvent(e *coolq.Event) {
 	for i := uint64(0); i <= c.MaxRetries; i++ {
 		// see https://stackoverflow.com/questions/31337891/net-http-http-contentlength-222-with-body-length-0
 		// we should create a new request for every single post trial
-		req, err = http.NewRequest("POST", c.addr, bytes.NewReader(e.JSONBytes()))
+		req, err = http.NewRequest(http.MethodPost, c.addr, bytes.NewReader(e.JSONBytes()))
 		if err != nil {
 			log.Warnf("上报 Event 数据到 %v 时创建请求失败: %v", c.addr, err)
 			return
 		}
 		req.Header = header
-		res, err = c.client.Do(req)
+		res, err = c.client.Do(req) // nolint:bodyclose
 		if err == nil {
 			break
 		}

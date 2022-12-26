@@ -5,6 +5,7 @@ package server
 import (
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -28,7 +29,9 @@ func Daemon() {
 		execArgs = append(execArgs, args[i])
 	}
 
-	proc := exec.Command(os.Args[0], execArgs...)
+	ex, _ := os.Executable()
+	p, _ := filepath.Abs(ex)
+	proc := exec.Command(p, execArgs...)
 	err := proc.Start()
 	if err != nil {
 		panic(err)
