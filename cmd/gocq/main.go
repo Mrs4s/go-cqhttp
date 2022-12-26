@@ -224,8 +224,8 @@ func Main() {
 					log.Warnf("警告: 配置文件内的QQ号 (%v) 与缓存内的QQ号 (%v) 不相同", base.Account.Uin, cu)
 					log.Warnf("1. 使用会话缓存继续.")
 					log.Warnf("2. 删除会话缓存并重启.")
-					log.Warnf("请选择: (5秒后自动选1)")
-					text := readLineTimeout(time.Second*5, "1")
+					log.Warnf("请选择:")
+					text := readIfTTY("1")
 					if text == "2" {
 						_ = os.Remove("session.token")
 						log.Infof("缓存已删除.")

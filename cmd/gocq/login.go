@@ -15,6 +15,7 @@ import (
 	"github.com/mattn/go-colorable"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"gopkg.ilharper.com/x/isatty"
 
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/internal/download"
@@ -42,6 +43,14 @@ func readLineTimeout(t time.Duration, de string) (str string) {
 	case <-time.After(t):
 	}
 	return
+}
+
+func readIfTTY(de string) (str string) {
+	if isatty.Isatty(os.Stdin.Fd()) {
+		return readLine()
+	}
+	log.Warnf("未检测到输入终端，自动选择%s.", de)
+	return de
 }
 
 var cli *client.QQClient
@@ -149,7 +158,7 @@ func loginResponseProcessor(res *client.LoginResponse) error {
 			log.Warnf("1. 使用浏览器抓取滑条并登录")
 			log.Warnf("2. 使用手机QQ扫码验证 (需要手Q和gocq在同一网络下).")
 			log.Warn("请输入(1 - 2)：")
-			text = readLine()
+			text = readIfTTY("1")
 			if strings.Contains(text, "1") {
 				ticket := getTicket(res.VerifyUrl)
 				if ticket == "" {
@@ -185,8 +194,8 @@ func loginResponseProcessor(res *client.LoginResponse) error {
 			log.Warnf("账号已开启设备锁，请选择验证方式:")
 			log.Warnf("1. 向手机 %v 发送短信验证码", res.SMSPhone)
 			log.Warnf("2. 使用手机QQ扫码验证.")
-			log.Warn("请输入(1 - 2) (将在10秒后自动选择2)：")
-			text = readLineTimeout(time.Second*10, "2")
+			log.Warn("请输入(1 - 2)：")
+			text = readIfTTY("2")
 			if strings.Contains(text, "1") {
 				if !cli.RequestSMS() {
 					log.Warnf("发送验证码失败，可能是请求过于频繁.")
