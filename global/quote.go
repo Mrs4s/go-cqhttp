@@ -18,11 +18,11 @@ func Quote(s string) string {
 	return quoteWith(s, '"', false, false)
 }
 
-func quoteWith(s string, quote byte, ASCIIonly, graphicOnly bool) string {
-	return string(appendQuotedWith(make([]byte, 0, 3*len(s)/2), s, quote, ASCIIonly, graphicOnly))
+func quoteWith(s string, quote byte, asciiOnly, graphicOnly bool) string {
+	return string(appendQuotedWith(make([]byte, 0, 3*len(s)/2), s, quote, asciiOnly, graphicOnly))
 }
 
-func appendQuotedWith(buf []byte, s string, quote byte, ASCIIonly, graphicOnly bool) []byte {
+func appendQuotedWith(buf []byte, s string, quote byte, asciiOnly, graphicOnly bool) []byte {
 	// Often called with big strings, so preallocate. If there's quoting,
 	// this is conservative but still helps a lot.
 	if cap(buf)-len(buf) < len(s) {
@@ -43,19 +43,19 @@ func appendQuotedWith(buf []byte, s string, quote byte, ASCIIonly, graphicOnly b
 			buf = append(buf, lowerhex[s[0]&0xF])
 			continue
 		}
-		buf = appendEscapedRune(buf, r, quote, ASCIIonly, graphicOnly)
+		buf = appendEscapedRune(buf, r, quote, asciiOnly, graphicOnly)
 	}
 	buf = append(buf, quote)
 	return buf
 }
-func appendEscapedRune(buf []byte, r rune, quote byte, ASCIIonly, graphicOnly bool) []byte {
+func appendEscapedRune(buf []byte, r rune, quote byte, asciiOnly, graphicOnly bool) []byte {
 	var runeTmp [utf8.UTFMax]byte
 	if r == rune(quote) || r == '\\' { // always backslashed
 		buf = append(buf, '\\')
 		buf = append(buf, byte(r))
 		return buf
 	}
-	if ASCIIonly {
+	if asciiOnly {
 		if r < utf8.RuneSelf && strconv.IsPrint(r) {
 			buf = append(buf, byte(r))
 			return buf
