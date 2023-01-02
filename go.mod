@@ -24,7 +24,7 @@ require (
 	golang.org/x/sys v0.2.0
 	golang.org/x/term v0.2.0
 	golang.org/x/time v0.2.0
-	gopkg.ilharper.com/x/isatty v1.1.0
+	gopkg.ilharper.com/x/isatty v1.1.1
 	gopkg.in/yaml.v3 v3.0.1
 )
 
