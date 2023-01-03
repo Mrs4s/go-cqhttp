@@ -88,6 +88,7 @@ func FindFile(file, cache, p string) (data []byte, err error) {
 		if err != nil {
 			return nil, err
 		}
+		return os.ReadFile(cacheFile)
 	case strings.HasPrefix(file, "base64"):
 		data, err = base64.StdEncoding.DecodeString(strings.TrimPrefix(file, "base64://"))
 		if err != nil {
