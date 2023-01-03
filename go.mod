@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/FloatTech/sqlite v1.5.7
 	github.com/Microsoft/go-winio v0.6.0
-	github.com/Mrs4s/MiraiGo v0.0.0-20221202060717-4658474c60dd
+	github.com/Mrs4s/MiraiGo v0.0.0-20230103130153-8e70b22d1c83
 	github.com/RomiChan/syncx v0.0.0-20221202055724-5f842c53020e
 	github.com/RomiChan/websocket v1.4.3-0.20220123145318-307a86b127bc
 	github.com/fumiama/go-base16384 v1.6.1
