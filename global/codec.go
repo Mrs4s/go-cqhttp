@@ -46,3 +46,8 @@ func ExtractCover(src string, target string) error {
 	cmd := exec.Command("ffmpeg", "-i", src, "-y", "-ss", "0", "-frames:v", "1", target)
 	return errors.Wrap(cmd.Run(), "extract video cover failed")
 }
+
+func ConvertImagePng(src string, target string) error {
+	cmd := exec.Command("ffmpeg", "-i", src, "-y", "-f", "png", target)
+	return errors.Wrap(cmd.Run(), "convert image to png failed")
+}

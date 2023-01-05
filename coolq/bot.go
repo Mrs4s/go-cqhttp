@@ -153,8 +153,22 @@ func (bot *CQBot) uploadLocalImage(target message.Source, img *LocalImageElement
 		defer func() { _ = f.Close() }()
 		img.Stream = f
 	}
-	if mt, ok := mime.CheckImage(img.Stream); !ok {
+	mt, ok := mime.CheckImage(img.Stream)
+	if !ok {
 		return nil, errors.New("image type error: " + mt)
+	}
+	if mt == "image/webp" && base.ConvertWebpImage != false {
+		newname := img.File + ".png"
+		err := global.ConvertImagePng(img.File, newname)
+		if err != nil {
+			return nil, errors.Wrap(err, "convert webp image error")
+		}
+		f, err := os.Open(newname)
+		if err != nil {
+			return nil, errors.Wrap(err, "open image error")
+		}
+		defer func() { _ = f.Close() }()
+		img.Stream = f
 	}
 	i, err := bot.Client.UploadImage(target, img.Stream, 4)
 	if err != nil {
