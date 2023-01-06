@@ -30,6 +30,7 @@ var (
 	SplitURL            bool // 是否分割URL
 	ForceFragmented     bool // 是否启用强制分片
 	SkipMimeScan        bool // 是否跳过Mime扫描
+	ConvertWebpImage    bool // 是否转换Webp图片
 	ReportSelfMessage   bool // 是否上报自身消息
 	UseSSOAddress       bool // 是否使用服务器下发的新地址进行重连
 	LogForceNew         bool // 是否在每次启动时强制创建全新的文件储存日志
@@ -79,6 +80,7 @@ func Init() {
 		ExtraReplyData = conf.Message.ExtraReplyData
 		ForceFragmented = conf.Message.ForceFragment
 		SkipMimeScan = conf.Message.SkipMimeScan
+		ConvertWebpImage = conf.Message.ConvertWebpImage
 		ReportSelfMessage = conf.Message.ReportSelfMessage
 		UseSSOAddress = conf.Account.UseSSOAddress
 		AllowTempSession = conf.Account.AllowTempSession
