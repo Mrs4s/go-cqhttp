@@ -159,7 +159,7 @@ func (bot *CQBot) uploadLocalImage(target message.Source, img *LocalImageElement
 	}
 	if mt == "image/webp" && base.ConvertWebpImage {
 		newname := img.File + ".png"
-		err := global.ConvertImagePng(img.File, newname)
+		err := global.ConvertImage(img.File, newname)
 		if err != nil {
 			return nil, errors.Wrap(err, "convert webp image error")
 		}
