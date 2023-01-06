@@ -161,9 +161,15 @@ func (bot *CQBot) uploadLocalImage(target message.Source, img *LocalImageElement
 		return nil, errors.New("image type error: " + mt)
 	}
 	if mt == "image/webp" && base.ConvertWebpImage {
-		img0, _ := webp.Decode(img.Stream)
+		img0, err := webp.Decode(img.Stream)
+		if err != nil {
+			return nil, errors.Wrap(err, "decode webp error")
+		}
 		stream := bytes.NewBuffer(nil)
-		png.Encode(stream, img0)
+		err = png.Encode(stream, img0)
+		if err != nil {
+			return nil, errors.Wrap(err, "encode png error")
+		}
 		img.Stream = bytes.NewReader(stream.Bytes())
 	}
 	i, err := bot.Client.UploadImage(target, img.Stream, 4)
