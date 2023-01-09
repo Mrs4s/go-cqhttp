@@ -1167,7 +1167,7 @@ func (bot *CQBot) CQSetGroupBan(groupID, userID int64, duration uint32) global.M
 		if m := g.FindMember(userID); m != nil {
 			err := m.Mute(duration)
 			if err != nil {
-				if duration > 2592000 {
+				if duration >= 2592000 {
 					return Failed(100, "DURATION_IS_NOT_IN_RANGE", "非法的禁言时长")
 				}
 				return Failed(100, "NOT_MANAGEABLE", "机器人权限不足")
