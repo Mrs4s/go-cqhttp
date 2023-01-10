@@ -191,9 +191,13 @@ func runWSClient(b *coolq.CQBot, node yaml.Node) {
 		filter: conf.Filter,
 	}
 	filter.Add(c.filter)
+
 	if conf.ReconnectInterval != 0 {
 		c.reconnectInterval = time.Duration(conf.ReconnectInterval) * time.Millisecond
+	} else {
+		c.reconnectInterval = time.Second * 5
 	}
+
 	if conf.RateLimit.Enabled {
 		c.limiter = rateLimit(conf.RateLimit.Frequency, conf.RateLimit.Bucket)
 	}
