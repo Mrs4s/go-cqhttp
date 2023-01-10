@@ -43,6 +43,8 @@ message:
   extra-reply-data: false
   # 跳过 Mime 扫描, 忽略错误数据
   skip-mime-scan: false
+  # 是否自动转换 WebP 图片
+  convert-webp-image: false
 
 output:
   # 日志等级 trace,debug,info,warn,error

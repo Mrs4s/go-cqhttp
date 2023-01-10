@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"image/png"
 	"os"
 	"runtime/debug"
 	"strings"
@@ -24,6 +25,8 @@ import (
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
 	"github.com/Mrs4s/go-cqhttp/internal/mime"
+
+	"golang.org/x/image/webp"
 )
 
 // CQBot CQBot结构体,存储Bot实例相关配置
@@ -153,8 +156,21 @@ func (bot *CQBot) uploadLocalImage(target message.Source, img *LocalImageElement
 		defer func() { _ = f.Close() }()
 		img.Stream = f
 	}
-	if mt, ok := mime.CheckImage(img.Stream); !ok {
+	mt, ok := mime.CheckImage(img.Stream)
+	if !ok {
 		return nil, errors.New("image type error: " + mt)
+	}
+	if mt == "image/webp" && base.ConvertWebpImage {
+		img0, err := webp.Decode(img.Stream)
+		if err != nil {
+			return nil, errors.Wrap(err, "decode webp error")
+		}
+		stream := bytes.NewBuffer(nil)
+		err = png.Encode(stream, img0)
+		if err != nil {
+			return nil, errors.Wrap(err, "encode png error")
+		}
+		img.Stream = bytes.NewReader(stream.Bytes())
 	}
 	i, err := bot.Client.UploadImage(target, img.Stream, 4)
 	if err != nil {
