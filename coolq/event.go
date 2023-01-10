@@ -144,7 +144,10 @@ func (bot *CQBot) tempMessageEvent(c *client.QQClient, e *client.TempMessageEven
 		PrimaryID:  e.Session.Sender,
 	}
 	cqm := toStringMessage(m.Elements, source)
-	bot.tempSessionCache.Store(m.Sender.Uin, e.Session)
+	if base.AllowTempSession {
+		bot.tempSessionCache.Store(m.Sender.Uin, e.Session)
+	}
+
 	id := m.Id
 	// todo(Mrs4s)
 	// if bot.db != nil { // nolint
