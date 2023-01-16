@@ -254,7 +254,7 @@ func getTicket(u string) (str string) {
 func fetchCaptcha(id string) string {
 	g, err := download.Request{URL: "https://captcha.go-cqhttp.org/captcha/ticket?id=" + id}.JSON()
 	if err != nil {
-		log.Warnf("获取 Ticket 时出现错误: %v", err)
+		log.Debugf("获取 Ticket 时出现错误: %v", err)
 		return ""
 	}
 	if g.Get("ticket").Exists() {
