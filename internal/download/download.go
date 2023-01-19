@@ -111,6 +111,7 @@ func writeToFile(reader io.ReadCloser, path string) error {
 	if err != nil {
 		return err
 	}
+	defer func() { _ = file.Close() }()
 	_, err = file.ReadFrom(reader)
 	return err
 }
