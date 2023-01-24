@@ -159,18 +159,18 @@ func loginResponseProcessor(res *client.LoginResponse) error {
 			log.Warnf("2. 使用手机QQ扫码验证 (需要手Q和gocq在同一网络下).")
 			log.Warn("请输入(1 - 2)：")
 			text = readIfTTY("1")
-			if strings.Contains(text, "1") {
-				ticket := getTicket(res.VerifyUrl)
-				if ticket == "" {
-					os.Exit(0)
-				}
-				res, err = cli.SubmitTicket(ticket)
-				continue
+			if strings.Contains(text, "2") {
+				cli.Disconnect()
+				cli.Release()
+				cli = client.NewClientEmpty()
+				return qrcodeLogin()
 			}
-			cli.Disconnect()
-			cli.Release()
-			cli = client.NewClientEmpty()
-			return qrcodeLogin()
+			ticket := getTicket(res.VerifyUrl)
+			if ticket == "" {
+				os.Exit(0)
+			}
+			res, err = cli.SubmitTicket(ticket)
+			continue
 		case client.NeedCaptcha:
 			log.Warnf("登录需要验证码.")
 			_ = os.WriteFile("captcha.jpg", res.CaptchaImage, 0o644)
