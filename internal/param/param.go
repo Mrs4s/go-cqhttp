@@ -19,7 +19,7 @@ import (
 // type gjson.True or gjson.False
 //
 // type string "true","yes","1" or "false","no","0" (case insensitive)
-func EnsureBool(p interface{}, defaultVal bool) bool {
+func EnsureBool(p any, defaultVal bool) bool {
 	var str string
 	if b, ok := p.(bool); ok {
 		return b

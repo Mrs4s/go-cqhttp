@@ -21,7 +21,7 @@ import (
 )
 
 // ToFormattedMessage 将给定[]message.IMessageElement转换为通过coolq.SetMessageFormat所定义的消息上报格式
-func ToFormattedMessage(e []message.IMessageElement, source message.Source) (r interface{}) {
+func ToFormattedMessage(e []message.IMessageElement, source message.Source) (r any) {
 	if base.PostFormat == "string" {
 		r = toStringMessage(e, source)
 	} else if base.PostFormat == "array" {

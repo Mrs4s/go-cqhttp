@@ -2083,7 +2083,7 @@ func (bot *CQBot) CQReloadEventFilter(file string) global.MSG {
 }
 
 // OK 生成成功返回值
-func OK(data interface{}) global.MSG {
+func OK(data any) global.MSG {
 	return global.MSG{"data": data, "retcode": 0, "status": "ok"}
 }
 
