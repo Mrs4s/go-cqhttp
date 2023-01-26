@@ -29,7 +29,7 @@ func readLine() (str string) {
 	return
 }
 
-func readLineTimeout(t time.Duration, de string) (str string) {
+func readLineTimeout(t time.Duration) {
 	r := make(chan string)
 	go func() {
 		select {
@@ -37,12 +37,10 @@ func readLineTimeout(t time.Duration, de string) (str string) {
 		case <-time.After(t):
 		}
 	}()
-	str = de
 	select {
-	case str = <-r:
+	case <-r:
 	case <-time.After(t):
 	}
-	return
 }
 
 func readIfTTY(de string) (str string) {
@@ -210,7 +208,7 @@ func loginResponseProcessor(res *client.LoginResponse) error {
 		case client.UnsafeDeviceError:
 			log.Warnf("账号已开启设备锁，请前往 -> %v <- 验证后重启Bot.", res.VerifyUrl)
 			log.Infof("按 Enter 或等待 5s 后继续....")
-			readLineTimeout(time.Second*5, "")
+			readLineTimeout(time.Second * 5)
 			os.Exit(0)
 		case client.OtherLoginError, client.UnknownLoginError, client.TooManySMSRequestError:
 			msg := res.ErrorMessage
@@ -221,7 +219,7 @@ func loginResponseProcessor(res *client.LoginResponse) error {
 			}
 			log.Warnf("登录失败: %v", msg)
 			log.Infof("按 Enter 或等待 5s 后继续....")
-			readLineTimeout(time.Second*5, "")
+			readLineTimeout(time.Second * 5)
 			os.Exit(0)
 		}
 	}
