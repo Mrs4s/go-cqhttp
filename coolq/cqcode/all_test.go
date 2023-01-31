@@ -2,18 +2,31 @@ package cqcode
 
 import (
 	"bytes"
+	"encoding/json"
 	"testing"
 )
 
-func TestIssue1733(t *testing.T) {
-	const (
-		input    = "\u0005"
-		expected = `"\u0005"`
-	)
-	var b bytes.Buffer
-	writeQuote(&b, input)
-	got := b.String()
-	if got != expected {
-		t.Errorf("want %v but got %v", expected, got)
+func jsonMarshal(s string) string {
+	b, err := json.Marshal(s)
+	if err != nil {
+		panic(err)
+	}
+	return string(b)
+}
+
+func Test_quote(t *testing.T) {
+	testcase := []string{
+		"\u0005", // issue 1773
+		"\v",
+	}
+
+	for _, input := range testcase {
+		var b bytes.Buffer
+		writeQuote(&b, input)
+		got := b.String()
+		expected := jsonMarshal(input)
+		if got != expected {
+			t.Errorf("want %v but got %v", expected, got)
+		}
 	}
 }
