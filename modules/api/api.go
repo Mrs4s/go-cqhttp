@@ -267,6 +267,13 @@ func (c *Caller) call(action string, p Getter) global.MSG {
 			p2 = pt.Bool()
 		}
 		return c.bot.CQSetGroupAdmin(p0, p1, p2)
+	case "set_group_anonymous":
+		p0 := p.Get("group_id").Int()
+		p1 := true
+		if pt := p.Get("enable"); pt.Exists() {
+			p1 = pt.Bool()
+		}
+		return c.bot.CQSetGroupAnonymous(p0, p1)
 	case "set_group_anonymous_ban":
 		p0 := p.Get("group_id").Int()
 		p1 := p.Get("[anonymous_flag,anonymous.flag].0").String()

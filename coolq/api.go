@@ -1337,6 +1337,19 @@ func (bot *CQBot) CQSetGroupAdmin(groupID, userID int64, enable bool) global.MSG
 	return OK(nil)
 }
 
+// CQSetGroupAnonymous 群组匿名
+//
+// https://beautyyu.one
+// @route(set_group_anonymous)
+// @default(enable=true)
+func (bot *CQBot) CQSetGroupAnonymous(groupID int64, enable bool) global.MSG {
+	if g := bot.Client.FindGroup(groupID); g != nil {
+		g.SetAnonymous(enable)
+		return OK(nil)
+	}
+	return Failed(100, "GROUP_NOT_FOUND", "群聊不存在")
+}
+
 // CQGetGroupHonorInfo 获取群荣誉信息
 //
 // https://git.io/Jtz1H
