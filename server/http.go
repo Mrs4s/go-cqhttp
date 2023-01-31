@@ -104,31 +104,35 @@ func init() {
 
 var joinQuery = regexp.MustCompile(`\[(.+?),(.+?)]\.0`)
 
-func (h *httpCtx) get(s string, join bool) gjson.Result {
+func mayJSONParam(p string) bool {
+	if strings.HasPrefix(p, "{") || strings.HasPrefix(p, "[") {
+		return gjson.Valid(p)
+	}
+	return false
+}
+
+func (h *httpCtx) get(pattern string, join bool) gjson.Result {
 	// support gjson advanced syntax:
-	// h.Get("[a,b].0") see usage in http_test.go
-	if join && joinQuery.MatchString(s) {
-		matched := joinQuery.FindStringSubmatch(s)
+	// h.Get("[a,b].0") see usage in http_test.go. See issue #1241, #1325.
+	if join && strings.HasPrefix(pattern, "[") && joinQuery.MatchString(pattern) {
+		matched := joinQuery.FindStringSubmatch(pattern)
 		if r := h.get(matched[1], false); r.Exists() {
 			return r
 		}
 		return h.get(matched[2], false)
 	}
 
-	validJSONParam := func(p string) bool {
-		return (strings.HasPrefix(p, "{") || strings.HasPrefix(p, "[")) && gjson.Valid(p)
-	}
 	if h.postForm != nil {
-		if form := h.postForm.Get(s); form != "" {
-			if validJSONParam(form) {
+		if form := h.postForm.Get(pattern); form != "" {
+			if mayJSONParam(form) {
 				return gjson.Result{Type: gjson.JSON, Raw: form}
 			}
 			return gjson.Result{Type: gjson.String, Str: form}
 		}
 	}
 	if h.query != nil {
-		if query := h.query.Get(s); query != "" {
-			if validJSONParam(query) {
+		if query := h.query.Get(pattern); query != "" {
+			if mayJSONParam(query) {
 				return gjson.Result{Type: gjson.JSON, Raw: query}
 			}
 			return gjson.Result{Type: gjson.String, Str: query}
