@@ -94,8 +94,8 @@ func writeQuote(b *bytes.Buffer, s string) {
 				c = 't'
 			}
 			b.WriteByte(c)
-			i = j + 1
-			j = j + 1
+			j++
+			i = j
 			continue
 
 		case '<', '>', '&':
@@ -103,8 +103,8 @@ func writeQuote(b *bytes.Buffer, s string) {
 			b.WriteString(`\u00`)
 			b.WriteByte(hex[c>>4])
 			b.WriteByte(hex[c&0xF])
-			i = j + 1
-			j = j + 1
+			j++
+			i = j
 			continue
 		}
 
@@ -114,8 +114,8 @@ func writeQuote(b *bytes.Buffer, s string) {
 			b.WriteString(`\u00`)
 			b.WriteByte(hex[c>>4])
 			b.WriteByte(hex[c&0xF])
-			i = j + 1
-			j = j + 1
+			j++
+			i = j
 			continue
 		}
 
@@ -124,8 +124,8 @@ func writeQuote(b *bytes.Buffer, s string) {
 		if r == utf8.RuneError && size == 1 {
 			b.WriteString(s[i:j])
 			b.WriteString(`\ufffd`)
-			i = j + size
-			j = j + size
+			j += size
+			i = j
 			continue
 		}
 
@@ -141,8 +141,8 @@ func writeQuote(b *bytes.Buffer, s string) {
 			b.WriteString(s[i:j])
 			b.WriteString(`\u202`)
 			b.WriteByte(hex[r&0xF])
-			i = j + size
-			j = j + size
+			j += size
+			i = j
 			continue
 		}
 
