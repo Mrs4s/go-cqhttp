@@ -1106,12 +1106,12 @@ func (bot *CQBot) CQSetGroupMemo(groupID int64, msg, img string) global.MSG {
 			if err != nil {
 				return Failed(100, "IMAGE_NOT_FOUND", "图片未找到")
 			}
-			err = bot.Client.AddGroupNoticeWithPic(groupID, msg, data)
+			_, err = bot.Client.AddGroupNoticeWithPic(groupID, msg, data)
 			if err != nil {
 				return Failed(100, "SEND_NOTICE_ERROR", err.Error())
 			}
 		} else {
-			err := bot.Client.AddGroupNoticeSimple(groupID, msg)
+			_, err := bot.Client.AddGroupNoticeSimple(groupID, msg)
 			if err != nil {
 				return Failed(100, "SEND_NOTICE_ERROR", err.Error())
 			}
