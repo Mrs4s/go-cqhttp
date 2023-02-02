@@ -97,7 +97,7 @@ func qrcodeLogin() error {
 	if err != nil {
 		return err
 	}
-	_ = os.WriteFile("qrcode.png", rsp.ImageData, 0o644)
+	_ = os.WriteFile("qrcode.png", rsp.ImageData, 0644)
 	defer func() { _ = os.Remove("qrcode.png") }()
 	if cli.Uin != 0 {
 		log.Infof("请使用账号 %v 登录手机QQ扫描二维码 (qrcode.png) : ", cli.Uin)
