@@ -282,6 +282,18 @@ func toElements(e []message.IMessageElement, source message.Source) (r []cqcode.
 					{K: "type", V: "sticker"},
 				},
 			}
+		case *LocalImageElement:
+			data := pairs{
+				{K: "file", V: o.File},
+				{K: "url", V: o.URL},
+			}
+			if o.Flash {
+				data = append(data, pair{K: "type", V: "flash"})
+			}
+			m = cqcode.Element{
+				Type: "image",
+				Data: data,
+			}
 		default:
 			continue
 		}
