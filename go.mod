@@ -21,6 +21,7 @@ require (
 	github.com/wdvxdr1123/go-silk v0.0.0-20210316130616-d47b553def60
 	go.mongodb.org/mongo-driver v1.11.0
 	golang.org/x/crypto v0.3.0
+	golang.org/x/image v0.3.0
 	golang.org/x/sys v0.2.0
 	golang.org/x/term v0.2.0
 	golang.org/x/time v0.2.0
@@ -50,7 +51,6 @@ require (
 	github.com/xdg-go/scram v1.1.1 // indirect
 	github.com/xdg-go/stringprep v1.0.3 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20181117223130-1be2e3e5546d // indirect
-	golang.org/x/image v0.3.0 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
 	golang.org/x/sync v0.0.0-20220819030929-7fc1605a5dde // indirect
 	golang.org/x/text v0.6.0 // indirect
