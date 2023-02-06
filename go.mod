@@ -1,11 +1,11 @@
 module github.com/Mrs4s/go-cqhttp
 
-go 1.19
+go 1.20
 
 require (
 	github.com/FloatTech/sqlite v1.5.7
 	github.com/Microsoft/go-winio v0.6.0
-	github.com/Mrs4s/MiraiGo v0.0.0-20230131090543-15069b74b35d
+	github.com/Mrs4s/MiraiGo v0.0.0-20230206122951-91f9576e4815
 	github.com/RomiChan/syncx v0.0.0-20221202055724-5f842c53020e
 	github.com/RomiChan/websocket v1.4.3-0.20220123145318-307a86b127bc
 	github.com/fumiama/go-base16384 v1.6.1
@@ -31,7 +31,7 @@ require (
 
 require (
 	github.com/FloatTech/ttl v0.0.0-20220715042055-15612be72f5b // indirect
-	github.com/RomiChan/protobuf v0.0.0-20220624030127-3310cba9dbc0 // indirect
+	github.com/RomiChan/protobuf v0.1.1-0.20230204044148-2ed269a2e54d // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fumiama/imgsz v0.0.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
