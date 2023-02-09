@@ -1431,6 +1431,7 @@ func (bot *CQBot) CQGetStrangerInfo(userID int64) global.MSG {
 			// unknown = 0x2
 			return "unknown"
 		}(),
+		"sign":       info.Sign,
 		"age":        info.Age,
 		"level":      info.Level,
 		"login_days": info.LoginDays,
