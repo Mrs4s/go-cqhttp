@@ -5,6 +5,8 @@
 
 注意: 与客户端建立连接的握手事件**不会**经过事件过滤器
 
+> 注意, 最新文档已经移动到 [go-cqhttp-docs](https://github.com/ishkong/go-cqhttp-docs), 当前文档只做兼容性保留, 所以内容可能有不足.
+
 ## 示例
 
 这节首先给出一些示例，演示过滤器的基本用法，下一节将给出具体语法说明。
@@ -163,9 +165,9 @@
 
 ## 过滤时的事件数据对象
 
-过滤器在go-cqhttp构建好事件数据后运行，各事件的数据字段见[OneBot标准]( https://github.com/howmanybots/onebot/blob/master/v11/specs/event/README.md )。
+过滤器在go-cqhttp构建好事件数据后运行，各事件的数据字段见[OneBot标准]( https://github.com/botuniverse/onebot-11/blob/master/event/README.md )。
 
 这里有几点需要注意：
 
-- `message` 字段在运行过滤器时和上报信息类型相同（见 [消息格式]( https://github.com/howmanybots/onebot/blob/master/v11/specs/message/array.md )）
+- `message` 字段在运行过滤器时和上报信息类型相同（见 [消息格式]( https://github.com/botuniverse/onebot-11/blob/master/message/array.md )）
 - `raw_message` 字段为未经**CQ码**处理的原始消息字符串，这意味着其中可能会出现形如 `[CQ:face,id=123]` 的 CQ 码

@@ -2,8 +2,8 @@ package cqcode
 
 import (
 	"bytes"
-	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/Mrs4s/MiraiGo/binary"
 )
@@ -60,8 +60,95 @@ func (e *Element) MarshalJSON() ([]byte, error) {
 			buf.WriteByte('"')
 			buf.WriteString(data.K)
 			buf.WriteString(`":`)
-			buf.WriteString(strconv.Quote(data.V))
+			writeQuote(buf, data.V)
 		}
 		buf.WriteString(`}}`)
 	}), nil
+}
+
+const hex = "0123456789abcdef"
+
+func writeQuote(b *bytes.Buffer, s string) {
+	i, j := 0, 0
+
+	b.WriteByte('"')
+	for j < len(s) {
+		c := s[j]
+
+		if c >= 0x20 && c <= 0x7f && c != '\\' && c != '"' {
+			// fast path: most of the time, printable ascii characters are used
+			j++
+			continue
+		}
+
+		switch c {
+		case '\\', '"', '\n', '\r', '\t':
+			b.WriteString(s[i:j])
+			b.WriteByte('\\')
+			switch c {
+			case '\n':
+				c = 'n'
+			case '\r':
+				c = 'r'
+			case '\t':
+				c = 't'
+			}
+			b.WriteByte(c)
+			j++
+			i = j
+			continue
+
+		case '<', '>', '&':
+			b.WriteString(s[i:j])
+			b.WriteString(`\u00`)
+			b.WriteByte(hex[c>>4])
+			b.WriteByte(hex[c&0xF])
+			j++
+			i = j
+			continue
+		}
+
+		// This encodes bytes < 0x20 except for \t, \n and \r.
+		if c < 0x20 {
+			b.WriteString(s[i:j])
+			b.WriteString(`\u00`)
+			b.WriteByte(hex[c>>4])
+			b.WriteByte(hex[c&0xF])
+			j++
+			i = j
+			continue
+		}
+
+		r, size := utf8.DecodeRuneInString(s[j:])
+
+		if r == utf8.RuneError && size == 1 {
+			b.WriteString(s[i:j])
+			b.WriteString(`\ufffd`)
+			j += size
+			i = j
+			continue
+		}
+
+		switch r {
+		case '\u2028', '\u2029':
+			// U+2028 is LINE SEPARATOR.
+			// U+2029 is PARAGRAPH SEPARATOR.
+			// They are both technically valid characters in JSON strings,
+			// but don't work in JSONP, which has to be evaluated as JavaScript,
+			// and can lead to security holes there. It is valid JSON to
+			// escape them, so we do so unconditionally.
+			// See http://timelessrepo.com/json-isnt-a-javascript-subset for discussion.
+			b.WriteString(s[i:j])
+			b.WriteString(`\u202`)
+			b.WriteByte(hex[r&0xF])
+			j += size
+			i = j
+			continue
+		}
+
+		j += size
+	}
+
+	b.WriteString(s[i:])
+	b.WriteByte('"')
 }

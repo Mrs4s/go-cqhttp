@@ -57,8 +57,12 @@ func Main() {
 		base.Help()
 	case base.LittleD:
 		server.Daemon()
-	case base.LittleWD != "":
-		base.ResetWorkingDir()
+	}
+	if base.LittleWD != "" {
+		err := os.Chdir(base.LittleWD)
+		if err != nil {
+			log.Fatalf("重置工作目录时出现错误: %v", err)
+		}
 	}
 	base.Init()
 
@@ -131,7 +135,6 @@ func Main() {
 	if base.Debug {
 		log.SetLevel(log.DebugLevel)
 		log.Warnf("已开启Debug模式.")
-		// log.Debugf("开发交流群: 192548878")
 	}
 	if !global.PathExists("device.json") {
 		log.Warn("虚拟设备信息不存在, 将自动生成随机设备.")
@@ -220,8 +223,8 @@ func Main() {
 					log.Warnf("警告: 配置文件内的QQ号 (%v) 与缓存内的QQ号 (%v) 不相同", base.Account.Uin, cu)
 					log.Warnf("1. 使用会话缓存继续.")
 					log.Warnf("2. 删除会话缓存并重启.")
-					log.Warnf("请选择: (5秒后自动选1)")
-					text := readLineTimeout(time.Second*5, "1")
+					log.Warnf("请选择:")
+					text := readIfTTY("1")
 					if text == "2" {
 						_ = os.Remove("session.token")
 						log.Infof("缓存已删除.")

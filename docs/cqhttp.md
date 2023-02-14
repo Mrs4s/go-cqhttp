@@ -1,6 +1,8 @@
 # 拓展API
 
-由于部分 api 原版 CQHTTP 并未实现，go-cqhttp 修改并增加了一些拓展 api .
+由于部分 api 原版 CQHTTP 并未实现，go-cqhttp 修改并增加了一些拓展 api 
+
+> 注意, 最新文档已经移动到 [go-cqhttp-docs](https://github.com/ishkong/go-cqhttp-docs), 当前文档只做兼容性保留, 所以内容可能有不足..
 
 <details>
 <summary>目录</summary>
@@ -42,6 +44,8 @@
 - [设置群名](#设置群名)
 - [获取用户VIP信息](#获取用户vip信息)
 - [发送群公告](#发送群公告)
+- [获取群公告](#获取群公告)
+- [删除群公告](#删除群公告)
 - [设置精华消息](#设置精华消息)
 - [移出精华消息](#移出精华消息)
 - [获取精华消息列表](#获取精华消息列表)
@@ -244,7 +248,8 @@ Type: `node`
 | `seq`     | message | 具体消息       | 用于自定义消息                                                                         |
 
 特殊说明: **需要使用单独的API `/send_group_forward_msg` 发送，并且由于消息段较为复杂，仅支持Array形式入参。 如果引用消息和自定义消息同时出现，实际查看顺序将取消息段顺序.
-另外按 [Onebot v11](https://github.com/botuniverse/onebot-11/blob/master/message/array.md) 文档说明, `data` 应全为字符串, 但由于需要接收`message` 类型的消息, 所以 *仅限此Type的content字段* 支持Array套娃**
+另外按 [Onebot v11](https://github.com/botuniverse/onebot-11/blob/master/message/array.md) 文档说明, `data` 应全为字符串,
+但由于需要接收`message` 类型的消息, 所以 *仅限此Type的content字段* 支持Array套娃**
 
 示例:
 
@@ -491,6 +496,18 @@ Type: `tts`
 
 示例: `[CQ:tts,text=这是一条测试消息]`
 
+### 猜拳消息
+
+Type: `rps`
+
+参数:
+
+| 参数名     | 类型  | 说明               |
+|---------|-----|------------------|
+| `value` | int | 0：石头, 1：剪刀, 2：布  |
+
+示例: `[CQ:rps,value=0]`
+
 ## API
 
 ### 设置群名
@@ -613,15 +630,16 @@ Type: `tts`
 }
 ````
 
-### 发送合并转发(群)
+### 发送合并转发(群/私聊)
 
-终结点: `/send_group_forward_msg`
+终结点: `/send_group_forward_msg`, `send_private_forward_msg`, `send_forward_msg`
 
 **参数**
 
-| 字段       | 类型           | 说明                         |
-| ---------- | -------------- | ---------------------------- |
-| `group_id` | int64          | 群号                         |
+| 字段         | 类型             | 说明                                                                                                                                                            |
+|------------|----------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `group_id` | int64          | 群号                                                                                                                                                            |
+| `user_id`  | int64          | 私聊QQ号                                                                                                                                                         |
 | `messages` | forward node[] | 自定义转发消息, 具体看 [CQCode](https://github.com/Mrs4s/go-cqhttp/blob/master/docs/cqhttp.md#%E5%90%88%E5%B9%B6%E8%BD%AC%E5%8F%91%E6%B6%88%E6%81%AF%E8%8A%82%E7%82%B9) |
 
 响应数据
@@ -883,6 +901,36 @@ Type: `tts`
 > 在不提供 `folder` 参数的情况下默认上传到根目录
 > 只能上传本地文件, 需要上传 `http` 文件的话请先调用 `download_file` API下载
 
+### 上传私聊文件
+
+终结点: `/upload_private_file`
+
+**参数**
+
+| 字段        | 类型     | 说明     |
+|-----------|--------|--------|
+| `user_id` | int64  | 接收者id  |
+| `file`    | string | 本地文件路径 |
+| `name`    | string | 储存名称   |
+
+> 只能上传本地文件, 需要上传 `http` 文件的话请先调用 `download_file` API下载
+
+### 设置 QQ 个人资料
+
+终结点: `/set_qq_profile`
+
+**参数**
+
+| 字段              | 类型     | 说明   |
+|-----------------|--------|------|
+| `nickname`      | int64  | 昵称   |
+| `company`       | string | 公司   |
+| `email`         | string | 邮箱   |
+| `college`       | string | 大学   |
+| `personal_note` | string | 个人签名 |
+
+> 所有参数字段都为可选。
+
 ### 获取状态
 
 终结点: `/get_status`
@@ -1065,13 +1113,67 @@ JSON数组:
 
 `该 API 没有响应数据`
 
+### 获取群公告
+
+终结点： `/_get_group_notice`
+
+**参数**
+
+| 字段名     | 数据类型 | 默认值 | 说明     |
+| ---------- | -------- | ------ | -------- |
+| `group_id` | int64    |        | 群号     |
+
+**响应数据**
+
+数组信息:
+
+| 字段名            | 数据类型   | 默认值 | 说明    |
+|----------------|--------| ------ |-------|
+| `notice_id`    | string |        | 公告id  |
+| `sender_id`    | string |        | 发布者id |
+| `publish_time` | string |        | 发布时间  |
+| `message`      | GroupNoticeMessage |        | 公告id  |
+
+响应示例
+
+```json
+{
+  "data": [
+    {
+      "notice_id": "8850de2e00000000cc6bbd628a150c00",
+      "sender_id": 1111111,
+      "publish_time": 1656581068,
+      "message": {
+        "text": "这是一条公告",
+        "images": []
+      }
+    }
+  ],
+  "retcode": 0,
+  "status": "ok"
+}
+```
+
+### 删除群公告
+
+终结点： `/_del_group_notice`
+
+**参数**
+
+| 字段名         | 数据类型 | 默认值 | 说明   |
+|-------------| -------- | ------ |------|
+| `group_id`  | int64    |        | 群号   |
+| `notice_id` | string   |        | 公告id |
+
+`该 API 没有响应数据`
+
 ### 获取单向好友列表
 
 终结点: `/get_unidirectional_friend_list`
 
 **响应数据**
 
-数组信息: 
+数组信息:
 
 | 字段          | 类型   | 说明     |
 | ------------- | ------ | -------- |

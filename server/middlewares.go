@@ -50,7 +50,7 @@ func longPolling(bot *coolq.CQBot, maxSize int) api.Handler {
 			return nil
 		}
 		var (
-			ch      = make(chan []interface{})
+			ch      = make(chan []any)
 			timeout = time.Duration(p.Get("timeout").Int()) * time.Second
 		)
 		go func() {
@@ -63,7 +63,7 @@ func longPolling(bot *coolq.CQBot, maxSize int) api.Handler {
 			if limit <= 0 || queue.Len() < limit {
 				limit = queue.Len()
 			}
-			ret := make([]interface{}, limit)
+			ret := make([]any, limit)
 			elem := queue.Front()
 			for i := 0; i < limit; i++ {
 				ret[i] = elem.Value
@@ -81,7 +81,7 @@ func longPolling(bot *coolq.CQBot, maxSize int) api.Handler {
 		if timeout != 0 {
 			select {
 			case <-time.After(timeout):
-				return coolq.OK([]interface{}{})
+				return coolq.OK([]any{})
 			case ret := <-ch:
 				return coolq.OK(ret)
 			}

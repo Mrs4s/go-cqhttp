@@ -1,5 +1,7 @@
 # 配置
 
+> 注意, 最新文档已经移动到 [go-cqhttp-docs](https://github.com/ishkong/go-cqhttp-docs), 当前文档只做兼容性保留, 所以内容可能有不足.
+
 go-cqhttp 包含 `config.yml` 和 `device.json` 两个配置文件, 其中 `config.yml` 为运行配置 `device.json` 为虚拟设备信息.
 
 ## 配置信息
@@ -84,9 +86,8 @@ servers:
   # HTTP 通信设置
   - http:
       # 服务端监听地址
-      host: 127.0.0.1
-      # 服务端监听端口
-      port: 5700
+      # 如需指定监听ipv4， 可使用 `address: tcp4://0.0.0.0:5700` (ipv6同理)
+      address: 0.0.0.0:5700
       # 反向HTTP超时时间, 单位秒
       # 最小值为5，小于5将会忽略本项设置
       timeout: 5
@@ -102,9 +103,8 @@ servers:
   # 正向WS设置
   - ws:
       # 正向WS服务器监听地址
-      host: 127.0.0.1
-      # 正向WS服务器监听端口
-      port: 6700
+      # 如需指定监听ipv4， 可使用 `address: tcp4://0.0.0.0:6700` (ipv6同理)
+      address: 0.0.0.0:6700
       middlewares:
         <<: *default # 引用默认中间件
 

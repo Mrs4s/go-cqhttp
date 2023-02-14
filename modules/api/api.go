@@ -89,6 +89,10 @@ func (c *Caller) call(action string, version uint16, p Getter) global.MSG {
 	case ".ocr_image", "ocr_image":
 		p0 := p.Get("image").String()
 		return c.bot.CQOcrImage(p0)
+	case "_del_group_notice":
+		p0 := p.Get("group_id").Int()
+		p1 := p.Get("notice_id").String()
+		return c.bot.CQDelGroupMemo(p0, p1)
 	case "_get_group_notice":
 		p0 := p.Get("group_id").Int()
 		return c.bot.CQGetGroupMemo(p0)
@@ -288,6 +292,13 @@ func (c *Caller) call(action string, version uint16, p Getter) global.MSG {
 			p2 = pt.Bool()
 		}
 		return c.bot.CQSetGroupAdmin(p0, p1, p2)
+	case "set_group_anonymous":
+		p0 := p.Get("group_id").Int()
+		p1 := true
+		if pt := p.Get("enable"); pt.Exists() {
+			p1 = pt.Bool()
+		}
+		return c.bot.CQSetGroupAnonymous(p0, p1)
 	case "set_group_anonymous_ban":
 		p0 := p.Get("group_id").Int()
 		p1 := p.Get("[anonymous_flag,anonymous.flag].0").String()

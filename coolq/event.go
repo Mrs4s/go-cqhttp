@@ -4,7 +4,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"os"
 	"path"
 	"strconv"
 	"strings"
@@ -18,10 +17,11 @@ import (
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
 	"github.com/Mrs4s/go-cqhttp/internal/cache"
+	"github.com/Mrs4s/go-cqhttp/internal/download"
 )
 
 // ToFormattedMessage 将给定[]message.IMessageElement转换为通过coolq.SetMessageFormat所定义的消息上报格式
-func ToFormattedMessage(e []message.IMessageElement, source message.Source) (r interface{}) {
+func ToFormattedMessage(e []message.IMessageElement, source message.Source) (r any) {
 	if base.PostFormat == "string" {
 		r = toStringMessage(e, source)
 	} else if base.PostFormat == "array" {
@@ -61,7 +61,11 @@ func (ev *event) MarshalJSON() ([]byte, error) {
 		fmt.Fprintf(buf, `,"sub_type":"%s"`, ev.SubType)
 	}
 	for k, v := range ev.Others {
-		v, _ := json.Marshal(v)
+		v, err := json.Marshal(v)
+		if err != nil {
+			log.Warnf("marshal message payload error: %v", err)
+			return nil, err
+		}
 		fmt.Fprintf(buf, `,"%s":%s`, k, v)
 	}
 	buf.WriteByte('}')
@@ -140,7 +144,10 @@ func (bot *CQBot) tempMessageEvent(c *client.QQClient, e *client.TempMessageEven
 		PrimaryID:  e.Session.Sender,
 	}
 	cqm := toStringMessage(m.Elements, source)
-	bot.tempSessionCache.Store(m.Sender.Uin, e.Session)
+	if base.AllowTempSession {
+		bot.tempSessionCache.Store(m.Sender.Uin, e.Session)
+	}
+
 	id := m.Id
 	// todo(Mrs4s)
 	// if bot.db != nil { // nolint
@@ -539,10 +546,11 @@ func (bot *CQBot) groupInvitedEvent(c *client.QQClient, e *client.GroupInvitedRe
 	log.Infof("收到来自群 %v(%v) 内用户 %v(%v) 的加群邀请.", e.GroupName, e.GroupCode, e.InvitorNick, e.InvitorUin)
 	flag := strconv.FormatInt(e.RequestId, 10)
 	bot.dispatchEvent("request/group/invite", global.MSG{
-		"group_id": e.GroupCode,
-		"user_id":  e.InvitorUin,
-		"comment":  "",
-		"flag":     flag,
+		"group_id":   e.GroupCode,
+		"user_id":    e.InvitorUin,
+		"invitor_id": 0,
+		"comment":    "",
+		"flag":       flag,
 	})
 }
 
@@ -550,10 +558,11 @@ func (bot *CQBot) groupJoinReqEvent(c *client.QQClient, e *client.UserJoinGroupR
 	log.Infof("群 %v(%v) 收到来自用户 %v(%v) 的加群请求.", e.GroupName, e.GroupCode, e.RequesterNick, e.RequesterUin)
 	flag := strconv.FormatInt(e.RequestId, 10)
 	bot.dispatchEvent("request/group/add", global.MSG{
-		"group_id": e.GroupCode,
-		"user_id":  e.RequesterUin,
-		"comment":  e.Message,
-		"flag":     flag,
+		"group_id":   e.GroupCode,
+		"user_id":    e.RequesterUin,
+		"invitor_id": e.ActionUin,
+		"comment":    e.Message,
+		"flag":       flag,
 	})
 }
 
@@ -666,7 +675,8 @@ func (bot *CQBot) checkMedia(e []message.IMessageElement, sourceID int64) {
 			filename := hex.EncodeToString(i.Md5) + ".image"
 			cache.Image.Insert(i.Md5, data)
 			if i.Url != "" && !global.PathExists(path.Join(global.ImagePath, "guild-images", filename)) {
-				if err := global.DownloadFile(i.Url, path.Join(global.ImagePath, "guild-images", filename), -1, nil); err != nil {
+				r := download.Request{URL: i.Url}
+				if err := r.WriteToFile(path.Join(global.ImagePath, "guild-images", filename)); err != nil {
 					log.Warnf("下载频道图片时出现错误: %v", err)
 				}
 			}
@@ -684,12 +694,11 @@ func (bot *CQBot) checkMedia(e []message.IMessageElement, sourceID int64) {
 			i.Name = strings.ReplaceAll(i.Name, "{", "")
 			i.Name = strings.ReplaceAll(i.Name, "}", "")
 			if !global.PathExists(path.Join(global.VoicePath, i.Name)) {
-				b, err := global.GetBytes(i.Url)
+				err := download.Request{URL: i.Url}.WriteToFile(path.Join(global.VoicePath, i.Name))
 				if err != nil {
 					log.Warnf("语音文件 %v 下载失败: %v", i.Name, err)
 					continue
 				}
-				_ = os.WriteFile(path.Join(global.VoicePath, i.Name), b, 0o644)
 			}
 		case *message.ShortVideoElement:
 			data := binary.NewWriterF(func(w *binary.Writer) {
