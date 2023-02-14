@@ -13,6 +13,7 @@ import (
 	"github.com/Mrs4s/go-cqhttp/global"
 )
 
+// IDConverter id 转换
 type IDConverter func(id any) any
 
 func convertGroupMemberInfo(groupID int64, m *client.GroupMemberInfo) global.MSG {
@@ -224,6 +225,7 @@ func fU64(v uint64) string {
 	return strconv.FormatUint(v, 10)
 }
 
+// ConvertIDWithVersion id 转换
 func ConvertIDWithVersion(v any, version uint16) any {
 	if version == 12 {
 		return fmt.Sprint(v)

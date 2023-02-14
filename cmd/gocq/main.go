@@ -136,14 +136,16 @@ func Main() {
 		log.SetLevel(log.DebugLevel)
 		log.Warnf("已开启Debug模式.")
 	}
+	var device *client.DeviceInfo
 	if !global.PathExists("device.json") {
 		log.Warn("虚拟设备信息不存在, 将自动生成随机设备.")
-		client.GenRandomDevice()
-		_ = os.WriteFile("device.json", client.SystemDeviceInfo.ToJson(), 0o644)
+		device = client.GenRandomDevice()
+		_ = os.WriteFile("device.json", device.ToJson(), 0o644)
 		log.Info("已生成设备信息并保存到 device.json 文件.")
 	} else {
 		log.Info("将使用 device.json 内的设备信息运行Bot.")
-		if err := client.SystemDeviceInfo.ReadJson([]byte(global.ReadAllText("device.json"))); err != nil {
+		device = new(client.DeviceInfo)
+		if err := device.ReadJson([]byte(global.ReadAllText("device.json"))); err != nil {
 			log.Fatalf("加载设备信息失败: %v", err)
 		}
 	}
@@ -205,8 +207,9 @@ func Main() {
 		time.Sleep(time.Second * 5)
 	}
 	log.Info("开始尝试登录并同步消息...")
-	log.Infof("使用协议: %s", client.SystemDeviceInfo.Protocol)
+	log.Infof("使用协议: %s", device.Protocol)
 	cli = newClient()
+	cli.UseDevice(device)
 	isQRCodeLogin := (base.Account.Uin == 0 || len(base.Account.Password) == 0) && !base.Account.Encrypt
 	isTokenLogin := false
 	saveToken := func() {

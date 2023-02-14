@@ -2012,7 +2012,7 @@ func (bot *CQBot) CQGetVersionInfo() global.MSG {
 		"runtime_version":            runtime.Version(),
 		"runtime_os":                 runtime.GOOS,
 		"version":                    base.Version,
-		"protocol_name":              client.SystemDeviceInfo.Protocol,
+		"protocol_name":              bot.Client.Device().Protocol,
 	})
 }
 
