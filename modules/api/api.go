@@ -5,21 +5,17 @@ package api
 import (
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
+	"github.com/Mrs4s/go-cqhttp/internal/onebot"
 )
 
-func (c *Caller) call(action string, version uint16, p Getter) global.MSG {
-	var converter coolq.IDConverter = func(id any) any {
-		return coolq.ConvertIDWithVersion(id, version)
-	}
-	if version == 12 {
+func (c *Caller) call(action string, spec *onebot.Spec, p Getter) global.MSG {
+	if spec.Version == 12 {
 		switch action {
 		case "get_self_info":
 			return c.bot.CQGetLoginInfo()
 		case "get_user_info":
 			p0 := p.Get("user_id").Int()
 			return c.bot.CQGetStrangerInfo(p0)
-		case "get_supported_actions":
-			return c.bot.CQGetSupportedActions()
 		case "get_version":
 			return c.bot.CQGetVersion()
 		case "send_message":
@@ -30,8 +26,12 @@ func (c *Caller) call(action string, version uint16, p Getter) global.MSG {
 			return c.bot.CQSendMessageV12(p0, p1, p2, p3)
 		}
 	}
-	if version == 11 {
+	if spec.Version == 11 {
 		switch action {
+		case ".handle_quick_operation":
+			p0 := p.Get("context")
+			p1 := p.Get("operation")
+			return c.bot.CQHandleQuickOperation(p0, p1)
 		case "can_send_image":
 			return c.bot.CQCanSendImage()
 		case "can_send_record":
@@ -81,10 +81,6 @@ func (c *Caller) call(action string, version uint16, p Getter) global.MSG {
 	case ".get_word_slices":
 		p0 := p.Get("content").String()
 		return c.bot.CQGetWordSlices(p0)
-	case ".handle_quick_operation":
-		p0 := p.Get("context")
-		p1 := p.Get("operation")
-		return c.bot.CQHandleQuickOperation(p0, p1)
 	case ".ocr_image", "ocr_image":
 		p0 := p.Get("image").String()
 		return c.bot.CQOcrImage(p0)
@@ -159,7 +155,7 @@ func (c *Caller) call(action string, version uint16, p Getter) global.MSG {
 		p0 := p.Get("[message_id,id].0").String()
 		return c.bot.CQGetForwardMessage(p0)
 	case "get_friend_list":
-		return c.bot.CQGetFriendList(version)
+		return c.bot.CQGetFriendList(spec)
 	case "get_group_at_all_remain":
 		p0 := p.Get("group_id").Int()
 		return c.bot.CQGetAtAllRemain(p0)
@@ -182,10 +178,10 @@ func (c *Caller) call(action string, version uint16, p Getter) global.MSG {
 	case "get_group_info":
 		p0 := p.Get("group_id").Int()
 		p1 := p.Get("no_cache").Bool()
-		return c.bot.CQGetGroupInfo(p0, p1, converter)
+		return c.bot.CQGetGroupInfo(p0, p1, spec)
 	case "get_group_list":
 		p0 := p.Get("no_cache").Bool()
-		return c.bot.CQGetGroupList(p0, converter)
+		return c.bot.CQGetGroupList(p0, spec)
 	case "get_group_member_info":
 		p0 := p.Get("group_id").Int()
 		p1 := p.Get("user_id").Int()
@@ -240,7 +236,9 @@ func (c *Caller) call(action string, version uint16, p Getter) global.MSG {
 		p0 := p.Get("no_cache").Bool()
 		return c.bot.CQGetOnlineClients(p0)
 	case "get_status":
-		return c.bot.CQGetStatus(version)
+		return c.bot.CQGetStatus(spec)
+	case "get_supported_actions":
+		return c.bot.CQGetSupportedActions(spec)
 	case "get_topic_channel_feeds":
 		p0 := p.Get("guild_id").Uint()
 		p1 := p.Get("channel_id").Uint()

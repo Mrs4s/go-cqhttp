@@ -26,6 +26,7 @@ import (
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
 	"github.com/Mrs4s/go-cqhttp/internal/mime"
+	"github.com/Mrs4s/go-cqhttp/internal/onebot"
 )
 
 // CQBot CQBot结构体,存储Bot实例相关配置
@@ -114,7 +115,7 @@ func NewQQBot(cli *client.QQClient) *CQBot {
 		for {
 			<-t.C
 			bot.dispatchEvent("meta_event/heartbeat", global.MSG{
-				"status":   bot.CQGetStatus(11)["data"],
+				"status":   bot.CQGetStatus(onebot.V11)["data"],
 				"interval": base.HeartbeatInterval.Milliseconds(),
 			})
 		}

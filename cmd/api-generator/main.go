@@ -76,12 +76,10 @@ func (g *generator) genRouter(routers []Router) {
 	g.WriteString("import (\n\n")
 	g.WriteString("\"github.com/Mrs4s/go-cqhttp/coolq\"\n")
 	g.WriteString("\"github.com/Mrs4s/go-cqhttp/global\"\n")
+	g.WriteString("\"github.com/Mrs4s/go-cqhttp/internal/onebot\"\n")
 	g.WriteString(")\n\n")
-	g.WriteString(`func (c *Caller) call(action string, version uint16, p Getter) global.MSG {
-	var converter coolq.IDConverter = func(id any) any {
-		return coolq.ConvertIDWithVersion(id,version)
-	}
-	if version == 12 {
+	g.WriteString(`func (c *Caller) call(action string, spec *onebot.Spec, p Getter) global.MSG {
+	if spec.Version == 12 {
 		switch action {
 `)
 	for _, router := range routers {
@@ -89,7 +87,7 @@ func (g *generator) genRouter(routers []Router) {
 	}
 	io.WriteString(g.out, `}}`)
 	io.WriteString(g.out, "\n")
-	g.WriteString(`if version == 11 {
+	g.WriteString(`if spec.Version == 11 {
 		switch action {
 	`)
 	for _, router := range routers {
@@ -141,14 +139,14 @@ func (g *generator) router(router Router, pathVersion int) {
 	if len(router.Version) == 1 { // 目前来说只需要判断一个版本的情况
 		check := make([]string, 0, len(router.Version))
 		for _, ver := range router.Version {
-			check = append(check, fmt.Sprintf("version != %v", ver))
+			check = append(check, fmt.Sprintf("spec.Version != %v", ver))
 		}
 		fmt.Fprintf(g.out, "if %v {\n", strings.Join(check, " && "))
 		fmt.Fprintf(g.out, "return coolq.Failed(405, \"VERSION_ERROR\", \"API版本不匹配\")}\n")
 	}
 
 	for i, p := range router.Params {
-		if p.Name == "version" || p.Name == "converter" {
+		if p.Name == "spec" {
 			continue
 		}
 		if p.Default == "" {
@@ -166,12 +164,8 @@ func (g *generator) router(router Router, pathVersion int) {
 		if i != 0 {
 			g.WriteString(", ")
 		}
-		if p.Name == "version" {
-			fmt.Fprintf(g.out, "version")
-			continue
-		}
-		if p.Name == "converter" {
-			fmt.Fprintf(g.out, "converter")
+		if p.Name == "spec" {
+			fmt.Fprintf(g.out, "spec")
 			continue
 		}
 		fmt.Fprintf(g.out, "p%d", i)
@@ -183,7 +177,7 @@ func conv(v, t string) string {
 	switch t {
 	default:
 		panic("unknown type: " + t)
-	case "gjson.Result", "IDConverter":
+	case "gjson.Result", "*onebot.Spec", "IDConverter":
 		return v
 	case "int64":
 		return v + ".Int()"

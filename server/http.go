@@ -26,6 +26,7 @@ import (
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
+	"github.com/Mrs4s/go-cqhttp/internal/onebot"
 	"github.com/Mrs4s/go-cqhttp/modules/api"
 	"github.com/Mrs4s/go-cqhttp/modules/config"
 	"github.com/Mrs4s/go-cqhttp/modules/filter"
@@ -58,7 +59,7 @@ type httpServerPost struct {
 type httpServer struct {
 	api         *api.Caller
 	accessToken string
-	version     uint16
+	spec        *onebot.Spec // onebot spec
 }
 
 // HTTPClient 反向HTTP上报客户端
@@ -158,7 +159,7 @@ func (s *httpServer) ServeHTTP(writer http.ResponseWriter, request *http.Request
 	switch request.Method {
 	case http.MethodPost:
 		// todo: msg pack
-		if s.version == 12 && strings.Contains(contentType, "application/msgpack") {
+		if s.spec.Version == 12 && strings.Contains(contentType, "application/msgpack") {
 			log.Warnf("请求 %v 数据类型暂不支持: MsgPack", request.RequestURI)
 			writer.WriteHeader(http.StatusUnsupportedMediaType)
 			return
@@ -204,12 +205,12 @@ func (s *httpServer) ServeHTTP(writer http.ResponseWriter, request *http.Request
 	if request.URL.Path == "/" {
 		action := strings.TrimSuffix(ctx.Get("action").Str, "_async")
 		log.Debugf("HTTPServer接收到API调用: %v", action)
-		response = s.api.Call(action, s.version, ctx.Get("params"))
+		response = s.api.Call(action, s.spec, ctx.Get("params"))
 	} else {
 		action := strings.TrimPrefix(request.URL.Path, "/")
 		action = strings.TrimSuffix(action, "_async")
 		log.Debugf("HTTPServer接收到API调用: %v", action)
-		response = s.api.Call(action, s.version, &ctx)
+		response = s.api.Call(action, s.spec, &ctx)
 	}
 
 	writer.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -259,11 +260,15 @@ func runHTTP(bot *coolq.CQBot, node yaml.Node) {
 	case conf.Disabled:
 		return
 	}
-	if conf.Version != 11 && conf.Version != 12 {
-		conf.Version = 11
-	}
 	network, addr := "tcp", conf.Address
-	s := &httpServer{accessToken: conf.AccessToken, version: conf.Version}
+	s := &httpServer{accessToken: conf.AccessToken}
+	switch conf.Version {
+	default:
+		// default v11
+		s.spec = onebot.V11
+	case 12:
+		s.spec = onebot.V12
+	}
 	switch {
 	case conf.Address != "":
 		uri, err := url.Parse(conf.Address)

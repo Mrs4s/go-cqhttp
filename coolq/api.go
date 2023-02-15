@@ -328,13 +328,13 @@ func (bot *CQBot) CQGetTopicChannelFeeds(guildID, channelID uint64) global.MSG {
 //
 // https://git.io/Jtz1L
 // @route(get_friend_list)
-func (bot *CQBot) CQGetFriendList(version uint16) global.MSG {
+func (bot *CQBot) CQGetFriendList(spec *onebot.Spec) global.MSG {
 	fs := make([]global.MSG, 0, len(bot.Client.FriendList))
 	for _, f := range bot.Client.FriendList {
 		fs = append(fs, global.MSG{
 			"nickname": f.Nickname,
 			"remark":   f.Remark,
-			"user_id":  ConvertIDWithVersion(f.Uin, version),
+			"user_id":  spec.ConvertID(f.Uin),
 		})
 	}
 	return OK(fs)
@@ -400,14 +400,14 @@ func (bot *CQBot) CQDeleteFriend(uin int64) global.MSG {
 //
 // https://git.io/Jtz1t
 // @route(get_group_list)
-func (bot *CQBot) CQGetGroupList(noCache bool, converter IDConverter) global.MSG {
+func (bot *CQBot) CQGetGroupList(noCache bool, spec *onebot.Spec) global.MSG {
 	gs := make([]global.MSG, 0, len(bot.Client.GroupList))
 	if noCache {
 		_ = bot.Client.ReloadGroupList()
 	}
 	for _, g := range bot.Client.GroupList {
 		gs = append(gs, global.MSG{
-			"group_id":          converter(g.Code),
+			"group_id":          spec.ConvertID(g.Code),
 			"group_name":        g.Name,
 			"group_create_time": g.GroupCreateTime,
 			"group_level":       g.GroupLevel,
@@ -422,7 +422,7 @@ func (bot *CQBot) CQGetGroupList(noCache bool, converter IDConverter) global.MSG
 //
 // https://git.io/Jtz1O
 // @route(get_group_info)
-func (bot *CQBot) CQGetGroupInfo(groupID int64, noCache bool, converter IDConverter) global.MSG {
+func (bot *CQBot) CQGetGroupInfo(groupID int64, noCache bool, spec *onebot.Spec) global.MSG {
 	group := bot.Client.FindGroup(groupID)
 	if group == nil || noCache {
 		group, _ = bot.Client.GetGroupInfo(groupID)
@@ -436,7 +436,7 @@ func (bot *CQBot) CQGetGroupInfo(groupID int64, noCache bool, converter IDConver
 		for _, g := range info {
 			if g.Code == groupID {
 				return OK(global.MSG{
-					"group_id":          converter(g.Code),
+					"group_id":          spec.ConvertID(g.Code),
 					"group_name":        g.Name,
 					"group_memo":        g.Memo,
 					"group_create_time": 0,
@@ -448,7 +448,7 @@ func (bot *CQBot) CQGetGroupInfo(groupID int64, noCache bool, converter IDConver
 		}
 	} else {
 		return OK(global.MSG{
-			"group_id":          converter(group.Code),
+			"group_id":          spec.ConvertID(group.Code),
 			"group_name":        group.Name,
 			"group_create_time": group.GroupCreateTime,
 			"group_level":       group.GroupLevel,
@@ -1445,7 +1445,7 @@ func (bot *CQBot) CQGetStrangerInfo(userID int64) global.MSG {
 // CQHandleQuickOperation 隐藏API-对事件执行快速操作
 //
 // https://git.io/Jtz15
-// @route(".handle_quick_operation")
+// @route11(".handle_quick_operation")
 func (bot *CQBot) CQHandleQuickOperation(context, operation gjson.Result) global.MSG {
 	postType := context.Get("post_type").Str
 
@@ -1903,8 +1903,8 @@ func (bot *CQBot) CQSetGroupAnonymousBan(groupID int64, flag string, duration in
 //
 // https://git.io/JtzMe
 // @route(get_status)
-func (bot *CQBot) CQGetStatus(version uint16) global.MSG {
-	if version == 11 {
+func (bot *CQBot) CQGetStatus(spec *onebot.Spec) global.MSG {
+	if spec.Version == 11 {
 		return OK(global.MSG{
 			"app_initialized": true,
 			"app_enabled":     true,
@@ -2108,10 +2108,9 @@ func (bot *CQBot) CQReloadEventFilter(file string) global.MSG {
 
 // CQGetSupportedActions 获取支持的动作列表
 //
-// @route12(get_supported_actions)
-func (bot *CQBot) CQGetSupportedActions() global.MSG {
-	// TODO: fix v11
-	return OK(onebot.V12.SupportedActions)
+// @route(get_supported_actions)
+func (bot *CQBot) CQGetSupportedActions(spec *onebot.Spec) global.MSG {
+	return OK(spec.SupportedActions)
 }
 
 // OK 生成成功返回值

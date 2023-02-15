@@ -22,6 +22,7 @@ import (
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
+	"github.com/Mrs4s/go-cqhttp/internal/onebot"
 	"github.com/Mrs4s/go-cqhttp/modules/api"
 	"github.com/Mrs4s/go-cqhttp/modules/config"
 	"github.com/Mrs4s/go-cqhttp/modules/filter"
@@ -476,7 +477,7 @@ func (c *wsConn) handleRequest(_ *coolq.CQBot, payload []byte) {
 	t := strings.TrimSuffix(j.Get("action").Str, "_async")
 	params := j.Get("params")
 	log.Debugf("WS接收到API调用: %v 参数: %v", t, params.Raw)
-	ret := c.apiCaller.Call(t, 11, params)
+	ret := c.apiCaller.Call(t, onebot.V11, params)
 	if j.Get("echo").Exists() {
 		ret["echo"] = j.Get("echo").Value()
 	}

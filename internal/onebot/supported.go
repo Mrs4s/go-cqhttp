@@ -54,6 +54,7 @@ var supportedV11 = []string{
 	"get_online_clients",
 	"get_status",
 	"get_stranger_info",
+	"get_supported_actions",
 	"get_topic_channel_feeds",
 	"get_unidirectional_friend_list",
 	"get_version_info",
@@ -91,7 +92,6 @@ var supportedV11 = []string{
 
 var supportedV12 = []string{
 	".get_word_slices",
-	".handle_quick_operation",
 	".ocr_image",
 	"ocr_image",
 	"_del_group_notice",
@@ -139,6 +139,7 @@ var supportedV12 = []string{
 	"get_online_clients",
 	"get_status",
 	"get_user_info",
+	"get_supported_actions",
 	"get_topic_channel_feeds",
 	"get_unidirectional_friend_list",
 	"mark_msg_as_read",

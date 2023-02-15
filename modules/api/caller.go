@@ -6,6 +6,7 @@ import (
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
+	"github.com/Mrs4s/go-cqhttp/internal/onebot"
 )
 
 //go:generate go run github.com/Mrs4s/go-cqhttp/cmd/api-generator -pkg api -path=./../../coolq/api.go,./../../coolq/api_v12.go -o api.go
@@ -25,13 +26,13 @@ type Caller struct {
 }
 
 // Call specific API
-func (c *Caller) Call(action string, version uint16, p Getter) global.MSG {
+func (c *Caller) Call(action string, spec *onebot.Spec, p Getter) global.MSG {
 	for _, fn := range c.handlers {
 		if ret := fn(action, p); ret != nil {
 			return ret
 		}
 	}
-	return c.call(action, version, p)
+	return c.call(action, spec, p)
 }
 
 // Use add handlers to the API caller

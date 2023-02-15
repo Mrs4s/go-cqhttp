@@ -1,6 +1,8 @@
 // Package onebot defines onebot protocol struct and some spec info.
 package onebot
 
+import "fmt"
+
 //go:generate go run github.com/Mrs4s/go-cqhttp/cmd/api-generator -pkg onebot -path=./../../coolq/api.go,./../../coolq/api_v12.go -supported -o supported.go
 
 // Spec OneBot Specification
@@ -9,15 +11,21 @@ type Spec struct {
 	SupportedActions []string
 }
 
-/* // TODO: Use this variable
+// V11 OneBot V11
 var V11 = &Spec{
 	Version:          11,
 	SupportedActions: supportedV11,
 }
-*/
 
 // V12 OneBot V12
 var V12 = &Spec{
 	Version:          12,
 	SupportedActions: supportedV12,
+}
+
+func (s *Spec) ConvertID(id any) any {
+	if s.Version == 12 {
+		return fmt.Sprint(id)
+	}
+	return id
 }
