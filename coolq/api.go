@@ -27,6 +27,7 @@ import (
 	"github.com/Mrs4s/go-cqhttp/internal/base"
 	"github.com/Mrs4s/go-cqhttp/internal/cache"
 	"github.com/Mrs4s/go-cqhttp/internal/download"
+	"github.com/Mrs4s/go-cqhttp/internal/onebot"
 	"github.com/Mrs4s/go-cqhttp/internal/param"
 	"github.com/Mrs4s/go-cqhttp/modules/filter"
 )
@@ -2103,6 +2104,14 @@ func (bot *CQBot) CQSetQQProfile(nickname, company, email, college, personalNote
 func (bot *CQBot) CQReloadEventFilter(file string) global.MSG {
 	filter.Add(file)
 	return OK(nil)
+}
+
+// CQGetSupportedActions 获取支持的动作列表
+//
+// @route12(get_supported_actions)
+func (bot *CQBot) CQGetSupportedActions() global.MSG {
+	// TODO: fix v11
+	return OK(onebot.V12.SupportedActions)
 }
 
 // OK 生成成功返回值

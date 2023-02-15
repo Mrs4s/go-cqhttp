@@ -8,7 +8,7 @@ import (
 	"github.com/Mrs4s/go-cqhttp/global"
 )
 
-//go:generate go run github.com/Mrs4s/go-cqhttp/cmd/api-generator -path=./../../coolq/api.go,./../../coolq/api_v12.go
+//go:generate go run github.com/Mrs4s/go-cqhttp/cmd/api-generator -pkg api -path=./../../coolq/api.go,./../../coolq/api_v12.go -o api.go
 
 // Getter 参数获取
 type Getter interface {
