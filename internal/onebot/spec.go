@@ -3,7 +3,7 @@ package onebot
 
 import "fmt"
 
-//go:generate go run github.com/Mrs4s/go-cqhttp/cmd/api-generator -pkg onebot -path=./../../coolq/api.go,./../../coolq/api_v12.go -supported -o supported.go
+//go:generate go run ./../../cmd/api-generator -pkg onebot -path=./../../coolq/api.go,./../../coolq/api_v12.go -supported -o supported.go
 
 // Spec OneBot Specification
 type Spec struct {
@@ -23,6 +23,7 @@ var V12 = &Spec{
 	SupportedActions: supportedV12,
 }
 
+// ConvertID 根据版本转换ID
 func (s *Spec) ConvertID(id any) any {
 	if s.Version == 12 {
 		return fmt.Sprint(id)

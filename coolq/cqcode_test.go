@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/tidwall/gjson"
 
-	"github.com/Mrs4s/go-cqhttp/coolq/cqcode"
+	"github.com/Mrs4s/go-cqhttp/internal/msg"
 )
 
 var bot = CQBot{}
@@ -44,7 +44,7 @@ const bText = `123456789[]&987654321[]&987654321[]&987654321[]&987654321[]&98765
 func BenchmarkCQCodeEscapeText(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		ret := bText
-		cqcode.EscapeText(ret)
+		msg.EscapeText(ret)
 	}
 }
 
@@ -64,6 +64,6 @@ func TestCQCodeEscapeText(t *testing.T) {
 		ret = strings.ReplaceAll(ret, "&", "&amp;")
 		ret = strings.ReplaceAll(ret, "[", "&#91;")
 		ret = strings.ReplaceAll(ret, "]", "&#93;")
-		assert.Equal(t, ret, cqcode.EscapeText(rs))
+		assert.Equal(t, ret, msg.EscapeText(rs))
 	}
 }

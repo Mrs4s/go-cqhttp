@@ -1,4 +1,4 @@
-package cqcode
+package msg
 
 import (
 	"bytes"

@@ -27,6 +27,7 @@ import (
 	"github.com/Mrs4s/go-cqhttp/internal/base"
 	"github.com/Mrs4s/go-cqhttp/internal/cache"
 	"github.com/Mrs4s/go-cqhttp/internal/download"
+	"github.com/Mrs4s/go-cqhttp/internal/msg"
 	"github.com/Mrs4s/go-cqhttp/internal/onebot"
 	"github.com/Mrs4s/go-cqhttp/internal/param"
 	"github.com/Mrs4s/go-cqhttp/modules/filter"
@@ -851,7 +852,7 @@ func (bot *CQBot) uploadForwardElement(m gjson.Result, target int64, sourceType 
 			for i, elem := range elems {
 				p := &elems[i]
 				switch o := elem.(type) {
-				case *LocalVideoElement:
+				case *msg.LocalVideo:
 					w.do(func() {
 						gm, err := bot.uploadLocalVideo(source, o)
 						if err != nil {
@@ -860,7 +861,7 @@ func (bot *CQBot) uploadForwardElement(m gjson.Result, target int64, sourceType 
 							*p = gm
 						}
 					})
-				case *LocalImageElement:
+				case *msg.LocalImage:
 					w.do(func() {
 						gm, err := bot.uploadLocalImage(source, o)
 						if err != nil {

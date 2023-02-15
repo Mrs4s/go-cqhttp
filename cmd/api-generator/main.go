@@ -177,7 +177,7 @@ func conv(v, t string) string {
 	switch t {
 	default:
 		panic("unknown type: " + t)
-	case "gjson.Result", "*onebot.Spec", "IDConverter":
+	case "gjson.Result", "*onebot.Spec":
 		return v
 	case "int64":
 		return v + ".Int()"
