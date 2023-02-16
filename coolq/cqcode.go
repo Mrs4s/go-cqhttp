@@ -538,7 +538,7 @@ func (bot *CQBot) at(id, name string) (m any, err error) {
 }
 
 // convertV11 ConvertElement11
-func (bot *CQBot) convertV11(elem msg.Element) (m any, err error, failed bool) {
+func (bot *CQBot) convertV11(elem msg.Element) (m any, err error, failed bool) { // nolint
 	switch elem.Type {
 	case "at":
 		qq := elem.Get("qq")
@@ -555,8 +555,8 @@ func (bot *CQBot) convertV11(elem msg.Element) (m any, err error, failed bool) {
 	return
 }
 
-// convertV11 ConvertElement11
-func (bot *CQBot) convertV12(elem msg.Element) (m any, err error, failed bool) {
+// convertV12 ConvertElement12
+func (bot *CQBot) convertV12(elem msg.Element) (m any, err error, failed bool) { // nolint
 	switch elem.Type {
 	case "mention":
 		m, err = bot.at(elem.Get("user_id"), elem.Get("name"))
