@@ -88,16 +88,26 @@ func UnescapeValue(content string) string {
 
 // @@@ 消息中间表示 @@@
 
+// Pair key value pair
+type Pair struct {
+	K string
+	V string
+}
+
 // Element single message
 type Element struct {
 	Type string
 	Data []Pair
 }
 
-// Pair key value pair
-type Pair struct {
-	K string
-	V string
+// Get 获取指定值
+func (e *Element) Get(k string) string {
+	for _, datum := range e.Data {
+		if datum.K == k {
+			return datum.V
+		}
+	}
+	return ""
 }
 
 // CQCode convert element to cqcode
@@ -140,7 +150,7 @@ func (e *Element) MarshalJSON() ([]byte, error) {
 			buf.WriteByte('"')
 			buf.WriteString(data.K)
 			buf.WriteString(`":`)
-			writeQuote(buf, data.V)
+			buf.WriteString(QuoteJSON(data.V))
 		}
 		buf.WriteString(`}}`)
 	}), nil
@@ -148,9 +158,10 @@ func (e *Element) MarshalJSON() ([]byte, error) {
 
 const hex = "0123456789abcdef"
 
-func writeQuote(b *bytes.Buffer, s string) {
+// QuoteJSON 按JSON转义为字符加上双引号
+func QuoteJSON(s string) string {
 	i, j := 0, 0
-
+	var b strings.Builder
 	b.WriteByte('"')
 	for j < len(s) {
 		c := s[j]
@@ -231,4 +242,5 @@ func writeQuote(b *bytes.Buffer, s string) {
 
 	b.WriteString(s[i:])
 	b.WriteByte('"')
+	return b.String()
 }

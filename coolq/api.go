@@ -1847,7 +1847,11 @@ func (bot *CQBot) CQCanSendRecord() global.MSG {
 // @route(ocr_image,".ocr_image")
 // @rename(image_id->image)
 func (bot *CQBot) CQOcrImage(imageID string) global.MSG {
-	img, err := bot.makeImageOrVideoElem(map[string]string{"file": imageID}, false, message.SourceGroup)
+	// TODO: fix this
+	var elem msg.Element
+	elem.Type = "image"
+	elem.Data = []msg.Pair{{K: "file", V: imageID}}
+	img, err := bot.makeImageOrVideoElem(elem, false, message.SourceGroup)
 	if err != nil {
 		log.Warnf("load image error: %v", err)
 		return Failed(100, "LOAD_FILE_ERROR", err.Error())

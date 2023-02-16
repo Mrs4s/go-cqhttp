@@ -1,7 +1,6 @@
 package msg
 
 import (
-	"bytes"
 	"encoding/json"
 	"testing"
 )
@@ -14,16 +13,14 @@ func jsonMarshal(s string) string {
 	return string(b)
 }
 
-func Test_quote(t *testing.T) {
+func TestQuoteJSON(t *testing.T) {
 	testcase := []string{
 		"\u0005", // issue 1773
 		"\v",
 	}
 
 	for _, input := range testcase {
-		var b bytes.Buffer
-		writeQuote(&b, input)
-		got := b.String()
+		got := QuoteJSON(input)
 		expected := jsonMarshal(input)
 		if got != expected {
 			t.Errorf("want %v but got %v", expected, got)
