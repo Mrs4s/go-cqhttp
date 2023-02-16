@@ -31,6 +31,7 @@ import (
 	"github.com/Mrs4s/go-cqhttp/internal/download"
 	"github.com/Mrs4s/go-cqhttp/internal/mime"
 	"github.com/Mrs4s/go-cqhttp/internal/msg"
+	"github.com/Mrs4s/go-cqhttp/internal/onebot"
 	"github.com/Mrs4s/go-cqhttp/internal/param"
 )
 
@@ -62,6 +63,7 @@ func replyID(r *message.ReplyElement, source message.Source) int32 {
 //
 // nolint:govet
 func toElements(e []message.IMessageElement, source message.Source) (r []msg.Element) {
+	// TODO: support OneBot V12
 	type pair = msg.Pair // simplify code
 	type pairs = []pair
 
@@ -380,18 +382,18 @@ func ToMessageContent(e []message.IMessageElement) (r []global.MSG) {
 }
 
 // ConvertStringMessage 将消息字符串转为消息元素数组
-func (bot *CQBot) ConvertStringMessage(raw string, sourceType message.SourceType) (r []message.IMessageElement) {
+func (bot *CQBot) ConvertStringMessage(spec *onebot.Spec, raw string, sourceType message.SourceType) (r []message.IMessageElement) {
 	elems := msg.ParseString(raw)
-	return bot.ConvertElements(elems, sourceType)
+	return bot.ConvertElements(spec, elems, sourceType)
 }
 
 // ConvertObjectMessage 将消息JSON对象转为消息元素数组
-func (bot *CQBot) ConvertObjectMessage(m gjson.Result, sourceType message.SourceType) (r []message.IMessageElement) {
-	if m.Type == gjson.String {
-		return bot.ConvertStringMessage(m.Str, sourceType)
+func (bot *CQBot) ConvertObjectMessage(spec *onebot.Spec, m gjson.Result, sourceType message.SourceType) (r []message.IMessageElement) {
+	if spec.Version == 11 && m.Type == gjson.String {
+		return bot.ConvertStringMessage(spec, m.Str, sourceType)
 	}
 	elems := msg.ParseObject(m)
-	return bot.ConvertElements(elems, sourceType)
+	return bot.ConvertElements(spec, elems, sourceType)
 }
 
 // ConvertContentMessage 将数据库用的 content 转换为消息元素数组
@@ -405,14 +407,14 @@ func (bot *CQBot) ConvertContentMessage(content []global.MSG, sourceType message
 		}
 		elems[i] = elem
 	}
-	return bot.ConvertElements(elems, sourceType)
+	return bot.ConvertElements(onebot.V11, elems, sourceType)
 }
 
 // ConvertElements 将解码后的消息数组转换为MiraiGo表示
-func (bot *CQBot) ConvertElements(elems []msg.Element, sourceType message.SourceType) (r []message.IMessageElement) {
+func (bot *CQBot) ConvertElements(spec *onebot.Spec, elems []msg.Element, sourceType message.SourceType) (r []message.IMessageElement) {
 	var replyCount int
 	for _, elem := range elems {
-		me, err := bot.ConvertElement(elem, sourceType)
+		me, err := bot.ConvertElement(spec, elem, sourceType)
 		if err != nil {
 			// TODO: don't use cqcode format
 			if !base.IgnoreInvalidCQCode {
@@ -439,7 +441,7 @@ func (bot *CQBot) ConvertElements(elems []msg.Element, sourceType message.Source
 	return
 }
 
-func (bot *CQBot) reply(elem msg.Element, sourceType message.SourceType) (any, error) {
+func (bot *CQBot) reply(spec *onebot.Spec, elem msg.Element, sourceType message.SourceType) (any, error) {
 	mid, err := strconv.Atoi(elem.Get("id"))
 	customText := elem.Get("text")
 	var re *message.ReplyElement
@@ -466,7 +468,7 @@ func (bot *CQBot) reply(elem msg.Element, sourceType message.SourceType) (any, e
 				ReplySeq: org.GetAttribute().MessageSeq,
 				Sender:   org.GetAttribute().SenderUin,
 				Time:     int32(org.GetAttribute().Timestamp),
-				Elements: bot.ConvertStringMessage(customText, sourceType),
+				Elements: bot.ConvertStringMessage(spec, customText, sourceType),
 			}
 			if senderErr != nil {
 				re.Sender = sender
@@ -483,7 +485,7 @@ func (bot *CQBot) reply(elem msg.Element, sourceType message.SourceType) (any, e
 			ReplySeq: int32(messageSeq),
 			Sender:   sender,
 			Time:     int32(msgTime),
-			Elements: bot.ConvertStringMessage(customText, sourceType),
+			Elements: bot.ConvertStringMessage(spec, customText, sourceType),
 		}
 
 	case err == nil:
@@ -504,12 +506,89 @@ func (bot *CQBot) reply(elem msg.Element, sourceType message.SourceType) (any, e
 	return re, nil
 }
 
+func (bot *CQBot) voice(elem msg.Element) (m any, err error) {
+	f := elem.Get("file")
+	data, err := global.FindFile(f, elem.Get("cache"), global.VoicePath)
+	if err != nil {
+		return nil, err
+	}
+	if !global.IsAMRorSILK(data) {
+		mt, ok := mime.CheckAudio(bytes.NewReader(data))
+		if !ok {
+			return nil, errors.New("voice type error: " + mt)
+		}
+		data, err = global.EncoderSilk(data)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return &message.VoiceElement{Data: data}, nil
+}
+
+func (bot *CQBot) at(id, name string) (m any, err error) {
+	t, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	name = strings.TrimSpace(name)
+	if len(name) > 0 {
+		name = "@" + name
+	}
+	return message.NewAt(t, name), nil
+}
+
+// convertV11 ConvertElement11
+func (bot *CQBot) convertV11(elem msg.Element) (m any, err error, failed bool) {
+	switch elem.Type {
+	case "at":
+		qq := elem.Get("qq")
+		if qq == "all" {
+			m = message.AtAll()
+			break
+		}
+		m, err = bot.at(qq, elem.Get("name"))
+	case "record":
+		m, err = bot.voice(elem)
+	default:
+		failed = true
+	}
+	return
+}
+
+// convertV11 ConvertElement11
+func (bot *CQBot) convertV12(elem msg.Element) (m any, err error, failed bool) {
+	switch elem.Type {
+	case "mention":
+		m, err = bot.at(elem.Get("user_id"), elem.Get("name"))
+	case "mention_all":
+		m = message.AtAll()
+	case "voice":
+		m, err = bot.voice(elem)
+	default:
+		failed = true
+	}
+	return
+}
+
 // ConvertElement 将解码后的消息转换为MiraiGoElement.
 //
 // 返回 interface{} 存在三种类型
 //
 // message.IMessageElement []message.IMessageElement nil
-func (bot *CQBot) ConvertElement(elem msg.Element, sourceType message.SourceType) (m any, err error) {
+func (bot *CQBot) ConvertElement(spec *onebot.Spec, elem msg.Element, sourceType message.SourceType) (m any, err error) {
+	var failed bool
+	switch spec.Version {
+	case 11:
+		m, err, failed = bot.convertV11(elem)
+	case 12:
+		m, err, failed = bot.convertV12(elem)
+	default:
+		panic("invalid onebot version:" + strconv.Itoa(spec.Version))
+	}
+	if !failed {
+		return m, err
+	}
+
 	switch elem.Type {
 	case "text":
 		text := elem.Get("text")
@@ -553,7 +632,7 @@ func (bot *CQBot) ConvertElement(elem msg.Element, sourceType message.SourceType
 		}
 		return img, nil
 	case "reply":
-		return bot.reply(elem, sourceType)
+		return bot.reply(spec, elem, sourceType)
 	case "forward":
 		id := elem.Get("id")
 		if id != "" {
@@ -574,23 +653,6 @@ func (bot *CQBot) ConvertElement(elem msg.Element, sourceType message.SourceType
 			return nil, err
 		}
 		return &message.VoiceElement{Data: base.ResampleSilk(data)}, nil
-	case "record", "audio":
-		f := elem.Get("file")
-		data, err := global.FindFile(f, elem.Get("cache"), global.VoicePath)
-		if err != nil {
-			return nil, err
-		}
-		if !global.IsAMRorSILK(data) {
-			mt, ok := mime.CheckAudio(bytes.NewReader(data))
-			if !ok {
-				return nil, errors.New("audio type error: " + mt)
-			}
-			data, err = global.EncoderSilk(data)
-			if err != nil {
-				return nil, err
-			}
-		}
-		return &message.VoiceElement{Data: data}, nil
 	case "face":
 		id, err := strconv.Atoi(elem.Get("id"))
 		if err != nil {
@@ -600,27 +662,12 @@ func (bot *CQBot) ConvertElement(elem msg.Element, sourceType message.SourceType
 			return &message.AnimatedSticker{ID: int32(id)}, nil
 		}
 		return message.NewFace(int32(id)), nil
-	case "mention_all":
-		return message.AtAll(), nil
-	case "at", "mention":
-		qq := elem.Get("qq")
-		if qq == "all" {
-			return message.AtAll(), nil
-		}
-		t, err := strconv.ParseInt(qq, 10, 64)
-		if err != nil {
-			return nil, err
-		}
-		name := strings.TrimSpace(elem.Get("name"))
-		if len(name) > 0 {
-			name = "@" + name
-		}
-		return message.NewAt(t, name), nil
 	case "share":
 		return message.NewUrlShare(elem.Get("url"), elem.Get("title"), elem.Get("content"), elem.Get("image")), nil
 	case "music":
 		id := elem.Get("id")
-		if elem.Get("type") == "qq" {
+		switch elem.Get("type") {
+		case "qq":
 			info, err := global.QQMusicSongInfo(id)
 			if err != nil {
 				return nil, err
@@ -628,27 +675,22 @@ func (bot *CQBot) ConvertElement(elem msg.Element, sourceType message.SourceType
 			if !info.Get("track_info").Exists() {
 				return nil, errors.New("song not found")
 			}
-			name := info.Get("track_info.name").Str
-			mid := info.Get("track_info.mid").Str
-			albumMid := info.Get("track_info.album.mid").Str
-			pinfo, _ := download.Request{URL: "https://u.y.qq.com/cgi-bin/musicu.fcg?g_tk=2034008533&uin=0&format=json&data={\"comm\":{\"ct\":23,\"cv\":0},\"url_mid\":{\"module\":\"vkey.GetVkeyServer\",\"method\":\"CgiGetVkey\",\"param\":{\"guid\":\"4311206557\",\"songmid\":[\"" + mid + "\"],\"songtype\":[0],\"uin\":\"0\",\"loginflag\":1,\"platform\":\"23\"}}}&_=1599039471576"}.JSON()
-			jumpURL := "https://i.y.qq.com/v8/playsong.html?platform=11&appshare=android_qq&appversion=10030010&hosteuin=oKnlNenz7i-s7c**&songmid=" + mid + "&type=0&appsongtype=1&_wv=1&source=qq&ADTAG=qfshare"
-			purl := pinfo.Get("url_mid.data.midurlinfo.0.purl").Str
-			preview := "https://y.gtimg.cn/music/photo_new/T002R180x180M000" + albumMid + ".jpg"
-			content := info.Get("track_info.singer.0.name").Str
+			albumMid := info.Get("track_info.album.mid").String()
+			pinfo, _ := download.Request{URL: "https://u.y.qq.com/cgi-bin/musicu.fcg?g_tk=2034008533&uin=0&format=json&data={\"comm\":{\"ct\":23,\"cv\":0},\"url_mid\":{\"module\":\"vkey.GetVkeyServer\",\"method\":\"CgiGetVkey\",\"param\":{\"guid\":\"4311206557\",\"songmid\":[\"" + info.Get("track_info.mid").Str + "\"],\"songtype\":[0],\"uin\":\"0\",\"loginflag\":1,\"platform\":\"23\"}}}&_=1599039471576"}.JSON()
+			jumpURL := "https://i.y.qq.com/v8/playsong.html?platform=11&appshare=android_qq&appversion=10030010&hosteuin=oKnlNenz7i-s7c**&songmid=" + info.Get("track_info.mid").Str + "&type=0&appsongtype=1&_wv=1&source=qq&ADTAG=qfshare"
+			content := info.Get("track_info.singer.0.name").String()
 			if elem.Get("content") != "" {
 				content = elem.Get("content")
 			}
 			return &message.MusicShareElement{
 				MusicType:  message.QQMusic,
-				Title:      name,
+				Title:      info.Get("track_info.name").Str,
 				Summary:    content,
 				Url:        jumpURL,
-				PictureUrl: preview,
-				MusicUrl:   purl,
+				PictureUrl: "https://y.gtimg.cn/music/photo_new/T002R180x180M000" + albumMid + ".jpg",
+				MusicUrl:   pinfo.Get("url_mid.data.midurlinfo.0.purl").String(),
 			}, nil
-		}
-		if elem.Get("type") == "163" {
+		case "163":
 			info, err := global.NeteaseMusicSongInfo(id)
 			if err != nil {
 				return nil, err
@@ -656,24 +698,19 @@ func (bot *CQBot) ConvertElement(elem msg.Element, sourceType message.SourceType
 			if !info.Exists() {
 				return nil, errors.New("song not found")
 			}
-			name := info.Get("name").Str
-			jumpURL := "https://y.music.163.com/m/song/" + id
-			musicURL := "http://music.163.com/song/media/outer/url?id=" + id
-			picURL := info.Get("album.picUrl").Str
 			artistName := ""
 			if info.Get("artists.0").Exists() {
-				artistName = info.Get("artists.0.name").Str
+				artistName = info.Get("artists.0.name").String()
 			}
 			return &message.MusicShareElement{
 				MusicType:  message.CloudMusic,
-				Title:      name,
+				Title:      info.Get("name").String(),
 				Summary:    artistName,
-				Url:        jumpURL,
-				PictureUrl: picURL,
-				MusicUrl:   musicURL,
+				Url:        "https://y.music.163.com/m/song/" + id,
+				PictureUrl: info.Get("album.picUrl").String(),
+				MusicUrl:   "https://music.163.com/song/media/outer/url?id=" + id,
 			}, nil
-		}
-		if elem.Get("type") == "custom" {
+		case "custom":
 			if elem.Get("subtype") != "" {
 				var subType int
 				switch elem.Get("subtype") {
@@ -694,11 +731,11 @@ func (bot *CQBot) ConvertElement(elem msg.Element, sourceType message.SourceType
 					Summary:    elem.Get("content"),
 					Url:        elem.Get("url"),
 					PictureUrl: elem.Get("image"),
-					MusicUrl:   elem.Get("audio"),
+					MusicUrl:   elem.Get("voice"),
 				}, nil
 			}
-			xml := fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="2" templateID="1" action="web" brief="[分享] %s" sourceMsgId="0" url="%s" flag="0" adverSign="0" multiMsgFlag="0"><item layout="2"><audio cover="%s" src="%s"/><title>%s</title><summary>%s</summary></item><source name="音乐" icon="https://i.gtimg.cn/open/app_icon/01/07/98/56/1101079856_100_m.png" url="http://web.p.qq.com/qqmpmobile/aio/app.html?id=1101079856" action="app" a_actionData="com.tencent.qqmusic" i_actionData="tencent1101079856://" appid="1101079856" /></msg>`,
-				utils.XmlEscape(elem.Get("title")), elem.Get("url"), elem.Get("image"), elem.Get("audio"), utils.XmlEscape(elem.Get("title")), utils.XmlEscape(elem.Get("content")))
+			xml := fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="2" templateID="1" action="web" brief="[分享] %s" sourceMsgId="0" url="%s" flag="0" adverSign="0" multiMsgFlag="0"><item layout="2"><voice cover="%s" src="%s"/><title>%s</title><summary>%s</summary></item><source name="音乐" icon="https://i.gtimg.cn/open/app_icon/01/07/98/56/1101079856_100_m.png" url="http://web.p.qq.com/qqmpmobile/aio/app.html?id=1101079856" action="app" a_actionData="com.tencent.qqmusic" i_actionData="tencent1101079856://" appid="1101079856" /></msg>`,
+				utils.XmlEscape(elem.Get("title")), elem.Get("url"), elem.Get("image"), elem.Get("voice"), utils.XmlEscape(elem.Get("title")), utils.XmlEscape(elem.Get("content")))
 			return &message.ServiceElement{
 				Id:      60,
 				Content: xml,

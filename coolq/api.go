@@ -754,7 +754,7 @@ func (bot *CQBot) CQSendGroupMessage(groupID int64, m gjson.Result, autoEscape b
 
 	var elem []message.IMessageElement
 	if m.Type == gjson.JSON {
-		elem = bot.ConvertObjectMessage(m, message.SourceGroup)
+		elem = bot.ConvertObjectMessage(onebot.V11, m, message.SourceGroup)
 	} else {
 		str := m.String()
 		if str == "" {
@@ -764,7 +764,7 @@ func (bot *CQBot) CQSendGroupMessage(groupID int64, m gjson.Result, autoEscape b
 		if autoEscape {
 			elem = []message.IMessageElement{message.NewText(str)}
 		} else {
-			elem = bot.ConvertStringMessage(str, message.SourceGroup)
+			elem = bot.ConvertStringMessage(onebot.V11, str, message.SourceGroup)
 		}
 	}
 	fixAt(elem)
@@ -808,7 +808,7 @@ func (bot *CQBot) CQSendGuildChannelMessage(guildID, channelID uint64, m gjson.R
 
 	var elem []message.IMessageElement
 	if m.Type == gjson.JSON {
-		elem = bot.ConvertObjectMessage(m, message.SourceGuildChannel)
+		elem = bot.ConvertObjectMessage(onebot.V11, m, message.SourceGuildChannel)
 	} else {
 		str := m.String()
 		if str == "" {
@@ -818,7 +818,7 @@ func (bot *CQBot) CQSendGuildChannelMessage(guildID, channelID uint64, m gjson.R
 		if autoEscape {
 			elem = []message.IMessageElement{message.NewText(str)}
 		} else {
-			elem = bot.ConvertStringMessage(str, message.SourceGuildChannel)
+			elem = bot.ConvertStringMessage(onebot.V11, str, message.SourceGuildChannel)
 		}
 	}
 	fixAt(elem)
@@ -928,7 +928,7 @@ func (bot *CQBot) uploadForwardElement(m gjson.Result, target int64, sourceType 
 					}
 				}
 			}
-			content := bot.ConvertObjectMessage(c, sourceType)
+			content := bot.ConvertObjectMessage(onebot.V11, c, sourceType)
 			if uin != 0 && name != "" && len(content) > 0 {
 				return &message.ForwardNode{
 					SenderId:   uin,
@@ -1021,7 +1021,7 @@ func (bot *CQBot) CQSendPrivateForwardMessage(userID int64, m gjson.Result) glob
 func (bot *CQBot) CQSendPrivateMessage(userID int64, groupID int64, m gjson.Result, autoEscape bool) global.MSG {
 	var elem []message.IMessageElement
 	if m.Type == gjson.JSON {
-		elem = bot.ConvertObjectMessage(m, message.SourcePrivate)
+		elem = bot.ConvertObjectMessage(onebot.V11, m, message.SourcePrivate)
 	} else {
 		str := m.String()
 		if str == "" {
@@ -1030,7 +1030,7 @@ func (bot *CQBot) CQSendPrivateMessage(userID int64, groupID int64, m gjson.Resu
 		if autoEscape {
 			elem = []message.IMessageElement{message.NewText(str)}
 		} else {
-			elem = bot.ConvertStringMessage(str, message.SourcePrivate)
+			elem = bot.ConvertStringMessage(onebot.V11, str, message.SourcePrivate)
 		}
 	}
 	mid := bot.SendPrivateMessage(userID, groupID, &message.SendingMessage{Elements: elem})
