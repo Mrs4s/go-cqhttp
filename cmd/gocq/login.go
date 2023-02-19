@@ -225,25 +225,29 @@ func loginResponseProcessor(res *client.LoginResponse) error {
 	}
 }
 
-func getTicket(u string) (str string) {
+func getTicket(u string) string {
+	log.Warnf("请选择提交滑块ticket方式:")
+	log.Warnf("1. 自动提交")
+	log.Warnf("2. 手动抓取提交")
+	log.Warn("请输入(1 - 2)：")
+	text := readLine()
 	id := utils.RandomString(8)
-	log.Warnf("请前往该地址验证 -> %v <- 或输入手动抓取的 ticket：（Enter 提交）", strings.ReplaceAll(u, "https://ssl.captcha.qq.com/template/wireless_mqq_captcha.html?", fmt.Sprintf("https://captcha.go-cqhttp.org/captcha?id=%v&", id)))
-	manual := make(chan string, 1)
-	go func() {
-		manual <- readLine()
-	}()
-	ticker := time.NewTicker(time.Second)
-	defer ticker.Stop()
+	auto := !strings.Contains(text, "2")
+	if auto {
+		u = strings.ReplaceAll(u, "https://ssl.captcha.qq.com/template/wireless_mqq_captcha.html?", fmt.Sprintf("https://captcha.go-cqhttp.org/captcha?id=%v&", id))
+	}
+	log.Warnf("请前往该地址验证 -> %v ", u)
+	if !auto {
+		log.Warn("请输入ticket： (Enter 提交)")
+		return readLine()
+	}
+
 	for count := 120; count > 0; count-- {
-		select {
-		case <-ticker.C:
-			str = fetchCaptcha(id)
-			if str != "" {
-				return
-			}
-		case str = <-manual:
-			return
+		str := fetchCaptcha(id)
+		if str != "" {
+			return str
 		}
+		time.Sleep(time.Second)
 	}
 	log.Warnf("验证超时")
 	return ""
