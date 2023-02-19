@@ -17,7 +17,7 @@ type Getter interface {
 }
 
 // Handler 中间件
-type Handler func(action string, p Getter) global.MSG
+type Handler func(action string, spe *onebot.Spec, p Getter) global.MSG
 
 // Caller api route caller
 type Caller struct {
@@ -28,7 +28,7 @@ type Caller struct {
 // Call specific API
 func (c *Caller) Call(action string, spec *onebot.Spec, p Getter) global.MSG {
 	for _, fn := range c.handlers {
-		if ret := fn(action, p); ret != nil {
+		if ret := fn(action, spec, p); ret != nil {
 			return ret
 		}
 	}

@@ -8,6 +8,7 @@ import (
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
+	"github.com/Mrs4s/go-cqhttp/internal/onebot"
 	"github.com/Mrs4s/go-cqhttp/modules/api"
 
 	"golang.org/x/time/rate"
@@ -26,7 +27,7 @@ type MiddleWares struct {
 
 func rateLimit(frequency float64, bucketSize int) api.Handler {
 	limiter := rate.NewLimiter(rate.Limit(frequency), bucketSize)
-	return func(_ string, _ api.Getter) global.MSG {
+	return func(_ string, _ *onebot.Spec, _ api.Getter) global.MSG {
 		_ = limiter.Wait(context.Background())
 		return nil
 	}
@@ -45,8 +46,11 @@ func longPolling(bot *coolq.CQBot, maxSize int) api.Handler {
 		}
 		cond.Signal()
 	})
-	return func(action string, p api.Getter) global.MSG {
-		if action != "get_updates" {
+	return func(action string, spec *onebot.Spec, p api.Getter) global.MSG {
+		switch {
+		case spec.Version == 11 && action == "get_updates": // ok
+		case spec.Version == 12 && action == "get_latest_events": // ok
+		default:
 			return nil
 		}
 		var (
