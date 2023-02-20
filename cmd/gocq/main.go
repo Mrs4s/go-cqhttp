@@ -136,7 +136,6 @@ func Main() {
 		log.SetLevel(log.DebugLevel)
 		log.Warnf("已开启Debug模式.")
 	}
-	var device *client.DeviceInfo
 	if !global.PathExists("device.json") {
 		log.Warn("虚拟设备信息不存在, 将自动生成随机设备.")
 		device = client.GenRandomDevice()
@@ -242,6 +241,7 @@ func Main() {
 				cli.Disconnect()
 				cli.Release()
 				cli = newClient()
+				cli.UseDevice(device)
 			} else {
 				isTokenLogin = true
 			}

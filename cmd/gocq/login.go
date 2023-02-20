@@ -52,6 +52,7 @@ func readIfTTY(de string) (str string) {
 }
 
 var cli *client.QQClient
+var device *client.DeviceInfo
 
 // ErrSMSRequestError SMS请求出错
 var ErrSMSRequestError = errors.New("sms request error")
@@ -168,6 +169,7 @@ func loginResponseProcessor(res *client.LoginResponse) error {
 			cli.Disconnect()
 			cli.Release()
 			cli = client.NewClientEmpty()
+			cli.UseDevice(device)
 			return qrcodeLogin()
 		case client.NeedCaptcha:
 			log.Warnf("登录需要验证码.")
