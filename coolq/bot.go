@@ -173,7 +173,7 @@ func (bot *CQBot) uploadLocalImage(target message.Source, img *msg.LocalImage) (
 		}
 		img.Stream = bytes.NewReader(stream.Bytes())
 	}
-	i, err := bot.Client.UploadImage(target, img.Stream, 4)
+	i, err := bot.Client.UploadImage(target, img.Stream)
 	if err != nil {
 		return nil, err
 	}
@@ -194,7 +194,7 @@ func (bot *CQBot) uploadLocalVideo(target message.Source, v *msg.LocalVideo) (*m
 		return nil, err
 	}
 	defer func() { _ = video.Close() }()
-	return bot.Client.UploadShortVideo(target, video, v.Thumb, 4)
+	return bot.Client.UploadShortVideo(target, video, v.Thumb)
 }
 
 func removeLocalElement(elements []message.IMessageElement) []message.IMessageElement {
