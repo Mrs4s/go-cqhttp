@@ -9,23 +9,6 @@ import (
 )
 
 func (c *Caller) call(action string, spec *onebot.Spec, p Getter) global.MSG {
-	if spec.Version == 12 {
-		switch action {
-		case "get_self_info":
-			return c.bot.CQGetLoginInfo()
-		case "get_user_info":
-			p0 := p.Get("user_id").Int()
-			return c.bot.CQGetStrangerInfo(p0)
-		case "get_version":
-			return c.bot.CQGetVersion()
-		case "send_message":
-			p0 := p.Get("group_id").String()
-			p1 := p.Get("user_id").String()
-			p2 := p.Get("detail_type").String()
-			p3 := p.Get("message")
-			return c.bot.CQSendMessageV12(p0, p1, p2, p3)
-		}
-	}
 	if spec.Version == 11 {
 		switch action {
 		case ".handle_quick_operation":
@@ -75,6 +58,23 @@ func (c *Caller) call(action string, spec *onebot.Spec, p Getter) global.MSG {
 			p2 := p.Get("message")
 			p3 := p.Get("auto_escape").Bool()
 			return c.bot.CQSendPrivateMessage(p0, p1, p2, p3)
+		}
+	}
+	if spec.Version == 12 {
+		switch action {
+		case "get_self_info":
+			return c.bot.CQGetLoginInfo()
+		case "get_user_info":
+			p0 := p.Get("user_id").Int()
+			return c.bot.CQGetStrangerInfo(p0)
+		case "get_version":
+			return c.bot.CQGetVersion()
+		case "send_message":
+			p0 := p.Get("group_id").String()
+			p1 := p.Get("user_id").String()
+			p2 := p.Get("detail_type").String()
+			p3 := p.Get("message")
+			return c.bot.CQSendMessageV12(p0, p1, p2, p3)
 		}
 	}
 	switch action {
