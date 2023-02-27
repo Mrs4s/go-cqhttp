@@ -31,8 +31,8 @@ import (
 	"github.com/Mrs4s/go-cqhttp/internal/download"
 	"github.com/Mrs4s/go-cqhttp/internal/mime"
 	"github.com/Mrs4s/go-cqhttp/internal/msg"
-	"github.com/Mrs4s/go-cqhttp/internal/onebot"
 	"github.com/Mrs4s/go-cqhttp/internal/param"
+	"github.com/Mrs4s/go-cqhttp/pkg/onebot"
 )
 
 // TODO: move this file to internal/msg, internal/onebot
@@ -538,8 +538,11 @@ func (bot *CQBot) at(id, name string) (m any, err error) {
 }
 
 // convertV11 ConvertElement11
-func (bot *CQBot) convertV11(elem msg.Element) (m any, err error, failed bool) { // nolint
+func (bot *CQBot) convertV11(elem msg.Element) (m any, ok bool, err error) {
 	switch elem.Type {
+	default:
+		// not ok
+		return
 	case "at":
 		qq := elem.Get("qq")
 		if qq == "all" {
@@ -549,24 +552,25 @@ func (bot *CQBot) convertV11(elem msg.Element) (m any, err error, failed bool) {
 		m, err = bot.at(qq, elem.Get("name"))
 	case "record":
 		m, err = bot.voice(elem)
-	default:
-		failed = true
 	}
+	ok = true
 	return
 }
 
 // convertV12 ConvertElement12
-func (bot *CQBot) convertV12(elem msg.Element) (m any, err error, failed bool) { // nolint
+func (bot *CQBot) convertV12(elem msg.Element) (m any, ok bool, err error) {
 	switch elem.Type {
+	default:
+		// not ok
+		return
 	case "mention":
 		m, err = bot.at(elem.Get("user_id"), elem.Get("name"))
 	case "mention_all":
 		m = message.AtAll()
 	case "voice":
 		m, err = bot.voice(elem)
-	default:
-		failed = true
 	}
+	ok = true
 	return
 }
 
@@ -576,16 +580,16 @@ func (bot *CQBot) convertV12(elem msg.Element) (m any, err error, failed bool) {
 //
 // message.IMessageElement []message.IMessageElement nil
 func (bot *CQBot) ConvertElement(spec *onebot.Spec, elem msg.Element, sourceType message.SourceType) (m any, err error) {
-	var failed bool
+	var ok bool
 	switch spec.Version {
 	case 11:
-		m, err, failed = bot.convertV11(elem)
+		m, ok, err = bot.convertV11(elem)
 	case 12:
-		m, err, failed = bot.convertV12(elem)
+		m, ok, err = bot.convertV12(elem)
 	default:
 		panic("invalid onebot version:" + strconv.Itoa(spec.Version))
 	}
-	if !failed {
+	if ok {
 		return m, err
 	}
 

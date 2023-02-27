@@ -28,9 +28,9 @@ import (
 	"github.com/Mrs4s/go-cqhttp/internal/cache"
 	"github.com/Mrs4s/go-cqhttp/internal/download"
 	"github.com/Mrs4s/go-cqhttp/internal/msg"
-	"github.com/Mrs4s/go-cqhttp/internal/onebot"
 	"github.com/Mrs4s/go-cqhttp/internal/param"
 	"github.com/Mrs4s/go-cqhttp/modules/filter"
+	"github.com/Mrs4s/go-cqhttp/pkg/onebot"
 )
 
 type guildMemberPageToken struct {

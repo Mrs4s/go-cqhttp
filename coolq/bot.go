@@ -27,7 +27,7 @@ import (
 	"github.com/Mrs4s/go-cqhttp/internal/base"
 	"github.com/Mrs4s/go-cqhttp/internal/mime"
 	"github.com/Mrs4s/go-cqhttp/internal/msg"
-	"github.com/Mrs4s/go-cqhttp/internal/onebot"
+	"github.com/Mrs4s/go-cqhttp/pkg/onebot"
 )
 
 // CQBot CQBot结构体,存储Bot实例相关配置
