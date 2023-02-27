@@ -72,11 +72,10 @@ func (g *generator) genRouter(routers []Router) {
 		actions[i] = `"` + actions[i] + `"`
 	}
 
-	// TODO: v12 和 all 的 switch-case 由常量改为数组寻址, 以利用 get_supported_actions
 	g.WriteString("import (\n\n")
 	g.WriteString("\"github.com/Mrs4s/go-cqhttp/coolq\"\n")
 	g.WriteString("\"github.com/Mrs4s/go-cqhttp/global\"\n")
-	g.WriteString("\"github.com/Mrs4s/go-cqhttp/internal/onebot\"\n")
+	g.WriteString("\"github.com/Mrs4s/go-cqhttp/pkg/onebot\"\n")
 	g.WriteString(")\n\n")
 	g.WriteString(`func (c *Caller) call(action string, spec *onebot.Spec, p Getter) global.MSG {
 	if spec.Version == 12 {
