@@ -19,5 +19,8 @@ func DisableQuickEdit() error {
 	mode &^= windows.ENABLE_QUICK_EDIT_MODE // 禁用快速编辑模式
 	mode |= windows.ENABLE_EXTENDED_FLAGS   // 启用扩展标志
 
+	mode &^= windows.ENABLE_MOUSE_INPUT    // 禁用鼠标输入
+	mode |= windows.ENABLE_PROCESSED_INPUT // 启用控制输入
+
 	return windows.SetConsoleMode(stdin, mode)
 }
