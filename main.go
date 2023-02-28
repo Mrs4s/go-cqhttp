@@ -18,4 +18,5 @@ func main() {
 	_ = terminal.DisableQuickEdit()
 	_ = terminal.EnableVT100()
 	gocq.Main()
+	_ = terminal.RestoreInputMode()
 }
