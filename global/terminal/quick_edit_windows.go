@@ -14,7 +14,7 @@ func RestoreInputMode() error {
 		return nil
 	}
 	stdin := windows.Handle(os.Stdin.Fd())
-	return windows.SetConsoleMode(stdin, mode)
+	return windows.SetConsoleMode(stdin, inputmode)
 }
 
 // DisableQuickEdit 禁用快速编辑
