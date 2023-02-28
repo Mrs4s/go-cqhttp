@@ -1,6 +1,10 @@
 package terminal
 
-import "golang.org/x/sys/windows"
+import (
+	"os"
+
+	"golang.org/x/sys/windows"
+)
 
 // DisableQuickEdit 禁用快速编辑
 func DisableQuickEdit() error {

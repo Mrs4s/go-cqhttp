@@ -1,6 +1,10 @@
 package terminal
 
-import "golang.org/x/sys/windows"
+import (
+	"os"
+
+	"golang.org/x/sys/windows"
+)
 
 // EnableVT100 启用颜色、控制字符
 func EnableVT100() error {
