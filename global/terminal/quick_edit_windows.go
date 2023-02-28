@@ -22,5 +22,11 @@ func DisableQuickEdit() error {
 	mode &^= windows.ENABLE_MOUSE_INPUT    // 禁用鼠标输入
 	mode |= windows.ENABLE_PROCESSED_INPUT // 启用控制输入
 
+	mode &^= windows.ENABLE_INSERT_MODE                           // 禁用插入模式
+	mode |= windows.ENABLE_ECHO_INPUT | windows.ENABLE_LINE_INPUT // 启用输入回显&逐行输入
+
+	mode &^= windows.ENABLE_WINDOW_INPUT           // 禁用窗口输入
+	mode &^= windows.ENABLE_VIRTUAL_TERMINAL_INPUT // 禁用虚拟终端输入
+
 	return windows.SetConsoleMode(stdin, mode)
 }
