@@ -41,8 +41,10 @@ var allowStatus = [...]client.UserOnlineStatus{
 	client.StatusGaming, client.StatusVacationing, client.StatusWatchingTV, client.StatusFitness,
 }
 
-// Main 启动主程序
-func Main() {
+// InitBase 解析参数并检测
+//
+//	如果在 windows 下双击打开了程序，程序将在此函数释出脚本后终止
+func InitBase() {
 	base.Parse()
 	if !base.FastStart && terminal.RunningByDoubleClick() {
 		err := terminal.NoMoreDoubleClick()
@@ -50,7 +52,7 @@ func Main() {
 			log.Errorf("遇到错误: %v", err)
 			time.Sleep(time.Second * 5)
 		}
-		return
+		os.Exit(0)
 	}
 	switch {
 	case base.LittleH:
@@ -65,7 +67,10 @@ func Main() {
 		}
 	}
 	base.Init()
+}
 
+// Main 启动主程序，必须在 InitBase 之后执行
+func Main() {
 	rotateOptions := []rotatelogs.Option{
 		rotatelogs.WithRotationTime(time.Hour * 24),
 	}
