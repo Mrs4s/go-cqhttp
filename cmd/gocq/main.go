@@ -43,7 +43,9 @@ var allowStatus = [...]client.UserOnlineStatus{
 
 // InitBase 解析参数并检测
 //
-//	如果在 windows 下双击打开了程序，程序将在此函数释出脚本后终止
+//	如果在 windows 下双击打开了程序，程序将在此函数释出脚本后终止；
+//	如果传入 -h 参数，程序将打印帮助后终止；
+//	如果传入 -d 参数，程序将在启动 daemon 后终止。
 func InitBase() {
 	base.Parse()
 	if !base.FastStart && terminal.RunningByDoubleClick() {
