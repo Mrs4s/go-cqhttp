@@ -71,8 +71,8 @@ func InitBase() {
 	base.Init()
 }
 
-// Main 启动主程序，必须在 InitBase 之后执行
-func Main() {
+// PrepareData 准备 log, 缓存, 数据库, 必须在 InitBase 之后执行
+func PrepareData() {
 	rotateOptions := []rotatelogs.Option{
 		rotatelogs.WithRotationTime(time.Hour * 24),
 	}
@@ -108,7 +108,10 @@ func Main() {
 	if err := db.Open(); err != nil {
 		log.Fatalf("打开数据库失败: %v", err)
 	}
+}
 
+// LoginInteract 登录交互, 可能需要键盘输入, 必须在 InitBase, PrepareData 之后执行
+func LoginInteract() {
 	var byteKey []byte
 	arg := os.Args
 	if len(arg) > 1 {
@@ -336,7 +339,13 @@ func Main() {
 	servers.Run(coolq.NewQQBot(cli))
 	log.Info("资源初始化完成, 开始处理信息.")
 	log.Info("アトリは、高性能ですから!")
+}
 
+// WaitSignal 在新线程检查更新和网络并等待信号, 必须在 InitBase, PrepareData, LoginInteract 之后执行
+//
+//   - 直接返回: os.Interrupt, syscall.SIGTERM
+//   - dump stack: syscall.SIGQUIT, syscall.SIGUSR1
+func WaitSignal() {
 	go func() {
 		selfupdate.CheckUpdate()
 		selfdiagnosis.NetworkDiagnosis(cli)
