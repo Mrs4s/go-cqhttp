@@ -3,6 +3,7 @@ package main
 
 import (
 	"github.com/Mrs4s/go-cqhttp/cmd/gocq"
+	"github.com/Mrs4s/go-cqhttp/global/terminal"
 
 	_ "github.com/Mrs4s/go-cqhttp/db/leveldb"   // leveldb 数据库支持
 	_ "github.com/Mrs4s/go-cqhttp/modules/silk" // silk编码模块
@@ -13,5 +14,9 @@ import (
 )
 
 func main() {
+	gocq.InitBase()
+	_ = terminal.DisableQuickEdit()
+	_ = terminal.EnableVT100()
 	gocq.Main()
+	_ = terminal.RestoreInputMode()
 }
