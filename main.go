@@ -15,8 +15,10 @@ import (
 
 func main() {
 	gocq.InitBase()
+	gocq.PrepareData()
+	gocq.LoginInteract()
 	_ = terminal.DisableQuickEdit()
 	_ = terminal.EnableVT100()
-	gocq.Main()
+	gocq.WaitSignal()
 	_ = terminal.RestoreInputMode()
 }

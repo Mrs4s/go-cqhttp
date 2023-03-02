@@ -14,9 +14,9 @@ import (
 func SetupMainSignalHandler() <-chan struct{} {
 	mainOnce.Do(func() {
 		mainStopCh = make(chan struct{})
-		mc := make(chan os.Signal, 3)
+		mc := make(chan os.Signal, 4)
 		closeOnce := sync.Once{}
-		signal.Notify(mc, os.Interrupt, syscall.SIGTERM, syscall.SIGUSR1)
+		signal.Notify(mc, os.Interrupt, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGUSR1)
 		go func() {
 			for {
 				switch <-mc {
@@ -24,7 +24,7 @@ func SetupMainSignalHandler() <-chan struct{} {
 					closeOnce.Do(func() {
 						close(mainStopCh)
 					})
-				case syscall.SIGUSR1:
+				case syscall.SIGQUIT, syscall.SIGUSR1:
 					dumpStack()
 				}
 			}
