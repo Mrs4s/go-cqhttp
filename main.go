@@ -14,6 +14,7 @@ import (
 )
 
 func main() {
+	terminal.SetTitle()
 	gocq.InitBase()
 	_ = terminal.DisableQuickEdit()
 	_ = terminal.EnableVT100()
