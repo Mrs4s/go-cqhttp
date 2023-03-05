@@ -4,8 +4,8 @@ github.com/FloatTech/ttl v0.0.0-20220715042055-15612be72f5b h1:tvciXWq2nuvTbFeJG
 github.com/FloatTech/ttl v0.0.0-20220715042055-15612be72f5b/go.mod h1:fHZFWGquNXuHttu9dUYoKuNbm3dzLETnIOnm1muSfDs=
 github.com/Microsoft/go-winio v0.6.0 h1:slsWYD/zyx7lCXoZVlvQrj0hPTM1HI4+v1sIda2yDvg=
 github.com/Microsoft/go-winio v0.6.0/go.mod h1:cTAf44im0RAYeL23bpB+fzCyDH2MJiz2BO69KH/soAE=
-github.com/Mrs4s/MiraiGo v0.0.0-20230305095902-b8f6dadd53b8 h1:q2g/gUPbJKhDfZI9HlB1dSbQtfPIMK94w531iLp0nTQ=
-github.com/Mrs4s/MiraiGo v0.0.0-20230305095902-b8f6dadd53b8/go.mod h1:mU3fBFU+7eO0kaGes7YRKtzIDtwIU84nSSwTV7NK2b0=
+github.com/Mrs4s/MiraiGo v0.0.0-20230305102225-a42218b851d8 h1:0RMPpAHY5W5rdDVRtrc5nWtDCnmrR5E9L6wi9y1uhAc=
+github.com/Mrs4s/MiraiGo v0.0.0-20230305102225-a42218b851d8/go.mod h1:mU3fBFU+7eO0kaGes7YRKtzIDtwIU84nSSwTV7NK2b0=
 github.com/RomiChan/protobuf v0.1.1-0.20230204044148-2ed269a2e54d h1:/Xuj3fIiMY2ls1TwvPKmaqQrtJsPY+c9s+0lOScVHd8=
 github.com/RomiChan/protobuf v0.1.1-0.20230204044148-2ed269a2e54d/go.mod h1:2Ie+hdBFQpQFDHfeklgxoFmQRCE7O+KwFpISeXq7OwA=
 github.com/RomiChan/syncx v0.0.0-20221202055724-5f842c53020e h1:wR3MXQ3VbUlPKOOUwLOYgh/QaJThBTYtsl673O3lqSA=
