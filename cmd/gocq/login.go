@@ -3,18 +3,22 @@ package gocq
 import (
 	"bufio"
 	"bytes"
+	"encoding/hex"
 	"fmt"
 	"image"
 	"image/png"
+	"net/http"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/MiraiGo/utils"
+	"github.com/Mrs4s/MiraiGo/warpper"
 	"github.com/mattn/go-colorable"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"github.com/tidwall/gjson"
 	"gopkg.ilharper.com/x/isatty"
 
 	"github.com/Mrs4s/go-cqhttp/global"
@@ -22,6 +26,10 @@ import (
 )
 
 var console = bufio.NewReader(os.Stdin)
+
+func init() {
+	warpper.DandelionEnergy = energy
+}
 
 func readLine() (str string) {
 	str, _ = console.ReadString('\n')
@@ -265,4 +273,24 @@ func fetchCaptcha(id string) string {
 		return g.Get("ticket").String()
 	}
 	return ""
+}
+
+func energy(id string, salt []byte) []byte {
+	// temporary solution
+	response, err := download.Request{
+		Method: http.MethodPost,
+		URL:    "https://captcha.go-cqhttp.org/sdk/dandelion/energy",
+		Header: map[string]string{"Content-Type": "application/x-www-form-urlencoded"},
+		Body:   bytes.NewReader([]byte(fmt.Sprintf("id=%s&salt=%s", id, hex.EncodeToString(salt)))),
+	}.Bytes()
+	if err != nil {
+		log.Errorf("获取T544时出现问题: %v", err)
+		return nil
+	}
+	sign, err := hex.DecodeString(gjson.GetBytes(response, "result").String())
+	if err != nil {
+		log.Errorf("获取T544时出现问题: %v", err)
+		return nil
+	}
+	return sign
 }
