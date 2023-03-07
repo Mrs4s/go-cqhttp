@@ -96,7 +96,7 @@ func (w *writer) arrayMsg(a []global.MSG) {
 	}
 }
 
-func (w *writer) obj(o interface{}) {
+func (w *writer) obj(o any) {
 	switch x := o.(type) {
 	case nil:
 		w.nil()

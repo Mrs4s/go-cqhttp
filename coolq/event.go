@@ -21,7 +21,7 @@ import (
 )
 
 // ToFormattedMessage 将给定[]message.IMessageElement转换为通过coolq.SetMessageFormat所定义的消息上报格式
-func ToFormattedMessage(e []message.IMessageElement, source message.Source) (r interface{}) {
+func ToFormattedMessage(e []message.IMessageElement, source message.Source) (r any) {
 	if base.PostFormat == "string" {
 		r = toStringMessage(e, source)
 	} else if base.PostFormat == "array" {
@@ -144,7 +144,10 @@ func (bot *CQBot) tempMessageEvent(c *client.QQClient, e *client.TempMessageEven
 		PrimaryID:  e.Session.Sender,
 	}
 	cqm := toStringMessage(m.Elements, source)
-	bot.tempSessionCache.Store(m.Sender.Uin, e.Session)
+	if base.AllowTempSession {
+		bot.tempSessionCache.Store(m.Sender.Uin, e.Session)
+	}
+
 	id := m.Id
 	// todo(Mrs4s)
 	// if bot.db != nil { // nolint

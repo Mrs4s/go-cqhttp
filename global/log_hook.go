@@ -108,7 +108,7 @@ func (hook *LocalHook) SetPath(path string) {
 }
 
 // NewLocalHook 初始化本地日志钩子实现
-func NewLocalHook(args interface{}, consoleFormatter, fileFormatter logrus.Formatter, levels ...logrus.Level) *LocalHook {
+func NewLocalHook(args any, consoleFormatter, fileFormatter logrus.Formatter, levels ...logrus.Level) *LocalHook {
 	hook := &LocalHook{
 		lock: new(sync.Mutex),
 	}
