@@ -169,6 +169,8 @@ func loginResponseProcessor(res *client.LoginResponse) error {
 			if strings.Contains(text, "1") {
 				ticket := getTicket(res.VerifyUrl)
 				if ticket == "" {
+					log.Infof("按 Enter 继续....")
+					readLine()
 					os.Exit(0)
 				}
 				res, err = cli.SubmitTicket(ticket)
@@ -223,11 +225,14 @@ func loginResponseProcessor(res *client.LoginResponse) error {
 		case client.OtherLoginError, client.UnknownLoginError, client.TooManySMSRequestError:
 			msg := res.ErrorMessage
 			if strings.Contains(msg, "冻结") {
-				log.Fatalf("账号被冻结")
+				log.Warnf("账号被冻结")
+				log.Infof("按 Enter 继续....")
+				readLine()
+				os.Exit(0)
 			}
 			log.Warnf("登录失败: %v", msg)
-			log.Infof("按 Enter 或等待 5s 后继续....")
-			readLineTimeout(time.Second * 5)
+			log.Infof("按 Enter 继续....")
+			readLine()
 			os.Exit(0)
 		}
 	}
