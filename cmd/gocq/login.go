@@ -224,13 +224,7 @@ func loginResponseProcessor(res *client.LoginResponse) error {
 			os.Exit(0)
 		case client.OtherLoginError, client.UnknownLoginError, client.TooManySMSRequestError:
 			msg := res.ErrorMessage
-			if strings.Contains(msg, "冻结") {
-				log.Warnf("账号被冻结")
-				log.Infof("按 Enter 继续....")
-				readLine()
-				os.Exit(0)
-			}
-			log.Warnf("登录失败: %v", msg)
+			log.Warnf("登录失败: %v Code: %v", msg, res.Code)
 			log.Infof("按 Enter 继续....")
 			readLine()
 			os.Exit(0)
