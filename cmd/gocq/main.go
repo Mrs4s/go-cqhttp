@@ -216,7 +216,7 @@ func LoginInteract() {
 		time.Sleep(time.Second * 5)
 	}
 	log.Info("开始尝试登录并同步消息...")
-	log.Infof("使用协议: %s", device.Protocol)
+	log.Infof("使用协议: %s", device.Protocol.Version())
 	cli = newClient()
 	cli.UseDevice(device)
 	isQRCodeLogin := (base.Account.Uin == 0 || len(base.Account.Password) == 0) && !base.Account.Encrypt
