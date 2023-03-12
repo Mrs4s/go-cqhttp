@@ -13,6 +13,7 @@ require (
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
 	github.com/mattn/go-colorable v0.1.13
 	github.com/pkg/errors v0.9.1
+	github.com/redis/go-redis/v9 v9.0.2
 	github.com/segmentio/asm v1.2.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.1
@@ -32,7 +33,9 @@ require (
 require (
 	github.com/FloatTech/ttl v0.0.0-20220715042055-15612be72f5b // indirect
 	github.com/RomiChan/protobuf v0.1.1-0.20230204044148-2ed269a2e54d // indirect
+	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/fumiama/imgsz v0.0.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/uuid v1.3.0 // indirect
