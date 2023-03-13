@@ -28,9 +28,9 @@ type database struct {
 }
 
 type config struct {
-	Enable  bool          `yaml:"enable"`
-	URI     string        `yaml:"uri"`
-	Timeout time.Duration `yaml:"timeout"`
+	Enable  bool   `yaml:"enable"`
+	URI     string `yaml:"uri"`
+	Timeout int    `yaml:"timeout"`
 
 	Host     string `yaml:"host"`
 	Port     string `yaml:"port"`
@@ -58,7 +58,10 @@ func init() {
 			conf.URI = fmt.Sprintf("redis://%s:%s/%s", conf.Host, conf.Port, conf.Database)
 		}
 		log.Debugf("redis registration successful, uri: %s", conf.URI)
-		return &database{uri: conf.URI, timeout: conf.Timeout}
+		return &database{
+			uri:     conf.URI,
+			timeout: time.Duration(conf.Timeout) * time.Millisecond,
+		}
 	})
 }
 
