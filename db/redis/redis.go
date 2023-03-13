@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/Mrs4s/MiraiGo/utils"
 	"github.com/Mrs4s/go-cqhttp/db"
@@ -21,14 +22,15 @@ const (
 )
 
 type database struct {
-	uri string
-	rdb *redis.Client
-	ctx *context.Context
+	uri     string
+	timeout time.Duration
+	rdb     *redis.Client
 }
 
 type config struct {
-	Enable bool   `yaml:"enable"`
-	URI    string `yaml:"uri"`
+	Enable  bool          `yaml:"enable"`
+	URI     string        `yaml:"uri"`
+	Timeout time.Duration `yaml:"timeout"`
 
 	Host     string `yaml:"host"`
 	Port     string `yaml:"port"`
@@ -44,6 +46,9 @@ func init() {
 			return nil
 		}
 		if conf.URI == "" {
+			if conf.Host == "" {
+				conf.Host = "127.0.0.1"
+			}
 			if conf.Port == "" {
 				conf.Port = "6379"
 			}
@@ -53,7 +58,7 @@ func init() {
 			conf.URI = fmt.Sprintf("redis://%s:%s/%s", conf.Host, conf.Port, conf.Database)
 		}
 		log.Debugf("redis registration successful, uri: %s", conf.URI)
-		return &database{uri: conf.URI}
+		return &database{uri: conf.URI, timeout: conf.Timeout}
 	})
 }
 
@@ -62,15 +67,16 @@ func (r *database) Open() error {
 	if err != nil {
 		return errors.Wrap(err, "open redis error")
 	}
+
 	rdb := redis.NewClient(opt)
-	ctx := context.Background()
+	ctx, cancelFunc := buildCtx(r.timeout)
+	defer cancelFunc()
 	_, err = rdb.Ping(ctx).Result()
 	if err != nil {
 		return errors.Wrap(err, "ping redis error")
 	}
 
 	r.rdb = rdb
-	r.ctx = &ctx
 
 	return nil
 }
@@ -86,7 +92,10 @@ func (r *database) GetMessageByGlobalID(id int32) (db.StoredMessage, error) {
 func (r *database) GetGroupMessageByGlobalID(id int32) (*db.StoredGroupMessage, error) {
 	log.Debugf("get group message, id=%d", id)
 	msg := &db.StoredGroupMessage{}
-	result, err := r.rdb.Get(*r.ctx, GocqhttpGroupMsgKeyPrefix+strconv.Itoa(int(id))).Result()
+
+	ctx, cancelFunc := buildCtx(r.timeout)
+	defer cancelFunc()
+	result, err := r.rdb.Get(ctx, GocqhttpGroupMsgKeyPrefix+strconv.Itoa(int(id))).Result()
 	if err != nil {
 		return nil, errors.Wrap(err, "get value error")
 	}
@@ -100,7 +109,10 @@ func (r *database) GetGroupMessageByGlobalID(id int32) (*db.StoredGroupMessage, 
 func (r *database) GetPrivateMessageByGlobalID(id int32) (*db.StoredPrivateMessage, error) {
 	log.Debugf("get private message, id=%d", id)
 	msg := &db.StoredPrivateMessage{}
-	result, err := r.rdb.Get(*r.ctx, GocqhttpPrivateMsgKeyPrefix+strconv.Itoa(int(id))).Result()
+
+	ctx, cancelFunc := buildCtx(r.timeout)
+	defer cancelFunc()
+	result, err := r.rdb.Get(ctx, GocqhttpPrivateMsgKeyPrefix+strconv.Itoa(int(id))).Result()
 	if err != nil {
 		return nil, errors.Wrap(err, "get value error")
 	}
@@ -114,7 +126,10 @@ func (r *database) GetPrivateMessageByGlobalID(id int32) (*db.StoredPrivateMessa
 func (r *database) GetGuildChannelMessageByID(id string) (*db.StoredGuildChannelMessage, error) {
 	log.Debugf("get guild channel message, id=%s", id)
 	msg := &db.StoredGuildChannelMessage{}
-	result, err := r.rdb.Get(*r.ctx, GocqhttpGuildChannelMsgKeyPrefix+id).Result()
+
+	ctx, cancelFunc := buildCtx(r.timeout)
+	defer cancelFunc()
+	result, err := r.rdb.Get(ctx, GocqhttpGuildChannelMsgKeyPrefix+id).Result()
 	if err != nil {
 		return nil, errors.Wrap(err, "get value error")
 	}
@@ -131,7 +146,10 @@ func (r *database) InsertGroupMessage(msg *db.StoredGroupMessage) error {
 	if err != nil {
 		return errors.Wrap(err, "set value error")
 	}
-	err = r.rdb.Set(*r.ctx, GocqhttpGroupMsgKeyPrefix+strconv.Itoa(int(msg.GlobalID)), utils.B2S(jsonData), 0).Err()
+
+	ctx, cancelFunc := buildCtx(r.timeout)
+	defer cancelFunc()
+	err = r.rdb.Set(ctx, GocqhttpGroupMsgKeyPrefix+strconv.Itoa(int(msg.GlobalID)), utils.B2S(jsonData), 0).Err()
 	if err != nil {
 		return errors.Wrap(err, "set value error")
 	}
@@ -144,7 +162,9 @@ func (r *database) InsertPrivateMessage(msg *db.StoredPrivateMessage) error {
 	if err != nil {
 		return errors.Wrap(err, "set value error")
 	}
-	err = r.rdb.Set(*r.ctx, GocqhttpPrivateMsgKeyPrefix+strconv.Itoa(int(msg.GlobalID)), utils.B2S(jsonData), 0).Err()
+	ctx, cancelFunc := buildCtx(r.timeout)
+	defer cancelFunc()
+	err = r.rdb.Set(ctx, GocqhttpPrivateMsgKeyPrefix+strconv.Itoa(int(msg.GlobalID)), utils.B2S(jsonData), 0).Err()
 	if err != nil {
 		return errors.Wrap(err, "set value error")
 	}
@@ -157,9 +177,22 @@ func (r *database) InsertGuildChannelMessage(msg *db.StoredGuildChannelMessage) 
 	if err != nil {
 		return errors.Wrap(err, "set value error")
 	}
-	err = r.rdb.Set(*r.ctx, GocqhttpGuildChannelMsgKeyPrefix+msg.ID, utils.B2S(jsonData), 0).Err()
+
+	ctx, cancelFunc := buildCtx(r.timeout)
+	defer cancelFunc()
+	err = r.rdb.Set(ctx, GocqhttpGuildChannelMsgKeyPrefix+msg.ID, utils.B2S(jsonData), 0).Err()
 	if err != nil {
 		return errors.Wrap(err, "set value error")
 	}
 	return err
+}
+
+func buildCtx(timeout time.Duration) (context.Context, context.CancelFunc) {
+	var ctx context.Context
+	if timeout != 0 {
+		return context.WithTimeout(context.Background(), timeout)
+	} else {
+		ctx = context.Background()
+		return ctx, func() {}
+	}
 }
