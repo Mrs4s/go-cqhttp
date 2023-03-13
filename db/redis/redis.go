@@ -15,9 +15,9 @@ import (
 )
 
 const (
-	GocqhttpGroupMsgKey        = "GOCQHTTP_GROUP_MSG:"
-	GocqhttpPrivateMsgKey      = "GOCQHTTP_PRIVATE_MSG:"
-	GocqhttpGuildChannelMsgKey = "GOCQHTTP_GUILD_CHANNEL_MSG:"
+	GocqhttpGroupMsgKeyPrefix        = "GOCQHTTP_GROUP_MSG:"
+	GocqhttpPrivateMsgKeyPrefix      = "GOCQHTTP_PRIVATE_MSG:"
+	GocqhttpGuildChannelMsgKeyPrefix = "GOCQHTTP_GUILD_CHANNEL_MSG:"
 )
 
 type database struct {
@@ -86,7 +86,7 @@ func (r *database) GetMessageByGlobalID(id int32) (db.StoredMessage, error) {
 func (r *database) GetGroupMessageByGlobalID(id int32) (*db.StoredGroupMessage, error) {
 	log.Debugf("get group message, id=%d", id)
 	msg := &db.StoredGroupMessage{}
-	result, err := r.rdb.Get(*r.ctx, GocqhttpGroupMsgKey+strconv.Itoa(int(id))).Result()
+	result, err := r.rdb.Get(*r.ctx, GocqhttpGroupMsgKeyPrefix+strconv.Itoa(int(id))).Result()
 	if err != nil {
 		return nil, errors.Wrap(err, "get value error")
 	}
@@ -100,7 +100,7 @@ func (r *database) GetGroupMessageByGlobalID(id int32) (*db.StoredGroupMessage, 
 func (r *database) GetPrivateMessageByGlobalID(id int32) (*db.StoredPrivateMessage, error) {
 	log.Debugf("get private message, id=%d", id)
 	msg := &db.StoredPrivateMessage{}
-	result, err := r.rdb.Get(*r.ctx, GocqhttpPrivateMsgKey+strconv.Itoa(int(id))).Result()
+	result, err := r.rdb.Get(*r.ctx, GocqhttpPrivateMsgKeyPrefix+strconv.Itoa(int(id))).Result()
 	if err != nil {
 		return nil, errors.Wrap(err, "get value error")
 	}
@@ -114,7 +114,7 @@ func (r *database) GetPrivateMessageByGlobalID(id int32) (*db.StoredPrivateMessa
 func (r *database) GetGuildChannelMessageByID(id string) (*db.StoredGuildChannelMessage, error) {
 	log.Debugf("get guild channel message, id=%s", id)
 	msg := &db.StoredGuildChannelMessage{}
-	result, err := r.rdb.Get(*r.ctx, GocqhttpGuildChannelMsgKey+id).Result()
+	result, err := r.rdb.Get(*r.ctx, GocqhttpGuildChannelMsgKeyPrefix+id).Result()
 	if err != nil {
 		return nil, errors.Wrap(err, "get value error")
 	}
@@ -131,7 +131,7 @@ func (r *database) InsertGroupMessage(msg *db.StoredGroupMessage) error {
 	if err != nil {
 		return errors.Wrap(err, "set value error")
 	}
-	err = r.rdb.Set(*r.ctx, GocqhttpGroupMsgKey+strconv.Itoa(int(msg.GlobalID)), utils.B2S(jsonData), 0).Err()
+	err = r.rdb.Set(*r.ctx, GocqhttpGroupMsgKeyPrefix+strconv.Itoa(int(msg.GlobalID)), utils.B2S(jsonData), 0).Err()
 	if err != nil {
 		return errors.Wrap(err, "set value error")
 	}
@@ -144,7 +144,7 @@ func (r *database) InsertPrivateMessage(msg *db.StoredPrivateMessage) error {
 	if err != nil {
 		return errors.Wrap(err, "set value error")
 	}
-	err = r.rdb.Set(*r.ctx, GocqhttpPrivateMsgKey+strconv.Itoa(int(msg.GlobalID)), utils.B2S(jsonData), 0).Err()
+	err = r.rdb.Set(*r.ctx, GocqhttpPrivateMsgKeyPrefix+strconv.Itoa(int(msg.GlobalID)), utils.B2S(jsonData), 0).Err()
 	if err != nil {
 		return errors.Wrap(err, "set value error")
 	}
@@ -157,7 +157,7 @@ func (r *database) InsertGuildChannelMessage(msg *db.StoredGuildChannelMessage) 
 	if err != nil {
 		return errors.Wrap(err, "set value error")
 	}
-	err = r.rdb.Set(*r.ctx, GocqhttpGuildChannelMsgKey+msg.ID, utils.B2S(jsonData), 0).Err()
+	err = r.rdb.Set(*r.ctx, GocqhttpGuildChannelMsgKeyPrefix+msg.ID, utils.B2S(jsonData), 0).Err()
 	if err != nil {
 		return errors.Wrap(err, "set value error")
 	}
