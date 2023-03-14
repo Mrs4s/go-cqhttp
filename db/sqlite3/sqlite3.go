@@ -15,6 +15,7 @@ import (
 
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/utils"
+
 	"github.com/Mrs4s/go-cqhttp/db"
 )
 
@@ -38,7 +39,7 @@ func init() {
 		if !conf.Enable {
 			return nil
 		}
-		return &database{db: new(sql.Sqlite), ttl: conf.CacheTTL}
+		return &database{db: new(sql.Sqlite), ttl: conf.CacheTTL * time.Millisecond}
 	})
 }
 
