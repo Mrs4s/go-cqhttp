@@ -14,13 +14,14 @@ import (
 
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/client"
-	"github.com/Mrs4s/go-cqhttp/internal/download"
 	para "github.com/fumiama/go-hide-param"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/pbkdf2"
 	"golang.org/x/term"
+
+	"github.com/Mrs4s/go-cqhttp/internal/download"
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/db"
