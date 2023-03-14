@@ -14,8 +14,10 @@ import (
 
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/client"
+	"github.com/Mrs4s/go-cqhttp/internal/download"
 	para "github.com/fumiama/go-hide-param"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/pbkdf2"
 	"golang.org/x/term"
@@ -102,6 +104,7 @@ func PrepareData() {
 	mkCacheDir(global.VideoPath, "视频")
 	mkCacheDir(global.CachePath, "发送图片")
 	mkCacheDir(path.Join(global.ImagePath, "guild-images"), "频道图片缓存")
+	mkCacheDir(global.VersionsPath, "版本缓存")
 	cache.Init()
 
 	db.Init()
@@ -221,6 +224,17 @@ func LoginInteract() {
 	cli.UseDevice(device)
 	isQRCodeLogin := (base.Account.Uin == 0 || len(base.Account.Password) == 0) && !base.Account.Encrypt
 	isTokenLogin := false
+
+	// 加载本地版本信息, 一般是在上次登录时保存的
+	versionFile := path.Join(global.VersionsPath, fmt.Sprint(int(cli.Device().Protocol))+".json")
+	if global.PathExists(versionFile) {
+		b, err := os.ReadFile(versionFile)
+		if err == nil {
+			_ = cli.Device().Protocol.Version().UpdateFromJson(b)
+		}
+		log.Infof("从文件 %s 读取协议版本 %v.", versionFile, cli.Device().Protocol.Version())
+	}
+
 	saveToken := func() {
 		base.AccountToken = cli.GenToken()
 		_ = os.WriteFile("session.token", base.AccountToken, 0o644)
@@ -262,6 +276,20 @@ func LoginInteract() {
 		cli.PasswordMd5 = base.PasswordHash
 	}
 	if !isTokenLogin {
+		if !base.Account.DisableProtocolUpdate {
+			oldVersionName := device.Protocol.Version().String()
+			remoteVersion, err := getRemoteLatestProtocolVersion(int(device.Protocol.Version().Protocol))
+			if err == nil {
+				if err = device.Protocol.Version().UpdateFromJson(remoteVersion); err == nil {
+					if device.Protocol.Version().String() != oldVersionName {
+						log.Infof("已自动更新协议版本: %s -> %s", oldVersionName, device.Protocol.Version().String())
+					}
+					_ = os.WriteFile(versionFile, remoteVersion, 0o644)
+				}
+			} else if err.Error() != "remote version unavailable" {
+				log.Warnf("检查协议更新失败: %v", err)
+			}
+		}
 		if !isQRCodeLogin {
 			if err := commonLogin(); err != nil {
 				log.Fatalf("登录时发生致命错误: %v", err)
@@ -406,6 +434,24 @@ func newClient() *client.QQClient {
 	}
 	c.SetLogger(protocolLogger{})
 	return c
+}
+
+// TODO: mirror support
+var remoteVersions = map[int]string{
+	1: "https://raw.githubusercontent.com/RomiChan/protocol-versions/master/android_phone.json",
+	6: "https://raw.githubusercontent.com/RomiChan/protocol-versions/master/android_pad.json",
+}
+
+func getRemoteLatestProtocolVersion(protocolType int) ([]byte, error) {
+	url, ok := remoteVersions[protocolType]
+	if !ok {
+		return nil, errors.New("remote version unavailable")
+	}
+	response, err := download.Request{URL: url}.Bytes()
+	if err != nil {
+		return nil, err
+	}
+	return response, nil
 }
 
 type protocolLogger struct{}
