@@ -278,12 +278,15 @@ func LoginInteract() {
 	}
 	if !isTokenLogin {
 		if !base.Account.DisableProtocolUpdate {
+			log.Infof("正在检查协议更新...")
 			oldVersionName := device.Protocol.Version().String()
 			remoteVersion, err := getRemoteLatestProtocolVersion(int(device.Protocol.Version().Protocol))
 			if err == nil {
 				if err = device.Protocol.Version().UpdateFromJson(remoteVersion); err == nil {
 					if device.Protocol.Version().String() != oldVersionName {
 						log.Infof("已自动更新协议版本: %s -> %s", oldVersionName, device.Protocol.Version().String())
+					} else {
+						log.Infof("协议已经是最新版本")
 					}
 					_ = os.WriteFile(versionFile, remoteVersion, 0o644)
 				}
@@ -437,7 +440,6 @@ func newClient() *client.QQClient {
 	return c
 }
 
-// TODO: mirror support
 var remoteVersions = map[int]string{
 	1: "https://raw.githubusercontent.com/RomiChan/protocol-versions/master/android_phone.json",
 	6: "https://raw.githubusercontent.com/RomiChan/protocol-versions/master/android_pad.json",
@@ -450,7 +452,7 @@ func getRemoteLatestProtocolVersion(protocolType int) ([]byte, error) {
 	}
 	response, err := download.Request{URL: url}.Bytes()
 	if err != nil {
-		return nil, err
+		return download.Request{URL: "https://ghproxy.com/" + url}.Bytes()
 	}
 	return response, nil
 }
