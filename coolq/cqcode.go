@@ -545,6 +545,9 @@ func (bot *CQBot) convertV11(elem msg.Element) (m any, ok bool, err error) {
 		return
 	case "at":
 		qq := elem.Get("qq")
+		if qq == "" {
+			qq = elem.Get("target")
+		}
 		if qq == "all" {
 			m = message.AtAll()
 			break
