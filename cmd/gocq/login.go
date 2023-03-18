@@ -216,6 +216,9 @@ func loginResponseProcessor(res *client.LoginResponse) error {
 		case client.OtherLoginError, client.UnknownLoginError, client.TooManySMSRequestError:
 			msg := res.ErrorMessage
 			log.Warnf("登录失败: %v Code: %v", msg, res.Code)
+			if res.Code == 235 {
+				log.Warnf("请删除 device.json 后重试.")
+			}
 			log.Infof("按 Enter 继续....")
 			readLine()
 			os.Exit(0)
