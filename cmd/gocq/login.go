@@ -161,26 +161,15 @@ func loginResponseProcessor(res *client.LoginResponse) error {
 		var text string
 		switch res.Error {
 		case client.SliderNeededError:
-			log.Warnf("登录需要滑条验证码, 请选择验证方式: ")
-			log.Warnf("1. 使用浏览器抓取滑条并登录")
-			log.Warnf("2. 使用手机QQ扫码验证 (需要手Q和gocq在同一网络下).")
-			log.Warn("请输入(1 - 2)：")
-			text = readIfTTY("1")
-			if strings.Contains(text, "1") {
-				ticket := getTicket(res.VerifyUrl)
-				if ticket == "" {
-					log.Infof("按 Enter 继续....")
-					readLine()
-					os.Exit(0)
-				}
-				res, err = cli.SubmitTicket(ticket)
-				continue
+			log.Warnf("登录需要滑条验证码, 请验证后重试.")
+			ticket := getTicket(res.VerifyUrl)
+			if ticket == "" {
+				log.Infof("按 Enter 继续....")
+				readLine()
+				os.Exit(0)
 			}
-			cli.Disconnect()
-			cli.Release()
-			cli = client.NewClientEmpty()
-			cli.UseDevice(device)
-			return qrcodeLogin()
+			res, err = cli.SubmitTicket(ticket)
+			continue
 		case client.NeedCaptcha:
 			log.Warnf("登录需要验证码.")
 			_ = os.WriteFile("captcha.jpg", res.CaptchaImage, 0o644)
