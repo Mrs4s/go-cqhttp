@@ -15,6 +15,7 @@ import (
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/MiraiGo/utils"
 	"github.com/Mrs4s/MiraiGo/wrapper"
+	"github.com/Mrs4s/go-cqhttp/internal/base"
 	"github.com/mattn/go-colorable"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -263,9 +264,13 @@ func fetchCaptcha(id string) string {
 
 func energy(uin uint64, id string, salt []byte) ([]byte, error) {
 	// temporary solution
+	signServer := "https://captcha.go-cqhttp.org/sdk/dandelion/energy"
+	if base.SignServerOverwrite != "" {
+		signServer = base.SignServerOverwrite
+	}
 	response, err := download.Request{
 		Method: http.MethodPost,
-		URL:    "https://captcha.go-cqhttp.org/sdk/dandelion/energy",
+		URL:    signServer,
 		Header: map[string]string{"Content-Type": "application/x-www-form-urlencoded"},
 		Body:   bytes.NewReader([]byte(fmt.Sprintf("uin=%v&id=%s&salt=%s", uin, id, hex.EncodeToString(salt)))),
 	}.Bytes()
