@@ -12,13 +12,7 @@ jobs:
       - name: Checkout
         run: |
           git version
-          ls -hl
-          git config --global --add safe.directory /home/runner/work/go-cqhttp/go-cqhttp
-          git init /home/runner/work/go-cqhttp/go-cqhttp
-          cd /home/runner/work/go-cqhttp/go-cqhttp
-          git remote add origin https://github.com/Mrs4s/go-cqhttp
-          git config --local gc.auto 0
-          git pull origin master
+          git clone https://github.com/Mrs4s/go-cqhttp.git /home/runner/work/go-cqhttp/go-cqhttp
 
       - name: Set up Go
         uses: actions/setup-go@v3
