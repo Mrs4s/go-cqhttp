@@ -68,8 +68,8 @@ func binaryName() string {
 	return fmt.Sprintf("go-cqhttp_%v_%v.%v", runtime.GOOS, goarch, ext)
 }
 
-func checksum(github, version string) []byte {
-	sumURL := fmt.Sprintf("%v/Mrs4s/go-cqhttp/releases/download/%v/go-cqhttp_checksums.txt", github, version)
+func checksum(domain, version string) []byte {
+	sumURL := fmt.Sprintf("%v/Mrs4s/go-cqhttp/releases/download/%v/go-cqhttp_checksums.txt", domain, version)
 	sum, err := download.Request{URL: sumURL}.Bytes()
 	if err != nil {
 		return nil
@@ -97,18 +97,18 @@ func wait() {
 }
 
 // SelfUpdate 自更新
-func SelfUpdate(github string) {
-	if github == "" {
-		github = "https://github.com"
+func SelfUpdate(domain string) {
+	github := "https://github.com"
+	if domain == "" {
+		domain = github
 	}
-
 	logrus.Infof("正在检查更新.")
 	latest, err := lastVersion()
 	if err != nil {
 		logrus.Warnf("获取最新版本失败: %v", err)
 		wait()
 	}
-	url := fmt.Sprintf("%v/Mrs4s/go-cqhttp/releases/download/%v/%v", github, latest, binaryName())
+	url := fmt.Sprintf("%v/Mrs4s/go-cqhttp/releases/download/%v/%v", domain, latest, binaryName())
 	if base.Version == latest {
 		logrus.Info("当前版本已经是最新版本!")
 		wait()
@@ -121,8 +121,11 @@ func SelfUpdate(github string) {
 		wait()
 	}
 	logrus.Info("正在更新,请稍等...")
-	sum := checksum(github, latest)
+	sum := checksum(domain, latest)
 	if sum != nil {
+		if strings.HasPrefix(url, github) {
+			url = "https://ghproxy.com/" + url
+		}
 		err = update(url, sum)
 		if err != nil {
 			logrus.Error("更新失败: ", err)
