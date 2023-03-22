@@ -75,24 +75,3 @@ default-middlewares: &default
     enabled: false # 是否启用限速
     frequency: 1  # 令牌回复频率, 单位秒
     bucket: 1     # 令牌桶大小
-
-database: # 数据库相关设置
-  leveldb:
-    # 是否启用内置leveldb数据库
-    # 启用将会增加10-20MB的内存占用和一定的磁盘空间
-    # 关闭将无法使用 撤回 回复 get_msg 等上下文相关功能
-    enable: true
-  sqlite3:
-    # 是否启用内置sqlite3数据库
-    # 启用将会增加一定的内存占用和一定的磁盘空间
-    # 关闭将无法使用 撤回 回复 get_msg 等上下文相关功能
-    enable: false
-    cachettl: 3600000000000 # 1h
-
-# 连接服务列表
-servers:
-  # 添加方式，同一连接方式可添加多个，具体配置说明请查看文档
-  #- http: # http 通信
-  #- ws:   # 正向 Websocket
-  #- ws-reverse: # 反向 Websocket
-  #- pprof: #性能分析服务器

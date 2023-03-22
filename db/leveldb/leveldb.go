@@ -11,7 +11,14 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/Mrs4s/go-cqhttp/db"
+	yamlconfig "github.com/Mrs4s/go-cqhttp/modules/config"
 )
+
+const leveldbconfig = `  leveldb:
+    # 是否启用内置leveldb数据库
+    # 启用将会增加10-20MB的内存占用和一定的磁盘空间
+    # 关闭将无法使用 撤回 回复 get_msg 等上下文相关功能
+    enable: true`
 
 type database struct {
 	db *leveldb.DB
@@ -31,6 +38,7 @@ func init() {
 		}
 		return &database{}
 	})
+	yamlconfig.AddDatabase(leveldbconfig)
 }
 
 func (ldb *database) Open() error {

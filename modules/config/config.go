@@ -3,8 +3,10 @@ package config
 
 import (
 	"bufio"
+	"bytes"
 	_ "embed" // embed the default config file
 	"fmt"
+	"io"
 	"os"
 	"regexp"
 	"strings"
@@ -100,11 +102,29 @@ func AddServer(s *Server) {
 	serverconfs = append(serverconfs, s)
 }
 
+// databaseConfig 供数据库注册配置项目
+var databaseConfig bytes.Buffer
+
+// AddDatabase 添加一个数据库配置项
+func AddDatabase(conf string) {
+	databaseConfig.WriteString(conf)
+}
+
 // generateConfig 生成配置文件
 func generateConfig() {
 	fmt.Println("未找到配置文件，正在为您生成配置文件中！")
 	sb := strings.Builder{}
 	sb.WriteString(defaultConfig)
+	sb.WriteString("database: # 数据库相关设置")
+	_, _ = io.Copy(&sb, &databaseConfig)
+	sb.WriteString(`# 连接服务列表
+servers:
+  # 添加方式，同一连接方式可添加多个，具体配置说明请查看文档
+  #- http: # http 通信
+  #- ws:   # 正向 Websocket
+  #- ws-reverse: # 反向 Websocket
+  #- pprof: #性能分析服务器
+`)
 	hint := "请选择你需要的通信方式:"
 	for i, s := range serverconfs {
 		hint += fmt.Sprintf("\n> %d: %s", i, s.Brief)

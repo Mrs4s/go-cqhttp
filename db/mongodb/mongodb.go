@@ -10,7 +10,12 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/Mrs4s/go-cqhttp/db"
+	yamlconfig "github.com/Mrs4s/go-cqhttp/modules/config"
 )
+
+const mongodbconfig = `  mongodb:
+    # 是否启用mongodb数据库
+    enable: true`
 
 type database struct {
 	uri   string
@@ -43,6 +48,7 @@ func init() {
 		}
 		return &database{uri: conf.URI, db: conf.Database}
 	})
+	yamlconfig.AddDatabase(mongodbconfig)
 }
 
 func (m *database) Open() error {
