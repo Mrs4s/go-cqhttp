@@ -642,7 +642,7 @@ func (bot *CQBot) ConvertElement(spec *onebot.Spec, elem msg.Element, sourceType
 		return bot.reply(spec, elem, sourceType)
 	case "forward":
 		id := elem.Get("id")
-		if id != "" {
+		if id == "" {
 			return nil, errors.New("forward 消息中必须包含 id")
 		}
 		fwdMsg := bot.Client.DownloadForwardMessage(id)
