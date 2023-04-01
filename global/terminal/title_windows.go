@@ -27,3 +27,8 @@ func setConsoleTitle(title string) error {
 func SetTitle() {
 	_ = setConsoleTitle(fmt.Sprintf("go-cqhttp "+base.Version+" © 2020 - %d Mrs4s", time.Now().Year()))
 }
+
+// SetTitleWithUin 设置标题为QQ号 -  go-cqhttp `版本` `版权`
+func SetTitleWithUin() {
+	_ = setConsoleTitle(fmt.Sprintf("%d - go-cqhttp "+base.Version+" © 2020 - %d Mrs4s", base.Account.Uin, time.Now().Year()))
+}

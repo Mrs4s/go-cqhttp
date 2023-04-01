@@ -13,3 +13,8 @@ import (
 func SetTitle() {
 	fmt.Printf("\033]0;go-cqhttp "+base.Version+" © 2020 - %d Mrs4s"+"\007", time.Now().Year())
 }
+
+// SetTitleWithUin 在非 Windows 上啥也不用做
+func SetTitleWithUin() {
+	return nil
+}

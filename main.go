@@ -16,6 +16,7 @@ import (
 func main() {
 	terminal.SetTitle()
 	gocq.InitBase()
+	terminal.SetTitleWithUin()
 	gocq.PrepareData()
 	gocq.LoginInteract()
 	_ = terminal.DisableQuickEdit()
