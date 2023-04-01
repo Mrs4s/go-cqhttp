@@ -13,3 +13,8 @@ import (
 func SetTitle() {
 	fmt.Printf("\033]0;go-cqhttp "+base.Version+" © 2020 - %d Mrs4s"+"\007", time.Now().Year())
 }
+
+// SetTitleWithUin 因为 SetTitle 已经输出过一遍了，非Windows系统永远返回nil
+func SetTitleWithUin() error {
+	return nil
+}
