@@ -266,7 +266,7 @@ func fetchCaptcha(id string) string {
 	return ""
 }
 
-func energy(uin uint64, id string, salt []byte) ([]byte, error) {
+func energy(uin uint64, id string, appVersion string, salt []byte) ([]byte, error) {
 	// temporary solution
 	signServer := "https://captcha.go-cqhttp.org/sdk/dandelion/energy"
 	if base.SignServerOverwrite != "" {
@@ -276,7 +276,7 @@ func energy(uin uint64, id string, salt []byte) ([]byte, error) {
 		Method: http.MethodPost,
 		URL:    signServer,
 		Header: map[string]string{"Content-Type": "application/x-www-form-urlencoded"},
-		Body:   bytes.NewReader([]byte(fmt.Sprintf("uin=%v&id=%s&salt=%s", uin, id, hex.EncodeToString(salt)))),
+		Body:   bytes.NewReader([]byte(fmt.Sprintf("uin=%v&id=%s&salt=%s&version=%s", uin, id, hex.EncodeToString(salt), appVersion))),
 	}.Bytes()
 	if err != nil {
 		log.Errorf("获取T544时出现问题: %v", err)
