@@ -475,6 +475,9 @@ func (bot *CQBot) offlineFileEvent(c *client.QQClient, e *client.OfflineFileEven
 }
 
 func (bot *CQBot) joinGroupEvent(c *client.QQClient, group *client.GroupInfo) {
+	if group == nil {
+		return
+	}
 	log.Infof("Bot进入了群 %v.", formatGroupName(group))
 	bot.dispatch(bot.groupIncrease(group.Code, 0, c.Uin))
 }
