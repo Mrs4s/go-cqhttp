@@ -30,7 +30,7 @@ func init() {
 	}
 }
 
-// sign t544 v8.9.35.10440
+// sign t544 algorithm
 // special thanks to the anonymous contributor who provided the algorithm
 func sign(curr int64, input []byte) []byte {
 	curr %= 1000000
@@ -60,10 +60,7 @@ func sign(curr int64, input []byte) []byte {
 	crcData[2] = 1
 	crcData[4] = 1
 	copy(crcData[5:9], kt[:4])
-	crcData[9] = byte(curr >> 24)
-	crcData[10] = byte(curr >> 16)
-	crcData[11] = byte(curr >> 8)
-	crcData[12] = byte(curr)
+	binary.BigEndian.PutUint32(crcData[9:13], uint32(curr))
 	copy(crcData[13:], result[:8])
 	calcCrc := tencentCrc32(&crc32Table, crcData[2:])
 	copy(kt[4+32:4+32+4], (*[4]byte)(unsafe.Pointer(&calcCrc))[:])
