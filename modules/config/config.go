@@ -28,14 +28,13 @@ type Reconnect struct {
 
 // Account 账号配置
 type Account struct {
-	Uin                   int64      `yaml:"uin"`
-	Password              string     `yaml:"password"`
-	Encrypt               bool       `yaml:"encrypt"`
-	Status                int        `yaml:"status"`
-	ReLogin               *Reconnect `yaml:"relogin"`
-	UseSSOAddress         bool       `yaml:"use-sso-address"`
-	AllowTempSession      bool       `yaml:"allow-temp-session"`
-	DisableProtocolUpdate bool       `yaml:"disable-protocol-update"`
+	Uin              int64      `yaml:"uin"`
+	Password         string     `yaml:"password"`
+	Encrypt          bool       `yaml:"encrypt"`
+	Status           int        `yaml:"status"`
+	ReLogin          *Reconnect `yaml:"relogin"`
+	UseSSOAddress    bool       `yaml:"use-sso-address"`
+	AllowTempSession bool       `yaml:"allow-temp-session"`
 }
 
 // Config 总配置文件
