@@ -38,9 +38,6 @@ func NoMoreDoubleClick() error {
 	}
 	f, err := os.OpenFile("go-cqhttp.bat", os.O_CREATE|os.O_RDWR, 0o666)
 	if err != nil {
-		return err
-	}
-	if err != nil {
 		return errors.Errorf("打开go-cqhttp.bat失败: %v", err)
 	}
 	_ = f.Truncate(0)
