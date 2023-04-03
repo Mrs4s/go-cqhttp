@@ -218,6 +218,15 @@ func loginResponseProcessor(res *client.LoginResponse) error {
 		case client.OtherLoginError, client.UnknownLoginError, client.TooManySMSRequestError:
 			msg := res.ErrorMessage
 			log.Warnf("登录失败: %v Code: %v", msg, res.Code)
+			switch res.Code {
+			case 235:
+				log.Warnf("设备信息被封禁, 请删除 device.json 后重试.")
+			case 237:
+				log.Warnf("登录过于频繁, 请在手机QQ登录并根据提示完成认证后等一段时间重试")
+			case 45: // 在提供 t544 后还是出现45错误是需要强行升级到最新客户端或被限制非常用设备
+				log.Warnf("你的账号涉嫌违规被限制在非常用设备登录, 请在手机QQ登录并根据提示完成认证")
+				log.Warnf("或使用 -update-protocol 升级到最新协议后重试")
+			}
 			if res.Code == 235 {
 				log.Warnf("请删除 device.json 后重试.")
 			}
