@@ -227,9 +227,6 @@ func loginResponseProcessor(res *client.LoginResponse) error {
 				log.Warnf("你的账号涉嫌违规被限制在非常用设备登录, 请在手机QQ登录并根据提示完成认证")
 				log.Warnf("或使用 -update-protocol 升级到最新协议后重试")
 			}
-			if res.Code == 235 {
-				log.Warnf("请删除 device.json 后重试.")
-			}
 			log.Infof("按 Enter 继续....")
 			readLine()
 			os.Exit(0)
