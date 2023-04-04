@@ -24,10 +24,8 @@ var (
 )
 
 func init() {
-	if canusesse2 {
-		encryption.T544Signer["8.9.35.10440"] = sign
-		encryption.T544Signer["8.9.38.10545"] = sign
-	}
+	encryption.T544Signer["8.9.35.10440"] = sign
+	encryption.T544Signer["8.9.38.10545"] = sign
 }
 
 // sign t544 algorithm
