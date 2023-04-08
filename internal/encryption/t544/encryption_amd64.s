@@ -244,11 +244,11 @@ TEXT ·sub_d(SB), NOSPLIT, $16-32
     MOVQ    SI, DI
     ADDQ    $15, DI
     MOVB    $16, CX
-    STD
 lop:
     LEAQ    -1(CX), AX
     XLAT
     MOVBLZX in-16(SP)(AX*1), AX
+    STD
     STOSB
     LOOP    lop
     RET
