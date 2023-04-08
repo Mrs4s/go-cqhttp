@@ -364,6 +364,7 @@ func LoginInteract() {
 	})
 	saveToken()
 	cli.AllowSlider = true
+	download.SetGlobalTimeout(time.Duration(base.HTTPTimeout) * time.Second) // 在登录完成后设置, 防止在堵塞协议更新
 	log.Infof("登录成功 欢迎使用: %v", cli.Nickname)
 	log.Info("开始加载好友列表...")
 	global.Check(cli.ReloadFriendList(), true)
@@ -375,7 +376,6 @@ func LoginInteract() {
 		base.Account.Status = 0
 	}
 	cli.SetOnlineStatus(allowStatus[base.Account.Status])
-
 	servers.Run(coolq.NewQQBot(cli))
 	log.Info("资源初始化完成, 开始处理信息.")
 	log.Info("アトリは、高性能ですから!")
