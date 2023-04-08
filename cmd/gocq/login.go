@@ -15,18 +15,17 @@ import (
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/MiraiGo/utils"
 	"github.com/Mrs4s/MiraiGo/wrapper"
-	"github.com/Mrs4s/go-cqhttp/internal/encryption"
-	_ "github.com/Mrs4s/go-cqhttp/internal/encryption/t544"
 	"github.com/mattn/go-colorable"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 	"gopkg.ilharper.com/x/isatty"
 
-	"github.com/Mrs4s/go-cqhttp/internal/base"
-
 	"github.com/Mrs4s/go-cqhttp/global"
+	"github.com/Mrs4s/go-cqhttp/internal/base"
 	"github.com/Mrs4s/go-cqhttp/internal/download"
+	"github.com/Mrs4s/go-cqhttp/internal/encryption"
+	_ "github.com/Mrs4s/go-cqhttp/internal/encryption/t544" // side effect
 )
 
 var console = bufio.NewReader(os.Stdin)
