@@ -468,7 +468,7 @@ TEXT ·initState(SB), NOSPLIT, $0-64
     MOVUPS  X6,112(DI)
     RET
 
-TEXT ·sub_ad(SB), NOSPLIT, $8-24
+TEXT sub_ad(SB), NOSPLIT, $8-8
     MOVQ ·a+0(FP), DI
     MOVQ DI, AX
     MOVL 40(DI), R10
@@ -609,6 +609,37 @@ TEXT ·sub_ad(SB), NOSPLIT, $8-24
     PUNPCKLQDQ X1, X0
     MOVL DX, 16(AX)
     MOVUPS X0, 32(AX)
+    RET
+
+TEXT ·refreshState(SB), NOSPLIT, $16-8
+    MOVQ    ·i+0(FP), BX
+    MOVB    128(BX), CX
+    JE      ad
+    SHRQ    $1, CX
+fr:
+    MOVQ    BX, 0(SP)
+    MOVQ    CX, c-8(SP)
+    CALL    sub_ad(SB)
+    MOVQ    c-8(SP), CX
+    MOVQ    ·i+0(FP), BX
+    LOOP    fr
+ad:
+    MOVOU   (BX), X0
+    MOVOU   64(BX), X1
+    MOVOU   80(BX), X2
+    MOVOU   96(BX), X3
+    PADDD   X1, X0
+    MOVOU   48(BX), X4
+    MOVUPS  X0, (BX)
+    MOVOU   16(BX), X0
+    PADDD   X2, X0
+    MOVUPS  X0, 16(BX)
+    MOVOU   32(BX), X0
+    PADDD   X3, X0
+    MOVUPS  X0, 32(BX)
+    MOVOU   112(BX), X0
+    PADDD   X4, X0
+    MOVUPS  X0, 48(BX)
     RET
 
 // func tencentCrc32(tab *crc32.Table, b []byte) uint32
