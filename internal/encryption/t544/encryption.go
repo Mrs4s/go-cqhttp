@@ -44,6 +44,7 @@ func sub_e(*[256][6]byte, []byte)
 //go:noescape
 func sub_f(*[16]byte, *[15]uint32, *[16][16]byte) (w [44]uint32)
 
+//go:noescape
 func sub_aa(int, *[16][2][16][16]byte, *[16]byte, []byte) byte
 
 // transformInner see com/tencent/mobileqq/dt/model/FEBound

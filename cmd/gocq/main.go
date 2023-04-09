@@ -364,7 +364,7 @@ func LoginInteract() {
 	})
 	saveToken()
 	cli.AllowSlider = true
-	download.SetGlobalTimeout(time.Duration(base.HTTPTimeout) * time.Second) // 在登录完成后设置, 防止在堵塞协议更新
+	download.SetTimeout(time.Duration(base.HTTPTimeout) * time.Second) // 在登录完成后设置, 防止在堵塞协议更新
 	log.Infof("登录成功 欢迎使用: %v", cli.Nickname)
 	log.Info("开始加载好友列表...")
 	global.Check(cli.ReloadFriendList(), true)

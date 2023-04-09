@@ -31,6 +31,7 @@ type (
 // Kind is the kind of Value.
 type Kind int
 
+// Kind
 const (
 	KindAny Kind = iota
 	KindBool
