@@ -236,7 +236,7 @@ TEXT ·sub_c(SB), NOSPLIT, $0-32
     MOVB CX, 15(AX)
     RET 
 
-TEXT ·sub_d(SB), NOSPLIT, $16-32
+TEXT ·sub_d(SB), NOSPLIT, $24-32
     MOVQ ·t+0(FP), BX
     MOVQ ·s+8(FP), DI
     MOVOU   (DI), X0
