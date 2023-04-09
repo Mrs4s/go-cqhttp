@@ -238,18 +238,19 @@ TEXT ·sub_c(SB), NOSPLIT, $0-32
 
 TEXT ·sub_d(SB), NOSPLIT, $16-32
     MOVQ ·t+0(FP), BX
-    MOVQ ·s+8(FP), SI
-    MOVOU   (SI), X0
+    MOVQ ·s+8(FP), DI
+    MOVOU   (DI), X0
     MOVOU   X0, in-16(SP)
-    MOVQ    SI, DI
+    MOVQ    $16, CX
     ADDQ    $15, DI
-    MOVB    $16, CX
 lop:
     LEAQ    -1(CX), AX
     XLAT
-    MOVBLZX in-16(SP)(AX*1), AX
+    LEAQ    in-16(SP)(AX*1), SI
+    PUSHFQ
     STD
-    STOSB
+    MOVSB
+    POPFQ
     LOOP    lop
     RET
 
