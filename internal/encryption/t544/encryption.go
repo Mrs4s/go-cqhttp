@@ -50,4 +50,4 @@ func (c *state) init(key []byte, data []byte, counter uint64, nr uint8) {
 	initState(c, key, data, counter)
 }
 
-func sub_ad([]uint32)
+func refreshState(c *state)
