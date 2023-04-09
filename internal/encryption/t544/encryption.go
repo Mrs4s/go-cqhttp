@@ -51,7 +51,3 @@ func (c *state) init(key []byte, data []byte, counter uint64, nr uint8) {
 }
 
 func refreshState(c *state)
-
-func (c *state) refreshState() {
-	refreshState(c)
-}
