@@ -10,8 +10,8 @@ DATA  LC0<>+12(SB)/4, $1797285236
 GLOBL LC0<>(SB), NOPTR, $16
 
 TEXT ·sub_a(SB), NOSPLIT, $0-48
-    MOVQ ·a+0(FP), DI
-    MOVQ ·b+24(FP), CX
+    MOVQ a+0(FP), DI
+    MOVQ b+24(FP), CX
     MOVQ    CX, DX
     MOVBLZX 3(CX), CX
     XORB    CX,  (DI)
@@ -48,8 +48,8 @@ TEXT ·sub_a(SB), NOSPLIT, $0-48
     RET
 
 TEXT ·sub_b(SB), NOSPLIT, $0-48
-    MOVQ ·a+0(FP), DI
-    MOVQ ·b+24(FP), CX
+    MOVQ a+0(FP), DI
+    MOVQ b+24(FP), CX
     MOVQ    CX, DX
     MOVBLZX 3(CX), CX
     XORB    CX, (DI)
@@ -87,8 +87,8 @@ TEXT ·sub_b(SB), NOSPLIT, $0-48
 
 
 TEXT ·sub_c(SB), NOSPLIT, $0-32
-    MOVQ ·a+0(FP), DI
-    MOVQ ·b+8(FP), SI
+    MOVQ a+0(FP), DI
+    MOVQ b+8(FP), SI
     MOVQ SI, AX
     MOVBLZX (SI), SI
     MOVL SI, CX
@@ -237,8 +237,8 @@ TEXT ·sub_c(SB), NOSPLIT, $0-32
     RET 
 
 TEXT ·sub_d(SB), NOSPLIT, $24-32
-    MOVQ ·t+0(FP), BX
-    MOVQ ·s+8(FP), DI
+    MOVQ t+0(FP), BX
+    MOVQ s+8(FP), DI
     MOVOU   (DI), X0
     MOVOU   X0, in-16(SP)
     MOVQ    $16, CX
@@ -255,8 +255,8 @@ lop:
     RET
 
 TEXT ·sub_e(SB), NOSPLIT, $0-32
-    MOVQ ·a+0(FP), DI
-    MOVQ ·n+8(FP), SI
+    MOVQ a+0(FP), DI
+    MOVQ n+8(FP), SI
     MOVQ $4, AX
 lop:
     MOVBQZX -4(SI)(AX*4), DX
@@ -296,9 +296,9 @@ lop:
     JNZ lop
     RET
 
-TEXT sub_ab(SB), NOSPLIT, $0-24
-    MOVQ ·s+0(FP), DI
-    MOVQ ·w+8(FP), SI
+TEXT sub_ab<>(SB), NOSPLIT, $0-24
+    MOVQ s+0(FP), DI
+    MOVQ w+8(FP), SI
     MOVL SI, AX
     MOVL SI, CX
     MOVL SI, DX
@@ -330,14 +330,14 @@ TEXT sub_ab(SB), NOSPLIT, $0-24
     MOVBLZX (DI)(DX*1), DX
     SALL $16, DX
     ORL DX, AX
-    MOVQ AX, ·retval+16(FP)
+    MOVQ AX, retval+16(FP)
     RET
 
 TEXT ·sub_f(SB), NOSPLIT, $24-68
-    MOVQ ·k+0(FP), DI
-    MOVQ ·r+8(FP), SI
-    MOVQ ·s+16(FP), DX
-    MOVQ $·w+24(FP), CX
+    MOVQ k+0(FP), DI
+    MOVQ r+8(FP), SI
+    MOVQ s+16(FP), DX
+    MOVQ $w+24(FP), CX
     MOVQ CX, R10
     MOVQ SI, R9
     MOVQ DX, R8
@@ -368,7 +368,7 @@ inner:
     ROLL $8, AX
     MOVQ R8, 0(SP)
     MOVL AX, 8(SP)
-    CALL sub_ab(SB)
+    CALL sub_ab<>(SB)
     MOVQ 16(SP), AX
     LEAL -1(BX), DX
     SARL $2, DX
@@ -379,10 +379,10 @@ end:
     RET
 
 TEXT ·sub_aa(SB), NOSPLIT, $0-56
-    MOVQ ·i+0(FP), DI
-    MOVQ ·t+8(FP), SI
-    MOVQ ·b+16(FP), DX
-    MOVQ ·m+24(FP), CX
+    MOVQ i+0(FP), DI
+    MOVQ t+8(FP), SI
+    MOVQ b+16(FP), DX
+    MOVQ m+24(FP), CX
     MOVL DI, AX
     MOVLQSX DI, DI
     MOVQ SI, R8
@@ -408,13 +408,13 @@ TEXT ·sub_aa(SB), NOSPLIT, $0-56
     MOVBLZX (AX)(DI*1), AX
     SALL $4, AX
     ORB 256(SI)(DX*1), AX
-    MOVQ AX, ·retval+48(FP)
+    MOVQ AX, retval+48(FP)
     RET
 
 // func transformInner(x *[0x15]byte, tab *[32][16]byte)
 TEXT ·transformInner(SB), NOSPLIT, $0-16
-    MOVQ ·x+0(FP), DI
-    MOVQ ·tab+8(FP), SI
+    MOVQ x+0(FP), DI
+    MOVQ tab+8(FP), SI
     MOVQ    DI, AX
     MOVL    $1, CX
     MOVQ    SI, DI
@@ -447,10 +447,10 @@ lop:
     RET
 
 TEXT ·initState(SB), NOSPLIT, $0-64
-    MOVQ ·c+0(FP), DI
-    MOVQ ·key+8(FP), SI
-    MOVQ ·data+32(FP), R8
-    MOVQ ·counter+56(FP), AX
+    MOVQ c+0(FP), DI
+    MOVQ key+8(FP), SI
+    MOVQ data+32(FP), R8
+    MOVQ counter+56(FP), AX
     MOVOA   LC0<>(SB), X0
     MOVUPS  X0, (DI)
     MOVOU   (SI), X1
@@ -468,8 +468,8 @@ TEXT ·initState(SB), NOSPLIT, $0-64
     MOVUPS  X6,112(DI)
     RET
 
-TEXT sub_ad(SB), NOSPLIT, $8-8
-    MOVQ ·a+0(FP), DI
+TEXT sub_ad<>(SB), NOSPLIT, $8-8
+    MOVQ a+0(FP), DI
     MOVQ DI, AX
     MOVL 40(DI), R10
     MOVL 12(DI), R12
@@ -612,16 +612,16 @@ TEXT sub_ad(SB), NOSPLIT, $8-8
     RET
 
 TEXT ·refreshState(SB), NOSPLIT, $16-8
-    MOVQ    ·i+0(FP), BX
+    MOVQ    i+0(FP), BX
     MOVB    128(BX), CX
     JE      ad
     SHRQ    $1, CX
 fr:
     MOVQ    BX, 0(SP)
     MOVQ    CX, c-8(SP)
-    CALL    sub_ad(SB)
+    CALL    sub_ad<>(SB)
     MOVQ    c-8(SP), CX
-    MOVQ    ·i+0(FP), BX
+    MOVQ    i+0(FP), BX
     LOOP    fr
 ad:
     MOVOU   (BX), X0
@@ -644,9 +644,9 @@ ad:
 
 // func tencentCrc32(tab *crc32.Table, b []byte) uint32
 TEXT ·tencentCrc32(SB), NOSPLIT, $0-40
-    MOVQ ·tab+0(FP), DI
-    MOVQ ·bptr+8(FP), SI
-    MOVQ ·bngas+16(FP), DX
+    MOVQ tab+0(FP), DI
+    MOVQ bptr+8(FP), SI
+    MOVQ bngas+16(FP), DX
     TESTQ   DX, DX
     JE      quickend
     ADDQ    SI, DX
@@ -661,7 +661,7 @@ lop:
     CMPQ    SI, DX
     JNE     lop
     NOTL    AX
-    MOVQ    AX, ·bngas+32(FP)
+    MOVQ    AX, bngas+32(FP)
     RET
 quickend:
     XORL    AX, AX
