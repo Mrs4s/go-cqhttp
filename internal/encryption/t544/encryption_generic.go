@@ -91,12 +91,7 @@ func (c *state) encrypt(data []byte) {
 	dataLen := uint32(len(data))
 	for dataLen > 0 {
 		if c.p == 0 {
-			for i := uint8(0); i < c.nr; i += 2 {
-				sub_ad(c.state[:])
-			}
-			for i := 0; i < 16; i++ {
-				c.state[i] += c.orgstate[i]
-			}
+			refreshState(c)
 		}
 		var sb [16 * 4]byte
 		for i, v := range c.state {
