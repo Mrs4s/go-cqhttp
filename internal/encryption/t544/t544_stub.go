@@ -2,6 +2,6 @@
 
 package t544
 
-func init() {
-
+func sign(curr int64, input []byte) []byte {
+	panic("stub!")
 }
