@@ -18,10 +18,9 @@ import (
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"github.com/tidwall/gjson"
 	"golang.org/x/crypto/pbkdf2"
 	"golang.org/x/term"
-
-	"github.com/Mrs4s/go-cqhttp/internal/download"
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/db"
@@ -29,6 +28,7 @@ import (
 	"github.com/Mrs4s/go-cqhttp/global/terminal"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
 	"github.com/Mrs4s/go-cqhttp/internal/cache"
+	"github.com/Mrs4s/go-cqhttp/internal/download"
 	"github.com/Mrs4s/go-cqhttp/internal/selfdiagnosis"
 	"github.com/Mrs4s/go-cqhttp/internal/selfupdate"
 	"github.com/Mrs4s/go-cqhttp/modules/servers"
@@ -167,51 +167,48 @@ func LoginInteract() {
 		if !global.PathExists("password.encrypt") {
 			if base.Account.Password == "" {
 				log.Error("无法进行加密，请在配置文件中的添加密码后重新启动.")
-				readLine()
-				os.Exit(0)
+			} else {
+				log.Infof("密码加密已启用, 请输入Key对密码进行加密: (Enter 提交)")
+				byteKey, _ = term.ReadPassword(int(os.Stdin.Fd()))
+				base.PasswordHash = md5.Sum([]byte(base.Account.Password))
+				_ = os.WriteFile("password.encrypt", []byte(PasswordHashEncrypt(base.PasswordHash[:], byteKey)), 0o644)
+				log.Info("密码已加密，为了您的账号安全，请删除配置文件中的密码后重新启动.")
 			}
-			log.Infof("密码加密已启用, 请输入Key对密码进行加密: (Enter 提交)")
-			byteKey, _ = term.ReadPassword(int(os.Stdin.Fd()))
-			base.PasswordHash = md5.Sum([]byte(base.Account.Password))
-			_ = os.WriteFile("password.encrypt", []byte(PasswordHashEncrypt(base.PasswordHash[:], byteKey)), 0o644)
-			log.Info("密码已加密，为了您的账号安全，请删除配置文件中的密码后重新启动.")
 			readLine()
 			os.Exit(0)
-		} else {
-			if base.Account.Password != "" {
-				log.Error("密码已加密，为了您的账号安全，请删除配置文件中的密码后重新启动.")
-				readLine()
-				os.Exit(0)
-			}
-
-			if len(byteKey) == 0 {
-				log.Infof("密码加密已启用, 请输入Key对密码进行解密以继续: (Enter 提交)")
-				cancel := make(chan struct{}, 1)
-				state, _ := term.GetState(int(os.Stdin.Fd()))
-				go func() {
-					select {
-					case <-cancel:
-						return
-					case <-time.After(time.Second * 45):
-						log.Infof("解密key输入超时")
-						time.Sleep(3 * time.Second)
-						_ = term.Restore(int(os.Stdin.Fd()), state)
-						os.Exit(0)
-					}
-				}()
-				byteKey, _ = term.ReadPassword(int(os.Stdin.Fd()))
-				cancel <- struct{}{}
-			} else {
-				log.Infof("密码加密已启用, 使用运行时传递的参数进行解密，按 Ctrl+C 取消.")
-			}
-
-			encrypt, _ := os.ReadFile("password.encrypt")
-			ph, err := PasswordHashDecrypt(string(encrypt), byteKey)
-			if err != nil {
-				log.Fatalf("加密存储的密码损坏，请尝试重新配置密码")
-			}
-			copy(base.PasswordHash[:], ph)
 		}
+		if base.Account.Password != "" {
+			log.Error("密码已加密，为了您的账号安全，请删除配置文件中的密码后重新启动.")
+			readLine()
+			os.Exit(0)
+		}
+		if len(byteKey) == 0 {
+			log.Infof("密码加密已启用, 请输入Key对密码进行解密以继续: (Enter 提交)")
+			cancel := make(chan struct{}, 1)
+			state, _ := term.GetState(int(os.Stdin.Fd()))
+			go func() {
+				select {
+				case <-cancel:
+					return
+				case <-time.After(time.Second * 45):
+					log.Infof("解密key输入超时")
+					time.Sleep(3 * time.Second)
+					_ = term.Restore(int(os.Stdin.Fd()), state)
+					os.Exit(0)
+				}
+			}()
+			byteKey, _ = term.ReadPassword(int(os.Stdin.Fd()))
+			cancel <- struct{}{}
+		} else {
+			log.Infof("密码加密已启用, 使用运行时传递的参数进行解密，按 Ctrl+C 取消.")
+		}
+
+		encrypt, _ := os.ReadFile("password.encrypt")
+		ph, err := PasswordHashDecrypt(string(encrypt), byteKey)
+		if err != nil {
+			log.Fatalf("加密存储的密码损坏，请尝试重新配置密码")
+		}
+		copy(base.PasswordHash[:], ph)
 	} else if len(base.Account.Password) > 0 {
 		base.PasswordHash = md5.Sum([]byte(base.Account.Password))
 	}
@@ -281,24 +278,30 @@ func LoginInteract() {
 		cli.Uin = base.Account.Uin
 		cli.PasswordMd5 = base.PasswordHash
 	}
-	if !isTokenLogin {
-		if !base.Account.DisableProtocolUpdate {
-			log.Infof("正在检查协议更新...")
-			oldVersionName := device.Protocol.Version().String()
-			remoteVersion, err := getRemoteLatestProtocolVersion(int(device.Protocol.Version().Protocol))
-			if err == nil {
-				if err = device.Protocol.Version().UpdateFromJson(remoteVersion); err == nil {
-					if device.Protocol.Version().String() != oldVersionName {
-						log.Infof("已自动更新协议版本: %s -> %s", oldVersionName, device.Protocol.Version().String())
-					} else {
-						log.Infof("协议已经是最新版本")
-					}
-					_ = os.WriteFile(versionFile, remoteVersion, 0o644)
+	if !base.FastStart {
+		log.Infof("正在检查协议更新...")
+		currentVersionName := device.Protocol.Version().SortVersionName
+		remoteVersion, err := getRemoteLatestProtocolVersion(int(device.Protocol.Version().Protocol))
+		if err == nil {
+			remoteVersionName := gjson.GetBytes(remoteVersion, "sort_version_name").String()
+			if remoteVersionName != currentVersionName {
+				switch {
+				case !base.UpdateProtocol:
+					log.Infof("检测到协议更新: %s -> %s", currentVersionName, remoteVersionName)
+					log.Infof("如果登录时出现版本过低错误, 可尝试使用 -update-protocol 参数启动")
+				case !isTokenLogin:
+					_ = device.Protocol.Version().UpdateFromJson(remoteVersion)
+					log.Infof("协议版本已更新: %s -> %s", currentVersionName, remoteVersionName)
+				default:
+					log.Infof("检测到协议更新: %s -> %s", currentVersionName, remoteVersionName)
+					log.Infof("由于使用了会话缓存, 无法自动更新协议, 请删除缓存后重试")
 				}
-			} else if err.Error() != "remote version unavailable" {
-				log.Warnf("检查协议更新失败: %v", err)
 			}
+		} else if err.Error() != "remote version unavailable" {
+			log.Warnf("检查协议更新失败: %v", err)
 		}
+	}
+	if !isTokenLogin {
 		if !isQRCodeLogin {
 			if err := commonLogin(); err != nil {
 				log.Fatalf("登录时发生致命错误: %v", err)
@@ -361,6 +364,7 @@ func LoginInteract() {
 	})
 	saveToken()
 	cli.AllowSlider = true
+	download.SetTimeout(time.Duration(base.HTTPTimeout) * time.Second) // 在登录完成后设置, 防止在堵塞协议更新
 	log.Infof("登录成功 欢迎使用: %v", cli.Nickname)
 	log.Info("开始加载好友列表...")
 	global.Check(cli.ReloadFriendList(), true)
@@ -372,7 +376,6 @@ func LoginInteract() {
 		base.Account.Status = 0
 	}
 	cli.SetOnlineStatus(allowStatus[base.Account.Status])
-
 	servers.Run(coolq.NewQQBot(cli))
 	log.Info("资源初始化完成, 开始处理信息.")
 	log.Info("アトリは、高性能ですから!")

@@ -15,8 +15,6 @@ account: # 账号相关
   use-sso-address: true
   # 是否允许发送临时会话消息
   allow-temp-session: false
-  # 是否禁用协议更新
-  disable-protocol-update: false
 
 heartbeat:
   # 心跳频率, 单位秒
