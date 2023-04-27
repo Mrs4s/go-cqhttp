@@ -263,13 +263,17 @@ func toElements(e []message.IMessageElement, source message.Source) (r []msg.Ele
 	return
 }
 
-// ToMessageContent 将消息转换成 Content. 忽略 Reply
 // 不同于 onebot 的 Array Message, 此函数转换出来的 Content 的 data 段为实际类型
 // 方便数据库查询
-func ToMessageContent(e []message.IMessageElement) (r []global.MSG) {
+func ToMessageContent(e []message.IMessageElement, source message.Source) (r []global.MSG) {
 	for _, elem := range e {
 		var m global.MSG
 		switch o := elem.(type) {
+		case *message.ReplyElement:
+			m = global.MSG{
+				"type": "reply",
+				"data": global.MSG{"id": replyID(o, source)},
+			}
 		case *message.TextElement:
 			m = global.MSG{
 				"type": "text",
@@ -384,7 +388,7 @@ func ToMessageContent(e []message.IMessageElement) (r []global.MSG) {
 // ConvertStringMessage 将消息字符串转为消息元素数组
 func (bot *CQBot) ConvertStringMessage(spec *onebot.Spec, raw string, sourceType message.SourceType) (r []message.IMessageElement) {
 	elems := msg.ParseString(raw)
-	return bot.ConvertElements(spec, elems, sourceType)
+	return bot.ConvertElements(spec, elems, sourceType, true)
 }
 
 // ConvertObjectMessage 将消息JSON对象转为消息元素数组
@@ -393,11 +397,11 @@ func (bot *CQBot) ConvertObjectMessage(spec *onebot.Spec, m gjson.Result, source
 		return bot.ConvertStringMessage(spec, m.Str, sourceType)
 	}
 	elems := msg.ParseObject(m)
-	return bot.ConvertElements(spec, elems, sourceType)
+	return bot.ConvertElements(spec, elems, sourceType, false)
 }
 
 // ConvertContentMessage 将数据库用的 content 转换为消息元素数组
-func (bot *CQBot) ConvertContentMessage(content []global.MSG, sourceType message.SourceType) (r []message.IMessageElement) {
+func (bot *CQBot) ConvertContentMessage(content []global.MSG, sourceType message.SourceType, noReply bool) (r []message.IMessageElement) {
 	elems := make([]msg.Element, len(content))
 	for i, v := range content {
 		elem := msg.Element{Type: v["type"].(string)}
@@ -407,13 +411,16 @@ func (bot *CQBot) ConvertContentMessage(content []global.MSG, sourceType message
 		}
 		elems[i] = elem
 	}
-	return bot.ConvertElements(onebot.V11, elems, sourceType)
+	return bot.ConvertElements(onebot.V11, elems, sourceType, noReply)
 }
 
 // ConvertElements 将解码后的消息数组转换为MiraiGo表示
-func (bot *CQBot) ConvertElements(spec *onebot.Spec, elems []msg.Element, sourceType message.SourceType) (r []message.IMessageElement) {
+func (bot *CQBot) ConvertElements(spec *onebot.Spec, elems []msg.Element, sourceType message.SourceType, noReply bool) (r []message.IMessageElement) {
 	var replyCount int
 	for _, elem := range elems {
+		if noReply && elem.Type == "reply" {
+			continue
+		}
 		me, err := bot.ConvertElement(spec, elem, sourceType)
 		if err != nil {
 			// TODO: don't use cqcode format
@@ -497,7 +504,7 @@ func (bot *CQBot) reply(spec *onebot.Spec, elem msg.Element, sourceType message.
 			ReplySeq: org.GetAttribute().MessageSeq,
 			Sender:   org.GetAttribute().SenderUin,
 			Time:     int32(org.GetAttribute().Timestamp),
-			Elements: bot.ConvertContentMessage(org.GetContent(), sourceType),
+			Elements: bot.ConvertContentMessage(org.GetContent(), sourceType, true),
 		}
 
 	default:
