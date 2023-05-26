@@ -28,7 +28,7 @@ func (bot *CQBot) CQGetVersion() global.MSG {
 //
 // @route12(send_message)
 // @rename(m->message)
-func (bot *CQBot) CQSendMessageV12(groupID, userID, detailType string, m gjson.Result) global.MSG {
+func (bot *CQBot) CQSendMessageV12(groupID, userID, detailType string, m gjson.Result) global.MSG { // nolint
 	// TODO: implement
 	return OK(nil)
 }

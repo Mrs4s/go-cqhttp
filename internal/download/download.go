@@ -4,6 +4,7 @@ package download
 import (
 	"bufio"
 	"compress/gzip"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"net/http"
@@ -22,18 +23,31 @@ import (
 
 var client = &http.Client{
 	Transport: &http.Transport{
-		Proxy: func(request *http.Request) (u *url.URL, e error) {
+		Proxy: func(request *http.Request) (*url.URL, error) {
 			if base.Proxy == "" {
 				return http.ProxyFromEnvironment(request)
 			}
 			return url.Parse(base.Proxy)
 		},
-		ForceAttemptHTTP2:   false,
-		MaxConnsPerHost:     0,
-		MaxIdleConns:        0,
+		// Disable http2
+		TLSNextProto:        map[string]func(authority string, c *tls.Conn) http.RoundTripper{},
 		MaxIdleConnsPerHost: 999,
 	},
-	Timeout: time.Second * 15,
+	Timeout: time.Second * 5,
+}
+
+var clienth2 = &http.Client{
+	Transport: &http.Transport{
+		Proxy: func(request *http.Request) (*url.URL, error) {
+			if base.Proxy == "" {
+				return http.ProxyFromEnvironment(request)
+			}
+			return url.Parse(base.Proxy)
+		},
+		ForceAttemptHTTP2:   true,
+		MaxIdleConnsPerHost: 999,
+	},
+	Timeout: time.Second * 5,
 }
 
 // ErrOverSize 响应主体过大时返回此错误
@@ -42,6 +56,15 @@ var ErrOverSize = errors.New("oversize")
 // UserAgent HTTP请求时使用的UA
 const UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36 Edg/87.0.664.66"
 
+// SetTimeout set internal/download client timeout
+func SetTimeout(t time.Duration) {
+	if t == 0 {
+		t = time.Second * 10
+	}
+	client.Timeout = t
+	clienth2.Timeout = t
+}
+
 // Request is a file download request
 type Request struct {
 	Method string
@@ -49,6 +72,13 @@ type Request struct {
 	Header map[string]string
 	Limit  int64
 	Body   io.Reader
+}
+
+func (r Request) client() *http.Client {
+	if strings.Contains(r.URL, "go-cqhttp.org") {
+		return clienth2
+	}
+	return client
 }
 
 func (r Request) do() (*http.Response, error) {
@@ -65,7 +95,7 @@ func (r Request) do() (*http.Response, error) {
 		req.Header.Set(k, v)
 	}
 
-	return client.Do(req)
+	return r.client().Do(req)
 }
 
 func (r Request) body() (io.ReadCloser, error) {

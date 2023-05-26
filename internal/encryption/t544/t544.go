@@ -7,7 +7,6 @@ import (
 	"crypto/rc4"
 	"encoding/binary"
 	"math/rand"
-	"unsafe"
 
 	"github.com/Mrs4s/go-cqhttp/internal/encryption"
 )
@@ -24,17 +23,17 @@ var (
 )
 
 func init() {
-	if canusesse2 {
-		encryption.T544Signer["8.9.35.10440"] = sign
-		encryption.T544Signer["8.9.38.10545"] = sign
-	}
+	encryption.T544Signer["8.9.35.10440"] = sign
+	encryption.T544Signer["8.9.38.10545"] = sign
 }
 
 // sign t544 algorithm
 // special thanks to the anonymous contributor who provided the algorithm
 func sign(curr int64, input []byte) []byte {
+	var crcData [0x15]byte
 	curr %= 1000000
-	input = append(input, []byte{byte(curr >> 24), byte(curr >> 16), byte(curr >> 8), byte(curr)}...)
+	binary.BigEndian.PutUint32(crcData[:4], uint32(curr))
+	input = append(input, crcData[:4]...)
 	var kt [4 + 32 + 4]byte
 	r := rand.New(rand.NewSource(curr))
 	for i := 0; i < 2; i++ {
@@ -53,8 +52,7 @@ func sign(curr int64, input []byte) []byte {
 	k3calc[6], k3calc[7] = 0, 0
 	rc4Cipher, _ := rc4.NewCipher(key3)
 	rc4Cipher.XORKeyStream(key3, key3)
-	var crcData [0x15]byte
-	copy(crcData[4:4+8], (*[8]byte)(unsafe.Pointer(&magic))[:])
+	binary.LittleEndian.PutUint64(crcData[4:4+8], magic)
 	tencentEncryptionA(input, kt[4:4+32], crcData[4:4+8])
 	result := md5.Sum(input)
 	crcData[2] = 1
@@ -63,7 +61,7 @@ func sign(curr int64, input []byte) []byte {
 	binary.BigEndian.PutUint32(crcData[9:13], uint32(curr))
 	copy(crcData[13:], result[:8])
 	calcCrc := tencentCrc32(&crc32Table, crcData[2:])
-	copy(kt[4+32:4+32+4], (*[4]byte)(unsafe.Pointer(&calcCrc))[:])
+	binary.LittleEndian.PutUint32(kt[4+32:4+32+4], calcCrc)
 	crcData[0] = kt[4+32]
 	crcData[1] = kt[4+32+3]
 	nonce := uint32(r.Int() ^ r.Int() ^ r.Int())
