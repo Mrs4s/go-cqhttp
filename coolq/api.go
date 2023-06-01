@@ -1387,7 +1387,7 @@ func (bot *CQBot) CQGetGroupHonorInfo(groupID int64, t string) global.MSG {
 
 	if t == "performer" || t == "all" {
 		if honor, err := bot.Client.GetGroupHonorInfo(groupID, client.Performer); err == nil {
-			msg["performer_lis"] = convertMem(honor.ActorList)
+			msg["performer_list"] = convertMem(honor.ActorList)
 		}
 	}
 
