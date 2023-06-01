@@ -2011,7 +2011,7 @@ func (bot *CQBot) CQGetVersionInfo() global.MSG {
 		"protocol_version":           "v11",
 		"coolq_directory":            wd,
 		"coolq_edition":              "pro",
-		"go-cqhttp":                  true,
+		"go_cqhttp":                  true,
 		"plugin_version":             "4.15.0",
 		"plugin_build_number":        99,
 		"plugin_build_configuration": "release",
