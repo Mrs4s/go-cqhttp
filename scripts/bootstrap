@@ -1,6 +1,8 @@
-#!/bin/sh
-echo "Start GOCQHTTP~~~"
-
-cp -f config.yml /tmp/config.yml
-cp -f device.json /tmp/device.json
-./go-cqhttp -w="/tmp/" faststart
+#!/usr/bin/env bash
+function index.main_handler() {
+    echo "Start GOCQHTTP~~~"
+    cp -f config.yml /tmp/config.yml
+    cp -f device.json /tmp/device.json
+    ./go-cqhttp -w="/tmp/" faststart
+}
+index.main_handler
