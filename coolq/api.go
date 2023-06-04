@@ -617,6 +617,7 @@ func (bot *CQBot) CQUploadPrivateFile(userID int64, file, name string) global.MS
 		log.Warnf("上传私聊文件 %v 失败: %+v", file, err)
 		return Failed(100, "OPEN_FILE_ERROR", "打开文件失败")
 	}
+	defer func() { _ = fileBody.Close() }()
 	localFile := &client.LocalFile{
 		FileName: name,
 		Body:     fileBody,
