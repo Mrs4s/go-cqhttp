@@ -45,6 +45,8 @@ message:
   skip-mime-scan: false
   # 是否自动转换 WebP 图片
   convert-webp-image: false
+  # http超时时间
+  http-timeout: 0
 
 output:
   # 日志等级 trace,debug,info,warn,error
