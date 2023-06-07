@@ -19,4 +19,3 @@ go-cqhttp
 
 # windwos rc
 *.syso
-/deploy/
