@@ -166,6 +166,9 @@ func LoginInteract() {
 
 	if base.SignServer != "-" && base.SignServer != "" {
 		log.Infof("使用服务器 %s 进行数据包签名", base.SignServer)
+		if base.SignServerBearer != "-" && base.SignServerBearer != "" {
+			log.Infof("使用 Bearer %s 认证服务器 %s ", base.SignServerBearer, base.SignServer)
+		}
 		wrapper.DandelionEnergy = energy
 		wrapper.FekitGetSign = sign
 	} else {

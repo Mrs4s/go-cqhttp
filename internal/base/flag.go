@@ -39,6 +39,7 @@ var (
 	AllowTempSession    bool   // 是否允许发送临时会话信息
 	UpdateProtocol      bool   // 是否更新协议
 	SignServer          string // 使用特定的服务器进行签名
+	SignServerBearer    string // 签名服务器的 Bearer 认证 Token
 	HTTPTimeout         int
 
 	PostFormat        string                 // 上报格式 string or array
@@ -89,6 +90,7 @@ func Init() {
 		UseSSOAddress = conf.Account.UseSSOAddress
 		AllowTempSession = conf.Account.AllowTempSession
 		SignServer = conf.Account.SignServer
+		SignServerBearer = conf.Account.SignServerBearer
 		HTTPTimeout = conf.Message.HTTPTimeout
 	}
 	{ // others

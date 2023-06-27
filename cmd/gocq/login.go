@@ -14,12 +14,13 @@ import (
 
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/MiraiGo/utils"
-	"github.com/Mrs4s/go-cqhttp/internal/base"
 	"github.com/mattn/go-colorable"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 	"gopkg.ilharper.com/x/isatty"
+
+	"github.com/Mrs4s/go-cqhttp/internal/base"
 
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/internal/download"
@@ -270,8 +271,14 @@ func energy(uin uint64, id string, appVersion string, salt []byte) ([]byte, erro
 	if !strings.HasSuffix(signServer, "/") {
 		signServer += "/"
 	}
+	headers := make(map[string]string)
+	signServerBearer := base.SignServerBearer
+	if signServerBearer != "-" && signServerBearer != "" {
+		headers["Authorization"] = "Bearer " + strings.TrimPrefix(signServerBearer, "Bearer ")
+	}
 	response, err := download.Request{
 		Method: http.MethodGet,
+		Header: headers,
 		URL:    signServer + "custom_energy" + fmt.Sprintf("?data=%v&salt=%v", id, hex.EncodeToString(salt)),
 	}.Bytes()
 	if err != nil {
@@ -295,10 +302,15 @@ func sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []b
 	if !strings.HasSuffix(signServer, "/") {
 		signServer += "/"
 	}
+	headers := map[string]string{"Content-Type": "application/x-www-form-urlencoded"}
+	signServerBearer := base.SignServerBearer
+	if signServerBearer != "-" && signServerBearer != "" {
+		headers["Authorization"] = "Bearer " + strings.TrimPrefix(signServerBearer, "Bearer ")
+	}
 	response, err := download.Request{
 		Method: http.MethodPost,
 		URL:    signServer + "sign",
-		Header: map[string]string{"Content-Type": "application/x-www-form-urlencoded"},
+		Header: headers,
 		Body:   bytes.NewReader([]byte(fmt.Sprintf("uin=%v&qua=%s&cmd=%s&seq=%v&buffer=%v", uin, qua, cmd, seq, hex.EncodeToString(buff)))),
 	}.Bytes()
 	if err != nil {

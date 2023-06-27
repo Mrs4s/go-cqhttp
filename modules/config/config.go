@@ -36,6 +36,7 @@ type Account struct {
 	UseSSOAddress    bool       `yaml:"use-sso-address"`
 	AllowTempSession bool       `yaml:"allow-temp-session"`
 	SignServer       string     `yaml:"sign-server"`
+	SignServerBearer string     `yaml:"sign-server-bearer"`
 }
 
 // Config 总配置文件
