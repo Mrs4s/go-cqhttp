@@ -104,7 +104,7 @@ func main() {
 	commitcnt := strings.Builder{}
 	commitcnt.WriteString(v[1:i])
 	commitcnt.WriteByte('.')
-	commitcntcmd := exec.Command("git", "rev-list", "--count", "master")
+	commitcntcmd := exec.Command("git", "rev-list", "--count", "HEAD")
 	commitcntcmd.Stdout = &commitcnt
 	err = commitcntcmd.Run()
 	if err != nil {
