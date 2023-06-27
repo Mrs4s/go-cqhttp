@@ -266,7 +266,7 @@ func fetchCaptcha(id string) string {
 	return ""
 }
 
-func energy(uin uint64, id string, appVersion string, salt []byte) ([]byte, error) {
+func energy(_ uint64, id string, appVersion string, salt []byte) ([]byte, error) {
 	signServer := base.SignServer
 	if !strings.HasSuffix(signServer, "/") {
 		signServer += "/"
