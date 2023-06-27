@@ -14,6 +14,7 @@ import (
 
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/client"
+	"github.com/Mrs4s/MiraiGo/wrapper"
 	para "github.com/fumiama/go-hide-param"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"github.com/pkg/errors"
@@ -161,6 +162,14 @@ func LoginInteract() {
 		if err := device.ReadJson([]byte(global.ReadAllText("device.json"))); err != nil {
 			log.Fatalf("加载设备信息失败: %v", err)
 		}
+	}
+
+	if base.SignServer != "-" && base.SignServer != "" {
+		log.Infof("使用服务器 %s 进行数据包签名", base.SignServer)
+		wrapper.DandelionEnergy = energy
+		wrapper.FekitGetSign = sign
+	} else {
+		log.Warnf("警告: 未配置签名服务器, 这可能会导致登录 45 错误码或发送消息被风控")
 	}
 
 	if base.Account.Encrypt {
