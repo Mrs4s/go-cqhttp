@@ -274,7 +274,7 @@ func energy(_ uint64, id string, _ string, salt []byte) ([]byte, error) {
 	headers := make(map[string]string)
 	signServerBearer := base.SignServerBearer
 	if signServerBearer != "-" && signServerBearer != "" {
-		headers["Authorization"] = "Bearer " + strings.TrimPrefix(signServerBearer, "Bearer ")
+		headers["Authorization"] = "Bearer " + signServerBearer
 	}
 	response, err := download.Request{
 		Method: http.MethodGet,
@@ -305,7 +305,7 @@ func sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []b
 	headers := map[string]string{"Content-Type": "application/x-www-form-urlencoded"}
 	signServerBearer := base.SignServerBearer
 	if signServerBearer != "-" && signServerBearer != "" {
-		headers["Authorization"] = "Bearer " + strings.TrimPrefix(signServerBearer, "Bearer ")
+		headers["Authorization"] = "Bearer " + signServerBearer
 	}
 	response, err := download.Request{
 		Method: http.MethodPost,
