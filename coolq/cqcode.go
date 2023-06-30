@@ -713,7 +713,7 @@ func (bot *CQBot) ConvertElement(spec *onebot.Spec, elem msg.Element, sourceType
 				MusicType:  message.CloudMusic,
 				Title:      info.Get("name").String(),
 				Summary:    artistName,
-				Url:        "https://y.music.163.com/m/song/" + id,
+				Url:        "https://music.163.com/song/?id=" + id,
 				PictureUrl: info.Get("album.picUrl").String(),
 				MusicUrl:   "https://music.163.com/song/media/outer/url?id=" + id,
 			}, nil
