@@ -270,9 +270,20 @@ func energy(uin uint64, id string, appVersion string, salt []byte) ([]byte, erro
 	if !strings.HasSuffix(signServer, "/") {
 		signServer += "/"
 	}
+
+	_, err := download.Request{
+		Method: http.MethodGet,
+		URL: signServer + "register" + fmt.Sprintf("?uin=%v&android_id=%v&guid=%v&qimei36=%v&key=%v",
+			uin, hex.EncodeToString(device.AndroidId), hex.EncodeToString(device.Guid), device.QImei36, "114514"),
+	}.Bytes()
+	if err != nil {
+		log.Warnf("获取T544 sign时出现错误: %v server: %v", err, signServer)
+		return nil, err
+	}
+
 	response, err := download.Request{
 		Method: http.MethodGet,
-		URL:    signServer + "custom_energy" + fmt.Sprintf("?data=%v&salt=%v", id, hex.EncodeToString(salt)),
+		URL:    signServer + "custom_energy" + fmt.Sprintf("?uin=%v&salt=%v&data=%v", uin, hex.EncodeToString(salt), id),
 	}.Bytes()
 	if err != nil {
 		log.Warnf("获取T544 sign时出现错误: %v server: %v", err, signServer)
