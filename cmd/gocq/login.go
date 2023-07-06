@@ -274,7 +274,7 @@ func energy(uin uint64, id string, appVersion string, salt []byte) ([]byte, erro
 	_, err := download.Request{
 		Method: http.MethodGet,
 		URL: signServer + "register" + fmt.Sprintf("?uin=%v&android_id=%v&guid=%v&qimei36=%v&key=%v",
-			uin, hex.EncodeToString(device.AndroidId), hex.EncodeToString(device.Guid), device.QImei36, "114514"),
+			uin, hex.EncodeToString(device.AndroidId), hex.EncodeToString(device.Guid), device.QImei36, base.Key),
 	}.Bytes()
 	if err != nil {
 		log.Warnf("获取T544 sign时出现错误: %v server: %v", err, signServer)

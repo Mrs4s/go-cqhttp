@@ -24,6 +24,8 @@ account: # 账号相关
   # sign-server: 'https://signserver.example.com' # 线上签名服务器
   # 服务器可使用docker在本地搭建或者使用他人开放的服务
   sign-server: '-'
+  # key 为签名服务支持的密钥，签名服务默认密钥是 114514
+  key: '114514'
 
 heartbeat:
   # 心跳频率, 单位秒
