@@ -270,10 +270,14 @@ func energy(uin uint64, id string, appVersion string, salt []byte) ([]byte, erro
 	if !strings.HasSuffix(signServer, "/") {
 		signServer += "/"
 	}
-	response, err := download.Request{
+	req := download.Request{
 		Method: http.MethodGet,
-		URL:    signServer + "custom_energy" + fmt.Sprintf("?data=%v&salt=%v", id, hex.EncodeToString(salt)),
-	}.Bytes()
+		URL:    signServer + "custom_energy" + fmt.Sprintf("?data=%v&salt=%v&uin=%v", id, hex.EncodeToString(salt), uin),
+	}
+	if base.IsBelow110 {
+		req.URL = signServer + "custom_energy" + fmt.Sprintf("?data=%v&salt=%v", id, hex.EncodeToString(salt))
+	}
+	response, err := req.Bytes()
 	if err != nil {
 		log.Warnf("获取T544 sign时出现错误: %v server: %v", err, signServer)
 		return nil, err
@@ -309,4 +313,30 @@ func sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []b
 	extra, _ = hex.DecodeString(gjson.GetBytes(response, "data.extra").String())
 	token, _ = hex.DecodeString(gjson.GetBytes(response, "data.token").String())
 	return sign, extra, token, nil
+}
+
+func register(uin int64, androidID, guid []byte, qimei36, key string) {
+	if base.IsBelow110 {
+		log.Warn("签名服务器版本低于1.1.0, 跳过实例注册")
+		return
+	}
+	signServer := base.SignServer
+	if !strings.HasSuffix(signServer, "/") {
+		signServer += "/"
+	}
+	resp, err := download.Request{
+		Method: http.MethodGet,
+		URL: signServer + "register" + fmt.Sprintf("?uin=%v&android_id=%v&guid=%v&qimei36=%v&key=%s",
+			uin, hex.EncodeToString(androidID), hex.EncodeToString(guid), qimei36, key),
+	}.Bytes()
+	if err != nil {
+		log.Warnf("注册QQ实例时出现错误: %v server: %v", err, signServer)
+		return
+	}
+	msg := gjson.GetBytes(resp, "msg")
+	if gjson.GetBytes(resp, "code").Int() != 0 {
+		log.Warnf("注册QQ实例时出现错误: %v server: %v", msg, signServer)
+		return
+	}
+	log.Infof("注册QQ实例 %v 成功: %v", uin, msg)
 }

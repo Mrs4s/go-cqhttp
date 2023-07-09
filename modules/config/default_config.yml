@@ -24,6 +24,11 @@ account: # 账号相关
   # sign-server: 'https://signserver.example.com' # 线上签名服务器
   # 服务器可使用docker在本地搭建或者使用他人开放的服务
   sign-server: '-'
+  # 如果签名服务器的版本在1.1.0及以下, 请将下面的参数改成true
+  is-below-110: false
+  # 签名服务器所需要的apikey, 如果签名服务器的版本在1.1.0及以下则此项无效
+  # 本地部署的默认为114514
+  key: '114514'
 
 heartbeat:
   # 心跳频率, 单位秒
