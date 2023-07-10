@@ -39,6 +39,8 @@ var (
 	AllowTempSession    bool   // 是否允许发送临时会话信息
 	UpdateProtocol      bool   // 是否更新协议
 	SignServer          string // 使用特定的服务器进行签名
+	Key                 string // 签名服务器密钥
+	IsBelow110          bool   // 签名服务器版本是否低于1.1.0及以下
 	HTTPTimeout         int
 
 	PostFormat        string                 // 上报格式 string or array
@@ -89,6 +91,8 @@ func Init() {
 		UseSSOAddress = conf.Account.UseSSOAddress
 		AllowTempSession = conf.Account.AllowTempSession
 		SignServer = conf.Account.SignServer
+		Key = conf.Account.Key
+		IsBelow110 = conf.Account.IsBelow110
 		HTTPTimeout = conf.Message.HTTPTimeout
 	}
 	{ // others

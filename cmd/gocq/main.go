@@ -166,6 +166,7 @@ func LoginInteract() {
 
 	if base.SignServer != "-" && base.SignServer != "" {
 		log.Infof("使用服务器 %s 进行数据包签名", base.SignServer)
+		register(base.Account.Uin, device.AndroidId, device.Guid, device.QImei36, base.Key)
 		wrapper.DandelionEnergy = energy
 		wrapper.FekitGetSign = sign
 	} else {
