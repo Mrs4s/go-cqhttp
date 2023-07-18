@@ -33,7 +33,7 @@ var client = &http.Client{
 		TLSNextProto:        map[string]func(authority string, c *tls.Conn) http.RoundTripper{},
 		MaxIdleConnsPerHost: 999,
 	},
-	Timeout: time.Second * 5,
+	Timeout: time.Second * 50,
 }
 
 var clienth2 = &http.Client{
