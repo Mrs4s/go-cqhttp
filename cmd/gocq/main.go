@@ -166,6 +166,7 @@ func LoginInteract() {
 
 	if base.SignServer != "-" && base.SignServer != "" {
 		log.Infof("使用服务器 %s 进行数据包签名", base.SignServer)
+		download.SetTimeout(time.Duration(base.HTTPTimeout) * time.Second) // 设置签名超时时间
 		register(base.Account.Uin, device.AndroidId, device.Guid, device.QImei36, base.Key)
 		wrapper.DandelionEnergy = energy
 		wrapper.FekitGetSign = sign
@@ -290,6 +291,7 @@ func LoginInteract() {
 	}
 	if !base.FastStart {
 		log.Infof("正在检查协议更新...")
+		download.SetTimeout(time.Second * 5) // 防止协议更新堵塞过久
 		currentVersionName := device.Protocol.Version().SortVersionName
 		remoteVersion, err := getRemoteLatestProtocolVersion(int(device.Protocol.Version().Protocol))
 		if err == nil {
@@ -374,7 +376,7 @@ func LoginInteract() {
 	})
 	saveToken()
 	cli.AllowSlider = true
-	download.SetTimeout(time.Duration(base.HTTPTimeout) * time.Second) // 在登录完成后设置, 防止在堵塞协议更新
+	download.SetTimeout(time.Duration(base.HTTPTimeout) * time.Second) // 登陆完成进行最终超时设置
 	log.Infof("登录成功 欢迎使用: %v", cli.Nickname)
 	log.Info("开始加载好友列表...")
 	global.Check(cli.ReloadFriendList(), true)

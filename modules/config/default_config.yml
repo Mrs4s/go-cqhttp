@@ -59,7 +59,7 @@ message:
   skip-mime-scan: false
   # 是否自动转换 WebP 图片
   convert-webp-image: false
-  # http超时时间
+  # http超时时间，同时作为签名服务超时时间
   http-timeout: 0
 
 output:
