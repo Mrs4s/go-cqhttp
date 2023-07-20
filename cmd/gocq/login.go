@@ -17,13 +17,12 @@ import (
 
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/MiraiGo/utils"
+	"github.com/Mrs4s/go-cqhttp/internal/base"
 	"github.com/mattn/go-colorable"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 	"gopkg.ilharper.com/x/isatty"
-
-	"github.com/Mrs4s/go-cqhttp/internal/base"
 
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/internal/download"
@@ -306,7 +305,7 @@ func sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []b
 	}
 	response, err := download.Request{
 		Method: http.MethodPost,
-		URL:    signServer + "sign"+fmt.Sprintf("?),
+		URL:    signServer + "sign" + fmt.Sprintf("?android_id=%v&guid=%v", hex.EncodeToString(device.AndroidId), hex.EncodeToString(device.Guid)),
 		Header: map[string]string{"Content-Type": "application/x-www-form-urlencoded"},
 		Body:   bytes.NewReader([]byte(fmt.Sprintf("uin=%v&qua=%s&cmd=%s&seq=%v&buffer=%v", uin, qua, cmd, seq, hex.EncodeToString(buff)))),
 	}.Bytes()
