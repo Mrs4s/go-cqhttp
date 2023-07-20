@@ -305,9 +305,10 @@ func sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []b
 	}
 	response, err := download.Request{
 		Method: http.MethodPost,
-		URL:    signServer + "sign" + fmt.Sprintf("?android_id=%v&guid=%v", hex.EncodeToString(device.AndroidId), hex.EncodeToString(device.Guid)),
+		URL:    signServer + "sign",
 		Header: map[string]string{"Content-Type": "application/x-www-form-urlencoded"},
-		Body:   bytes.NewReader([]byte(fmt.Sprintf("uin=%v&qua=%s&cmd=%s&seq=%v&buffer=%v", uin, qua, cmd, seq, hex.EncodeToString(buff)))),
+		Body: bytes.NewReader([]byte(fmt.Sprintf("uin=%v&qua=%s&cmd=%s&seq=%v&buffer=%v&android_id=%v&guid=%v",
+			uin, qua, cmd, seq, hex.EncodeToString(buff), hex.EncodeToString(device.AndroidId), hex.EncodeToString(device.Guid)))),
 	}.Bytes()
 	if err != nil {
 		log.Warnf("获取sso sign时出现错误: %v server: %v", err, signServer)
