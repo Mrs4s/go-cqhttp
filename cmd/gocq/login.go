@@ -275,7 +275,8 @@ func energy(uin uint64, id string, _ string, salt []byte) ([]byte, error) {
 	}
 	req := download.Request{
 		Method: http.MethodGet,
-		URL:    signServer + "custom_energy" + fmt.Sprintf("?data=%v&salt=%v&uin=%v", id, hex.EncodeToString(salt), uin),
+		URL: signServer + "custom_energy" + fmt.Sprintf("?data=%v&salt=%v&uin=%v&android_id=%v&guid=%v",
+			id, hex.EncodeToString(salt), uin, hex.EncodeToString(device.AndroidId), hex.EncodeToString(device.Guid)),
 	}
 	if base.IsBelow110 {
 		req.URL = signServer + "custom_energy" + fmt.Sprintf("?data=%v&salt=%v", id, hex.EncodeToString(salt))
@@ -304,7 +305,7 @@ func sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []b
 	}
 	response, err := download.Request{
 		Method: http.MethodPost,
-		URL:    signServer + "sign",
+		URL:    signServer + "sign"+fmt.Sprintf("?),
 		Header: map[string]string{"Content-Type": "application/x-www-form-urlencoded"},
 		Body:   bytes.NewReader([]byte(fmt.Sprintf("uin=%v&qua=%s&cmd=%s&seq=%v&buffer=%v", uin, qua, cmd, seq, hex.EncodeToString(buff)))),
 	}.Bytes()
