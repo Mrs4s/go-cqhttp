@@ -9,6 +9,7 @@ import (
 	"image/png"
 	"net/http"
 	"os"
+	"reflect"
 	"strings"
 	"time"
 
@@ -295,7 +296,7 @@ func energy(uin uint64, id string, _ string, salt []byte) ([]byte, error) {
 	return data, nil
 }
 
-func sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []byte, extra []byte, token []byte, err error) {
+func _sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []byte, extra []byte, token []byte, err error) {
 	signServer := base.SignServer
 	if !strings.HasSuffix(signServer, "/") {
 		signServer += "/"
@@ -340,4 +341,17 @@ func register(uin int64, androidID, guid []byte, qimei36, key string) {
 		return
 	}
 	log.Infof("注册QQ实例 %v 成功: %v", uin, msg)
+}
+
+func sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []byte, extra []byte, token []byte, err error) {
+	sign, extra, token, err = _sign(seq, uin, cmd, qua, buff)
+	if err == nil && reflect.ValueOf(sign).Len() == 0 {
+		log.Warn("获取签名为空，实例可能丢失，尝试重新注册")
+		register(base.Account.Uin, device.AndroidId, device.Guid, device.QImei36, base.Key)
+		return _sign(seq, uin, cmd, qua, buff)
+	}
+	if err != nil {
+		log.Warnf("获取sso sign时出现错误: %v server: %v", err, base.SignServer)
+	}
+	return sign, extra, token, err
 }
