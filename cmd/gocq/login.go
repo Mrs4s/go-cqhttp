@@ -328,7 +328,7 @@ func register(uin int64, androidID, guid []byte, qimei36, key string) {
 	resp, err := download.Request{
 		Method: http.MethodGet,
 		URL: signServer + "register" + fmt.Sprintf("?uin=%v&android_id=%v&guid=%v&qimei36=%v&key=%s",
-			uin, hex.EncodeToString(androidID), hex.EncodeToString(guid), qimei36, key),
+			uin, androidID, hex.EncodeToString(guid), qimei36, key),
 	}.Bytes()
 	if err != nil {
 		log.Warnf("注册QQ实例时出现错误: %v server: %v", err, signServer)
