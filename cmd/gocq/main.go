@@ -170,6 +170,12 @@ func LoginInteract() {
 		register(base.Account.Uin, device.AndroidId, device.Guid, device.QImei36, base.Key)
 		wrapper.DandelionEnergy = energy
 		wrapper.FekitGetSign = sign
+		if !base.Account.AutoRegister {
+			log.Warn("自动注册实例已关闭，实例丢失时需要重启 go-cqhttp 以正常签名")
+		}
+		if !base.Account.AutoRefreshToken {
+			log.Warn("自动刷新 token 已关闭，token 过期将不会刷新，可自行定时请求签名服务器刷新 token")
+		}
 	} else {
 		log.Warnf("警告: 未配置签名服务器, 这可能会导致登录 45 错误码或发送消息被风控")
 	}
