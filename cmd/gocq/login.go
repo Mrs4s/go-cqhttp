@@ -296,18 +296,18 @@ func energy(uin uint64, id string, _ string, salt []byte) ([]byte, error) {
 	return data, nil
 }
 
-var isFirstSign bool = true
+var isFirstSign = true
 
-func submit(uin string, cmd string, callbackId int64, buffer []byte) {
+func submit(uin string, cmd string, callbackID int64, buffer []byte) {
 	signServer := base.SignServer
 	if !strings.HasSuffix(signServer, "/") {
 		signServer += "/"
 	}
-	log.Infof("submit: uin=%v, cmd=%v, callbackId=%v", uin, cmd, callbackId)
+	log.Infof("submit: uin=%v, cmd=%v, callbackID=%v", uin, cmd, callbackID)
 	_, err := download.Request{
 		Method: http.MethodGet,
 		URL: signServer + "submit" + fmt.Sprintf("?uin=%v&cmd=%v&callback_id=%v&buffer=%v",
-			uin, cmd, callbackId, hex.EncodeToString(buffer)),
+			uin, cmd, callbackID, hex.EncodeToString(buffer)),
 	}.Bytes()
 	if err != nil {
 		log.Warnf("提交 request callback 时出现错误: %v server: %v", err, signServer)
@@ -336,8 +336,8 @@ func _sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []
 		log.Info("首次 sign 将提交 request callback")
 		for _, r := range gjson.GetBytes(response, "data.requestCallback").Array() {
 			cmd := r.Get("cmd").String()
-			callbackId := r.Get("callbackId").Int()
-			submit(uin, cmd, callbackId, buff)
+			callbackID := r.Get("callbackId").Int()
+			submit(uin, cmd, callbackID, buff)
 		}
 		isFirstSign = false
 	}
@@ -371,7 +371,7 @@ func register(uin int64, androidID, guid []byte, qimei36, key string) {
 	log.Infof("注册QQ实例 %v 成功: %v", uin, msg)
 }
 
-func refresh_token(uin string) bool {
+func refreshToken(uin string) bool {
 	signServer := base.SignServer
 	if !strings.HasSuffix(signServer, "/") {
 		signServer += "/"
@@ -403,7 +403,7 @@ func sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []b
 	}
 	if base.Account.AutoRefreshToken && reflect.ValueOf(token).Len() == 0 {
 		log.Warn("token 已过期，正在刷新")
-		if !refresh_token(uin) {
+		if !refreshToken(uin) {
 			// 由于 unidbg-fetch-qsign request_token 可能有死锁
 			// 刷新 token 时经常超时，此处采用重新注册实例重置会话临时解决超时问题
 			log.Warn("正在重新注册实例")
