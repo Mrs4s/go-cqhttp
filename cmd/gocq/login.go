@@ -314,6 +314,16 @@ func submit(uin string, cmd string, callbackID int64, buffer []byte) {
 	}
 }
 
+// 请求token和签名的回调
+func callback(uin string, results []gjson.Result) {
+	for _, result := range results {
+		cmd := result.Get("cmd").String()
+		callbackID := result.Get("callbackId").Int()
+		body, _ := hex.DecodeString(result.Get("body").String())
+		submit(uin, cmd, callbackID, body)
+	}
+}
+
 func _sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []byte, extra []byte, token []byte, err error) {
 	signServer := base.SignServer
 	if !strings.HasSuffix(signServer, "/") {
@@ -334,11 +344,7 @@ func _sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []
 	token, _ = hex.DecodeString(gjson.GetBytes(response, "data.token").String())
 	if isFirstSign {
 		log.Info("首次 sign 将提交 request callback")
-		for _, r := range gjson.GetBytes(response, "data.requestCallback").Array() {
-			cmd := r.Get("cmd").String()
-			callbackID := r.Get("callbackId").Int()
-			submit(uin, cmd, callbackID, buff)
-		}
+		callback(uin, gjson.GetBytes(response, "data.requestCallback").Array())
 		isFirstSign = false
 	}
 
@@ -389,7 +395,7 @@ func refreshToken(uin string) bool {
 		log.Warnf("刷新 token 出现错误: %v server: %v", msg, signServer)
 		return false
 	}
-	log.Info("token 刷新成功")
+	callback(uin, gjson.GetBytes(resp, "data").Array())
 	return true
 }
 
@@ -404,9 +410,8 @@ func sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []b
 	if base.Account.AutoRefreshToken && reflect.ValueOf(token).Len() == 0 {
 		log.Warn("token 已过期，正在刷新")
 		if !refreshToken(uin) {
-			// 由于 unidbg-fetch-qsign request_token 可能有死锁
-			// 刷新 token 时经常超时，此处采用重新注册实例重置会话临时解决超时问题
-			log.Warn("正在重新注册实例")
+			// request_token 失败时重新注册实例刷新 token
+			log.Warn("刷新 token 失败，正在重新注册实例")
 			register(base.Account.Uin, device.AndroidId, device.Guid, device.QImei36, base.Key)
 			isFirstSign = true
 		}
