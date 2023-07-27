@@ -168,6 +168,7 @@ func LoginInteract() {
 		log.Infof("使用服务器 %s 进行数据包签名", base.SignServer)
 		download.SetTimeout(time.Duration(base.HTTPTimeout) * time.Second) // 设置签名超时时间
 		register(base.Account.Uin, device.AndroidId, device.Guid, device.QImei36, base.Key)
+		go startRefreshTokenTask(base.Account.RefreshInterval) // 定时刷新 token
 		wrapper.DandelionEnergy = energy
 		wrapper.FekitGetSign = sign
 		if !base.Account.AutoRegister {
