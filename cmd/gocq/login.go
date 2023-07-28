@@ -12,6 +12,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/Mrs4s/MiraiGo/client"
@@ -349,6 +350,8 @@ func _sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []
 	return sign, extra, token, nil
 }
 
+var registerLock sync.Mutex
+
 func register(uin int64, androidID, guid []byte, qimei36, key string) {
 	if base.IsBelow110 {
 		log.Warn("签名服务器版本低于1.1.0, 跳过实例注册")
@@ -403,18 +406,24 @@ var missTokenCount = 0
 func sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []byte, extra []byte, token []byte, err error) {
 	sign, extra, token, err = _sign(seq, uin, cmd, qua, buff)
 	if base.Account.AutoRegister && err == nil && reflect.ValueOf(sign).Len() == 0 {
-		log.Warn("获取签名为空，实例可能丢失，正在尝试重新注册")
-		destroy(uin)
-		register(base.Account.Uin, device.AndroidId, device.Guid, device.QImei36, base.Key)
+		if registerLock.TryLock() { // 避免并发时多处同时销毁并重新注册
+			log.Warn("获取签名为空，实例可能丢失，正在尝试重新注册")
+			defer registerLock.Unlock()
+			destroy(uin)
+			register(base.Account.Uin, device.AndroidId, device.Guid, device.QImei36, base.Key)
+		}
 		return _sign(seq, uin, cmd, qua, buff)
 	}
 	if base.Account.AutoRefreshToken && reflect.ValueOf(token).Len() == 0 {
 		missTokenCount++
 		log.Warnf("token 已过期, 连续丢失 token 次数为 %v", missTokenCount)
 		if !refreshToken(uin) || missTokenCount >= 3 {
-			log.Warn("刷新 token 失败或无效，正在重新注册实例")
-			destroy(uin)
-			register(base.Account.Uin, device.AndroidId, device.Guid, device.QImei36, base.Key)
+			if registerLock.TryLock() {
+				log.Warn("刷新 token 失败或无效，正在重新注册实例")
+				defer registerLock.Unlock()
+				destroy(uin)
+				register(base.Account.Uin, device.AndroidId, device.Guid, device.QImei36, base.Key)
+			}
 		}
 		return _sign(seq, uin, cmd, qua, buff)
 	}
