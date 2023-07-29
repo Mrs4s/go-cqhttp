@@ -306,11 +306,13 @@ func submit(uin string, cmd string, callbackID int64, buffer []byte, t string) {
 	if !strings.HasSuffix(signServer, "/") {
 		signServer += "/"
 	}
-	log.Infof("submit %v: uin=%v, cmd=%v, callbackID=%v", t, uin, cmd, callbackID)
+	buffStr := hex.EncodeToString(buffer)
+	log.Infof("submit %v: uin=%v, cmd=%v, callbackID=%v, buffer-end=%v", t, uin, cmd, callbackID,
+		buffStr[len(buffStr)-10:])
 	_, err := download.Request{
 		Method: http.MethodGet,
 		URL: signServer + "submit" + fmt.Sprintf("?uin=%v&cmd=%v&callback_id=%v&buffer=%v",
-			uin, cmd, callbackID, hex.EncodeToString(buffer)),
+			uin, cmd, callbackID, buffStr),
 	}.Bytes()
 	if err != nil {
 		log.Warnf("提交 callback 时出现错误: %v server: %v", err, signServer)
@@ -405,7 +407,7 @@ var missTokenCount = 0
 
 func sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []byte, extra []byte, token []byte, err error) {
 	sign, extra, token, err = _sign(seq, uin, cmd, qua, buff)
-	if base.Account.AutoRegister && err == nil && reflect.ValueOf(sign).Len() == 0 {
+	if base.Account.AutoRegister && err == nil && len(sign) == 0 {
 		if registerLock.TryLock() { // 避免并发时多处同时销毁并重新注册
 			log.Warn("获取签名为空，实例可能丢失，正在尝试重新注册")
 			defer registerLock.Unlock()
@@ -414,7 +416,7 @@ func sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []b
 		}
 		return _sign(seq, uin, cmd, qua, buff)
 	}
-	if base.Account.AutoRefreshToken && reflect.ValueOf(token).Len() == 0 {
+	if base.Account.AutoRefreshToken && len(token) == 0 {
 		missTokenCount++
 		log.Warnf("token 已过期, 连续丢失 token 次数为 %v", missTokenCount)
 		if !refreshToken(uin) || missTokenCount >= 3 {
@@ -479,6 +481,10 @@ func getSignServerVersion() (version string, err error) {
 
 // 定时刷新 token, interval 为间隔时间（分钟）
 func startRefreshTokenTask(interval int64) {
+	if interval <= 0 {
+		log.Warn("定时刷新 token 已关闭")
+		return
+	}
 	log.Infof("每 %v 分钟将刷新一次签名 token", interval)
 	if interval < 10 {
 		log.Warnf("间隔时间 %v 分钟较短，推荐 30~40 分钟", interval)

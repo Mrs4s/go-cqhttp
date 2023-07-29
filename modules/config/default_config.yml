@@ -38,6 +38,8 @@ account: # 账号相关
   # 不同于定时刷新，设置为 true 刷新失败时会重新注册实例
   auto-refresh-token: true
   # 定时刷新 token 间隔时间，单位为分钟, 建议 30~40 分钟, 不可超过 60 分钟
+  # 截至 qsign 1.1.7 版本，刷新 token 并没有效果
+  # 目前丢失token也不会有太大影响， 可设置为 0 以关闭
   refresh-interval: 40
 
 heartbeat:
