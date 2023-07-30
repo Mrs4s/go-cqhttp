@@ -9,7 +9,6 @@ import (
 	"image/png"
 	"net/http"
 	"os"
-	"reflect"
 	"strconv"
 	"strings"
 	"sync"
@@ -348,7 +347,9 @@ func _sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []
 	sign, _ = hex.DecodeString(gjson.GetBytes(response, "data.sign").String())
 	extra, _ = hex.DecodeString(gjson.GetBytes(response, "data.extra").String())
 	token, _ = hex.DecodeString(gjson.GetBytes(response, "data.token").String())
-	go callback(uin, gjson.GetBytes(response, "data.requestCallback").Array(), "sign")
+	if !base.IsBelow110 {
+		go callback(uin, gjson.GetBytes(response, "data.requestCallback").Array(), "sign")
+	}
 	return sign, extra, token, nil
 }
 
@@ -407,7 +408,7 @@ var missTokenCount = 0
 
 func sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []byte, extra []byte, token []byte, err error) {
 	sign, extra, token, err = _sign(seq, uin, cmd, qua, buff)
-	if base.Account.AutoRegister && err == nil && len(sign) == 0 {
+	if (!base.IsBelow110) && base.Account.AutoRegister && err == nil && len(sign) == 0 {
 		if registerLock.TryLock() { // 避免并发时多处同时销毁并重新注册
 			log.Warn("获取签名为空，实例可能丢失，正在尝试重新注册")
 			defer registerLock.Unlock()
@@ -416,7 +417,7 @@ func sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []b
 		}
 		return _sign(seq, uin, cmd, qua, buff)
 	}
-	if base.Account.AutoRefreshToken && len(token) == 0 {
+	if (!base.IsBelow110) && base.Account.AutoRefreshToken && len(token) == 0 {
 		missTokenCount++
 		log.Warnf("token 已过期, 连续丢失 token 次数为 %v", missTokenCount)
 		if !refreshToken(uin) || missTokenCount >= 3 {
@@ -442,7 +443,7 @@ func destroy(uin string) {
 		signServer += "/"
 	}
 	signVersion, _ := getSignServerVersion()
-	if reflect.ValueOf(signVersion).Len() == 0 {
+	if len(signVersion) == 0 {
 		return
 	}
 	if global.VersionNameCompare("v"+signVersion, "v1.1.6") {
