@@ -324,7 +324,11 @@ func callback(uin string, results []gjson.Result, t string) {
 		cmd := result.Get("cmd").String()
 		callbackID := result.Get("callbackId").Int()
 		body, _ := hex.DecodeString(result.Get("body").String())
-		submit(uin, cmd, callbackID, body, t)
+		ret, err := cli.SendSsoPacket(cmd, body)
+		if err != nil {
+			log.Warnf("callback error: %v", err)
+		}
+		submit(uin, cmd, callbackID, ret, t)
 	}
 }
 
@@ -420,12 +424,10 @@ func sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []b
 	if (!base.IsBelow110) && base.Account.AutoRefreshToken && len(token) == 0 {
 		missTokenCount++
 		log.Warnf("token 已过期, 连续丢失 token 次数为 %v", missTokenCount)
-		if !refreshToken(uin) || missTokenCount >= 3 {
-			if registerLock.TryLock() {
-				log.Warn("刷新 token 失败或无效，正在重新注册实例")
-				defer registerLock.Unlock()
-				destroy(uin)
-				register(base.Account.Uin, device.AndroidId, device.Guid, device.QImei36, base.Key)
+		if registerLock.TryLock() {
+			defer registerLock.Unlock()
+			if refreshToken(uin) {
+				log.Info("token 已成功刷新")
 			}
 		}
 		return _sign(seq, uin, cmd, qua, buff)
