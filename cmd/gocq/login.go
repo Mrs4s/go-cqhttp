@@ -278,7 +278,7 @@ func energy(uin uint64, id string, _ string, salt []byte) ([]byte, error) {
 		Method: http.MethodGet,
 		URL: signServer + "custom_energy" + fmt.Sprintf("?data=%v&salt=%v&uin=%v&android_id=%v&guid=%v",
 			id, hex.EncodeToString(salt), uin,
-			hex.EncodeToString(device.AndroidId), hex.EncodeToString(device.Guid)),
+			string(device.AndroidId), hex.EncodeToString(device.Guid)),
 	}
 	if base.IsBelow110 {
 		req.URL = signServer + "custom_energy" + fmt.Sprintf("?data=%v&salt=%v", id, hex.EncodeToString(salt))
@@ -340,7 +340,7 @@ func _sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []
 		Header: map[string]string{"Content-Type": "application/x-www-form-urlencoded"},
 		Body: bytes.NewReader([]byte(fmt.Sprintf("uin=%v&qua=%s&cmd=%s&seq=%v&buffer=%v&android_id=%v&guid=%v",
 			uin, qua, cmd, seq, hex.EncodeToString(buff),
-			hex.EncodeToString(device.AndroidId), hex.EncodeToString(device.Guid)))),
+			string(device.AndroidId), hex.EncodeToString(device.Guid)))),
 	}.Bytes()
 	if err != nil {
 		return nil, nil, nil, err
@@ -366,7 +366,7 @@ func register(uin int64, androidID, guid []byte, qimei36, key string) {
 	resp, err := download.Request{
 		Method: http.MethodGet,
 		URL: signServer + "register" + fmt.Sprintf("?uin=%v&android_id=%v&guid=%v&qimei36=%v&key=%s",
-			uin, hex.EncodeToString(androidID), hex.EncodeToString(guid), qimei36, key),
+			uin, string(androidID), hex.EncodeToString(guid), qimei36, key),
 	}.Bytes()
 	if err != nil {
 		log.Warnf("注册QQ实例时出现错误: %v server: %v", err, signServer)
