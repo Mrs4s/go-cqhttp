@@ -27,6 +27,8 @@ const (
 	VoicePath = "data/voices"
 	// VideoPath go-cqhttp使用的视频缓存目录
 	VideoPath = "data/videos"
+	// VersionsPath go-cqhttp使用的版本信息目录
+	VersionsPath = "data/versions"
 	// CachePath go-cqhttp使用的缓存目录
 	CachePath = "data/cache"
 	// DumpsPath go-cqhttp使用错误转储目录

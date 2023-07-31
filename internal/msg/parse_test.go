@@ -10,7 +10,7 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-func TestParseString(t *testing.T) {
+func TestParseString(_ *testing.T) {
 	// TODO: add more text
 	for _, v := range ParseString(`[CQ:face,id=115,text=111][CQ:face,id=217]] [CQ:text,text=123] [`) {
 		fmt.Println(v)

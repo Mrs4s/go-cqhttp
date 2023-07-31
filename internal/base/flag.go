@@ -23,20 +23,23 @@ var (
 
 // config file flags
 var (
-	Debug               bool // 是否开启 debug 模式
-	RemoveReplyAt       bool // 是否删除reply后的at
-	ExtraReplyData      bool // 是否上报额外reply信息
-	IgnoreInvalidCQCode bool // 是否忽略无效CQ码
-	SplitURL            bool // 是否分割URL
-	ForceFragmented     bool // 是否启用强制分片
-	SkipMimeScan        bool // 是否跳过Mime扫描
-	ConvertWebpImage    bool // 是否转换Webp图片
-	ReportSelfMessage   bool // 是否上报自身消息
-	UseSSOAddress       bool // 是否使用服务器下发的新地址进行重连
-	LogForceNew         bool // 是否在每次启动时强制创建全新的文件储存日志
-	LogColorful         bool // 是否启用日志颜色
-	FastStart           bool // 是否为快速启动
-	AllowTempSession    bool // 是否允许发送临时会话信息
+	Debug               bool   // 是否开启 debug 模式
+	RemoveReplyAt       bool   // 是否删除reply后的at
+	ExtraReplyData      bool   // 是否上报额外reply信息
+	IgnoreInvalidCQCode bool   // 是否忽略无效CQ码
+	SplitURL            bool   // 是否分割URL
+	ForceFragmented     bool   // 是否启用强制分片
+	SkipMimeScan        bool   // 是否跳过Mime扫描
+	ConvertWebpImage    bool   // 是否转换Webp图片
+	ReportSelfMessage   bool   // 是否上报自身消息
+	UseSSOAddress       bool   // 是否使用服务器下发的新地址进行重连
+	LogForceNew         bool   // 是否在每次启动时强制创建全新的文件储存日志
+	LogColorful         bool   // 是否启用日志颜色
+	FastStart           bool   // 是否为快速启动
+	AllowTempSession    bool   // 是否允许发送临时会话信息
+	UpdateProtocol      bool   // 是否更新协议
+	SignServer          string // 使用特定的服务器进行签名
+	HTTPTimeout         int
 
 	PostFormat        string                 // 上报格式 string or array
 	Proxy             string                 // 存储 proxy_rewrite,用于设置代理
@@ -60,6 +63,7 @@ func Parse() {
 	flag.StringVar(&LittleWD, "w", "", "cover the working directory")
 	d := flag.Bool("D", false, "debug mode")
 	flag.BoolVar(&FastStart, "faststart", false, "skip waiting 5 seconds")
+	flag.BoolVar(&UpdateProtocol, "update-protocol", false, "update protocol")
 	flag.Parse()
 
 	if *d {
@@ -84,6 +88,8 @@ func Init() {
 		ReportSelfMessage = conf.Message.ReportSelfMessage
 		UseSSOAddress = conf.Account.UseSSOAddress
 		AllowTempSession = conf.Account.AllowTempSession
+		SignServer = conf.Account.SignServer
+		HTTPTimeout = conf.Message.HTTPTimeout
 	}
 	{ // others
 		Proxy = conf.Message.ProxyRewrite
