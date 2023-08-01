@@ -334,7 +334,9 @@ func signCallback(uin string, results []gjson.Result, t string) {
 		if err != nil {
 			log.Warnf("callback error: %v", err)
 		}
-		signSubmit(uin, cmd, callbackID, ret, t)
+		if len(ret) > 10 {
+			signSubmit(uin, cmd, callbackID, ret, t)
+		}
 	}
 }
 
