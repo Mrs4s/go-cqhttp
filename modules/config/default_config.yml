@@ -16,6 +16,15 @@ account: # 账号相关
   # 是否允许发送临时会话消息
   allow-temp-session: false
 
+  # 数据包的签名服务器
+  # 兼容 https://github.com/fuqiuluo/unidbg-fetch-qsign
+  # 如果遇到 登录 45 错误, 或者发送信息风控的话需要填入一个服务器
+  # 示例:
+  # sign-server: 'http://127.0.0.1:8080' # 本地签名服务器
+  # sign-server: 'https://signserver.example.com' # 线上签名服务器
+  # 服务器可使用docker在本地搭建或者使用他人开放的服务
+  sign-server: '-'
+
 heartbeat:
   # 心跳频率, 单位秒
   # -1 为关闭心跳
@@ -45,6 +54,8 @@ message:
   skip-mime-scan: false
   # 是否自动转换 WebP 图片
   convert-webp-image: false
+  # http超时时间
+  http-timeout: 0
 
 output:
   # 日志等级 trace,debug,info,warn,error

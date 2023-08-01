@@ -21,7 +21,8 @@ RUN chmod +x /docker-entrypoint.sh && \
       ffmpeg \
       coreutils \
       shadow \
-      su-exec && \
+      su-exec \
+      tzdata && \
     rm -rf /var/cache/apk/* && \
     mkdir -p /app && \
     mkdir -p /data && \
@@ -42,3 +43,4 @@ WORKDIR /data
 VOLUME [ "/data" ]
 
 ENTRYPOINT [ "/docker-entrypoint.sh" ]
+CMD [ "/app/cqhttp" ]
