@@ -166,7 +166,6 @@ func LoginInteract() {
 
 	if base.SignServer != "-" && base.SignServer != "" {
 		log.Infof("使用服务器 %s 进行数据包签名", base.SignServer)
-		download.SetTimeout(time.Duration(base.HTTPTimeout) * time.Second) // 设置签名超时时间
 		// 等待签名服务器直到连接成功
 		if !signWaitServer() {
 			log.Fatalf("连接签名服务器失败")
@@ -304,9 +303,9 @@ func LoginInteract() {
 		cli.Uin = base.Account.Uin
 		cli.PasswordMd5 = base.PasswordHash
 	}
+	download.SetTimeout(time.Duration(base.HTTPTimeout) * time.Second)
 	if !base.FastStart {
 		log.Infof("正在检查协议更新...")
-		download.SetTimeout(time.Second * 5) // 防止协议更新堵塞过久
 		currentVersionName := device.Protocol.Version().SortVersionName
 		remoteVersion, err := getRemoteLatestProtocolVersion(int(device.Protocol.Version().Protocol))
 		if err == nil {
@@ -391,7 +390,6 @@ func LoginInteract() {
 	})
 	saveToken()
 	cli.AllowSlider = true
-	download.SetTimeout(time.Duration(base.HTTPTimeout) * time.Second) // 登陆完成进行最终超时设置
 	log.Infof("登录成功 欢迎使用: %v", cli.Nickname)
 	log.Info("开始加载好友列表...")
 	global.Check(cli.ReloadFriendList(), true)

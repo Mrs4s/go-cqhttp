@@ -278,7 +278,7 @@ func energy(uin uint64, id string, _ string, salt []byte) ([]byte, error) {
 		Method: http.MethodGet,
 		URL: signServer + "custom_energy" + fmt.Sprintf("?data=%v&salt=%v&uin=%v&android_id=%v&guid=%v",
 			id, hex.EncodeToString(salt), uin, utils.B2S(device.AndroidId), hex.EncodeToString(device.Guid)),
-	}
+	}.WithTimeout(time.Duration(base.SignServerTimeout) * time.Second)
 	if base.IsBelow110 {
 		req.URL = signServer + "custom_energy" + fmt.Sprintf("?data=%v&salt=%v", id, hex.EncodeToString(salt))
 	}
@@ -312,7 +312,7 @@ func signSubmit(uin string, cmd string, callbackID int64, buffer []byte, t strin
 		Method: http.MethodGet,
 		URL: signServer + "submit" + fmt.Sprintf("?uin=%v&cmd=%v&callback_id=%v&buffer=%v",
 			uin, cmd, callbackID, buffStr),
-	}.Bytes()
+	}.WithTimeout(time.Duration(base.SignServerTimeout) * time.Second).Bytes()
 	if err != nil {
 		log.Warnf("提交 callback 时出现错误: %v server: %v", err, signServer)
 	}
@@ -343,7 +343,7 @@ func signRequset(seq uint64, uin string, cmd string, qua string, buff []byte) (s
 		Header: map[string]string{"Content-Type": "application/x-www-form-urlencoded"},
 		Body: bytes.NewReader([]byte(fmt.Sprintf("uin=%v&qua=%s&cmd=%s&seq=%v&buffer=%v&android_id=%v&guid=%v",
 			uin, qua, cmd, seq, hex.EncodeToString(buff), utils.B2S(device.AndroidId), hex.EncodeToString(device.Guid)))),
-	}.Bytes()
+	}.WithTimeout(time.Duration(base.SignServerTimeout) * time.Second).Bytes()
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -371,7 +371,7 @@ func signRegister(uin int64, androidID, guid []byte, qimei36, key string) {
 		Method: http.MethodGet,
 		URL: signServer + "register" + fmt.Sprintf("?uin=%v&android_id=%v&guid=%v&qimei36=%v&key=%s",
 			uin, utils.B2S(androidID), hex.EncodeToString(guid), qimei36, key),
-	}.Bytes()
+	}.WithTimeout(time.Duration(base.SignServerTimeout) * time.Second).Bytes()
 	if err != nil {
 		log.Warnf("注册QQ实例时出现错误: %v server: %v", err, signServer)
 		return
@@ -393,7 +393,7 @@ func signRefreshToken(uin string) error {
 	resp, err := download.Request{
 		Method: http.MethodGet,
 		URL:    signServer + "request_token" + fmt.Sprintf("?uin=%v", uin),
-	}.Bytes()
+	}.WithTimeout(time.Duration(base.SignServerTimeout) * time.Second).Bytes()
 	if err != nil {
 		return err
 	}
@@ -463,7 +463,7 @@ func signServerDestroy(uin string) error {
 	resp, err := download.Request{
 		Method: http.MethodGet,
 		URL:    signServer + "destroy" + fmt.Sprintf("?uin=%v&key=%v", uin, base.Key),
-	}.Bytes()
+	}.WithTimeout(time.Duration(base.SignServerTimeout) * time.Second).Bytes()
 	if err != nil || gjson.GetBytes(resp, "code").Int() != 0 {
 		return errors.Wrapf(err, "destroy 实例出现错误, server: %v", signServer)
 	}
@@ -475,7 +475,7 @@ func signVersion() (version string, err error) {
 	resp, err := download.Request{
 		Method: http.MethodGet,
 		URL:    signServer,
-	}.Bytes()
+	}.WithTimeout(time.Duration(base.SignServerTimeout) * time.Second).Bytes()
 	if err != nil {
 		return "", err
 	}

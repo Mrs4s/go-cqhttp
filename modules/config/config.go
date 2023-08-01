@@ -63,6 +63,7 @@ type Config struct {
 		SkipMimeScan        bool   `yaml:"skip-mime-scan"`
 		ConvertWebpImage    bool   `yaml:"convert-webp-image"`
 		HTTPTimeout         int    `yaml:"http-timeout"`
+		SignServerTimeout   int    `yaml:"sign-server-timeout"`
 	} `yaml:"message"`
 
 	Output struct {
