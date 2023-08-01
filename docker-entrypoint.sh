@@ -17,4 +17,4 @@ chown -R ${UID}:${GID} /app /data
 chmod +x /app/cqhttp
 
 echo "Starting..."
-su-exec ${USER} "$@"
+su-exec ${USER} /app/cqhttp "$@"
