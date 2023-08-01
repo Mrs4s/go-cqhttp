@@ -299,8 +299,8 @@ func energy(uin uint64, id string, _ string, salt []byte) ([]byte, error) {
 	return data, nil
 }
 
-// t: 提交的操作类型
-func submit(uin string, cmd string, callbackID int64, buffer []byte, t string) {
+// signSubmit 提交的操作类型
+func signSubmit(uin string, cmd string, callbackID int64, buffer []byte, t string) {
 	signServer := base.SignServer
 	if !strings.HasSuffix(signServer, "/") {
 		signServer += "/"
@@ -318,8 +318,8 @@ func submit(uin string, cmd string, callbackID int64, buffer []byte, t string) {
 	}
 }
 
-// request token和签名的回调
-func callback(uin string, results []gjson.Result, t string) {
+// signCallback request token 和签名的回调
+func signCallback(uin string, results []gjson.Result, t string) {
 	for _, result := range results {
 		cmd := result.Get("cmd").String()
 		callbackID := result.Get("callbackId").Int()
@@ -328,11 +328,11 @@ func callback(uin string, results []gjson.Result, t string) {
 		if err != nil {
 			log.Warnf("callback error: %v", err)
 		}
-		submit(uin, cmd, callbackID, ret, t)
+		signSubmit(uin, cmd, callbackID, ret, t)
 	}
 }
 
-func _sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []byte, extra []byte, token []byte, err error) {
+func signRequset(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []byte, extra []byte, token []byte, err error) {
 	signServer := base.SignServer
 	if !strings.HasSuffix(signServer, "/") {
 		signServer += "/"
@@ -351,14 +351,14 @@ func _sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []
 	extra, _ = hex.DecodeString(gjson.GetBytes(response, "data.extra").String())
 	token, _ = hex.DecodeString(gjson.GetBytes(response, "data.token").String())
 	if !base.IsBelow110 {
-		go callback(uin, gjson.GetBytes(response, "data.requestCallback").Array(), "sign")
+		go signCallback(uin, gjson.GetBytes(response, "data.requestCallback").Array(), "sign")
 	}
 	return sign, extra, token, nil
 }
 
 var registerLock sync.Mutex
 
-func register(uin int64, androidID, guid []byte, qimei36, key string) {
+func signRegister(uin int64, androidID, guid []byte, qimei36, key string) {
 	if base.IsBelow110 {
 		log.Warn("签名服务器版本低于1.1.0, 跳过实例注册")
 		return
@@ -384,7 +384,7 @@ func register(uin int64, androidID, guid []byte, qimei36, key string) {
 	log.Infof("注册QQ实例 %v 成功: %v", uin, msg)
 }
 
-func refreshToken(uin string) error {
+func signRefreshToken(uin string) error {
 	signServer := base.SignServer
 	if !strings.HasSuffix(signServer, "/") {
 		signServer += "/"
@@ -401,7 +401,7 @@ func refreshToken(uin string) error {
 	if gjson.GetBytes(resp, "code").Int() != 0 {
 		return errors.New(msg.String())
 	}
-	go callback(uin, gjson.GetBytes(resp, "data").Array(), "request token")
+	go signCallback(uin, gjson.GetBytes(resp, "data").Array(), "request token")
 	return nil
 }
 
@@ -410,7 +410,7 @@ var missTokenCount = uint64(0)
 func sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []byte, extra []byte, token []byte, err error) {
 	i := 0
 	for {
-		sign, extra, token, err = _sign(seq, uin, cmd, qua, buff)
+		sign, extra, token, err = signRequset(seq, uin, cmd, qua, buff)
 		if err != nil {
 			log.Warnf("获取sso sign时出现错误: %v server: %v", err, base.SignServer)
 		}
@@ -422,12 +422,12 @@ func sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []b
 			if registerLock.TryLock() { // 避免并发时多处同时销毁并重新注册
 				log.Warn("获取签名为空，实例可能丢失，正在尝试重新注册")
 				defer registerLock.Unlock()
-				err := destroySignServer(uin)
+				err := signServerDestroy(uin)
 				if err != nil {
 					log.Warnln(err)
 					return nil, nil, nil, err
 				}
-				register(base.Account.Uin, device.AndroidId, device.Guid, device.QImei36, base.Key)
+				signRegister(base.Account.Uin, device.AndroidId, device.Guid, device.QImei36, base.Key)
 			}
 			continue
 		}
@@ -435,7 +435,7 @@ func sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []b
 			log.Warnf("token 已过期, 总丢失 token 次数为 %v", atomic.AddUint64(&missTokenCount, 1))
 			if registerLock.TryLock() {
 				defer registerLock.Unlock()
-				if err := refreshToken(uin); err != nil {
+				if err := signRefreshToken(uin); err != nil {
 					log.Warnf("刷新 token 出现错误: %v server: %v", err, base.SignServer)
 				} else {
 					log.Info("刷新 token 成功")
@@ -448,12 +448,12 @@ func sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []b
 	return sign, extra, token, err
 }
 
-func destroySignServer(uin string) error {
+func signServerDestroy(uin string) error {
 	signServer := base.SignServer
 	if !strings.HasSuffix(signServer, "/") {
 		signServer += "/"
 	}
-	signVersion, err := getSignServerVersion()
+	signVersion, err := signVersion()
 	if err != nil {
 		return errors.Wrapf(err, "获取签名服务版本出现错误, server: %v", signServer)
 	}
@@ -470,7 +470,7 @@ func destroySignServer(uin string) error {
 	return nil
 }
 
-func getSignServerVersion() (version string, err error) {
+func signVersion() (version string, err error) {
 	signServer := base.SignServer
 	resp, err := download.Request{
 		Method: http.MethodGet,
@@ -486,7 +486,7 @@ func getSignServerVersion() (version string, err error) {
 }
 
 // 定时刷新 token, interval 为间隔时间（分钟）
-func startRefreshTokenTask(interval int64) {
+func signStartRefreshToken(interval int64) {
 	if interval <= 0 {
 		log.Warn("定时刷新 token 已关闭")
 		return
@@ -502,14 +502,14 @@ func startRefreshTokenTask(interval int64) {
 	t := time.NewTicker(time.Duration(interval) * time.Minute)
 	defer t.Stop()
 	for range t.C {
-		err := refreshToken(strconv.FormatInt(base.Account.Uin, 10))
+		err := signRefreshToken(strconv.FormatInt(base.Account.Uin, 10))
 		if err != nil {
 			log.Warnf("刷新 token 出现错误: %v server: %v", err, base.SignServer)
 		}
 	}
 }
 
-func waitSignServer() bool {
+func signWaitServer() bool {
 	t := time.NewTicker(time.Second * 5)
 	defer t.Stop()
 	i := 0
