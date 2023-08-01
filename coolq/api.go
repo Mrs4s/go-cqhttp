@@ -1155,7 +1155,7 @@ func (bot *CQBot) CQSetGroupKick(groupID int64, userID int64, msg string, block 
 	if g := bot.Client.FindGroup(groupID); g != nil {
 		m := g.FindMember(userID)
 		if m == nil {
-			return Failed(100, "MEMBER_IS_NOT_IN_GROUP", "人员不存在")
+			return Failed(100, "MEMBER_NOT_FOUND", "人员不存在")
 		}
 		err := m.Kick(msg, block)
 		if err != nil {
