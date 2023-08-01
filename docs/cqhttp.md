@@ -1,6 +1,8 @@
 # 拓展API
 
-由于部分 api 原版 CQHTTP 并未实现，go-cqhttp 修改并增加了一些拓展 api .
+由于部分 api 原版 CQHTTP 并未实现，go-cqhttp 修改并增加了一些拓展 api 
+
+> 注意, 最新文档已经移动到 [go-cqhttp-docs](https://github.com/ishkong/go-cqhttp-docs), 当前文档只做兼容性保留, 所以内容可能有不足..
 
 <details>
 <summary>目录</summary>

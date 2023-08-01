@@ -29,11 +29,13 @@ import (
 	"github.com/Mrs4s/go-cqhttp/modules/api"
 	"github.com/Mrs4s/go-cqhttp/modules/config"
 	"github.com/Mrs4s/go-cqhttp/modules/filter"
+	"github.com/Mrs4s/go-cqhttp/pkg/onebot"
 )
 
 // HTTPServer HTTP通信相关配置
 type HTTPServer struct {
 	Disabled    bool   `yaml:"disabled"`
+	Version     uint16 `yaml:"version"`
 	Address     string `yaml:"address"`
 	Host        string `yaml:"host"`
 	Port        int    `yaml:"port"`
@@ -57,6 +59,7 @@ type httpServerPost struct {
 type httpServer struct {
 	api         *api.Caller
 	accessToken string
+	spec        *onebot.Spec // onebot spec
 }
 
 // HTTPClient 反向HTTP上报客户端
@@ -81,6 +84,7 @@ type httpCtx struct {
 const httpDefault = `
   - http: # HTTP 通信设置
       address: 0.0.0.0:5700 # HTTP监听地址
+      version: 11     # OneBot协议版本, 支持 11/12
       timeout: 5      # 反向 HTTP 超时时间, 单位秒，<5 时将被忽略
       long-polling:   # 长轮询拓展
         enabled: false       # 是否开启
@@ -104,31 +108,35 @@ func init() {
 
 var joinQuery = regexp.MustCompile(`\[(.+?),(.+?)]\.0`)
 
-func (h *httpCtx) get(s string, join bool) gjson.Result {
+func mayJSONParam(p string) bool {
+	if strings.HasPrefix(p, "{") || strings.HasPrefix(p, "[") {
+		return gjson.Valid(p)
+	}
+	return false
+}
+
+func (h *httpCtx) get(pattern string, join bool) gjson.Result {
 	// support gjson advanced syntax:
-	// h.Get("[a,b].0") see usage in http_test.go
-	if join && joinQuery.MatchString(s) {
-		matched := joinQuery.FindStringSubmatch(s)
+	// h.Get("[a,b].0") see usage in http_test.go. See issue #1241, #1325.
+	if join && strings.HasPrefix(pattern, "[") && joinQuery.MatchString(pattern) {
+		matched := joinQuery.FindStringSubmatch(pattern)
 		if r := h.get(matched[1], false); r.Exists() {
 			return r
 		}
 		return h.get(matched[2], false)
 	}
 
-	validJSONParam := func(p string) bool {
-		return (strings.HasPrefix(p, "{") || strings.HasPrefix(p, "[")) && gjson.Valid(p)
-	}
 	if h.postForm != nil {
-		if form := h.postForm.Get(s); form != "" {
-			if validJSONParam(form) {
+		if form := h.postForm.Get(pattern); form != "" {
+			if mayJSONParam(form) {
 				return gjson.Result{Type: gjson.JSON, Raw: form}
 			}
 			return gjson.Result{Type: gjson.String, Str: form}
 		}
 	}
 	if h.query != nil {
-		if query := h.query.Get(s); query != "" {
-			if validJSONParam(query) {
+		if query := h.query.Get(pattern); query != "" {
+			if mayJSONParam(query) {
 				return gjson.Result{Type: gjson.JSON, Raw: query}
 			}
 			return gjson.Result{Type: gjson.String, Str: query}
@@ -150,6 +158,13 @@ func (s *httpServer) ServeHTTP(writer http.ResponseWriter, request *http.Request
 	contentType := request.Header.Get("Content-Type")
 	switch request.Method {
 	case http.MethodPost:
+		// todo: msg pack
+		if s.spec.Version == 12 && strings.Contains(contentType, "application/msgpack") {
+			log.Warnf("请求 %v 数据类型暂不支持: MsgPack", request.RequestURI)
+			writer.WriteHeader(http.StatusUnsupportedMediaType)
+			return
+		}
+
 		if strings.Contains(contentType, "application/json") {
 			body, err := io.ReadAll(request.Body)
 			if err != nil {
@@ -190,12 +205,12 @@ func (s *httpServer) ServeHTTP(writer http.ResponseWriter, request *http.Request
 	if request.URL.Path == "/" {
 		action := strings.TrimSuffix(ctx.Get("action").Str, "_async")
 		log.Debugf("HTTPServer接收到API调用: %v", action)
-		response = s.api.Call(action, ctx.Get("params"))
+		response = s.api.Call(action, s.spec, ctx.Get("params"))
 	} else {
 		action := strings.TrimPrefix(request.URL.Path, "/")
 		action = strings.TrimSuffix(action, "_async")
 		log.Debugf("HTTPServer接收到API调用: %v", action)
-		response = s.api.Call(action, &ctx)
+		response = s.api.Call(action, s.spec, &ctx)
 	}
 
 	writer.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -245,9 +260,15 @@ func runHTTP(bot *coolq.CQBot, node yaml.Node) {
 	case conf.Disabled:
 		return
 	}
-
 	network, addr := "tcp", conf.Address
 	s := &httpServer{accessToken: conf.AccessToken}
+	switch conf.Version {
+	default:
+		// default v11
+		s.spec = onebot.V11
+	case 12:
+		s.spec = onebot.V12
+	}
 	switch {
 	case conf.Address != "":
 		uri, err := url.Parse(conf.Address)

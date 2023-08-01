@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"image/png"
 	"os"
 	"runtime/debug"
 	"strings"
@@ -19,11 +20,14 @@ import (
 	"github.com/pkg/errors"
 	"github.com/segmentio/asm/base64"
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/image/webp"
 
 	"github.com/Mrs4s/go-cqhttp/db"
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
 	"github.com/Mrs4s/go-cqhttp/internal/mime"
+	"github.com/Mrs4s/go-cqhttp/internal/msg"
+	"github.com/Mrs4s/go-cqhttp/pkg/onebot"
 )
 
 // CQBot CQBot结构体,存储Bot实例相关配置
@@ -112,7 +116,7 @@ func NewQQBot(cli *client.QQClient) *CQBot {
 		for {
 			<-t.C
 			bot.dispatchEvent("meta_event/heartbeat", global.MSG{
-				"status":   bot.CQGetStatus()["data"],
+				"status":   bot.CQGetStatus(onebot.V11)["data"],
 				"interval": base.HeartbeatInterval.Milliseconds(),
 			})
 		}
@@ -144,7 +148,7 @@ func (w *worker) wait() {
 }
 
 // uploadLocalImage 上传本地图片
-func (bot *CQBot) uploadLocalImage(target message.Source, img *LocalImageElement) (message.IMessageElement, error) {
+func (bot *CQBot) uploadLocalImage(target message.Source, img *msg.LocalImage) (message.IMessageElement, error) {
 	if img.File != "" {
 		f, err := os.Open(img.File)
 		if err != nil {
@@ -153,10 +157,23 @@ func (bot *CQBot) uploadLocalImage(target message.Source, img *LocalImageElement
 		defer func() { _ = f.Close() }()
 		img.Stream = f
 	}
-	if mt, ok := mime.CheckImage(img.Stream); !ok {
+	mt, ok := mime.CheckImage(img.Stream)
+	if !ok {
 		return nil, errors.New("image type error: " + mt)
 	}
-	i, err := bot.Client.UploadImage(target, img.Stream, 4)
+	if mt == "image/webp" && base.ConvertWebpImage {
+		img0, err := webp.Decode(img.Stream)
+		if err != nil {
+			return nil, errors.Wrap(err, "decode webp error")
+		}
+		stream := bytes.NewBuffer(nil)
+		err = png.Encode(stream, img0)
+		if err != nil {
+			return nil, errors.Wrap(err, "encode png error")
+		}
+		img.Stream = bytes.NewReader(stream.Bytes())
+	}
+	i, err := bot.Client.UploadImage(target, img.Stream)
 	if err != nil {
 		return nil, err
 	}
@@ -171,20 +188,20 @@ func (bot *CQBot) uploadLocalImage(target message.Source, img *LocalImageElement
 }
 
 // uploadLocalVideo 上传本地短视频至群聊
-func (bot *CQBot) uploadLocalVideo(target message.Source, v *LocalVideoElement) (*message.ShortVideoElement, error) {
+func (bot *CQBot) uploadLocalVideo(target message.Source, v *msg.LocalVideo) (*message.ShortVideoElement, error) {
 	video, err := os.Open(v.File)
 	if err != nil {
 		return nil, err
 	}
 	defer func() { _ = video.Close() }()
-	return bot.Client.UploadShortVideo(target, video, v.thumb, 4)
+	return bot.Client.UploadShortVideo(target, video, v.Thumb)
 }
 
 func removeLocalElement(elements []message.IMessageElement) []message.IMessageElement {
 	var j int
 	for i, e := range elements {
 		switch e.(type) {
-		case *LocalImageElement, *LocalVideoElement:
+		case *msg.LocalImage, *msg.LocalVideo:
 		case *message.VoiceElement: // 未上传的语音消息， 也删除
 		case nil:
 		default:
@@ -214,7 +231,7 @@ func (bot *CQBot) uploadMedia(target message.Source, elements []message.IMessage
 	for i, m := range elements {
 		p := &elements[i]
 		switch e := m.(type) {
-		case *LocalImageElement:
+		case *msg.LocalImage:
 			w.do(func() {
 				m, err := bot.uploadLocalImage(target, e)
 				if err != nil {
@@ -232,7 +249,7 @@ func (bot *CQBot) uploadMedia(target message.Source, elements []message.IMessage
 					*p = m
 				}
 			})
-		case *LocalVideoElement:
+		case *msg.LocalVideo:
 			w.do(func() {
 				m, err := bot.uploadLocalVideo(target, e)
 				if err != nil {
@@ -258,7 +275,7 @@ func (bot *CQBot) SendGroupMessage(groupID int64, m *message.SendingMessage) (in
 	m.Elements = bot.uploadMedia(source, m.Elements)
 	for _, e := range m.Elements {
 		switch i := e.(type) {
-		case *PokeElement:
+		case *msg.Poke:
 			if group != nil {
 				if mem := group.FindMember(i.Target); mem != nil {
 					mem.Poke()
@@ -303,7 +320,7 @@ func (bot *CQBot) SendPrivateMessage(target int64, groupID int64, m *message.Sen
 	m.Elements = bot.uploadMedia(source, m.Elements)
 	for _, e := range m.Elements {
 		switch i := e.(type) {
-		case *PokeElement:
+		case *msg.Poke:
 			bot.Client.SendFriendPoke(i.Target)
 			return 0
 		case *message.MusicShareElement:
@@ -405,7 +422,7 @@ func (bot *CQBot) SendGuildChannelMessage(guildID, channelID uint64, m *message.
 			bot.Client.SendGuildMusicShare(guildID, channelID, i)
 			return "-1" // todo: fix this
 
-		case *message.VoiceElement, *PokeElement:
+		case *message.VoiceElement, *msg.Poke:
 			log.Warnf("警告: 频道暂不支持发送 %v 消息", i.Type().String())
 			continue
 		}

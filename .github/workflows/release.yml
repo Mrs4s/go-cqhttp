@@ -10,20 +10,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2.3.4
-        with:
-          fetch-depth: 0
+        run: |
+          git version
+          git clone https://github.com/Mrs4s/go-cqhttp.git /home/runner/work/go-cqhttp/go-cqhttp
 
       - name: Set up Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
-          go-version: '1.19'
+          go-version: '1.20'
 
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v2
+        uses: goreleaser/goreleaser-action@v4
         with:
           version: latest
-          args: release --rm-dist
+          args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

@@ -9,6 +9,7 @@ import (
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/modules/api"
+	"github.com/Mrs4s/go-cqhttp/pkg/onebot"
 
 	"golang.org/x/time/rate"
 )
@@ -26,7 +27,7 @@ type MiddleWares struct {
 
 func rateLimit(frequency float64, bucketSize int) api.Handler {
 	limiter := rate.NewLimiter(rate.Limit(frequency), bucketSize)
-	return func(_ string, _ api.Getter) global.MSG {
+	return func(_ string, _ *onebot.Spec, _ api.Getter) global.MSG {
 		_ = limiter.Wait(context.Background())
 		return nil
 	}
@@ -45,12 +46,15 @@ func longPolling(bot *coolq.CQBot, maxSize int) api.Handler {
 		}
 		cond.Signal()
 	})
-	return func(action string, p api.Getter) global.MSG {
-		if action != "get_updates" {
+	return func(action string, spec *onebot.Spec, p api.Getter) global.MSG {
+		switch {
+		case spec.Version == 11 && action == "get_updates": // ok
+		case spec.Version == 12 && action == "get_latest_events": // ok
+		default:
 			return nil
 		}
 		var (
-			ch      = make(chan []interface{})
+			ch      = make(chan []any)
 			timeout = time.Duration(p.Get("timeout").Int()) * time.Second
 		)
 		go func() {
@@ -63,7 +67,7 @@ func longPolling(bot *coolq.CQBot, maxSize int) api.Handler {
 			if limit <= 0 || queue.Len() < limit {
 				limit = queue.Len()
 			}
-			ret := make([]interface{}, limit)
+			ret := make([]any, limit)
 			elem := queue.Front()
 			for i := 0; i < limit; i++ {
 				ret[i] = elem.Value
@@ -81,7 +85,7 @@ func longPolling(bot *coolq.CQBot, maxSize int) api.Handler {
 		if timeout != 0 {
 			select {
 			case <-time.After(timeout):
-				return coolq.OK([]interface{}{})
+				return coolq.OK([]any{})
 			case ret := <-ch:
 				return coolq.OK(ret)
 			}

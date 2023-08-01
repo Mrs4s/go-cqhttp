@@ -1,5 +1,7 @@
 # 配置
 
+> 注意, 最新文档已经移动到 [go-cqhttp-docs](https://github.com/ishkong/go-cqhttp-docs), 当前文档只做兼容性保留, 所以内容可能有不足.
+
 go-cqhttp 包含 `config.yml` 和 `device.json` 两个配置文件, 其中 `config.yml` 为运行配置 `device.json` 为虚拟设备信息.
 
 ## 配置信息

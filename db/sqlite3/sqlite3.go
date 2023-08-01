@@ -11,10 +11,12 @@ import (
 
 	sql "github.com/FloatTech/sqlite"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 
 	"github.com/Mrs4s/MiraiGo/binary"
 	"github.com/Mrs4s/MiraiGo/utils"
+
 	"github.com/Mrs4s/go-cqhttp/db"
 )
 
@@ -26,8 +28,8 @@ type database struct {
 
 // config mongodb 相关配置
 type config struct {
-	Enable   bool          `yaml:"enable"`
-	CacheTTL time.Duration `yaml:"cachettl"`
+	Enable   bool   `yaml:"enable"`
+	CacheTTL string `yaml:"cachettl"`
 }
 
 func init() {
@@ -38,7 +40,11 @@ func init() {
 		if !conf.Enable {
 			return nil
 		}
-		return &database{db: new(sql.Sqlite), ttl: conf.CacheTTL}
+		duration, err := time.ParseDuration(conf.CacheTTL)
+		if err != nil {
+			log.Fatalf("illegal ttl config: %v", err)
+		}
+		return &database{db: new(sql.Sqlite), ttl: duration}
 	})
 }
 

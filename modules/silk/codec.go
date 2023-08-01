@@ -32,6 +32,9 @@ func encode(record []byte, tempName string) (silkWav []byte, err error) {
 	// 2.转换pcm
 	pcmPath := path.Join(silkCachePath, tempName+".pcm")
 	cmd := exec.Command("ffmpeg", "-i", rawPath, "-f", "s16le", "-ar", "24000", "-ac", "1", pcmPath)
+	if errors.Is(cmd.Err, exec.ErrDot) {
+		cmd.Err = nil
+	}
 	if base.Debug {
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr

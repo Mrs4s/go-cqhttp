@@ -12,6 +12,10 @@ internal/btree/*.db
 
 # binary builds
 go-cqhttp
+*.exe
 
 # macos
 .DS_Store
+
+# windwos rc
+*.syso

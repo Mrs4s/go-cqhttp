@@ -6,9 +6,10 @@ import (
 
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
+	"github.com/Mrs4s/go-cqhttp/pkg/onebot"
 )
 
-//go:generate go run github.com/Mrs4s/go-cqhttp/cmd/api-generator -path=./../../coolq/api.go
+//go:generate go run ./../../cmd/api-generator -pkg api -path=./../../coolq/api.go,./../../coolq/api_v12.go -o api.go
 
 // Getter 参数获取
 type Getter interface {
@@ -16,7 +17,7 @@ type Getter interface {
 }
 
 // Handler 中间件
-type Handler func(action string, p Getter) global.MSG
+type Handler func(action string, spe *onebot.Spec, p Getter) global.MSG
 
 // Caller api route caller
 type Caller struct {
@@ -25,13 +26,13 @@ type Caller struct {
 }
 
 // Call specific API
-func (c *Caller) Call(action string, p Getter) global.MSG {
+func (c *Caller) Call(action string, spec *onebot.Spec, p Getter) global.MSG {
 	for _, fn := range c.handlers {
-		if ret := fn(action, p); ret != nil {
+		if ret := fn(action, spec, p); ret != nil {
 			return ret
 		}
 	}
-	return c.call(action, p)
+	return c.call(action, spec, p)
 }
 
 // Use add handlers to the API caller

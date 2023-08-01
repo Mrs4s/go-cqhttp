@@ -24,18 +24,12 @@ jobs:
             goarch: "386"
       fail-fast: true
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Setup Go environment
-        uses: actions/setup-go@v2.1.3
+        uses: actions/setup-go@v3
         with:
-          go-version: 1.19
-      - name: Cache downloaded module
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ matrix.goos }}-${{ matrix.goarch }}-${{ hashFiles('**/go.sum') }}
+          cache: true
+          go-version: '1.20'
       - name: Build binary file
         env:
           GOOS: ${{ matrix.goos }}
@@ -44,12 +38,12 @@ jobs:
         run: |
           if [ $GOOS = "windows" ]; then export BINARY_SUFFIX="$BINARY_SUFFIX.exe"; fi
           if $IS_PR ; then echo $PR_PROMPT; fi
-          export BINARY_NAME="$BINARY_PREFIX$GOOS_$GOARCH$BINARY_SUFFIX"
+          export BINARY_NAME="$BINARY_PREFIX"$GOOS"_$GOARCH$BINARY_SUFFIX"
           export CGO_ENABLED=0
           export LD_FLAGS="-w -s -X github.com/Mrs4s/go-cqhttp/internal/base.Version=${COMMIT_ID::7}"
           go build -o "output/$BINARY_NAME" -trimpath -ldflags "$LD_FLAGS" .
       - name: Upload artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         if: ${{ !github.head_ref }}
         with:
           name: ${{ matrix.goos }}_${{ matrix.goarch }}
