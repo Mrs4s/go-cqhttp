@@ -346,37 +346,27 @@ func register(uin int64, androidID, guid []byte, qimei36, key string) {
 	log.Infof("注册QQ实例 %v 成功: %v", uin, msg)
 }
 
-func listenPort(wg *sync.WaitGroup) {
-	defer wg.Done()
-	for {
-		err := dailPort()
+func waitSignServer() bool {
+	t := time.NewTicker(time.Second*5)
+	defer t.Stop()
+	i := 0
+	for range t.C {
+		if i > 3 {
+			return false
+		}
+		i++
+		u, err := url.Parse(base.SignServer)
 		if err != nil {
 			log.Warnf("连接到签名服务器出现错误: %v", err)
-			// 连接失败，每5秒检测一次
-			time.Sleep(5 * time.Second)
-		} else {
-			break
+			continue
 		}
+		r := utils.RunTCPPingLoop(u.Host, 4)
+		if r.PacketsLoss > 0 {
+			log.Warnf("连接到签名服务器出现错误: 丢包%d/%d 时延%dms", r.PacketsLoss, r.PacketsSent, r.AvgTimeMill)
+			continue
+		}
+		break
 	}
-}
-
-func dailPort() error {
-	u, err := url.Parse(base.SignServer)
-	if err != nil {
-		return err
-	}
-	conn, err := net.Dial("tcp", u.Host)
-	if err != nil {
-		return err
-	}
-	conn.Close()
-	return nil
-}
-
-func waitForConnection() {
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go listenPort(&wg)
-	wg.Wait()
 	log.Infof("连接至签名服务器: %s", base.SignServer)
+	return true
 }
