@@ -51,7 +51,7 @@ func replyID(r *message.ReplyElement, source message.Source) int32 {
 	}
 	// 私聊时，部分（不确定）的账号会在 ReplyElement 中带有 GroupID 字段。
 	// 这里需要判断是由于 “直接回复” 功能，GroupID 为触发直接回复的来源那个群。
-	if source.SourceType == message.SourcePrivate && (r.Sender == source.PrimaryID || r.GroupID == source.PrimaryID) {
+	if source.SourceType == message.SourcePrivate && (r.Sender == source.PrimaryID || r.GroupID == source.PrimaryID || r.GroupID == 0) {
 		// 私聊似乎腾讯服务器有bug?
 		seq = int32(uint16(seq))
 		id = r.Sender
@@ -720,7 +720,7 @@ func (bot *CQBot) ConvertElement(spec *onebot.Spec, elem msg.Element, sourceType
 				MusicType:  message.CloudMusic,
 				Title:      info.Get("name").String(),
 				Summary:    artistName,
-				Url:        "https://y.music.163.com/m/song/" + id,
+				Url:        "https://music.163.com/song/?id=" + id,
 				PictureUrl: info.Get("album.picUrl").String(),
 				MusicUrl:   "https://music.163.com/song/media/outer/url?id=" + id,
 			}, nil

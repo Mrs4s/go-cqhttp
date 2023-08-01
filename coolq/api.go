@@ -617,6 +617,7 @@ func (bot *CQBot) CQUploadPrivateFile(userID int64, file, name string) global.MS
 		log.Warnf("上传私聊文件 %v 失败: %+v", file, err)
 		return Failed(100, "OPEN_FILE_ERROR", "打开文件失败")
 	}
+	defer func() { _ = fileBody.Close() }()
 	localFile := &client.LocalFile{
 		FileName: name,
 		Body:     fileBody,
@@ -1151,13 +1152,15 @@ func (bot *CQBot) CQDelGroupMemo(groupID int64, fid string) global.MSG {
 // @rename(msg->message, block->reject_add_request)
 func (bot *CQBot) CQSetGroupKick(groupID int64, userID int64, msg string, block bool) global.MSG {
 	if g := bot.Client.FindGroup(groupID); g != nil {
-		if m := g.FindMember(userID); m != nil {
-			err := m.Kick(msg, block)
-			if err != nil {
-				return Failed(100, "NOT_MANAGEABLE", "机器人权限不足")
-			}
-			return OK(nil)
+		m := g.FindMember(userID)
+		if m == nil {
+			return Failed(100, "MEMBER_IS_NOT_IN_GROUP", "人员不存在")
 		}
+		err := m.Kick(msg, block)
+		if err != nil {
+			return Failed(100, "NOT_MANAGEABLE", "机器人权限不足")
+		}
+		return OK(nil)
 	}
 	return Failed(100, "GROUP_NOT_FOUND", "群聊不存在")
 }
@@ -1390,7 +1393,7 @@ func (bot *CQBot) CQGetGroupHonorInfo(groupID int64, t string) global.MSG {
 
 	if t == "performer" || t == "all" {
 		if honor, err := bot.Client.GetGroupHonorInfo(groupID, client.Performer); err == nil {
-			msg["performer_lis"] = convertMem(honor.ActorList)
+			msg["performer_list"] = convertMem(honor.ActorList)
 		}
 	}
 
@@ -1686,8 +1689,26 @@ func (bot *CQBot) CQGetMessage(messageID int32) global.MSG {
 	switch o := msg.(type) {
 	case *db.StoredGroupMessage:
 		m["group_id"] = o.GroupCode
+		if o.QuotedInfo != nil {
+			elem := global.MSG{
+				"type": "reply",
+				"data": global.MSG{
+					"id": strconv.FormatInt(int64(o.QuotedInfo.PrevGlobalID), 10),
+				},
+			}
+			o.Content = append(o.Content, elem)
+		}
 		m["message"] = ToFormattedMessage(bot.ConvertContentMessage(o.Content, message.SourceGroup, false), message.Source{SourceType: message.SourceGroup, PrimaryID: o.GroupCode})
 	case *db.StoredPrivateMessage:
+		if o.QuotedInfo != nil {
+			elem := global.MSG{
+				"type": "reply",
+				"data": global.MSG{
+					"id": strconv.FormatInt(int64(o.QuotedInfo.PrevGlobalID), 10),
+				},
+			}
+			o.Content = append(o.Content, elem)
+		}
 		m["message"] = ToFormattedMessage(bot.ConvertContentMessage(o.Content, message.SourcePrivate, false), message.Source{SourceType: message.SourcePrivate})
 	}
 	return OK(m)
@@ -2018,7 +2039,7 @@ func (bot *CQBot) CQGetVersionInfo() global.MSG {
 		"protocol_version":           "v11",
 		"coolq_directory":            wd,
 		"coolq_edition":              "pro",
-		"go-cqhttp":                  true,
+		"go_cqhttp":                  true,
 		"plugin_version":             "4.15.0",
 		"plugin_build_number":        99,
 		"plugin_build_configuration": "release",
