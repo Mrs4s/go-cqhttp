@@ -166,6 +166,9 @@ func LoginInteract() {
 
 	if base.SignServer != "-" && base.SignServer != "" {
 		log.Infof("使用服务器 %s 进行数据包签名", base.SignServer)
+		if base.SignServerBearer != "-" && base.SignServerBearer != "" {
+			log.Infof("使用 Bearer %s 认证签名服务器 %s ", base.SignServerBearer, base.SignServer)
+		}
 		// 等待签名服务器直到连接成功
 		if !signWaitServer() {
 			log.Fatalf("连接签名服务器失败")

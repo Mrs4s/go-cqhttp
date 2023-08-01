@@ -39,6 +39,7 @@ var (
 	AllowTempSession    bool   // 是否允许发送临时会话信息
 	UpdateProtocol      bool   // 是否更新协议
 	SignServer          string // 使用特定的服务器进行签名
+	SignServerBearer    string // 认证签名服务器的 Bearer Token
 	Key                 string // 签名服务器密钥
 	IsBelow110          bool   // 签名服务器版本是否低于1.1.0及以下
 	HTTPTimeout         int    // download 超时时间
@@ -92,6 +93,7 @@ func Init() {
 		UseSSOAddress = conf.Account.UseSSOAddress
 		AllowTempSession = conf.Account.AllowTempSession
 		SignServer = conf.Account.SignServer
+		SignServerBearer = conf.Account.SignServerBearer
 		Key = conf.Account.Key
 		IsBelow110 = conf.Account.IsBelow110
 		HTTPTimeout = conf.Message.HTTPTimeout

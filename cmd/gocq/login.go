@@ -24,6 +24,8 @@ import (
 	"github.com/tidwall/gjson"
 	"gopkg.ilharper.com/x/isatty"
 
+	"github.com/Mrs4s/go-cqhttp/internal/base"
+
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
 	"github.com/Mrs4s/go-cqhttp/internal/download"
@@ -269,13 +271,19 @@ func fetchCaptcha(id string) string {
 	return ""
 }
 
-func energy(uin uint64, id string, _ string, salt []byte) ([]byte, error) {
+func energy(_ uint64, id string, _ string, salt []byte) ([]byte, error) {
 	signServer := base.SignServer
 	if !strings.HasSuffix(signServer, "/") {
 		signServer += "/"
 	}
+	headers := make(map[string]string)
+	signServerBearer := base.SignServerBearer
+	if signServerBearer != "-" && signServerBearer != "" {
+		headers["Authorization"] = "Bearer " + signServerBearer
+	}
 	req := download.Request{
 		Method: http.MethodGet,
+    Header: headers,
 		URL: signServer + "custom_energy" + fmt.Sprintf("?data=%v&salt=%v&uin=%v&android_id=%v&guid=%v",
 			id, hex.EncodeToString(salt), uin, utils.B2S(device.AndroidId), hex.EncodeToString(device.Guid)),
 	}.WithTimeout(time.Duration(base.SignServerTimeout) * time.Second)
@@ -337,10 +345,15 @@ func signRequset(seq uint64, uin string, cmd string, qua string, buff []byte) (s
 	if !strings.HasSuffix(signServer, "/") {
 		signServer += "/"
 	}
+	headers := map[string]string{"Content-Type": "application/x-www-form-urlencoded"}
+	signServerBearer := base.SignServerBearer
+	if signServerBearer != "-" && signServerBearer != "" {
+		headers["Authorization"] = "Bearer " + signServerBearer
+	}
 	response, err := download.Request{
 		Method: http.MethodPost,
 		URL:    signServer + "sign",
-		Header: map[string]string{"Content-Type": "application/x-www-form-urlencoded"},
+		Header: headers,
 		Body: bytes.NewReader([]byte(fmt.Sprintf("uin=%v&qua=%s&cmd=%s&seq=%v&buffer=%v&android_id=%v&guid=%v",
 			uin, qua, cmd, seq, hex.EncodeToString(buff), utils.B2S(device.AndroidId), hex.EncodeToString(device.Guid)))),
 	}.WithTimeout(time.Duration(base.SignServerTimeout) * time.Second).Bytes()
