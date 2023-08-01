@@ -1151,13 +1151,12 @@ func (bot *CQBot) CQSetGroupKick(groupID int64, userID int64, msg string, block 
 	if g := bot.Client.FindGroup(groupID); g != nil {
 		if m := g.FindMember(userID); m == nil {
 			return Failed(100, "MEMBER_IS_NOT_IN_GROUP", "人员不存在")
-		} else {
-			err := m.Kick(msg, block)
-			if err != nil {
-				return Failed(100, "NOT_MANAGEABLE", "机器人权限不足")
-			}
-			return OK(nil)
 		}
+		err := m.Kick(msg, block)
+		if err != nil {
+			return Failed(100, "NOT_MANAGEABLE", "机器人权限不足")
+		}
+		return OK(nil)
 	}
 	return Failed(100, "GROUP_NOT_FOUND", "群聊不存在")
 }
