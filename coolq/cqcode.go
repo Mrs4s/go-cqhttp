@@ -263,6 +263,7 @@ func toElements(e []message.IMessageElement, source message.Source) (r []msg.Ele
 	return
 }
 
+// ToMessageContent 将消息转换成 Content. 忽略 Reply
 // 不同于 onebot 的 Array Message, 此函数转换出来的 Content 的 data 段为实际类型
 // 方便数据库查询
 func ToMessageContent(e []message.IMessageElement, source message.Source) (r []global.MSG) {
