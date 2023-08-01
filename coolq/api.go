@@ -1113,17 +1113,18 @@ func (bot *CQBot) CQSetGroupMemo(groupID int64, msg, img string) global.MSG {
 			if err != nil {
 				return Failed(100, "IMAGE_NOT_FOUND", "图片未找到")
 			}
-			_, err = bot.Client.AddGroupNoticeWithPic(groupID, msg, data)
+			noticeID, err := bot.Client.AddGroupNoticeWithPic(groupID, msg, data)
 			if err != nil {
 				return Failed(100, "SEND_NOTICE_ERROR", err.Error())
 			}
+			return OK(global.MSG{"notice_id": noticeID})
 		} else {
-			_, err := bot.Client.AddGroupNoticeSimple(groupID, msg)
+			noticeID, err := bot.Client.AddGroupNoticeSimple(groupID, msg)
 			if err != nil {
 				return Failed(100, "SEND_NOTICE_ERROR", err.Error())
 			}
+			return OK(global.MSG{"notice_id": noticeID})
 		}
-		return OK(nil)
 	}
 	return Failed(100, "GROUP_NOT_FOUND", "群聊不存在")
 }
