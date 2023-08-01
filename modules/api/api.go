@@ -5,19 +5,82 @@ package api
 import (
 	"github.com/Mrs4s/go-cqhttp/coolq"
 	"github.com/Mrs4s/go-cqhttp/global"
+	"github.com/Mrs4s/go-cqhttp/pkg/onebot"
 )
 
-func (c *Caller) call(action string, p Getter) global.MSG {
+func (c *Caller) call(action string, spec *onebot.Spec, p Getter) global.MSG {
+	if spec.Version == 11 {
+		switch action {
+		case ".handle_quick_operation":
+			p0 := p.Get("context")
+			p1 := p.Get("operation")
+			return c.bot.CQHandleQuickOperation(p0, p1)
+		case "can_send_image":
+			return c.bot.CQCanSendImage()
+		case "can_send_record":
+			return c.bot.CQCanSendRecord()
+		case "get_login_info":
+			return c.bot.CQGetLoginInfo()
+		case "get_stranger_info":
+			p0 := p.Get("user_id").Int()
+			return c.bot.CQGetStrangerInfo(p0)
+		case "get_version_info":
+			return c.bot.CQGetVersionInfo()
+		case "send_forward_msg":
+			p0 := p.Get("group_id").Int()
+			p1 := p.Get("user_id").Int()
+			p2 := p.Get("messages")
+			p3 := p.Get("message_type").String()
+			return c.bot.CQSendForwardMessage(p0, p1, p2, p3)
+		case "send_group_forward_msg":
+			p0 := p.Get("group_id").Int()
+			p1 := p.Get("messages")
+			return c.bot.CQSendGroupForwardMessage(p0, p1)
+		case "send_group_msg":
+			p0 := p.Get("group_id").Int()
+			p1 := p.Get("message")
+			p2 := p.Get("auto_escape").Bool()
+			return c.bot.CQSendGroupMessage(p0, p1, p2)
+		case "send_msg":
+			p0 := p.Get("group_id").Int()
+			p1 := p.Get("user_id").Int()
+			p2 := p.Get("message")
+			p3 := p.Get("message_type").String()
+			p4 := p.Get("auto_escape").Bool()
+			return c.bot.CQSendMessage(p0, p1, p2, p3, p4)
+		case "send_private_forward_msg":
+			p0 := p.Get("user_id").Int()
+			p1 := p.Get("messages")
+			return c.bot.CQSendPrivateForwardMessage(p0, p1)
+		case "send_private_msg":
+			p0 := p.Get("user_id").Int()
+			p1 := p.Get("group_id").Int()
+			p2 := p.Get("message")
+			p3 := p.Get("auto_escape").Bool()
+			return c.bot.CQSendPrivateMessage(p0, p1, p2, p3)
+		}
+	}
+	if spec.Version == 12 {
+		switch action {
+		case "get_self_info":
+			return c.bot.CQGetLoginInfo()
+		case "get_user_info":
+			p0 := p.Get("user_id").Int()
+			return c.bot.CQGetStrangerInfo(p0)
+		case "get_version":
+			return c.bot.CQGetVersion()
+		case "send_message":
+			p0 := p.Get("group_id").String()
+			p1 := p.Get("user_id").String()
+			p2 := p.Get("detail_type").String()
+			p3 := p.Get("message")
+			return c.bot.CQSendMessageV12(p0, p1, p2, p3)
+		}
+	}
 	switch action {
-	default:
-		return coolq.Failed(404, "API_NOT_FOUND", "API不存在")
 	case ".get_word_slices":
 		p0 := p.Get("content").String()
 		return c.bot.CQGetWordSlices(p0)
-	case ".handle_quick_operation":
-		p0 := p.Get("context")
-		p1 := p.Get("operation")
-		return c.bot.CQHandleQuickOperation(p0, p1)
 	case ".ocr_image", "ocr_image":
 		p0 := p.Get("image").String()
 		return c.bot.CQOcrImage(p0)
@@ -40,10 +103,6 @@ func (c *Caller) call(action string, p Getter) global.MSG {
 		p0 := p.Get("model").String()
 		p1 := p.Get("model_show").String()
 		return c.bot.CQSetModelShow(p0, p1)
-	case "can_send_image":
-		return c.bot.CQCanSendImage()
-	case "can_send_record":
-		return c.bot.CQCanSendRecord()
 	case "check_url_safely":
 		p0 := p.Get("url").String()
 		return c.bot.CQCheckURLSafely(p0)
@@ -96,7 +155,7 @@ func (c *Caller) call(action string, p Getter) global.MSG {
 		p0 := p.Get("[message_id,id].0").String()
 		return c.bot.CQGetForwardMessage(p0)
 	case "get_friend_list":
-		return c.bot.CQGetFriendList()
+		return c.bot.CQGetFriendList(spec)
 	case "get_group_at_all_remain":
 		p0 := p.Get("group_id").Int()
 		return c.bot.CQGetAtAllRemain(p0)
@@ -119,10 +178,10 @@ func (c *Caller) call(action string, p Getter) global.MSG {
 	case "get_group_info":
 		p0 := p.Get("group_id").Int()
 		p1 := p.Get("no_cache").Bool()
-		return c.bot.CQGetGroupInfo(p0, p1)
+		return c.bot.CQGetGroupInfo(p0, p1, spec)
 	case "get_group_list":
 		p0 := p.Get("no_cache").Bool()
-		return c.bot.CQGetGroupList(p0)
+		return c.bot.CQGetGroupList(p0, spec)
 	case "get_group_member_info":
 		p0 := p.Get("group_id").Int()
 		p1 := p.Get("user_id").Int()
@@ -170,8 +229,6 @@ func (c *Caller) call(action string, p Getter) global.MSG {
 	case "get_image":
 		p0 := p.Get("file").String()
 		return c.bot.CQGetImage(p0)
-	case "get_login_info":
-		return c.bot.CQGetLoginInfo()
 	case "get_msg":
 		p0 := int32(p.Get("message_id").Int())
 		return c.bot.CQGetMessage(p0)
@@ -179,18 +236,15 @@ func (c *Caller) call(action string, p Getter) global.MSG {
 		p0 := p.Get("no_cache").Bool()
 		return c.bot.CQGetOnlineClients(p0)
 	case "get_status":
-		return c.bot.CQGetStatus()
-	case "get_stranger_info":
-		p0 := p.Get("user_id").Int()
-		return c.bot.CQGetStrangerInfo(p0)
+		return c.bot.CQGetStatus(spec)
+	case "get_supported_actions":
+		return c.bot.CQGetSupportedActions(spec)
 	case "get_topic_channel_feeds":
 		p0 := p.Get("guild_id").Uint()
 		p1 := p.Get("channel_id").Uint()
 		return c.bot.CQGetTopicChannelFeeds(p0, p1)
 	case "get_unidirectional_friend_list":
 		return c.bot.CQGetUnidirectionalFriendList()
-	case "get_version_info":
-		return c.bot.CQGetVersionInfo()
 	case "mark_msg_as_read":
 		p0 := int32(p.Get("message_id").Int())
 		return c.bot.CQMarkMessageAsRead(p0)
@@ -199,21 +253,6 @@ func (c *Caller) call(action string, p Getter) global.MSG {
 	case "reload_event_filter":
 		p0 := p.Get("file").String()
 		return c.bot.CQReloadEventFilter(p0)
-	case "send_forward_msg":
-		p0 := p.Get("group_id").Int()
-		p1 := p.Get("user_id").Int()
-		p2 := p.Get("messages")
-		p3 := p.Get("message_type").String()
-		return c.bot.CQSendForwardMessage(p0, p1, p2, p3)
-	case "send_group_forward_msg":
-		p0 := p.Get("group_id").Int()
-		p1 := p.Get("messages")
-		return c.bot.CQSendGroupForwardMessage(p0, p1)
-	case "send_group_msg":
-		p0 := p.Get("group_id").Int()
-		p1 := p.Get("message")
-		p2 := p.Get("auto_escape").Bool()
-		return c.bot.CQSendGroupMessage(p0, p1, p2)
 	case "send_group_sign":
 		p0 := p.Get("group_id").Int()
 		return c.bot.CQSendGroupSign(p0)
@@ -223,23 +262,6 @@ func (c *Caller) call(action string, p Getter) global.MSG {
 		p2 := p.Get("message")
 		p3 := p.Get("auto_escape").Bool()
 		return c.bot.CQSendGuildChannelMessage(p0, p1, p2, p3)
-	case "send_msg":
-		p0 := p.Get("group_id").Int()
-		p1 := p.Get("user_id").Int()
-		p2 := p.Get("message")
-		p3 := p.Get("message_type").String()
-		p4 := p.Get("auto_escape").Bool()
-		return c.bot.CQSendMessage(p0, p1, p2, p3, p4)
-	case "send_private_forward_msg":
-		p0 := p.Get("user_id").Int()
-		p1 := p.Get("messages")
-		return c.bot.CQSendPrivateForwardMessage(p0, p1)
-	case "send_private_msg":
-		p0 := p.Get("user_id").Int()
-		p1 := p.Get("group_id").Int()
-		p2 := p.Get("message")
-		p3 := p.Get("auto_escape").Bool()
-		return c.bot.CQSendPrivateMessage(p0, p1, p2, p3)
 	case "set_essence_msg":
 		p0 := int32(p.Get("message_id").Int())
 		return c.bot.CQSetEssenceMessage(p0)
@@ -267,6 +289,13 @@ func (c *Caller) call(action string, p Getter) global.MSG {
 			p2 = pt.Bool()
 		}
 		return c.bot.CQSetGroupAdmin(p0, p1, p2)
+	case "set_group_anonymous":
+		p0 := p.Get("group_id").Int()
+		p1 := true
+		if pt := p.Get("enable"); pt.Exists() {
+			p1 = pt.Bool()
+		}
+		return c.bot.CQSetGroupAnonymous(p0, p1)
 	case "set_group_anonymous_ban":
 		p0 := p.Get("group_id").Int()
 		p1 := p.Get("[anonymous_flag,anonymous.flag].0").String()
@@ -347,4 +376,5 @@ func (c *Caller) call(action string, p Getter) global.MSG {
 		p2 := p.Get("name").String()
 		return c.bot.CQUploadPrivateFile(p0, p1, p2)
 	}
+	return coolq.Failed(404, "API_NOT_FOUND", "API不存在")
 }

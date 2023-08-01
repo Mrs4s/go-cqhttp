@@ -84,7 +84,7 @@ func (r *reader) arrayMsg() []global.MSG {
 	return msgs
 }
 
-func (r *reader) obj() interface{} {
+func (r *reader) obj() any {
 	switch coder := r.coder(); coder {
 	case coderNil:
 		return nil

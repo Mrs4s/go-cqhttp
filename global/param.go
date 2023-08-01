@@ -8,7 +8,7 @@ import (
 )
 
 // MSG 消息Map
-type MSG map[string]interface{}
+type MSG = map[string]any
 
 // VersionNameCompare 检查版本名是否需要更新, 仅适用于 go-cqhttp 的版本命名规则
 //

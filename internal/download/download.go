@@ -4,6 +4,7 @@ package download
 import (
 	"bufio"
 	"compress/gzip"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/tidwall/gjson"
@@ -19,19 +21,37 @@ import (
 	"github.com/Mrs4s/go-cqhttp/internal/base"
 )
 
-var client = &http.Client{
+var client = newcli(time.Second * 15)
+
+var clienth2 = &http.Client{
 	Transport: &http.Transport{
-		Proxy: func(request *http.Request) (u *url.URL, e error) {
+		Proxy: func(request *http.Request) (*url.URL, error) {
 			if base.Proxy == "" {
 				return http.ProxyFromEnvironment(request)
 			}
 			return url.Parse(base.Proxy)
 		},
-		ForceAttemptHTTP2:   false,
-		MaxConnsPerHost:     0,
-		MaxIdleConns:        0,
+		ForceAttemptHTTP2:   true,
 		MaxIdleConnsPerHost: 999,
 	},
+	Timeout: time.Second * 15,
+}
+
+func newcli(t time.Duration) *http.Client {
+	return &http.Client{
+		Transport: &http.Transport{
+			Proxy: func(request *http.Request) (*url.URL, error) {
+				if base.Proxy == "" {
+					return http.ProxyFromEnvironment(request)
+				}
+				return url.Parse(base.Proxy)
+			},
+			// Disable http2
+			TLSNextProto:        map[string]func(authority string, c *tls.Conn) http.RoundTripper{},
+			MaxIdleConnsPerHost: 999,
+		},
+		Timeout: t,
+	}
 }
 
 // ErrOverSize 响应主体过大时返回此错误
@@ -40,15 +60,46 @@ var ErrOverSize = errors.New("oversize")
 // UserAgent HTTP请求时使用的UA
 const UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36 Edg/87.0.664.66"
 
+// WithTimeout get a download instance with timeout t
+func (r Request) WithTimeout(t time.Duration) *Request {
+	r.custcli = newcli(t)
+	return &r
+}
+
+// SetTimeout set internal/download client timeout
+func SetTimeout(t time.Duration) {
+	if t == 0 {
+		t = time.Second * 10
+	}
+	client.Timeout = t
+	clienth2.Timeout = t
+}
+
 // Request is a file download request
 type Request struct {
-	URL    string
-	Header map[string]string
-	Limit  int64
+	Method  string
+	URL     string
+	Header  map[string]string
+	Limit   int64
+	Body    io.Reader
+	custcli *http.Client
+}
+
+func (r Request) client() *http.Client {
+	if r.custcli != nil {
+		return r.custcli
+	}
+	if strings.Contains(r.URL, "go-cqhttp.org") {
+		return clienth2
+	}
+	return client
 }
 
 func (r Request) do() (*http.Response, error) {
-	req, err := http.NewRequest(http.MethodGet, r.URL, nil)
+	if r.Method == "" {
+		r.Method = http.MethodGet
+	}
+	req, err := http.NewRequest(r.Method, r.URL, r.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +109,7 @@ func (r Request) do() (*http.Response, error) {
 		req.Header.Set(k, v)
 	}
 
-	return client.Do(req)
+	return r.client().Do(req)
 }
 
 func (r Request) body() (io.ReadCloser, error) {
@@ -79,7 +130,7 @@ func (r Request) body() (io.ReadCloser, error) {
 	return resp.Body, err
 }
 
-// Bytes 对给定URL发送Get请求，返回响应主体
+// Bytes 对给定URL发送请求，返回响应主体
 func (r Request) Bytes() ([]byte, error) {
 	rd, err := r.body()
 	if err != nil {
@@ -89,7 +140,7 @@ func (r Request) Bytes() ([]byte, error) {
 	return io.ReadAll(rd)
 }
 
-// JSON 发送GET请求， 并转换响应为JSON
+// JSON 发送请求， 并转换响应为JSON
 func (r Request) JSON() (gjson.Result, error) {
 	rd, err := r.body()
 	if err != nil {
@@ -111,6 +162,7 @@ func writeToFile(reader io.ReadCloser, path string) error {
 	if err != nil {
 		return err
 	}
+	defer func() { _ = file.Close() }()
 	_, err = file.ReadFrom(reader)
 	return err
 }

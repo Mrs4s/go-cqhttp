@@ -2,6 +2,8 @@
 
 欢迎来到 go-cqhttp 文档 目前还在咕
 
+> 注意, 最新文档已经移动到 [go-cqhttp-docs](https://github.com/ishkong/go-cqhttp-docs), 当前文档只做兼容性保留, 所以内容可能有不足.
+
 # 基础教程
 ## 下载
 从[release](https://github.com/Mrs4s/go-cqhttp/releases)界面下载最新版本的go-cqhttp
