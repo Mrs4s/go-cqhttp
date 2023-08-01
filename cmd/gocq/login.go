@@ -17,7 +17,6 @@ import (
 
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/MiraiGo/utils"
-	"github.com/Mrs4s/go-cqhttp/internal/base"
 	"github.com/mattn/go-colorable"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -25,6 +24,7 @@ import (
 	"gopkg.ilharper.com/x/isatty"
 
 	"github.com/Mrs4s/go-cqhttp/global"
+	"github.com/Mrs4s/go-cqhttp/internal/base"
 	"github.com/Mrs4s/go-cqhttp/internal/download"
 )
 
@@ -276,7 +276,7 @@ func energy(uin uint64, id string, _ string, salt []byte) ([]byte, error) {
 	req := download.Request{
 		Method: http.MethodGet,
 		URL: signServer + "custom_energy" + fmt.Sprintf("?data=%v&salt=%v&uin=%v&android_id=%v&guid=%v",
-			id, hex.EncodeToString(salt), uin, hex.EncodeToString(device.AndroidId), hex.EncodeToString(device.Guid)),
+			id, hex.EncodeToString(salt), uin, utils.B2S(device.AndroidId), hex.EncodeToString(device.Guid)),
 	}
 	if base.IsBelow110 {
 		req.URL = signServer + "custom_energy" + fmt.Sprintf("?data=%v&salt=%v", id, hex.EncodeToString(salt))
@@ -308,7 +308,7 @@ func sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []b
 		URL:    signServer + "sign",
 		Header: map[string]string{"Content-Type": "application/x-www-form-urlencoded"},
 		Body: bytes.NewReader([]byte(fmt.Sprintf("uin=%v&qua=%s&cmd=%s&seq=%v&buffer=%v&android_id=%v&guid=%v",
-			uin, qua, cmd, seq, hex.EncodeToString(buff), hex.EncodeToString(device.AndroidId), hex.EncodeToString(device.Guid)))),
+			uin, qua, cmd, seq, hex.EncodeToString(buff), utils.B2S(device.AndroidId), hex.EncodeToString(device.Guid)))),
 	}.Bytes()
 	if err != nil {
 		log.Warnf("获取sso sign时出现错误: %v server: %v", err, signServer)
@@ -332,7 +332,7 @@ func register(uin int64, androidID, guid []byte, qimei36, key string) {
 	resp, err := download.Request{
 		Method: http.MethodGet,
 		URL: signServer + "register" + fmt.Sprintf("?uin=%v&android_id=%v&guid=%v&qimei36=%v&key=%s",
-			uin, hex.EncodeToString(androidID), hex.EncodeToString(guid), qimei36, key),
+			uin, utils.B2S(androidID), hex.EncodeToString(guid), qimei36, key),
 	}.Bytes()
 	if err != nil {
 		log.Warnf("注册QQ实例时出现错误: %v server: %v", err, signServer)
