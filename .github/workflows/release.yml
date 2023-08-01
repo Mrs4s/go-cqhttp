@@ -12,7 +12,8 @@ jobs:
       - name: Checkout
         run: |
           git version
-          git clone https://github.com/Mrs4s/go-cqhttp.git /home/runner/work/go-cqhttp/go-cqhttp
+          git clone "${{ github.event.repository.html_url }}" /home/runner/work/go-cqhttp/go-cqhttp
+          git checkout "${{ github.ref }}"
 
       - name: Set up Go
         uses: actions/setup-go@v3

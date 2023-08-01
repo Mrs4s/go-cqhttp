@@ -79,7 +79,7 @@ func (bot *CQBot) privateMessageEvent(_ *client.QQClient, m *message.PrivateMess
 		PrimaryID:  m.Sender.Uin,
 	}
 	cqm := toStringMessage(m.Elements, source)
-	id := bot.InsertPrivateMessage(m)
+	id := bot.InsertPrivateMessage(m, source)
 	log.Infof("收到好友 %v(%v) 的消息: %v (%v)", m.Sender.DisplayName(), m.Sender.Uin, cqm, id)
 	typ := "message/private/friend"
 	if m.Sender.Uin == bot.Client.Uin {
@@ -126,7 +126,7 @@ func (bot *CQBot) groupMessageEvent(c *client.QQClient, m *message.GroupMessage)
 		PrimaryID:  m.GroupCode,
 	}
 	cqm := toStringMessage(m.Elements, source)
-	id := bot.InsertGroupMessage(m)
+	id := bot.InsertGroupMessage(m, source)
 	log.Infof("收到群 %v(%v) 内 %v(%v) 的消息: %v (%v)", m.GroupName, m.GroupCode, m.Sender.DisplayName(), m.Sender.Uin, cqm, id)
 	gm := bot.formatGroupMessage(m)
 	if gm == nil {

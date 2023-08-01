@@ -36,6 +36,12 @@ type Account struct {
 	UseSSOAddress    bool       `yaml:"use-sso-address"`
 	AllowTempSession bool       `yaml:"allow-temp-session"`
 	SignServer       string     `yaml:"sign-server"`
+	SignServerBearer string     `yaml:"sign-server-bearer"`
+	Key              string     `yaml:"key"`
+	IsBelow110       bool       `yaml:"is-below-110"`
+	AutoRegister     bool       `yaml:"auto-register"`
+	AutoRefreshToken bool       `yaml:"auto-refresh-token"`
+	RefreshInterval  int64      `yaml:"refresh-interval"`
 }
 
 // Config 总配置文件
@@ -58,6 +64,7 @@ type Config struct {
 		SkipMimeScan        bool   `yaml:"skip-mime-scan"`
 		ConvertWebpImage    bool   `yaml:"convert-webp-image"`
 		HTTPTimeout         int    `yaml:"http-timeout"`
+		SignServerTimeout   int    `yaml:"sign-server-timeout"`
 	} `yaml:"message"`
 
 	Output struct {
