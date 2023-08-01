@@ -24,8 +24,6 @@ import (
 	"github.com/tidwall/gjson"
 	"gopkg.ilharper.com/x/isatty"
 
-	"github.com/Mrs4s/go-cqhttp/internal/base"
-
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
 	"github.com/Mrs4s/go-cqhttp/internal/download"
@@ -271,7 +269,7 @@ func fetchCaptcha(id string) string {
 	return ""
 }
 
-func energy(_ uint64, id string, _ string, salt []byte) ([]byte, error) {
+func energy(uin uint64, id string, _ string, salt []byte) ([]byte, error) {
 	signServer := base.SignServer
 	if !strings.HasSuffix(signServer, "/") {
 		signServer += "/"
@@ -283,7 +281,7 @@ func energy(_ uint64, id string, _ string, salt []byte) ([]byte, error) {
 	}
 	req := download.Request{
 		Method: http.MethodGet,
-    Header: headers,
+		Header: headers,
 		URL: signServer + "custom_energy" + fmt.Sprintf("?data=%v&salt=%v&uin=%v&android_id=%v&guid=%v",
 			id, hex.EncodeToString(salt), uin, utils.B2S(device.AndroidId), hex.EncodeToString(device.Guid)),
 	}.WithTimeout(time.Duration(base.SignServerTimeout) * time.Second)
