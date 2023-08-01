@@ -1149,7 +1149,8 @@ func (bot *CQBot) CQDelGroupMemo(groupID int64, fid string) global.MSG {
 // @rename(msg->message, block->reject_add_request)
 func (bot *CQBot) CQSetGroupKick(groupID int64, userID int64, msg string, block bool) global.MSG {
 	if g := bot.Client.FindGroup(groupID); g != nil {
-		if m := g.FindMember(userID); m == nil {
+		m := g.FindMember(userID)
+		if m == nil {
 			return Failed(100, "MEMBER_IS_NOT_IN_GROUP", "人员不存在")
 		}
 		err := m.Kick(msg, block)

@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/Mrs4s/MiraiGo/client"
@@ -398,52 +399,52 @@ func refreshToken(uin string) error {
 	}
 	msg := gjson.GetBytes(resp, "msg")
 	if gjson.GetBytes(resp, "code").Int() != 0 {
-    return errors.New(msg)
+		return errors.New(msg.String())
 	}
 	go callback(uin, gjson.GetBytes(resp, "data").Array(), "request token")
-	return true
+	return nil
 }
 
 var missTokenCount = uint64(0)
 
 func sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []byte, extra []byte, token []byte, err error) {
-  i := 0
-  for {
-    sign, extra, token, err = _sign(seq, uin, cmd, qua, buff)
-    if err != nil {
-      log.Warnf("获取sso sign时出现错误: %v server: %v", err, base.SignServer)
-    }
-    if i > 0 {
-      break
-    }
-    i++
-    if (!base.IsBelow110) && base.Account.AutoRegister && err == nil && len(sign) == 0 {
-      if registerLock.TryLock() { // 避免并发时多处同时销毁并重新注册
-        log.Warn("获取签名为空，实例可能丢失，正在尝试重新注册")
-        defer registerLock.Unlock()
-        err := destroySignServer(uin)
-        if err != nil {
-          log.Warnf(err)
-          return nil, nil, nil, err
-        }
-        register(base.Account.Uin, device.AndroidId, device.Guid, device.QImei36, base.Key)
-      }
-      continue
-    }
-    if (!base.IsBelow110) && base.Account.AutoRefreshToken && len(token) == 0 {
-      log.Warnf("token 已过期, 总丢失 token 次数为 %v", atomic.AddUint64(&missTokenCount, 1))
-      if registerLock.TryLock() {
-        defer registerLock.Unlock()
-        if err := refreshToken(uin); err != nil {
-          log.Warnf("刷新 token 出现错误: %v server: %v", err, base.SignServer)
-        } else {
-          log.Info("刷新 token 成功")
-        }
-      }
-      continue
-    }
-    break
-  }
+	i := 0
+	for {
+		sign, extra, token, err = _sign(seq, uin, cmd, qua, buff)
+		if err != nil {
+			log.Warnf("获取sso sign时出现错误: %v server: %v", err, base.SignServer)
+		}
+		if i > 0 {
+			break
+		}
+		i++
+		if (!base.IsBelow110) && base.Account.AutoRegister && err == nil && len(sign) == 0 {
+			if registerLock.TryLock() { // 避免并发时多处同时销毁并重新注册
+				log.Warn("获取签名为空，实例可能丢失，正在尝试重新注册")
+				defer registerLock.Unlock()
+				err := destroySignServer(uin)
+				if err != nil {
+					log.Warnln(err)
+					return nil, nil, nil, err
+				}
+				register(base.Account.Uin, device.AndroidId, device.Guid, device.QImei36, base.Key)
+			}
+			continue
+		}
+		if (!base.IsBelow110) && base.Account.AutoRefreshToken && len(token) == 0 {
+			log.Warnf("token 已过期, 总丢失 token 次数为 %v", atomic.AddUint64(&missTokenCount, 1))
+			if registerLock.TryLock() {
+				defer registerLock.Unlock()
+				if err := refreshToken(uin); err != nil {
+					log.Warnf("刷新 token 出现错误: %v server: %v", err, base.SignServer)
+				} else {
+					log.Info("刷新 token 成功")
+				}
+			}
+			continue
+		}
+		break
+	}
 	return sign, extra, token, err
 }
 
@@ -453,9 +454,9 @@ func destroySignServer(uin string) error {
 		signServer += "/"
 	}
 	signVersion, err := getSignServerVersion()
-  if err != nil {
-    return errors.Wrapf(err, "获取签名服务版本出现错误, server: %v", signServer)
-  }
+	if err != nil {
+		return errors.Wrapf(err, "获取签名服务版本出现错误, server: %v", signServer)
+	}
 	if global.VersionNameCompare("v"+signVersion, "v1.1.6") {
 		return errors.Errorf("当前签名服务器版本 %v 低于 1.1.6，无法使用 destroy 接口", signVersion)
 	}
@@ -463,14 +464,10 @@ func destroySignServer(uin string) error {
 		Method: http.MethodGet,
 		URL:    signServer + "destroy" + fmt.Sprintf("?uin=%v&key=%v", uin, base.Key),
 	}.Bytes()
-	if err != nil {
+	if err != nil || gjson.GetBytes(resp, "code").Int() != 0 {
 		return errors.Wrapf(err, "destroy 实例出现错误, server: %v", signServer)
 	}
-	msg := gjson.GetBytes(resp, "msg")
-	if gjson.GetBytes(resp, "code").Int() != 0 {
-		return errors.Wrapf(err, "destroy 实例出现错误, server: %v", signServer)
-	}
-  return nil
+	return nil
 }
 
 func getSignServerVersion() (version string, err error) {
@@ -485,7 +482,7 @@ func getSignServerVersion() (version string, err error) {
 	if gjson.GetBytes(resp, "code").Int() == 0 {
 		return gjson.GetBytes(resp, "data.version").String(), nil
 	}
-  return "", errors.New("empty version")
+	return "", errors.New("empty version")
 }
 
 // 定时刷新 token, interval 为间隔时间（分钟）
@@ -502,18 +499,18 @@ func startRefreshTokenTask(interval int64) {
 		log.Warn("间隔时间不能超过 60 分钟，已自动设置为 60 分钟")
 		interval = 60
 	}
-  t := time.Newticker(time.Duration(interval) * time.Minute)
-  defer t.Stop()
+	t := time.NewTicker(time.Duration(interval) * time.Minute)
+	defer t.Stop()
 	for range t.C {
-    err := refreshToken(strconv.FormatInt(base.Account.Uin, 10))
-    if err != nil {
-      log.Warnf("刷新 token 出现错误: %v server: %v", err, base.SignServer)
-    }
+		err := refreshToken(strconv.FormatInt(base.Account.Uin, 10))
+		if err != nil {
+			log.Warnf("刷新 token 出现错误: %v server: %v", err, base.SignServer)
+		}
 	}
 }
 
 func waitSignServer() bool {
-	t := time.NewTicker(time.Second*5)
+	t := time.NewTicker(time.Second * 5)
 	defer t.Stop()
 	i := 0
 	for range t.C {
