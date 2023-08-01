@@ -166,9 +166,25 @@ func LoginInteract() {
 
 	if base.SignServer != "-" && base.SignServer != "" {
 		log.Infof("使用服务器 %s 进行数据包签名", base.SignServer)
-		register(base.Account.Uin, device.AndroidId, device.Guid, device.QImei36, base.Key)
+		download.SetTimeout(time.Duration(base.HTTPTimeout) * time.Second) // 设置签名超时时间
+		// 等待签名服务器直到连接成功
+		if !signWaitServer() {
+			log.Fatalf("连接签名服务器失败")
+		}
+		signRegister(base.Account.Uin, device.AndroidId, device.Guid, device.QImei36, base.Key)
+		go signStartRefreshToken(base.Account.RefreshInterval) // 定时刷新 token
 		wrapper.DandelionEnergy = energy
 		wrapper.FekitGetSign = sign
+		if !base.IsBelow110 {
+			if !base.Account.AutoRegister {
+				log.Warn("自动注册实例已关闭，若未配置 sign-server 端自动注册实例则实例丢失时需要重启 go-cqhttp 以正常签名")
+			}
+			if !base.Account.AutoRefreshToken {
+				log.Warn("自动刷新 token 已关闭，token 过期后获取签名时将不会立即尝试刷新获取新 token")
+			}
+		} else {
+			log.Warn("签名服务器版本 <= 1.1.0 ，无法使用刷新 token 等操作，建议使用 1.1.6 版本及以上签名服务器")
+		}
 	} else {
 		log.Warnf("警告: 未配置签名服务器, 这可能会导致登录 45 错误码或发送消息被风控")
 	}
@@ -290,6 +306,7 @@ func LoginInteract() {
 	}
 	if !base.FastStart {
 		log.Infof("正在检查协议更新...")
+		download.SetTimeout(time.Second * 5) // 防止协议更新堵塞过久
 		currentVersionName := device.Protocol.Version().SortVersionName
 		remoteVersion, err := getRemoteLatestProtocolVersion(int(device.Protocol.Version().Protocol))
 		if err == nil {
@@ -374,7 +391,7 @@ func LoginInteract() {
 	})
 	saveToken()
 	cli.AllowSlider = true
-	download.SetTimeout(time.Duration(base.HTTPTimeout) * time.Second) // 在登录完成后设置, 防止在堵塞协议更新
+	download.SetTimeout(time.Duration(base.HTTPTimeout) * time.Second) // 登陆完成进行最终超时设置
 	log.Infof("登录成功 欢迎使用: %v", cli.Nickname)
 	log.Info("开始加载好友列表...")
 	global.Check(cli.ReloadFriendList(), true)
