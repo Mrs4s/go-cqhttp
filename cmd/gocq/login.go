@@ -8,6 +8,7 @@ import (
 	"image"
 	"image/png"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -20,9 +21,8 @@ import (
 	"github.com/tidwall/gjson"
 	"gopkg.ilharper.com/x/isatty"
 
-	"github.com/Mrs4s/go-cqhttp/internal/base"
-
 	"github.com/Mrs4s/go-cqhttp/global"
+	"github.com/Mrs4s/go-cqhttp/internal/base"
 	"github.com/Mrs4s/go-cqhttp/internal/download"
 )
 
@@ -273,7 +273,8 @@ func energy(uin uint64, id string, _ string, salt []byte) ([]byte, error) {
 	}
 	req := download.Request{
 		Method: http.MethodGet,
-		URL:    signServer + "custom_energy" + fmt.Sprintf("?data=%v&salt=%v&uin=%v", id, hex.EncodeToString(salt), uin),
+		URL: signServer + "custom_energy" + fmt.Sprintf("?data=%v&salt=%v&uin=%v&android_id=%v&guid=%v",
+			id, hex.EncodeToString(salt), uin, utils.B2S(device.AndroidId), hex.EncodeToString(device.Guid)),
 	}
 	if base.IsBelow110 {
 		req.URL = signServer + "custom_energy" + fmt.Sprintf("?data=%v&salt=%v", id, hex.EncodeToString(salt))
@@ -304,7 +305,8 @@ func sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []b
 		Method: http.MethodPost,
 		URL:    signServer + "sign",
 		Header: map[string]string{"Content-Type": "application/x-www-form-urlencoded"},
-		Body:   bytes.NewReader([]byte(fmt.Sprintf("uin=%v&qua=%s&cmd=%s&seq=%v&buffer=%v", uin, qua, cmd, seq, hex.EncodeToString(buff)))),
+		Body: bytes.NewReader([]byte(fmt.Sprintf("uin=%v&qua=%s&cmd=%s&seq=%v&buffer=%v&android_id=%v&guid=%v",
+			uin, qua, cmd, seq, hex.EncodeToString(buff), utils.B2S(device.AndroidId), hex.EncodeToString(device.Guid)))),
 	}.Bytes()
 	if err != nil {
 		log.Warnf("获取sso sign时出现错误: %v server: %v", err, signServer)
@@ -328,7 +330,7 @@ func register(uin int64, androidID, guid []byte, qimei36, key string) {
 	resp, err := download.Request{
 		Method: http.MethodGet,
 		URL: signServer + "register" + fmt.Sprintf("?uin=%v&android_id=%v&guid=%v&qimei36=%v&key=%s",
-			uin, androidID, hex.EncodeToString(guid), qimei36, key),
+			uin, utils.B2S(androidID), hex.EncodeToString(guid), qimei36, key),
 	}.Bytes()
 	if err != nil {
 		log.Warnf("注册QQ实例时出现错误: %v server: %v", err, signServer)
@@ -340,4 +342,29 @@ func register(uin int64, androidID, guid []byte, qimei36, key string) {
 		return
 	}
 	log.Infof("注册QQ实例 %v 成功: %v", uin, msg)
+}
+
+func waitSignServer() bool {
+	t := time.NewTicker(time.Second*5)
+	defer t.Stop()
+	i := 0
+	for range t.C {
+		if i > 3 {
+			return false
+		}
+		i++
+		u, err := url.Parse(base.SignServer)
+		if err != nil {
+			log.Warnf("连接到签名服务器出现错误: %v", err)
+			continue
+		}
+		r := utils.RunTCPPingLoop(u.Host, 4)
+		if r.PacketsLoss > 0 {
+			log.Warnf("连接到签名服务器出现错误: 丢包%d/%d 时延%dms", r.PacketsLoss, r.PacketsSent, r.AvgTimeMill)
+			continue
+		}
+		break
+	}
+	log.Infof("连接至签名服务器: %s", base.SignServer)
+	return true
 }

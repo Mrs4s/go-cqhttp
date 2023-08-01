@@ -166,6 +166,10 @@ func LoginInteract() {
 
 	if base.SignServer != "-" && base.SignServer != "" {
 		log.Infof("使用服务器 %s 进行数据包签名", base.SignServer)
+		// 等待签名服务器直到连接成功
+		if !waitSignServer() {
+			log.Fatalf("连接签名服务器失败")
+		}
 		register(base.Account.Uin, device.AndroidId, device.Guid, device.QImei36, base.Key)
 		wrapper.DandelionEnergy = energy
 		wrapper.FekitGetSign = sign
