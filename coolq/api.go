@@ -1149,13 +1149,14 @@ func (bot *CQBot) CQDelGroupMemo(groupID int64, fid string) global.MSG {
 // @rename(msg->message, block->reject_add_request)
 func (bot *CQBot) CQSetGroupKick(groupID int64, userID int64, msg string, block bool) global.MSG {
 	if g := bot.Client.FindGroup(groupID); g != nil {
-		if m := g.FindMember(userID); m != nil {
-			err := m.Kick(msg, block)
-			if err != nil {
-				return Failed(100, "NOT_MANAGEABLE", "机器人权限不足")
-			}
-			return OK(nil)
+		if m := g.FindMember(userID); m == nil {
+			return Failed(100, "MEMBER_IS_NOT_IN_GROUP", "人员不存在")
 		}
+		err := m.Kick(msg, block)
+		if err != nil {
+			return Failed(100, "NOT_MANAGEABLE", "机器人权限不足")
+		}
+		return OK(nil)
 	}
 	return Failed(100, "GROUP_NOT_FOUND", "群聊不存在")
 }

@@ -167,6 +167,10 @@ func LoginInteract() {
 	if base.SignServer != "-" && base.SignServer != "" {
 		log.Infof("使用服务器 %s 进行数据包签名", base.SignServer)
 		download.SetTimeout(time.Duration(base.HTTPTimeout) * time.Second) // 设置签名超时时间
+		// 等待签名服务器直到连接成功
+		if !waitSignServer() {
+			log.Fatalf("连接签名服务器失败")
+		}
 		register(base.Account.Uin, device.AndroidId, device.Guid, device.QImei36, base.Key)
 		go startRefreshTokenTask(base.Account.RefreshInterval) // 定时刷新 token
 		wrapper.DandelionEnergy = energy
