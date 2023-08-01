@@ -27,6 +27,8 @@ const (
 	VoicePath = "data/voices"
 	// VideoPath go-cqhttp使用的视频缓存目录
 	VideoPath = "data/videos"
+	// VersionsPath go-cqhttp使用的版本信息目录
+	VersionsPath = "data/versions"
 	// CachePath go-cqhttp使用的缓存目录
 	CachePath = "data/cache"
 	// DumpsPath go-cqhttp使用错误转储目录
@@ -88,6 +90,7 @@ func FindFile(file, cache, p string) (data []byte, err error) {
 		if err != nil {
 			return nil, err
 		}
+		return os.ReadFile(cacheFile)
 	case strings.HasPrefix(file, "base64"):
 		data, err = base64.StdEncoding.DecodeString(strings.TrimPrefix(file, "base64://"))
 		if err != nil {

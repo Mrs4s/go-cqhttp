@@ -1,22 +1,18 @@
-package coolq
+package msg
 
 import (
 	"fmt"
 	"strings"
 	"testing"
 
-	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/Mrs4s/MiraiGo/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/tidwall/gjson"
-
-	"github.com/Mrs4s/go-cqhttp/coolq/cqcode"
 )
 
-var bot = CQBot{}
-
-func TestCQBot_ConvertStringMessage(t *testing.T) {
-	for _, v := range bot.ConvertStringMessage(`[CQ:face,id=115,text=111][CQ:face,id=217]] [CQ:text,text=123] [`, message.SourcePrivate) {
+func TestParseString(_ *testing.T) {
+	// TODO: add more text
+	for _, v := range ParseString(`[CQ:face,id=115,text=111][CQ:face,id=217]] [CQ:text,text=123] [`) {
 		fmt.Println(v)
 	}
 }
@@ -26,17 +22,18 @@ var (
 	benchArray = gjson.Parse(`[{"type":"text","data":{"text":"asdfqwerqwerqwer"}},{"type":"face","data":{"id":"115","text":"111"}},{"type":"text","data":{"text":"asdfasdfasdfasdfasdfasdfasd"}},{"type":"face","data":{"id":"217"}},{"type":"text","data":{"text":"] "}},{"type":"text","data":{"text":"123"}},{"type":"text","data":{"text":" ["}}]`)
 )
 
-func BenchmarkCQBot_ConvertStringMessage(b *testing.B) {
+func BenchmarkParseString(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		bot.ConvertStringMessage(bench, message.SourcePrivate)
+		ParseString(bench)
 	}
 	b.SetBytes(int64(len(bench)))
 }
 
-func BenchmarkCQBot_ConvertObjectMessage(b *testing.B) {
+func BenchmarkParseObject(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		bot.ConvertObjectMessage(benchArray, message.SourcePrivate)
+		ParseObject(benchArray)
 	}
+	b.SetBytes(int64(len(benchArray.Raw)))
 }
 
 const bText = `123456789[]&987654321[]&987654321[]&987654321[]&987654321[]&987654321[]&`
@@ -44,16 +41,7 @@ const bText = `123456789[]&987654321[]&987654321[]&987654321[]&987654321[]&98765
 func BenchmarkCQCodeEscapeText(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		ret := bText
-		cqcode.EscapeText(ret)
-	}
-}
-
-func BenchmarkCQCodeEscapeTextBefore(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		ret := bText
-		ret = strings.ReplaceAll(ret, "&", "&amp;")
-		ret = strings.ReplaceAll(ret, "[", "&#91;")
-		strings.ReplaceAll(ret, "]", "&#93;")
+		EscapeText(ret)
 	}
 }
 
@@ -64,6 +52,6 @@ func TestCQCodeEscapeText(t *testing.T) {
 		ret = strings.ReplaceAll(ret, "&", "&amp;")
 		ret = strings.ReplaceAll(ret, "[", "&#91;")
 		ret = strings.ReplaceAll(ret, "]", "&#93;")
-		assert.Equal(t, ret, cqcode.EscapeText(rs))
+		assert.Equal(t, ret, EscapeText(rs))
 	}
 }

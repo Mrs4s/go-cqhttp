@@ -4,10 +4,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Mrs4s/MiraiGo/topic"
-
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/MiraiGo/message"
+	"github.com/Mrs4s/MiraiGo/topic"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/Mrs4s/go-cqhttp/global"
@@ -93,7 +92,7 @@ func (bot *CQBot) formatGroupMessage(m *message.GroupMessage) *event {
 			"name": m.Sender.AnonymousInfo.AnonymousNick,
 		}
 		gm["sender"].(global.MSG)["nickname"] = "匿名消息"
-		gm["sub_type"] = "anonymous"
+		typ = "message/group/anonymous"
 	} else {
 		group := bot.Client.FindGroup(m.GroupCode)
 		mem := group.FindMember(m.Sender.Uin)

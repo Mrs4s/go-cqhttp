@@ -5,6 +5,8 @@
 
 QQ频道相关功能的事件以及API
 
+> 注意, 最新文档已经移动到 [go-cqhttp-docs](https://github.com/ishkong/go-cqhttp-docs), 当前文档只做兼容性保留, 所以内容可能有不足.
+
 ## 命名说明
 
 API以及字段相关命名均为参考QQ官方命名或相似产品命名规则, 由于QQ频道的账号系统独立于QQ本体, 所以各个 `ID` 并不能和QQ通用.也无法通过 `tiny_id` 获取到 `QQ号`
