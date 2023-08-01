@@ -7,12 +7,10 @@ import (
 	"fmt"
 	"image"
 	"image/png"
-	"net"
 	"net/http"
 	"net/url"
 	"os"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/Mrs4s/MiraiGo/client"
