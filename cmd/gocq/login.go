@@ -312,8 +312,13 @@ func signSubmit(uin string, cmd string, callbackID int64, buffer []byte, t strin
 		signServer += "/"
 	}
 	buffStr := hex.EncodeToString(buffer)
-	log.Infof("submit %v: uin=%v, cmd=%v, callbackID=%v, buffer-end=%v", t, uin, cmd, callbackID,
-		buffStr[len(buffStr)-10:])
+	if len(buffStr) > 10 {
+		log.Infof("submit %v: uin=%v, cmd=%v, callbackID=%v, buffer-end=%v", t, uin, cmd, callbackID,
+			buffStr[len(buffStr)-10:])
+	} else {
+		log.Infof("submit %v: uin=%v, cmd=%v, callbackID=%v, buffer=%v", t, uin, cmd, callbackID, buffStr)
+	}
+
 	_, err := download.Request{
 		Method: http.MethodGet,
 		URL: signServer + "submit" + fmt.Sprintf("?uin=%v&cmd=%v&callback_id=%v&buffer=%v",
@@ -333,6 +338,7 @@ func signCallback(uin string, results []gjson.Result, t string) {
 		ret, err := cli.SendSsoPacket(cmd, body)
 		if err != nil {
 			log.Warnf("callback error: %v", err)
+			continue
 		}
 		signSubmit(uin, cmd, callbackID, ret, t)
 	}
