@@ -106,6 +106,8 @@ body:
         - 2 | Android Watch
         - 3 | MacOS
         - 4 | 企点
+        - 5	| iPad
+        - 6	|aPad
     validations:
       required: true
 
