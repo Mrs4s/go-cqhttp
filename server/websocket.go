@@ -25,6 +25,7 @@ import (
 	"github.com/Mrs4s/go-cqhttp/modules/api"
 	"github.com/Mrs4s/go-cqhttp/modules/config"
 	"github.com/Mrs4s/go-cqhttp/modules/filter"
+	"github.com/Mrs4s/go-cqhttp/pkg/onebot"
 )
 
 type webSocketServer struct {
@@ -191,9 +192,13 @@ func runWSClient(b *coolq.CQBot, node yaml.Node) {
 		filter: conf.Filter,
 	}
 	filter.Add(c.filter)
+
 	if conf.ReconnectInterval != 0 {
 		c.reconnectInterval = time.Duration(conf.ReconnectInterval) * time.Millisecond
+	} else {
+		c.reconnectInterval = time.Second * 5
 	}
+
 	if conf.RateLimit.Enabled {
 		c.limiter = rateLimit(conf.RateLimit.Frequency, conf.RateLimit.Bucket)
 	}
@@ -463,14 +468,16 @@ func (s *webSocketServer) listenAPI(c *wsConn) {
 func (c *wsConn) handleRequest(_ *coolq.CQBot, payload []byte) {
 	defer func() {
 		if err := recover(); err != nil {
-			log.Printf("处置WS命令时发生无法恢复的异常：%v\n%s", err, debug.Stack())
+			log.Errorf("处置WS命令时发生无法恢复的异常：%v\n%s", err, debug.Stack())
 			_ = c.Close()
 		}
 	}()
+
 	j := gjson.Parse(utils.B2S(payload))
 	t := strings.TrimSuffix(j.Get("action").Str, "_async")
-	log.Debugf("WS接收到API调用: %v 参数: %v", t, j.Get("params").Raw)
-	ret := c.apiCaller.Call(t, j.Get("params"))
+	params := j.Get("params")
+	log.Debugf("WS接收到API调用: %v 参数: %v", t, params.Raw)
+	ret := c.apiCaller.Call(t, onebot.V11, params)
 	if j.Get("echo").Exists() {
 		ret["echo"] = j.Get("echo").Value()
 	}
@@ -478,7 +485,11 @@ func (c *wsConn) handleRequest(_ *coolq.CQBot, payload []byte) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	_ = c.conn.SetWriteDeadline(time.Now().Add(time.Second * 15))
-	writer, _ := c.conn.NextWriter(websocket.TextMessage)
+	writer, err := c.conn.NextWriter(websocket.TextMessage)
+	if err != nil {
+		log.Errorf("无法响应API调用(连接已断开?): %v", err)
+		return
+	}
 	_ = json.NewEncoder(writer).Encode(ret)
 	_ = writer.Close()
 }
