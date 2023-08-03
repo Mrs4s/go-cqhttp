@@ -19,7 +19,7 @@ require (
 	github.com/syndtr/goleveldb v1.0.0
 	github.com/tidwall/gjson v1.15.0
 	github.com/wdvxdr1123/go-silk v0.0.0-20210316130616-d47b553def60
-	go.mongodb.org/mongo-driver v1.13.0-prerelease.0.20230731223111-7355997933f8
+	go.mongodb.org/mongo-driver v1.12.0
 	golang.org/x/crypto v0.11.0
 	golang.org/x/image v0.9.0
 	golang.org/x/sys v0.10.0
