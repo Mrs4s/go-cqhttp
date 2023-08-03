@@ -290,7 +290,7 @@ func energy(uin uint64, id string, _ string, salt []byte) ([]byte, error) {
 	}
 	response, err := req.Bytes()
 	if err != nil {
-		log.Warnf("获取T544 sign时出现错误: %v server: %v", err, signServer)
+		log.Warnf("获取T544 sign时出现错误: %v. server: %v", err, signServer)
 		return nil, err
 	}
 	data, err := hex.DecodeString(gjson.GetBytes(response, "data").String())
@@ -299,7 +299,7 @@ func energy(uin uint64, id string, _ string, salt []byte) ([]byte, error) {
 		return nil, err
 	}
 	if len(data) == 0 {
-		log.Warnf("获取T544 sign时出现错误: %v", "data is empty")
+		log.Warnf("获取T544 sign时出现错误: %v.", "data is empty")
 		return nil, errors.New("data is empty")
 	}
 	return data, nil
@@ -320,7 +320,7 @@ func signSubmit(uin string, cmd string, callbackID int64, buffer []byte, t strin
 			uin, cmd, callbackID, buffStr),
 	}.WithTimeout(time.Duration(base.SignServerTimeout) * time.Second).Bytes()
 	if err != nil {
-		log.Warnf("提交 callback 时出现错误: %v server: %v", err, signServer)
+		log.Warnf("提交 callback 时出现错误: %v. server: %v", err, signServer)
 	}
 }
 
@@ -386,12 +386,12 @@ func signRegister(uin int64, androidID, guid []byte, qimei36, key string) {
 			uin, utils.B2S(androidID), hex.EncodeToString(guid), qimei36, key),
 	}.WithTimeout(time.Duration(base.SignServerTimeout) * time.Second).Bytes()
 	if err != nil {
-		log.Warnf("注册QQ实例时出现错误: %v server: %v", err, signServer)
+		log.Warnf("注册QQ实例时出现错误: %v. server: %v", err, signServer)
 		return
 	}
 	msg := gjson.GetBytes(resp, "msg")
 	if gjson.GetBytes(resp, "code").Int() != 0 {
-		log.Warnf("注册QQ实例时出现错误: %v server: %v", msg, signServer)
+		log.Warnf("注册QQ实例时出现错误: %v. server: %v", msg, signServer)
 		return
 	}
 	log.Infof("注册QQ实例 %v 成功: %v", uin, msg)
@@ -405,14 +405,15 @@ func signRefreshToken(uin string) error {
 	log.Info("正在刷新 token")
 	resp, err := download.Request{
 		Method: http.MethodGet,
-		URL:    signServer + "request_token" + fmt.Sprintf("?uin=%v", uin),
+		URL:    signServer + "request_token?uin=" + uin,
 	}.WithTimeout(time.Duration(base.SignServerTimeout) * time.Second).Bytes()
 	if err != nil {
 		return err
 	}
 	msg := gjson.GetBytes(resp, "msg")
-	if gjson.GetBytes(resp, "code").Int() != 0 {
-		return errors.New(msg.String())
+	code := gjson.GetBytes(resp, "code")
+	if code.Int() != 0 {
+		return errors.New("code=" + code.String() + ", msg: " + msg.String())
 	}
 	go signCallback(uin, gjson.GetBytes(resp, "data").Array(), "request token")
 	return nil
@@ -425,7 +426,7 @@ func sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []b
 	for {
 		sign, extra, token, err = signRequset(seq, uin, cmd, qua, buff)
 		if err != nil {
-			log.Warnf("获取sso sign时出现错误: %v server: %v", err, base.SignServer)
+			log.Warnf("获取sso sign时出现错误: %v. server: %v", err, base.SignServer)
 		}
 		if i > 0 {
 			break
@@ -449,7 +450,7 @@ func sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []b
 			if registerLock.TryLock() {
 				defer registerLock.Unlock()
 				if err := signRefreshToken(uin); err != nil {
-					log.Warnf("刷新 token 出现错误: %v server: %v", err, base.SignServer)
+					log.Warnf("刷新 token 出现错误: %v. server: %v", err, base.SignServer)
 				} else {
 					log.Info("刷新 token 成功")
 				}
@@ -513,11 +514,12 @@ func signStartRefreshToken(interval int64) {
 		interval = 60
 	}
 	t := time.NewTicker(time.Duration(interval) * time.Minute)
+	qqstr := strconv.FormatInt(base.Account.Uin, 10)
 	defer t.Stop()
 	for range t.C {
-		err := signRefreshToken(strconv.FormatInt(base.Account.Uin, 10))
+		err := signRefreshToken(qqstr)
 		if err != nil {
-			log.Warnf("刷新 token 出现错误: %v server: %v", err, base.SignServer)
+			log.Warnf("刷新 token 出现错误: %v. server: %v", err, base.SignServer)
 		}
 	}
 }
