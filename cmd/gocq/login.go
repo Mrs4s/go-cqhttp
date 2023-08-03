@@ -426,6 +426,7 @@ func signRefreshToken(uin string) error {
 }
 
 var missTokenCount = uint64(0)
+var lastToken = ""
 
 func sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []byte, extra []byte, token []byte, err error) {
 	i := 0
@@ -464,6 +465,10 @@ func sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []b
 			continue
 		}
 		break
+	}
+	if tokenString := hex.EncodeToString(token); lastToken != tokenString {
+		log.Infof("token 已更新：%v -> %v", lastToken, tokenString)
+		lastToken = tokenString
 	}
 	return sign, extra, token, err
 }
