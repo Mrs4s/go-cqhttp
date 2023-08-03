@@ -305,7 +305,8 @@ func energy(uin uint64, id string, _ string, salt []byte) ([]byte, error) {
 	return data, nil
 }
 
-// signSubmit 提交的操作类型
+// signSubmit
+// 提交回调 buffer
 func signSubmit(uin string, cmd string, callbackID int64, buffer []byte, t string) {
 	signServer := base.SignServer
 	if !strings.HasSuffix(signServer, "/") {
@@ -313,10 +314,10 @@ func signSubmit(uin string, cmd string, callbackID int64, buffer []byte, t strin
 	}
 	buffStr := hex.EncodeToString(buffer)
 	if len(buffStr) > 10 {
-		log.Infof("submit %v: uin=%v, cmd=%v, callbackID=%v, buffer-end=%v", t, uin, cmd, callbackID,
+		log.Infof("submit (%v): uin=%v, cmd=%v, callbackID=%v, buffer-end=%v", t, uin, cmd, callbackID,
 			buffStr[len(buffStr)-10:])
 	} else {
-		log.Infof("submit %v: uin=%v, cmd=%v, callbackID=%v, buffer=%v", t, uin, cmd, callbackID, buffStr)
+		log.Infof("submit (%v): uin=%v, cmd=%v, callbackID=%v, buffer=%v", t, uin, cmd, callbackID, buffStr)
 	}
 
 	_, err := download.Request{
@@ -329,20 +330,19 @@ func signSubmit(uin string, cmd string, callbackID int64, buffer []byte, t strin
 	}
 }
 
-// signCallback request token 和签名的回调
+// signCallback
+// 刷新 token 和签名的回调
 func signCallback(uin string, results []gjson.Result, t string) {
 	for _, result := range results {
 		cmd := result.Get("cmd").String()
 		callbackID := result.Get("callbackId").Int()
 		body, _ := hex.DecodeString(result.Get("body").String())
 		ret, err := cli.SendSsoPacket(cmd, body)
-		if err != nil {
-			log.Warnf("callback error: %v", err)
-			continue
+		if err != nil || len(ret) == 0 {
+			log.Warnf("Callback error: %v, Or response data is empty", err)
+			continue // 发送 SsoPacket 出错或返回数据为空时跳过
 		}
-		if len(ret) > 10 {
-			signSubmit(uin, cmd, callbackID, ret, t)
-		}
+		signSubmit(uin, cmd, callbackID, ret, t)
 	}
 }
 
@@ -444,8 +444,8 @@ func sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []b
 				defer registerLock.Unlock()
 				err := signServerDestroy(uin)
 				if err != nil {
-					log.Warnln(err)
-					return nil, nil, nil, err
+					log.Warnln(err) // 实例真的丢失时则必出错，或许应该不 return , 以重新获取本次签名
+					// return nil, nil, nil, err
 				}
 				signRegister(base.Account.Uin, device.AndroidId, device.Guid, device.QImei36, base.Key)
 			}
