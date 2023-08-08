@@ -2,7 +2,6 @@ package redis
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"time"
@@ -102,7 +101,7 @@ func (r *database) GetGroupMessageByGlobalID(id int32) (*db.StoredGroupMessage, 
 	if err != nil {
 		return nil, errors.Wrap(err, "get value error")
 	}
-	err = json.Unmarshal(utils.S2B(result), msg)
+	err = yaml.Unmarshal(utils.S2B(result), msg)
 	if err != nil {
 		return nil, errors.Wrap(err, "get value error")
 	}
@@ -119,7 +118,7 @@ func (r *database) GetPrivateMessageByGlobalID(id int32) (*db.StoredPrivateMessa
 	if err != nil {
 		return nil, errors.Wrap(err, "get value error")
 	}
-	err = json.Unmarshal(utils.S2B(result), msg)
+	err = yaml.Unmarshal(utils.S2B(result), msg)
 	if err != nil {
 		return nil, errors.Wrap(err, "get value error")
 	}
@@ -136,7 +135,7 @@ func (r *database) GetGuildChannelMessageByID(id string) (*db.StoredGuildChannel
 	if err != nil {
 		return nil, errors.Wrap(err, "get value error")
 	}
-	err = json.Unmarshal(utils.S2B(result), msg)
+	err = yaml.Unmarshal(utils.S2B(result), msg)
 	if err != nil {
 		return nil, errors.Wrap(err, "get value error")
 	}
@@ -145,14 +144,14 @@ func (r *database) GetGuildChannelMessageByID(id string) (*db.StoredGuildChannel
 
 func (r *database) InsertGroupMessage(msg *db.StoredGroupMessage) error {
 	log.Debugf("set group message, id=%d", msg.GlobalID)
-	jsonData, err := json.Marshal(msg)
+	yamlData, err := yaml.Marshal(msg)
 	if err != nil {
 		return errors.Wrap(err, "set value error")
 	}
 
 	ctx, cancelFunc := buildCtx(r.timeout)
 	defer cancelFunc()
-	err = r.rdb.Set(ctx, GocqhttpGroupMsgKeyPrefix+strconv.Itoa(int(msg.GlobalID)), utils.B2S(jsonData), 0).Err()
+	err = r.rdb.Set(ctx, GocqhttpGroupMsgKeyPrefix+strconv.Itoa(int(msg.GlobalID)), utils.B2S(yamlData), 0).Err()
 	if err != nil {
 		return errors.Wrap(err, "set value error")
 	}
@@ -161,13 +160,13 @@ func (r *database) InsertGroupMessage(msg *db.StoredGroupMessage) error {
 
 func (r *database) InsertPrivateMessage(msg *db.StoredPrivateMessage) error {
 	log.Debugf("set private message, id=%d", msg.GlobalID)
-	jsonData, err := json.Marshal(msg)
+	yamlData, err := yaml.Marshal(msg)
 	if err != nil {
 		return errors.Wrap(err, "set value error")
 	}
 	ctx, cancelFunc := buildCtx(r.timeout)
 	defer cancelFunc()
-	err = r.rdb.Set(ctx, GocqhttpPrivateMsgKeyPrefix+strconv.Itoa(int(msg.GlobalID)), utils.B2S(jsonData), 0).Err()
+	err = r.rdb.Set(ctx, GocqhttpPrivateMsgKeyPrefix+strconv.Itoa(int(msg.GlobalID)), utils.B2S(yamlData), 0).Err()
 	if err != nil {
 		return errors.Wrap(err, "set value error")
 	}
@@ -176,14 +175,14 @@ func (r *database) InsertPrivateMessage(msg *db.StoredPrivateMessage) error {
 
 func (r *database) InsertGuildChannelMessage(msg *db.StoredGuildChannelMessage) error {
 	log.Debugf("set guild channel message, id=%s", msg.ID)
-	jsonData, err := json.Marshal(msg)
+	yamlData, err := yaml.Marshal(msg)
 	if err != nil {
 		return errors.Wrap(err, "set value error")
 	}
 
 	ctx, cancelFunc := buildCtx(r.timeout)
 	defer cancelFunc()
-	err = r.rdb.Set(ctx, GocqhttpGuildChannelMsgKeyPrefix+msg.ID, utils.B2S(jsonData), 0).Err()
+	err = r.rdb.Set(ctx, GocqhttpGuildChannelMsgKeyPrefix+msg.ID, utils.B2S(yamlData), 0).Err()
 	if err != nil {
 		return errors.Wrap(err, "set value error")
 	}
