@@ -101,11 +101,13 @@ body:
       label: 使用协议
       description: 选择使用的协议
       options:
-        - 0 | iPad
+        - 0 | Default
         - 1 | Android Phone
         - 2 | Android Watch
         - 3 | MacOS
         - 4 | 企点
+        - 5 | iPad
+        - 6 | aPad
     validations:
       required: true
 

@@ -288,7 +288,7 @@ func (bot *CQBot) SendGroupMessage(groupID int64, m *message.SendingMessage) (in
 				log.Warnf("警告: 群 %v 富文本消息发送失败: %v", groupID, err)
 				return -1, errors.Wrap(err, "send group music share error")
 			}
-			return bot.InsertGroupMessage(ret), nil
+			return bot.InsertGroupMessage(ret, source), nil
 		case *message.AtElement:
 			if i.Target == 0 && group.SelfPermission() == client.Member {
 				e = message.NewText("@全体成员")
@@ -307,7 +307,7 @@ func (bot *CQBot) SendGroupMessage(groupID int64, m *message.SendingMessage) (in
 		log.Warnf("群消息发送失败: 账号可能被风控.")
 		return -1, errors.New("send group message failed: blocked by server")
 	}
-	return bot.InsertGroupMessage(ret), nil
+	return bot.InsertGroupMessage(ret, source), nil
 }
 
 // SendPrivateMessage 发送私聊消息
@@ -357,7 +357,7 @@ func (bot *CQBot) SendPrivateMessage(target int64, groupID int64, m *message.Sen
 	case bot.Client.FindFriend(target) != nil: // 双向好友
 		msg := bot.Client.SendPrivateMessage(target, m)
 		if msg != nil {
-			id = bot.InsertPrivateMessage(msg)
+			id = bot.InsertPrivateMessage(msg, source)
 		}
 	case ok || groupID != 0: // 临时会话
 		if !base.AllowTempSession {
@@ -395,7 +395,7 @@ func (bot *CQBot) SendPrivateMessage(target int64, groupID int64, m *message.Sen
 	case unidirectionalFriendExists(): // 单向好友
 		msg := bot.Client.SendPrivateMessage(target, m)
 		if msg != nil {
-			id = bot.InsertPrivateMessage(msg)
+			id = bot.InsertPrivateMessage(msg, source)
 		}
 	default:
 		nickname := "Unknown"
@@ -444,7 +444,7 @@ func (bot *CQBot) SendGuildChannelMessage(guildID, channelID uint64, m *message.
 }
 
 // InsertGroupMessage 群聊消息入数据库
-func (bot *CQBot) InsertGroupMessage(m *message.GroupMessage) int32 {
+func (bot *CQBot) InsertGroupMessage(m *message.GroupMessage, source message.Source) int32 {
 	t := &message.SendingMessage{Elements: m.Elements}
 	replyElem := t.FirstOrNil(func(e message.IMessageElement) bool {
 		_, ok := e.(*message.ReplyElement)
@@ -468,7 +468,7 @@ func (bot *CQBot) InsertGroupMessage(m *message.GroupMessage) int32 {
 			}
 			return ""
 		}(),
-		Content: ToMessageContent(m.Elements),
+		Content: ToMessageContent(m.Elements, source),
 	}
 	if replyElem != nil {
 		reply := replyElem.(*message.ReplyElement)
@@ -476,7 +476,7 @@ func (bot *CQBot) InsertGroupMessage(m *message.GroupMessage) int32 {
 		msg.QuotedInfo = &db.QuotedInfo{
 			PrevID:        encodeMessageID(m.GroupCode, reply.ReplySeq),
 			PrevGlobalID:  db.ToGlobalID(m.GroupCode, reply.ReplySeq),
-			QuotedContent: ToMessageContent(reply.Elements),
+			QuotedContent: ToMessageContent(reply.Elements, source),
 		}
 	}
 	if err := db.InsertGroupMessage(msg); err != nil {
@@ -487,7 +487,7 @@ func (bot *CQBot) InsertGroupMessage(m *message.GroupMessage) int32 {
 }
 
 // InsertPrivateMessage 私聊消息入数据库
-func (bot *CQBot) InsertPrivateMessage(m *message.PrivateMessage) int32 {
+func (bot *CQBot) InsertPrivateMessage(m *message.PrivateMessage, source message.Source) int32 {
 	t := &message.SendingMessage{Elements: m.Elements}
 	replyElem := t.FirstOrNil(func(e message.IMessageElement) bool {
 		_, ok := e.(*message.ReplyElement)
@@ -511,7 +511,7 @@ func (bot *CQBot) InsertPrivateMessage(m *message.PrivateMessage) int32 {
 			return m.Sender.Uin
 		}(),
 		TargetUin: m.Target,
-		Content:   ToMessageContent(m.Elements),
+		Content:   ToMessageContent(m.Elements, source),
 	}
 	if replyElem != nil {
 		reply := replyElem.(*message.ReplyElement)
@@ -519,7 +519,7 @@ func (bot *CQBot) InsertPrivateMessage(m *message.PrivateMessage) int32 {
 		msg.QuotedInfo = &db.QuotedInfo{
 			PrevID:        encodeMessageID(reply.Sender, reply.ReplySeq),
 			PrevGlobalID:  db.ToGlobalID(reply.Sender, reply.ReplySeq),
-			QuotedContent: ToMessageContent(reply.Elements),
+			QuotedContent: ToMessageContent(reply.Elements, source),
 		}
 	}
 	if err := db.InsertPrivateMessage(msg); err != nil {
@@ -562,6 +562,10 @@ func (bot *CQBot) InsertTempMessage(target int64, m *message.TempMessage) int32 
 // InsertGuildChannelMessage 频道消息入数据库
 func (bot *CQBot) InsertGuildChannelMessage(m *message.GuildChannelMessage) string {
 	id := encodeGuildMessageID(m.GuildId, m.ChannelId, m.Id, message.SourceGuildChannel)
+	source := message.Source{
+		SourceType: message.SourceGuildChannel,
+		PrimaryID:  int64(m.Sender.TinyId),
+	}
 	msg := &db.StoredGuildChannelMessage{
 		ID: id,
 		Attribute: &db.StoredGuildMessageAttribute{
@@ -573,7 +577,7 @@ func (bot *CQBot) InsertGuildChannelMessage(m *message.GuildChannelMessage) stri
 		},
 		GuildID:   m.GuildId,
 		ChannelID: m.ChannelId,
-		Content:   ToMessageContent(m.Elements),
+		Content:   ToMessageContent(m.Elements, source),
 	}
 	if err := db.InsertGuildChannelMessage(msg); err != nil {
 		log.Warnf("记录聊天数据时出现错误: %v", err)

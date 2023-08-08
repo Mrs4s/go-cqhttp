@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/FloatTech/sqlite v1.5.7
 	github.com/Microsoft/go-winio v0.6.0
-	github.com/Mrs4s/MiraiGo v0.0.0-20230627090859-19e3d172596e
+	github.com/Mrs4s/MiraiGo v0.0.0-20230730133947-d344e0f318ab
 	github.com/RomiChan/syncx v0.0.0-20221202055724-5f842c53020e
 	github.com/RomiChan/websocket v1.4.3-0.20220123145318-307a86b127bc
 	github.com/fumiama/go-base16384 v1.6.1
