@@ -137,6 +137,7 @@ func (r Request) Bytes() ([]byte, error) {
 		return nil, err
 	}
 	defer rd.Close()
+	defer r.client().CloseIdleConnections()
 	return io.ReadAll(rd)
 }
 
@@ -147,6 +148,7 @@ func (r Request) JSON() (gjson.Result, error) {
 		return gjson.Result{}, err
 	}
 	defer rd.Close()
+	defer r.client().CloseIdleConnections()
 
 	var sb strings.Builder
 	_, err = io.Copy(&sb, rd)
@@ -174,6 +176,7 @@ func (r Request) WriteToFile(path string) error {
 		return err
 	}
 	defer rd.Close()
+	defer r.client().CloseIdleConnections()
 	return writeToFile(rd, path)
 }
 
@@ -273,6 +276,7 @@ func (r Request) WriteToFileMultiThreading(path string, thread int) error {
 			return err
 		}
 		defer resp.Body.Close()
+		defer r.client().CloseIdleConnections()
 		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 			return errors.New("response status unsuccessful: " + strconv.FormatInt(int64(resp.StatusCode), 10))
 		}
