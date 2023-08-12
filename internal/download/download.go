@@ -186,6 +186,7 @@ func (r Request) WriteToFileMultiThreading(path string, thread int) error {
 		return r.WriteToFile(path)
 	}
 
+	defer r.client().CloseIdleConnections()
 	limit := r.Limit
 	type BlockMetaData struct {
 		BeginOffset    int64
@@ -276,7 +277,6 @@ func (r Request) WriteToFileMultiThreading(path string, thread int) error {
 			return err
 		}
 		defer resp.Body.Close()
-		defer r.client().CloseIdleConnections()
 		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 			return errors.New("response status unsuccessful: " + strconv.FormatInt(int64(resp.StatusCode), 10))
 		}
