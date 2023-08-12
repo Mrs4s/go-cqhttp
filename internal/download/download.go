@@ -21,7 +21,8 @@ import (
 	"github.com/Mrs4s/go-cqhttp/internal/base"
 )
 
-var client = newcli(time.Second * 15)
+var client = newClient(time.Second * 15)
+var clients sync.Map
 
 var clienth2 = &http.Client{
 	Transport: &http.Transport{
@@ -37,7 +38,7 @@ var clienth2 = &http.Client{
 	Timeout: time.Second * 15,
 }
 
-func newcli(t time.Duration) *http.Client {
+func newClient(t time.Duration) *http.Client {
 	return &http.Client{
 		Transport: &http.Transport{
 			Proxy: func(request *http.Request) (*url.URL, error) {
@@ -62,7 +63,13 @@ const UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 
 
 // WithTimeout get a download instance with timeout t
 func (r Request) WithTimeout(t time.Duration) *Request {
-	r.custcli = newcli(t)
+	if c, ok := clients.Load(t); ok {
+		r.custcli = c.(*http.Client)
+	} else {
+		c := newClient(t)
+		clients.Store(t, c)
+		r.custcli = c
+	}
 	return &r
 }
 
