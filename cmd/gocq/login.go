@@ -270,6 +270,64 @@ func fetchCaptcha(id string) string {
 	return ""
 }
 
+// 配置的所有签名服务器
+var signServers = base.SignServers
+var checkLock sync.Mutex
+
+// 当前签名服务器
+var currentSignServer = signServers[0]
+var currentOK atomic.Bool
+
+var errorCount = int64(0)
+
+// 获取可用的签名服务器，没有则返回空和相应错误
+func GetAvaliableSignServer() (string, error) {
+	if currentOK.Load() {
+		return currentSignServer, nil
+	}
+	maxCount := base.Account.MaxCheckCount
+	if maxCount == 0 && atomic.LoadInt64(&errorCount) > 3 {
+		currentSignServer = signServers[0]
+		currentOK.Store(true)
+		return currentSignServer, nil
+	}
+	if maxCount > 0 && atomic.LoadInt64(&errorCount) > int64(maxCount) {
+		log.Fatalf("获取可用签名服务器失败次数超过 %v 次, 正在离线", maxCount)
+	}
+	log.Warnf("当前签名服务器 %v 不可用，正在查找可用服务器", currentSignServer)
+	if checkLock.TryLock() {
+		defer checkLock.Unlock()
+
+		for i, server := range signServers {
+			if server == "-" || server == "" {
+				continue
+			}
+			log.Infof("正在检查签名服务器 %v （%v/%v）", server, i, len(signServers))
+			if isServerAvaliable(server) {
+				errorCount = 0
+				currentSignServer = server
+				currentOK.Store(true)
+				log.Warnf("签名服务器已切换至 %v", server)
+				return server, nil
+			}
+		}
+		return "", errors.New("没有可用的签名服务器")
+	} else {
+		return "-", errors.New("检查正在进行中...")
+	}
+}
+
+func isServerAvaliable(signServer string) bool {
+	resp, err := download.Request{
+		Method: http.MethodGet,
+		URL:    signServer,
+	}.WithTimeout(5 * time.Second).Bytes()
+	if err == nil && gjson.GetBytes(resp, "code").Int() == 0 {
+		return true
+	}
+	return false
+}
+
 /*
 请求签名服务器
 
@@ -277,7 +335,12 @@ func fetchCaptcha(id string) string {
 	return: signServer, response, error
 */
 func requestSignServer(method string, url string, headers map[string]string, body io.Reader) (string, []byte, error) {
-	signServer := base.SignServer
+	signServer, e := GetAvaliableSignServer()
+	if e != nil && signServer == "" { // 没有可用的
+		log.Warnf("获取可用签名服务器出错：%v", e)
+		atomic.AddInt64(&errorCount, 1)
+		signServer = signServers[0] // 没有获取到时使用第一个
+	}
 	if !strings.HasPrefix(url, signServer) {
 		url = strings.TrimSuffix(signServer, "/") + "/" + strings.TrimPrefix(url, "/")
 	}
@@ -295,6 +358,9 @@ func requestSignServer(method string, url string, headers map[string]string, bod
 		Body:   body,
 	}.WithTimeout(time.Duration(base.SignServerTimeout) * time.Second)
 	resp, err := req.Bytes()
+	if err != nil {
+		currentOK.Store(false)
+	}
 	return signServer, resp, err
 }
 
@@ -433,7 +499,7 @@ func sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []b
 	for {
 		sign, extra, token, err = signRequset(seq, uin, cmd, qua, buff)
 		if err != nil {
-			log.Warnf("获取sso sign时出现错误: %v. server: %v", err, base.SignServer)
+			log.Warnf("获取sso sign时出现错误: %v. server: %v", err, currentSignServer)
 		}
 		if i > 0 {
 			break
@@ -457,7 +523,7 @@ func sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []b
 			if registerLock.TryLock() {
 				defer registerLock.Unlock()
 				if err := signRefreshToken(uin); err != nil {
-					log.Warnf("刷新 token 出现错误: %v. server: %v", err, base.SignServer)
+					log.Warnf("刷新 token 出现错误: %v. server: %v", err, currentSignServer)
 				} else {
 					log.Info("刷新 token 成功")
 				}
@@ -469,6 +535,9 @@ func sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []b
 	if tokenString := hex.EncodeToString(token); lastToken != tokenString {
 		log.Infof("token 已更新：%v -> %v", lastToken, tokenString)
 		lastToken = tokenString
+	}
+	if len(sign) == 0 {
+		currentOK.Store(false)
 	}
 	return sign, extra, token, err
 }
@@ -523,7 +592,7 @@ func signStartRefreshToken(interval int64) {
 	for range t.C {
 		err := signRefreshToken(qqstr)
 		if err != nil {
-			log.Warnf("刷新 token 出现错误: %v. server: %v", err, base.SignServer)
+			log.Warnf("刷新 token 出现错误: %v. server: %v", err, currentSignServer)
 		}
 	}
 }
@@ -537,7 +606,7 @@ func signWaitServer() bool {
 			return false
 		}
 		i++
-		u, err := url.Parse(base.SignServer)
+		u, err := url.Parse(currentSignServer)
 		if err != nil {
 			log.Warnf("连接到签名服务器出现错误: %v", err)
 			continue
@@ -549,6 +618,6 @@ func signWaitServer() bool {
 		}
 		break
 	}
-	log.Infof("连接至签名服务器: %s", base.SignServer)
+	log.Infof("连接至签名服务器: %s", currentSignServer)
 	return true
 }

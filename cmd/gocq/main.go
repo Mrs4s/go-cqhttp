@@ -163,11 +163,11 @@ func LoginInteract() {
 			log.Fatalf("加载设备信息失败: %v", err)
 		}
 	}
-
-	if base.SignServer != "-" && base.SignServer != "" {
-		log.Infof("使用服务器 %s 进行数据包签名", base.SignServer)
+	signServer, _ := GetAvaliableSignServer()
+	if signServer != "-" && signServer != "" {
+		log.Infof("使用服务器 %s 进行数据包签名", signServer)
 		if base.SignServerBearer != "-" && base.SignServerBearer != "" {
-			log.Infof("使用 Bearer %s 认证签名服务器 %s ", base.SignServerBearer, base.SignServer)
+			log.Infof("使用 Bearer %s 认证签名服务器 %s ", base.SignServerBearer, signServer)
 		}
 		// 等待签名服务器直到连接成功
 		if !signWaitServer() {

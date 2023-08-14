@@ -35,7 +35,8 @@ type Account struct {
 	ReLogin          *Reconnect `yaml:"relogin"`
 	UseSSOAddress    bool       `yaml:"use-sso-address"`
 	AllowTempSession bool       `yaml:"allow-temp-session"`
-	SignServer       string     `yaml:"sign-server"`
+	SignServers      []string   `yaml:"sign-servers"`
+	MaxCheckCount    int        `yaml:"max-check-count"`
 	SignServerBearer string     `yaml:"sign-server-bearer"`
 	Key              string     `yaml:"key"`
 	IsBelow110       bool       `yaml:"is-below-110"`
