@@ -313,7 +313,7 @@ func GetAvaliableSignServer() (string, error) {
 		}
 		return "", errors.New("no avaliable sign-server")
 	}
-	return "-", errors.New("checking sign-servers...")
+	return "-", errors.New("checking sign-servers")
 }
 
 func isServerAvaliable(signServer string) bool {
