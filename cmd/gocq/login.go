@@ -271,21 +271,22 @@ func fetchCaptcha(id string) string {
 }
 
 // 配置的所有签名服务器
-var signServers = base.SignServers
+var signServers []string
 var checkLock sync.Mutex
 
 // 当前签名服务器
-var currentSignServer = signServers[0]
+var currentSignServer string
 var currentOK atomic.Bool
 
 var errorCount = int64(0)
 
-// 获取可用的签名服务器，没有则返回空和相应错误
+// GetAvaliableSignServer 获取可用的签名服务器，没有则返回空和相应错误
 func GetAvaliableSignServer() (string, error) {
 	if currentOK.Load() {
 		return currentSignServer, nil
 	}
 	maxCount := base.Account.MaxCheckCount
+	signServers = base.SignServers
 	if maxCount == 0 && atomic.LoadInt64(&errorCount) > 3 {
 		currentSignServer = signServers[0]
 		currentOK.Store(true)
@@ -297,24 +298,22 @@ func GetAvaliableSignServer() (string, error) {
 	log.Warnf("当前签名服务器 %v 不可用，正在查找可用服务器", currentSignServer)
 	if checkLock.TryLock() {
 		defer checkLock.Unlock()
-
 		for i, server := range signServers {
 			if server == "-" || server == "" {
 				continue
 			}
-			log.Infof("正在检查签名服务器 %v （%v/%v）", server, i, len(signServers))
+			log.Infof("正在检查签名服务器 %v 是否可用.（%v/%v）", server, i, len(signServers))
 			if isServerAvaliable(server) {
 				errorCount = 0
 				currentSignServer = server
 				currentOK.Store(true)
-				log.Warnf("签名服务器已切换至 %v", server)
+				log.Infof("使用签名服务器 %v", server)
 				return server, nil
 			}
 		}
-		return "", errors.New("没有可用的签名服务器")
-	} else {
-		return "-", errors.New("检查正在进行中...")
+		return "", errors.New("no avaliable sign-server")
 	}
+	return "-", errors.New("checking sign-servers...")
 }
 
 func isServerAvaliable(signServer string) bool {
