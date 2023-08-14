@@ -295,7 +295,9 @@ func GetAvaliableSignServer() (string, error) {
 	if maxCount > 0 && atomic.LoadInt64(&errorCount) > int64(maxCount) {
 		log.Fatalf("获取可用签名服务器失败次数超过 %v 次, 正在离线", maxCount)
 	}
-	log.Warnf("当前签名服务器 %v 不可用，正在查找可用服务器", currentSignServer)
+	if len(currentSignServer) > 1 {
+		log.Warnf("当前签名服务器 %v 不可用，正在查找可用服务器", currentSignServer)
+	}
 	if checkLock.TryLock() {
 		defer checkLock.Unlock()
 		for i, server := range signServers {
@@ -589,6 +591,11 @@ func signStartRefreshToken(interval int64) {
 	qqstr := strconv.FormatInt(base.Account.Uin, 10)
 	defer t.Stop()
 	for range t.C {
+		if currentSignServer != signServers[0] && isServerAvaliable(signServers[0]) {
+			currentSignServer = signServers[0]
+			currentOK.Store(true)
+			log.Infof("主签名服务器可用，已切换至主签名服务器 %v", currentSignServer)
+		}
 		err := signRefreshToken(qqstr)
 		if err != nil {
 			log.Warnf("刷新 token 出现错误: %v. server: %v", err, currentSignServer)
