@@ -17,6 +17,7 @@ import (
 	"github.com/tidwall/gjson"
 
 	"github.com/Mrs4s/MiraiGo/utils"
+
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/internal/base"
 	"github.com/Mrs4s/go-cqhttp/internal/download"
@@ -61,7 +62,7 @@ func GetAvaliableSignServer() (config.SignServer, error) {
 				}
 				if isServerAvaliable(s.URL) {
 					errorCount = 0
-					result <- s
+					r <- s
 					log.Infof("使用签名服务器 url=%v, key=%v, auth=%v", s.URL, s.Key, s.Authorization)
 				}
 			}(server, result)
@@ -73,8 +74,8 @@ func GetAvaliableSignServer() (config.SignServer, error) {
 			signRegister(base.Account.Uin, device.AndroidId, device.Guid, device.QImei36, res.Key) // 注册实例
 			return currentSignServer, nil
 		case <-time.After(time.Duration(base.SignServerTimeout) * time.Second):
-			return config.SignServer{}, errors.New(
-				fmt.Sprintf("no avaliable sign-server, timeout=%v", base.SignServerTimeout))
+			errMsg := fmt.Sprintf("no avaliable sign-server, timeout=%v", base.SignServerTimeout)
+			return config.SignServer{}, errors.New(errMsg)
 		}
 	}
 	return config.SignServer{}, errors.New("checking sign-servers")
