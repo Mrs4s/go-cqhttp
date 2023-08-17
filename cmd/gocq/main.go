@@ -163,12 +163,11 @@ func LoginInteract() {
 			log.Fatalf("加载设备信息失败: %v", err)
 		}
 	}
-	signServer, _ := GetAvaliableSignServer()
+	signServer, err := GetAvaliableSignServer() // 获取可用签名服务器
+	if err != nil {
+		log.Warn(err)
+	}
 	if len(signServer.URL) > 1 {
-		// 等待签名服务器直到连接成功
-		if !signWaitServer() {
-			log.Fatalf("连接签名服务器失败")
-		}
 		signRegister(base.Account.Uin, device.AndroidId, device.Guid, device.QImei36, signServer.Key)
 		go signStartRefreshToken(base.Account.RefreshInterval) // 定时刷新 token
 		wrapper.DandelionEnergy = energy

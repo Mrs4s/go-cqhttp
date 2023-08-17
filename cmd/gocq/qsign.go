@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 	"sync"
@@ -54,20 +53,28 @@ func GetAvaliableSignServer() (config.SignServer, error) {
 	}
 	if checkLock.TryLock() {
 		defer checkLock.Unlock()
-		for i, server := range signServers {
-			if server.URL == "-" || server.URL == "" {
-				continue
-			}
-			log.Infof("正在检查签名服务器 %v 是否可用.（%v/%v）", server.URL, i+1, len(signServers))
-			if isServerAvaliable(server.URL) {
-				errorCount = 0
-				currentSignServer = server
-				currentOK.Store(true)
-				log.Infof("使用签名服务器 url=%v, key=%v, auth=%v", server.URL, server.Key, server.Authorization)
-				return server, nil
-			}
+		result := make(chan config.SignServer)
+		for _, server := range signServers {
+			go func(s config.SignServer, r chan config.SignServer) {
+				if s.URL == "-" || s.URL == "" {
+					return
+				}
+				if isServerAvaliable(s.URL) {
+					errorCount = 0
+					result <- s
+					log.Infof("使用签名服务器 url=%v, key=%v, auth=%v", s.URL, s.Key, s.Authorization)
+				}
+			}(server, result)
 		}
-		return config.SignServer{}, errors.New("no avaliable sign-server")
+		select {
+		case res := <-result:
+			currentSignServer = res
+			currentOK.Store(true)
+			return currentSignServer, nil
+		case <-time.After(time.Duration(base.SignServerTimeout) * time.Second):
+			return config.SignServer{}, errors.New(
+				fmt.Sprintf("no avaliable sign-server, timeout=%v", base.SignServerTimeout))
+		}
 	}
 	return config.SignServer{}, errors.New("checking sign-servers")
 }
@@ -355,29 +362,4 @@ func signStartRefreshToken(interval int64) {
 			log.Warnf("刷新 token 出现错误: %v. server: %v", err, currentSignServer.URL)
 		}
 	}
-}
-
-func signWaitServer() bool {
-	t := time.NewTicker(time.Second * 5)
-	defer t.Stop()
-	i := 0
-	for range t.C {
-		if i > 3 {
-			return false
-		}
-		i++
-		u, err := url.Parse(currentSignServer.URL)
-		if err != nil {
-			log.Warnf("连接到签名服务器出现错误: %v", err)
-			continue
-		}
-		r := utils.RunTCPPingLoop(u.Host, 4)
-		if r.PacketsLoss > 0 {
-			log.Warnf("连接到签名服务器出现错误: 丢包%d/%d 时延%dms", r.PacketsLoss, r.PacketsSent, r.AvgTimeMill)
-			continue
-		}
-		break
-	}
-	log.Infof("成功连接至签名服务器: %s", currentSignServer.URL)
-	return true
 }
