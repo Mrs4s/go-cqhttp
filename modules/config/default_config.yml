@@ -21,25 +21,32 @@ account: # 账号相关
   # 如果遇到 登录 45 错误, 或者发送信息风控的话需要填入一个或多个服务器
   # 示例:
   # sign-servers: 
-  #   - 'http://127.0.0.1:8080' # 本地签名服务器
-  #   - 'https://signserver.example.com' # 线上签名服务器
+  #   - url: 'http://127.0.0.1:8080' # 本地签名服务器
+  #     key: "114514"  # 相应 key
+  #     authorization: "-"   # authorization 内容, 依服务端设置
+  #   - url: 'https://signserver.example.com' # 线上签名服务器
+  #     key: "114514"  
+  #     authorization: "-"   
   #   ...
+  # 
   # 服务器可使用docker在本地搭建或者使用他人开放的服务
   sign-servers: 
-    - "-"  # 主签名服务器
-    - "-"  # 备用
+    - url: '-'  # 主签名服务器地址， 必填
+      key: '114514'  # 签名服务器所需要的apikey, 如果签名服务器的版本在1.1.0及以下则此项无效
+      authorization: '-'   # authorization 内容, 依服务端设置
+    - url: '-'  # 备用
+      key: '114514'  
+      authorization: '-' 
+
   # 连续寻找可用签名服务器最大尝试次数
   # 为 0 时会在连续 3 次没有找到可用签名服务器后保持使用主签名服务器，不再尝试进行切换备用
   # 否则会在达到指定次数后 **退出** 主程序
   max-check-count: 0
-  # 签名服务器认证 Bearer Token
-  # 使用开放的服务可能需要提供此 Token 进行认证
-  sign-server-bearer: '-'
+  # 签名服务请求超时时间(s)
+  sign-server-timeout: 60
   # 如果签名服务器的版本在1.1.0及以下, 请将下面的参数改成true
+  # 建议使用 1.1.6 以上版本，低版本普遍半个月冻结一次
   is-below-110: false
-  # 签名服务器所需要的apikey, 如果签名服务器的版本在1.1.0及以下则此项无效
-  # 本地部署的默认为114514
-  key: '114514'
   # 在实例可能丢失（获取到的签名为空）时是否尝试重新注册
   # 为 true 时，在签名服务不可用时可能每次发消息都会尝试重新注册并签名。
   # 为 false 时，将不会自动注册实例，在签名服务器重启或实例被销毁后需要重启 go-cqhttp 以获取实例
@@ -84,8 +91,6 @@ message:
   convert-webp-image: false
   # download 超时时间(s)
   http-timeout: 15
-  # 签名服务超时时间(s)
-  sign-server-timeout: 60
 
 output:
   # 日志等级 trace,debug,info,warn,error
