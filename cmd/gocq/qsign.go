@@ -70,6 +70,7 @@ func GetAvaliableSignServer() (config.SignServer, error) {
 		case res := <-result:
 			currentSignServer = res
 			currentOK.Store(true)
+			signRegister(base.Account.Uin, device.AndroidId, device.Guid, device.QImei36, res.Key) // 注册实例
 			return currentSignServer, nil
 		case <-time.After(time.Duration(base.SignServerTimeout) * time.Second):
 			return config.SignServer{}, errors.New(

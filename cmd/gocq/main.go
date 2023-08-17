@@ -168,7 +168,6 @@ func LoginInteract() {
 		log.Warn(err)
 	}
 	if len(signServer.URL) > 1 {
-		signRegister(base.Account.Uin, device.AndroidId, device.Guid, device.QImei36, signServer.Key)
 		go signStartRefreshToken(base.Account.RefreshInterval) // 定时刷新 token
 		wrapper.DandelionEnergy = energy
 		wrapper.FekitGetSign = sign
