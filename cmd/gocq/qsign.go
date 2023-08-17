@@ -41,12 +41,12 @@ func GetAvaliableSignServer() (config.SignServer, error) {
 	}
 	maxCount := base.Account.MaxCheckCount
 	signServers = base.SignServers
-	if maxCount == 0 && atomic.LoadInt64(&errorCount) > 3 {
+	if maxCount == 0 && atomic.LoadInt64(&errorCount) >= 3 {
 		currentSignServer = signServers[0]
 		currentOK.Store(true)
 		return currentSignServer, nil
 	}
-	if maxCount > 0 && atomic.LoadInt64(&errorCount) > int64(maxCount) {
+	if maxCount > 0 && atomic.LoadInt64(&errorCount) >= int64(maxCount) {
 		log.Fatalf("获取可用签名服务器失败次数超过 %v 次, 正在离线", maxCount)
 	}
 	if len(currentSignServer.URL) > 1 {
@@ -54,10 +54,27 @@ func GetAvaliableSignServer() (config.SignServer, error) {
 	}
 	if checkLock.TryLock() {
 		defer checkLock.Unlock()
+		if base.Account.SyncCheckServers {
+			for i, server := range signServers {
+				log.Infof("检查签名服务器：%v  (%v/%v)", server.URL, i+1, len(signServers))
+				if len(server.URL) < 4 {
+					continue
+				}
+				if isServerAvaliable(server.URL) {
+					errorCount = 0
+					currentSignServer = server
+					currentOK.Store(true)
+					log.Infof("使用签名服务器 url=%v, key=%v, auth=%v", server.URL, server.Key, server.Authorization)
+					signRegister(base.Account.Uin, device.AndroidId, device.Guid, device.QImei36, server.Key) // 注册实例
+					return currentSignServer, nil
+				}
+			}
+			return config.SignServer{}, errors.New("no avaliable sign-server")
+		}
 		result := make(chan config.SignServer)
 		for _, server := range signServers {
 			go func(s config.SignServer, r chan config.SignServer) {
-				if s.URL == "-" || s.URL == "" {
+				if len(s.URL) < 4 {
 					return
 				}
 				if isServerAvaliable(s.URL) {
