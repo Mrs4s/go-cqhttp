@@ -77,6 +77,9 @@ func GetAvaliableSignServer() (config.SignServer, error) {
 				if len(s.URL) < 4 {
 					return
 				}
+				if s.URL != signServers[0].URL { // 主服务器优先检查
+					time.Sleep(3 * time.Second)
+				}
 				if isServerAvaliable(s.URL) {
 					errorCount = 0
 					r <- s
@@ -106,6 +109,7 @@ func isServerAvaliable(signServer string) bool {
 	if err == nil && gjson.GetBytes(resp, "code").Int() == 0 {
 		return true
 	}
+	log.Warnf("签名服务器可能不可用，请求出现错误：%v", err)
 	return false
 }
 
