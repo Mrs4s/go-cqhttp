@@ -123,7 +123,7 @@ func isServerAvaliable(signServer string) bool {
 	if err == nil && gjson.GetBytes(resp, "code").Int() == 0 {
 		return true
 	}
-	log.Warnf("签名服务器可能不可用，请求出现错误：%v", err)
+	log.Warnf("签名服务器 %v 可能不可用，请求出现错误：%v", signServer, err)
 	return false
 }
 
@@ -335,7 +335,8 @@ func sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []b
 		log.Infof("token 已更新：%v -> %v", lastToken, tokenString)
 		lastToken = tokenString
 	}
-	if len(sign) == 0 {
+	rule := base.Account.RuleChangeSignServer
+	if (len(sign) == 0 && rule >= 1) || (len(token) == 0 && rule >= 2) {
 		currentOK.Store(false)
 	}
 	return sign, extra, token, err

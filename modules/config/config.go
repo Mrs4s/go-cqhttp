@@ -28,21 +28,22 @@ type Reconnect struct {
 
 // Account 账号配置
 type Account struct {
-	Uin               int64        `yaml:"uin"`
-	Password          string       `yaml:"password"`
-	Encrypt           bool         `yaml:"encrypt"`
-	Status            int          `yaml:"status"`
-	ReLogin           *Reconnect   `yaml:"relogin"`
-	UseSSOAddress     bool         `yaml:"use-sso-address"`
-	AllowTempSession  bool         `yaml:"allow-temp-session"`
-	SignServers       []SignServer `yaml:"sign-servers"`
-	SyncCheckServers  bool         `yaml:"sync-check-servers"`
-	MaxCheckCount     int          `yaml:"max-check-count"`
-	SignServerTimeout int          `yaml:"sign-server-timeout"`
-	IsBelow110        bool         `yaml:"is-below-110"`
-	AutoRegister      bool         `yaml:"auto-register"`
-	AutoRefreshToken  bool         `yaml:"auto-refresh-token"`
-	RefreshInterval   int64        `yaml:"refresh-interval"`
+	Uin                  int64        `yaml:"uin"`
+	Password             string       `yaml:"password"`
+	Encrypt              bool         `yaml:"encrypt"`
+	Status               int          `yaml:"status"`
+	ReLogin              *Reconnect   `yaml:"relogin"`
+	UseSSOAddress        bool         `yaml:"use-sso-address"`
+	AllowTempSession     bool         `yaml:"allow-temp-session"`
+	SignServers          []SignServer `yaml:"sign-servers"`
+	SyncCheckServers     bool         `yaml:"sync-check-servers"`
+	RuleChangeSignServer int          `yaml:"rule-change-sign-server"`
+	MaxCheckCount        int          `yaml:"max-check-count"`
+	SignServerTimeout    int          `yaml:"sign-server-timeout"`
+	IsBelow110           bool         `yaml:"is-below-110"`
+	AutoRegister         bool         `yaml:"auto-register"`
+	AutoRefreshToken     bool         `yaml:"auto-refresh-token"`
+	RefreshInterval      int64        `yaml:"refresh-interval"`
 }
 
 // SignServer 签名服务器
