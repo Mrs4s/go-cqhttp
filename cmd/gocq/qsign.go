@@ -36,7 +36,7 @@ var errorCount = int64(0)
 
 // GetAvaliableSignServer 获取可用的签名服务器，没有则返回空和相应错误
 func GetAvaliableSignServer() (config.SignServer, error) {
-	if len(signServers) == 0 {
+	if len(base.SignServers) == 0 {
 		return config.SignServer{}, errors.New("no configured sign-server")
 	}
 	if currentOK.Load() {
