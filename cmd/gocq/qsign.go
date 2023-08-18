@@ -36,6 +36,9 @@ var errorCount = int64(0)
 
 // GetAvaliableSignServer 获取可用的签名服务器，没有则返回空和相应错误
 func GetAvaliableSignServer() (config.SignServer, error) {
+	if len(signServers) == 0 {
+		return config.SignServer{}, errors.New("no configured sign-server")
+	}
 	if currentOK.Load() {
 		return currentSignServer, nil
 	}
@@ -72,8 +75,17 @@ func GetAvaliableSignServer() (config.SignServer, error) {
 			return config.SignServer{}, errors.New("no avaliable sign-server")
 		}
 		result := make(chan config.SignServer)
+		allDone := make(chan bool)
+		i := int32(0)
+		log.Infof("正在检查各签名服务是否可用... （最多等待 %vs）", base.SignServerTimeout)
 		for _, server := range signServers {
 			go func(s config.SignServer, r chan config.SignServer) {
+				atomic.AddInt32(&i, 1)
+				defer func(count int) {
+					if len(signServers) == count {
+						allDone <- true
+					}
+				}(int(i))
 				if len(s.URL) < 4 {
 					return
 				}
@@ -93,6 +105,8 @@ func GetAvaliableSignServer() (config.SignServer, error) {
 			currentOK.Store(true)
 			signRegister(base.Account.Uin, device.AndroidId, device.Guid, device.QImei36, res.Key) // 注册实例
 			return currentSignServer, nil
+		case <-allDone:
+			return config.SignServer{}, errors.New("no avaliable sign-server")
 		case <-time.After(time.Duration(base.SignServerTimeout) * time.Second):
 			errMsg := fmt.Sprintf("no avaliable sign-server, timeout=%v", base.SignServerTimeout)
 			return config.SignServer{}, errors.New(errMsg)
