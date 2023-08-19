@@ -68,7 +68,10 @@ func GetAvaliableSignServer() (config.SignServer, error) {
 					currentSignServer = server
 					currentOK.Store(true)
 					log.Infof("使用签名服务器 url=%v, key=%v, auth=%v", server.URL, server.Key, server.Authorization)
-					signRegister(base.Account.Uin, device.AndroidId, device.Guid, device.QImei36, server.Key) // 注册实例
+					if base.Account.AutoRegister {
+						// 若配置了自动注册实例则在切换后注册实例，否则不需要注册，签名时由qsign自动注册
+						signRegister(base.Account.Uin, device.AndroidId, device.Guid, device.QImei36, server.Key)
+					}
 					return currentSignServer, nil
 				}
 			}
@@ -103,7 +106,9 @@ func GetAvaliableSignServer() (config.SignServer, error) {
 		case res := <-result:
 			currentSignServer = res
 			currentOK.Store(true)
-			signRegister(base.Account.Uin, device.AndroidId, device.Guid, device.QImei36, res.Key) // 注册实例
+			if base.Account.AutoRegister {
+				signRegister(base.Account.Uin, device.AndroidId, device.Guid, device.QImei36, res.Key)
+			}
 			return currentSignServer, nil
 		case <-allDone:
 			return config.SignServer{}, errors.New("no avaliable sign-server")
