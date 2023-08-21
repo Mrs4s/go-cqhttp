@@ -45,6 +45,7 @@ func GetAvaliableSignServer() (config.SignServer, error) {
 	maxCount := base.Account.MaxCheckCount
 	signServers = base.SignServers
 	if maxCount == 0 && atomic.LoadInt64(&errorCount) >= 3 {
+		log.Warn("已连续 3 次获取不到可用签名服务器，将固定使用主签名服务器")
 		currentSignServer = signServers[0]
 		currentOK.Store(true)
 		return currentSignServer, nil
@@ -141,7 +142,7 @@ func isServerAvaliable(signServer string) bool {
 func requestSignServer(method string, url string, headers map[string]string, body io.Reader) (string, []byte, error) {
 	signServer, e := GetAvaliableSignServer()
 	if e != nil && len(signServer.URL) <= 1 { // 没有可用的
-		log.Warnf("获取可用签名服务器出错：%v", e)
+		log.Warnf("获取可用签名服务器出错：%v, 将使用主签名服务器进行签名", e)
 		atomic.AddInt64(&errorCount, 1)
 		signServer = signServers[0] // 没有获取到时使用第一个
 	}
@@ -311,6 +312,9 @@ func sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []b
 		i++
 		if (!base.IsBelow110) && base.Account.AutoRegister && err == nil && len(sign) == 0 {
 			if registerLock.TryLock() { // 避免并发时多处同时销毁并重新注册
+				log.Debugf("请求签名：cmd=%v, qua=%v, buff=%v", seq, cmd, hex.EncodeToString(buff))
+				log.Debugf("返回结果：sign=%v, extra=%v, token=%v",
+					hex.EncodeToString(sign), hex.EncodeToString(extra), hex.EncodeToString(token))
 				log.Warn("获取签名为空，实例可能丢失，正在尝试重新注册")
 				defer registerLock.Unlock()
 				err := signServerDestroy(uin)
