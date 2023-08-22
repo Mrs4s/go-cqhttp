@@ -1388,33 +1388,42 @@ func (bot *CQBot) CQGetGroupHonorInfo(groupID int64, t string) global.MSG {
 				}
 			}
 			msg["talkative_list"] = convertMem(honor.TalkativeList)
+		} else {
+			log.Infof("获取群龙王出错：%v", err)
 		}
 	}
 
 	if t == "performer" || t == "all" {
 		if honor, err := bot.Client.GetGroupHonorInfo(groupID, client.Performer); err == nil {
 			msg["performer_list"] = convertMem(honor.ActorList)
+		} else {
+			log.Infof("获取群聊之火出错：%v", err)
 		}
 	}
 
 	if t == "legend" || t == "all" {
 		if honor, err := bot.Client.GetGroupHonorInfo(groupID, client.Legend); err == nil {
 			msg["legend_list"] = convertMem(honor.LegendList)
+		} else {
+			log.Infof("获取群聊炽焰出错：%v", err)
 		}
 	}
 
 	if t == "strong_newbie" || t == "all" {
 		if honor, err := bot.Client.GetGroupHonorInfo(groupID, client.StrongNewbie); err == nil {
 			msg["strong_newbie_list"] = convertMem(honor.StrongNewbieList)
+		} else {
+			log.Infof("获取冒尖小春笋出错：%v", err)
 		}
 	}
 
 	if t == "emotion" || t == "all" {
 		if honor, err := bot.Client.GetGroupHonorInfo(groupID, client.Emotion); err == nil {
 			msg["emotion_list"] = convertMem(honor.EmotionList)
+		} else {
+			log.Infof("获取快乐之源出错：%v", err)
 		}
 	}
-
 	return OK(msg)
 }
 
@@ -1689,26 +1698,8 @@ func (bot *CQBot) CQGetMessage(messageID int32) global.MSG {
 	switch o := msg.(type) {
 	case *db.StoredGroupMessage:
 		m["group_id"] = o.GroupCode
-		if o.QuotedInfo != nil {
-			elem := global.MSG{
-				"type": "reply",
-				"data": global.MSG{
-					"id": strconv.FormatInt(int64(o.QuotedInfo.PrevGlobalID), 10),
-				},
-			}
-			o.Content = append(o.Content, elem)
-		}
 		m["message"] = ToFormattedMessage(bot.ConvertContentMessage(o.Content, message.SourceGroup, false), message.Source{SourceType: message.SourceGroup, PrimaryID: o.GroupCode})
 	case *db.StoredPrivateMessage:
-		if o.QuotedInfo != nil {
-			elem := global.MSG{
-				"type": "reply",
-				"data": global.MSG{
-					"id": strconv.FormatInt(int64(o.QuotedInfo.PrevGlobalID), 10),
-				},
-			}
-			o.Content = append(o.Content, elem)
-		}
 		m["message"] = ToFormattedMessage(bot.ConvertContentMessage(o.Content, message.SourcePrivate, false), message.Source{SourceType: message.SourcePrivate})
 	}
 	return OK(m)
