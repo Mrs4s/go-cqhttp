@@ -24,98 +24,143 @@ import (
 	"github.com/Mrs4s/go-cqhttp/modules/config"
 )
 
+type signServers struct {
+	servers []config.SignServer
+	lock    sync.RWMutex
+}
+
+func (s *signServers) getServers() []config.SignServer {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+	return s.servers
+}
+
+type currentSignServer struct {
+	server *config.SignServer
+	ok     bool
+	lock   sync.RWMutex
+}
+
+func (c *currentSignServer) getServer() *config.SignServer {
+	c.lock.RLock()
+	defer c.lock.RUnlock()
+	return c.server
+}
+
+func (c *currentSignServer) isOK() bool {
+	c.lock.RLock()
+	defer c.lock.RUnlock()
+	return c.ok
+}
+
+func (c *currentSignServer) setServer(server *config.SignServer, status bool) {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+	if server != nil {
+		c.server = server
+	}
+	c.ok = status
+}
+
 // 配置的所有签名服务器
-var signServers []config.SignServer
-var checkLock sync.Mutex
+var allSignServers *signServers
 
 // 当前签名服务器
-var currentSignServer config.SignServer
-var currentOK atomic.Bool
+var curSignServer *currentSignServer
+var errorCount = uintptr(0)
+var checkLock sync.Mutex
 
-var errorCount = int64(0)
-
-// GetAvaliableSignServer 获取可用的签名服务器，没有则返回空和相应错误
-func GetAvaliableSignServer() (config.SignServer, error) {
+func initSignServersConfig() {
 	if len(base.SignServers) == 0 {
-		return config.SignServer{}, errors.New("no configured sign-server")
+		log.Warn("no configured sign-server")
+		return
 	}
-	if currentOK.Load() {
-		return currentSignServer, nil
+	allSignServers = &signServers{
+		servers: base.SignServers,
+	}
+	curSignServer = &currentSignServer{
+		server: &allSignServers.getServers()[0],
+		ok:     true,
+	}
+}
+
+// getAvaliableSignServer 获取可用的签名服务器，没有则返回空和相应错误
+func getAvaliableSignServer() (config.SignServer, error) {
+	if curSignServer.isOK() {
+		return *curSignServer.getServer(), nil
 	}
 	maxCount := base.Account.MaxCheckCount
-	signServers = base.SignServers
-	if maxCount == 0 && atomic.LoadInt64(&errorCount) >= 3 {
+	if maxCount == 0 && atomic.LoadUintptr(&errorCount) >= 3 {
 		log.Warn("已连续 3 次获取不到可用签名服务器，将固定使用主签名服务器")
-		currentSignServer = signServers[0]
-		currentOK.Store(true)
-		return currentSignServer, nil
+		curSignServer.setServer(&allSignServers.getServers()[0], true)
+		return *curSignServer.getServer(), nil
 	}
-	if maxCount > 0 && atomic.LoadInt64(&errorCount) >= int64(maxCount) {
+	if maxCount > 0 && int(atomic.LoadUintptr(&errorCount)) >= maxCount {
 		log.Fatalf("获取可用签名服务器失败次数超过 %v 次, 正在离线", maxCount)
 	}
-	if len(currentSignServer.URL) > 1 {
-		log.Warnf("当前签名服务器 %v 不可用，正在查找可用服务器", currentSignServer.URL)
+	cs := curSignServer.getServer()
+	if len(cs.URL) > 1 {
+		log.Warnf("当前签名服务器 %v 不可用，正在查找可用服务器", cs.URL)
 	}
+	allServers := allSignServers.getServers()
 	if checkLock.TryLock() {
 		defer checkLock.Unlock()
-		if base.Account.SyncCheckServers {
-			for i, server := range signServers {
-				log.Infof("检查签名服务器：%v  (%v/%v)", server.URL, i+1, len(signServers))
+		if base.Account.SyncCheckServers { // 顺序检查
+			for i, server := range allServers {
+				log.Infof("检查签名服务器：%v  (%v/%v)", server.URL, i+1, len(allServers))
 				if len(server.URL) < 4 {
 					continue
 				}
 				if isServerAvaliable(server.URL) {
-					errorCount = 0
-					currentSignServer = server
-					currentOK.Store(true)
+					atomic.StoreUintptr(&errorCount, 0)
+					curSignServer.setServer(&server, true)
 					log.Infof("使用签名服务器 url=%v, key=%v, auth=%v", server.URL, server.Key, server.Authorization)
 					if base.Account.AutoRegister {
 						// 若配置了自动注册实例则在切换后注册实例，否则不需要注册，签名时由qsign自动注册
 						signRegister(base.Account.Uin, device.AndroidId, device.Guid, device.QImei36, server.Key)
 					}
-					return currentSignServer, nil
+					return server, nil
 				}
 			}
 			return config.SignServer{}, errors.New("no avaliable sign-server")
 		}
-		result := make(chan config.SignServer)
-		allDone := make(chan bool)
-		i := int32(0)
+		result := make(chan *config.SignServer)
+		allDone := make(chan bool) // 标记检查是否全部完成
+		t := int32(0)
 		log.Infof("正在检查各签名服务是否可用... （最多等待 %vs）", base.SignServerTimeout)
-		for _, server := range signServers {
-			go func(s config.SignServer, r chan config.SignServer) {
-				atomic.AddInt32(&i, 1)
-				defer func(count int) {
-					if len(signServers) == count {
-						allDone <- true
+		for i, server := range allServers {
+			go func(idx int, s *config.SignServer, r chan *config.SignServer) {
+				defer func(count int32) { // 记录完成任务数
+					if len(allServers) == int(count) { // 已经全部检查完毕
+						allDone <- true // 终止，不用等待超时再返回
 					}
-				}(int(i))
+				}(atomic.AddInt32(&t, 1))
+
 				if len(s.URL) < 4 {
 					return
 				}
-				if s.URL != signServers[0].URL { // 主服务器优先检查
+				if s.URL != allServers[0].URL { // 主服务器优先 3s 检查
 					time.Sleep(3 * time.Second)
 				}
 				if isServerAvaliable(s.URL) {
-					errorCount = 0
+					atomic.StoreUintptr(&errorCount, 0)
 					r <- s
 					log.Infof("使用签名服务器 url=%v, key=%v, auth=%v", s.URL, s.Key, s.Authorization)
 				}
-			}(server, result)
+			}(i, &server, result)
 		}
 		select {
 		case res := <-result:
-			currentSignServer = res
-			currentOK.Store(true)
+			curSignServer.setServer(res, true)
 			if base.Account.AutoRegister {
 				signRegister(base.Account.Uin, device.AndroidId, device.Guid, device.QImei36, res.Key)
 			}
-			return currentSignServer, nil
-		case <-allDone:
-			return config.SignServer{}, errors.New("no avaliable sign-server")
+			return *res, nil
 		case <-time.After(time.Duration(base.SignServerTimeout) * time.Second):
 			errMsg := fmt.Sprintf("no avaliable sign-server, timeout=%v", base.SignServerTimeout)
 			return config.SignServer{}, errors.New(errMsg)
+		case <-allDone:
+			return config.SignServer{}, errors.New("no avaliable sign-server")
 		}
 	}
 	return config.SignServer{}, errors.New("checking sign-servers")
@@ -140,11 +185,11 @@ func isServerAvaliable(signServer string) bool {
 	return: signServer, response, error
 */
 func requestSignServer(method string, url string, headers map[string]string, body io.Reader) (string, []byte, error) {
-	signServer, e := GetAvaliableSignServer()
+	signServer, e := getAvaliableSignServer()
 	if e != nil && len(signServer.URL) <= 1 { // 没有可用的
 		log.Warnf("获取可用签名服务器出错：%v, 将使用主签名服务器进行签名", e)
-		atomic.AddInt64(&errorCount, 1)
-		signServer = signServers[0] // 没有获取到时使用第一个
+		atomic.AddUintptr(&errorCount, 1)
+		signServer = allSignServers.getServers()[0] // 没有获取到时使用第一个
 	}
 	if !strings.HasPrefix(url, signServer.URL) {
 		url = strings.TrimSuffix(signServer.URL, "/") + "/" + strings.TrimPrefix(url, "/")
@@ -164,7 +209,7 @@ func requestSignServer(method string, url string, headers map[string]string, bod
 	}.WithTimeout(time.Duration(base.SignServerTimeout) * time.Second)
 	resp, err := req.Bytes()
 	if err != nil {
-		currentOK.Store(false)
+		curSignServer.setServer(nil, false) // 标记为不可用
 	}
 	return signServer.URL, resp, err
 }
@@ -302,9 +347,10 @@ var lastToken = ""
 func sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []byte, extra []byte, token []byte, err error) {
 	i := 0
 	for {
+		cs := curSignServer.getServer()
 		sign, extra, token, err = signRequset(seq, uin, cmd, qua, buff)
 		if err != nil {
-			log.Warnf("获取sso sign时出现错误: %v. server: %v", err, currentSignServer.URL)
+			log.Warnf("获取sso sign时出现错误: %v. server: %v", err, cs.URL)
 		}
 		if i > 0 {
 			break
@@ -322,7 +368,7 @@ func sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []b
 					log.Warnln(err) // 实例真的丢失时则必出错，或许应该不 return , 以重新获取本次签名
 					// return nil, nil, nil, err
 				}
-				signRegister(base.Account.Uin, device.AndroidId, device.Guid, device.QImei36, currentSignServer.Key)
+				signRegister(base.Account.Uin, device.AndroidId, device.Guid, device.QImei36, cs.Key)
 			}
 			continue
 		}
@@ -331,7 +377,7 @@ func sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []b
 			if registerLock.TryLock() {
 				defer registerLock.Unlock()
 				if err := signRefreshToken(uin); err != nil {
-					log.Warnf("刷新 token 出现错误: %v. server: %v", err, currentSignServer.URL)
+					log.Warnf("刷新 token 出现错误: %v. server: %v", err, cs.URL)
 				} else {
 					log.Info("刷新 token 成功")
 				}
@@ -346,7 +392,7 @@ func sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []b
 	}
 	rule := base.Account.RuleChangeSignServer
 	if (len(sign) == 0 && rule >= 1) || (len(token) == 0 && rule >= 2) {
-		currentOK.Store(false)
+		curSignServer.setServer(nil, false)
 	}
 	return sign, extra, token, err
 }
@@ -361,7 +407,7 @@ func signServerDestroy(uin string) error {
 	}
 	signServer, resp, err := requestSignServer(
 		http.MethodGet,
-		"destroy"+fmt.Sprintf("?uin=%v&key=%v", uin, currentSignServer.Key),
+		"destroy"+fmt.Sprintf("?uin=%v&key=%v", uin, curSignServer.getServer().Key),
 		nil, nil,
 	)
 	if err != nil || gjson.GetBytes(resp, "code").Int() != 0 {
@@ -399,14 +445,14 @@ func signStartRefreshToken(interval int64) {
 	qqstr := strconv.FormatInt(base.Account.Uin, 10)
 	defer t.Stop()
 	for range t.C {
-		if currentSignServer != signServers[0] && isServerAvaliable(signServers[0].URL) {
-			currentSignServer = signServers[0]
-			currentOK.Store(true)
-			log.Infof("主签名服务器可用，已切换至主签名服务器 %v", currentSignServer.URL)
+		cs, master := curSignServer.getServer(), allSignServers.getServers()[0]
+		if cs.URL != master.URL && isServerAvaliable(master.URL) {
+			curSignServer.setServer(&master, true)
+			log.Infof("主签名服务器可用，已切换至主签名服务器 %v", cs.URL)
 		}
 		err := signRefreshToken(qqstr)
 		if err != nil {
-			log.Warnf("刷新 token 出现错误: %v. server: %v", err, currentSignServer.URL)
+			log.Warnf("刷新 token 出现错误: %v. server: %v", err, cs.URL)
 		}
 	}
 }

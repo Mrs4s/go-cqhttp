@@ -15,6 +15,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/RomiChan/syncx"
 	"github.com/pkg/errors"
 	"github.com/tidwall/gjson"
 
@@ -22,7 +23,7 @@ import (
 )
 
 var client = newClient(time.Second * 15)
-var clients sync.Map
+var clients syncx.Map[time.Duration, *http.Client]
 
 var clienth2 = &http.Client{
 	Transport: &http.Transport{
@@ -64,7 +65,7 @@ const UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 
 // WithTimeout get a download instance with timeout t
 func (r Request) WithTimeout(t time.Duration) *Request {
 	if c, ok := clients.Load(t); ok {
-		r.custcli = c.(*http.Client)
+		r.custcli = c
 	} else {
 		c := newClient(t)
 		clients.Store(t, c)

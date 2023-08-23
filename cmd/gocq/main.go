@@ -166,11 +166,13 @@ func LoginInteract() {
 	if len(base.Account.SignServers) > 5 {
 		log.Warn("签名服务器数量配置过多，推荐不超过 5 个")
 	}
-	signServer, err := GetAvaliableSignServer() // 获取可用签名服务器
+	initSignServersConfig()
+	signServer, err := getAvaliableSignServer() // 获取可用签名服务器
 	if err != nil {
 		log.Warn(err)
 	}
 	if len(signServer.URL) > 1 {
+		log.Infof("使用签名服务器：%v", signServer.URL)
 		go signStartRefreshToken(base.Account.RefreshInterval) // 定时刷新 token
 		wrapper.DandelionEnergy = energy
 		wrapper.FekitGetSign = sign
