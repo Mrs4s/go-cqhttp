@@ -128,8 +128,8 @@ func getAvaliableSignServer() (config.SignServer, error) {
 		allDone := make(chan bool) // 标记检查是否全部完成
 		t := int32(0)
 		log.Infof("正在检查各签名服务是否可用... （最多等待 %vs）", base.SignServerTimeout)
-		for i, server := range allServers {
-			go func(idx int, s *config.SignServer, r chan *config.SignServer) {
+		for _, server := range allServers {
+			go func(s *config.SignServer, r chan *config.SignServer) {
 				defer func(count int32) { // 记录完成任务数
 					if len(allServers) == int(count) { // 已经全部检查完毕
 						allDone <- true // 终止，不用等待超时再返回
@@ -147,7 +147,7 @@ func getAvaliableSignServer() (config.SignServer, error) {
 					r <- s
 					log.Infof("使用签名服务器 url=%v, key=%v, auth=%v", s.URL, s.Key, s.Authorization)
 				}
-			}(i, &server, result)
+			}(&server, result)
 		}
 		select {
 		case res := <-result:
