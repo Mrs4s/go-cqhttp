@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"image"
 	"image/png"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -541,7 +542,18 @@ func signWaitServer() bool {
 			log.Warnf("连接到签名服务器出现错误: %v", err)
 			continue
 		}
-		r := utils.RunTCPPingLoop(u.Host, 4)
+		host := u.Hostname()
+		port := u.Port()
+		if port == "" {
+			switch u.Scheme {
+			case "https":
+				port = "443"
+			case "http":
+				port = "80"
+			}
+		}
+		hostPort := net.JoinHostPort(host, port)
+		r := utils.RunTCPPingLoop(hostPort, 4)
 		if r.PacketsLoss > 0 {
 			log.Warnf("连接到签名服务器出现错误: 丢包%d/%d 时延%dms", r.PacketsLoss, r.PacketsSent, r.AvgTimeMill)
 			continue
