@@ -1689,26 +1689,8 @@ func (bot *CQBot) CQGetMessage(messageID int32) global.MSG {
 	switch o := msg.(type) {
 	case *db.StoredGroupMessage:
 		m["group_id"] = o.GroupCode
-		if o.QuotedInfo != nil {
-			elem := global.MSG{
-				"type": "reply",
-				"data": global.MSG{
-					"id": strconv.FormatInt(int64(o.QuotedInfo.PrevGlobalID), 10),
-				},
-			}
-			o.Content = append(o.Content, elem)
-		}
 		m["message"] = ToFormattedMessage(bot.ConvertContentMessage(o.Content, message.SourceGroup, false), message.Source{SourceType: message.SourceGroup, PrimaryID: o.GroupCode})
 	case *db.StoredPrivateMessage:
-		if o.QuotedInfo != nil {
-			elem := global.MSG{
-				"type": "reply",
-				"data": global.MSG{
-					"id": strconv.FormatInt(int64(o.QuotedInfo.PrevGlobalID), 10),
-				},
-			}
-			o.Content = append(o.Content, elem)
-		}
 		m["message"] = ToFormattedMessage(bot.ConvertContentMessage(o.Content, message.SourcePrivate, false), message.Source{SourceType: message.SourcePrivate})
 	}
 	return OK(m)
