@@ -106,62 +106,9 @@ func getAvaliableSignServer() (config.SignServer, error) {
 	if checkLock.TryLock() {
 		defer checkLock.Unlock()
 		if base.Account.SyncCheckServers { // 顺序检查
-			for i, server := range allServers {
-				log.Infof("检查签名服务器：%v  (%v/%v)", server.URL, i+1, len(allServers))
-				if len(server.URL) < 4 {
-					continue
-				}
-				if isServerAvaliable(server.URL) {
-					atomic.StoreUintptr(&errorCount, 0)
-					curSignServer.setServer(&server, true)
-					log.Infof("使用签名服务器 url=%v, key=%v, auth=%v", server.URL, server.Key, server.Authorization)
-					if base.Account.AutoRegister {
-						// 若配置了自动注册实例则在切换后注册实例，否则不需要注册，签名时由qsign自动注册
-						signRegister(base.Account.Uin, device.AndroidId, device.Guid, device.QImei36, server.Key)
-					}
-					return server, nil
-				}
-			}
-			return config.SignServer{}, errors.New("no avaliable sign-server")
+			return syncCheckServer(allServers)
 		}
-		result := make(chan *config.SignServer)
-		allDone := make(chan bool) // 标记检查是否全部完成
-		t := int32(0)
-		log.Infof("正在检查各签名服务是否可用... （最多等待 %vs）", base.SignServerTimeout)
-		for _, server := range allServers {
-			go func(s *config.SignServer, r chan *config.SignServer) {
-				defer func(count int32) { // 记录完成任务数
-					if len(allServers) == int(count) { // 已经全部检查完毕
-						allDone <- true // 终止，不用等待超时再返回
-					}
-				}(atomic.AddInt32(&t, 1))
-
-				if len(s.URL) < 4 {
-					return
-				}
-				if s.URL != allServers[0].URL { // 主服务器优先 3s 检查
-					time.Sleep(3 * time.Second)
-				}
-				if isServerAvaliable(s.URL) {
-					atomic.StoreUintptr(&errorCount, 0)
-					r <- s
-					log.Infof("使用签名服务器 url=%v, key=%v, auth=%v", s.URL, s.Key, s.Authorization)
-				}
-			}(&server, result)
-		}
-		select {
-		case res := <-result:
-			curSignServer.setServer(res, true)
-			if base.Account.AutoRegister {
-				signRegister(base.Account.Uin, device.AndroidId, device.Guid, device.QImei36, res.Key)
-			}
-			return *res, nil
-		case <-time.After(time.Duration(base.SignServerTimeout) * time.Second):
-			errMsg := fmt.Sprintf("no avaliable sign-server, timeout=%v", base.SignServerTimeout)
-			return config.SignServer{}, errors.New(errMsg)
-		case <-allDone:
-			return config.SignServer{}, errors.New("no avaliable sign-server")
-		}
+		return asyncCheckServer(allServers)
 	}
 	return config.SignServer{}, errors.New("checking sign-servers")
 }
@@ -176,6 +123,70 @@ func isServerAvaliable(signServer string) bool {
 	}
 	log.Warnf("签名服务器 %v 可能不可用，请求出现错误：%v", signServer, err)
 	return false
+}
+
+// syncCheckServer 按同步顺序检查所有签名服务器直到找到可用的
+func syncCheckServer(servers []config.SignServer) (config.SignServer, error) {
+	for i, server := range servers {
+		log.Infof("检查签名服务器：%v  (%v/%v)", server.URL, i+1, len(servers))
+		if len(server.URL) < 4 {
+			continue
+		}
+		if isServerAvaliable(server.URL) {
+			atomic.StoreUintptr(&errorCount, 0)
+			curSignServer.setServer(&server, true)
+			log.Infof("使用签名服务器 url=%v, key=%v, auth=%v", server.URL, server.Key, server.Authorization)
+			if base.Account.AutoRegister {
+				// 若配置了自动注册实例则在切换后注册实例，否则不需要注册，签名时由qsign自动注册
+				signRegister(base.Account.Uin, device.AndroidId, device.Guid, device.QImei36, server.Key)
+			}
+			return server, nil
+		}
+	}
+	return config.SignServer{}, errors.New("no avaliable sign-server")
+}
+
+// asyncCheckServer 异步检查所有签名服务器直到找到可用的
+func asyncCheckServer(servers []config.SignServer) (config.SignServer, error) {
+	avaliableServer := make(chan *config.SignServer)
+	allDone := make(chan struct{})   // 是否全部完成
+	var finishedCount atomic.Uintptr // 记录完成任务数
+	finishedCount.Store(0)
+	log.Infof("正在检查各签名服务是否可用... （最多等待 %vs）", base.SignServerTimeout)
+	for _, server := range servers {
+		go func(s *config.SignServer) {
+			defer func(count uintptr) {
+				if len(servers) == int(count) { // 已经全部检查完毕
+					allDone <- struct{}{}
+				}
+			}(finishedCount.Add(1)) // 完成任务数 + 1
+
+			if len(s.URL) < 4 {
+				return
+			}
+			if s.URL != servers[0].URL { // 主服务器优先 3s 检查
+				time.Sleep(3 * time.Second)
+			}
+			if isServerAvaliable(s.URL) {
+				atomic.StoreUintptr(&errorCount, 0)
+				avaliableServer <- s
+				log.Infof("使用签名服务器 url=%v, key=%v, auth=%v", s.URL, s.Key, s.Authorization)
+			}
+		}(&server)
+	}
+	select {
+	case res := <-avaliableServer:
+		curSignServer.setServer(res, true)
+		if base.Account.AutoRegister {
+			signRegister(base.Account.Uin, device.AndroidId, device.Guid, device.QImei36, res.Key)
+		}
+		return *res, nil
+	case <-time.After(time.Duration(base.SignServerTimeout) * time.Second):
+		errMsg := fmt.Sprintf("no avaliable sign-server, timeout=%v", base.SignServerTimeout)
+		return config.SignServer{}, errors.New(errMsg)
+	case <-allDone:
+		return config.SignServer{}, errors.New("no avaliable sign-server")
+	}
 }
 
 /*
@@ -247,7 +258,7 @@ func signSubmit(uin string, cmd string, callbackID int64, buffer []byte, t strin
 		tail = len(buffStr)
 		endl = "."
 	}
-	log.Infof("submit %v: uin=%v, cmd=%v, callbackID=%v, buffer=%v%s", t, uin, cmd, callbackID, buffStr[:tail], endl)
+	log.Infof("submit (%v): uin=%v, cmd=%v, callbackID=%v, buffer=%v%s", t, uin, cmd, callbackID, buffStr[:tail], endl)
 
 	signServer, _, err := requestSignServer(
 		http.MethodGet,
