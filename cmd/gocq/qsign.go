@@ -24,17 +24,6 @@ import (
 	"github.com/Mrs4s/go-cqhttp/modules/config"
 )
 
-type signServers struct {
-	servers []config.SignServer
-	lock    sync.RWMutex
-}
-
-func (s *signServers) getServers() []config.SignServer {
-	s.lock.RLock()
-	defer s.lock.RUnlock()
-	return s.servers
-}
-
 type currentSignServer struct {
 	server *config.SignServer
 	ok     bool
@@ -62,9 +51,6 @@ func (c *currentSignServer) setServer(server *config.SignServer, status bool) {
 	c.ok = status
 }
 
-// 配置的所有签名服务器
-var allSignServers *signServers
-
 // 当前签名服务器
 var curSignServer *currentSignServer
 var errorCount = uintptr(0)
@@ -75,11 +61,12 @@ func initSignServersConfig() {
 		log.Warn("no configured sign-server")
 		return
 	}
-	allSignServers = &signServers{
-		servers: base.SignServers,
+	if len(base.SignServers) > 5 {
+		base.SignServers = base.SignServers[:5]
+		log.Warn("签名服务器数量配置过多，可能导致不可用时检查时间过久，已取前 5 个")
 	}
 	curSignServer = &currentSignServer{
-		server: &allSignServers.getServers()[0],
+		server: &base.SignServers[0],
 		ok:     true,
 	}
 }
@@ -92,23 +79,19 @@ func getAvaliableSignServer() (config.SignServer, error) {
 	maxCount := base.Account.MaxCheckCount
 	if maxCount == 0 && atomic.LoadUintptr(&errorCount) >= 3 {
 		log.Warn("已连续 3 次获取不到可用签名服务器，将固定使用主签名服务器")
-		curSignServer.setServer(&allSignServers.getServers()[0], true)
+		curSignServer.setServer(&base.SignServers[0], true)
 		return *curSignServer.getServer(), nil
 	}
 	if maxCount > 0 && int(atomic.LoadUintptr(&errorCount)) >= maxCount {
 		log.Fatalf("获取可用签名服务器失败次数超过 %v 次, 正在离线", maxCount)
 	}
-	cs := curSignServer.getServer()
-	if len(cs.URL) > 1 {
-		log.Warnf("当前签名服务器 %v 不可用，正在查找可用服务器", cs.URL)
-	}
-	allServers := allSignServers.getServers()
 	if checkLock.TryLock() {
 		defer checkLock.Unlock()
-		if base.Account.SyncCheckServers { // 顺序检查
-			return syncCheckServer(allServers)
+		cs := curSignServer.getServer()
+		if len(cs.URL) > 1 {
+			log.Warnf("当前签名服务器 %v 不可用，正在查找可用服务器", cs.URL)
 		}
-		return asyncCheckServer(allServers)
+		return syncCheckServer(base.SignServers)
 	}
 	return config.SignServer{}, errors.New("checking sign-servers")
 }
@@ -117,7 +100,7 @@ func isServerAvaliable(signServer string) bool {
 	resp, err := download.Request{
 		Method: http.MethodGet,
 		URL:    signServer,
-	}.WithTimeout(5 * time.Second).Bytes()
+	}.WithTimeout(3 * time.Second).Bytes()
 	if err == nil && gjson.GetBytes(resp, "code").Int() == 0 {
 		return true
 	}
@@ -146,49 +129,6 @@ func syncCheckServer(servers []config.SignServer) (config.SignServer, error) {
 	return config.SignServer{}, errors.New("no avaliable sign-server")
 }
 
-// asyncCheckServer 异步检查所有签名服务器直到找到可用的
-func asyncCheckServer(servers []config.SignServer) (config.SignServer, error) {
-	avaliableServer := make(chan *config.SignServer)
-	allDone := make(chan struct{})   // 是否全部完成
-	var finishedCount atomic.Uintptr // 记录完成任务数
-	finishedCount.Store(0)
-	log.Infof("正在检查各签名服务是否可用... （最多等待 %vs）", base.SignServerTimeout)
-	for _, server := range servers {
-		go func(s *config.SignServer) {
-			defer func(count uintptr) {
-				if len(servers) == int(count) { // 已经全部检查完毕
-					allDone <- struct{}{}
-				}
-			}(finishedCount.Add(1)) // 完成任务数 + 1
-
-			if len(s.URL) < 4 {
-				return
-			}
-			if s.URL != servers[0].URL { // 主服务器优先 3s 检查
-				time.Sleep(3 * time.Second)
-			}
-			if isServerAvaliable(s.URL) {
-				atomic.StoreUintptr(&errorCount, 0)
-				avaliableServer <- s
-				log.Infof("使用签名服务器 url=%v, key=%v, auth=%v", s.URL, s.Key, s.Authorization)
-			}
-		}(&server)
-	}
-	select {
-	case res := <-avaliableServer:
-		curSignServer.setServer(res, true)
-		if base.Account.AutoRegister {
-			signRegister(base.Account.Uin, device.AndroidId, device.Guid, device.QImei36, res.Key)
-		}
-		return *res, nil
-	case <-time.After(time.Duration(base.SignServerTimeout) * time.Second):
-		errMsg := fmt.Sprintf("no avaliable sign-server, timeout=%v", base.SignServerTimeout)
-		return config.SignServer{}, errors.New(errMsg)
-	case <-allDone:
-		return config.SignServer{}, errors.New("no avaliable sign-server")
-	}
-}
-
 /*
 请求签名服务器
 
@@ -200,7 +140,7 @@ func requestSignServer(method string, url string, headers map[string]string, bod
 	if e != nil && len(signServer.URL) <= 1 { // 没有可用的
 		log.Warnf("获取可用签名服务器出错：%v, 将使用主签名服务器进行签名", e)
 		atomic.AddUintptr(&errorCount, 1)
-		signServer = allSignServers.getServers()[0] // 没有获取到时使用第一个
+		signServer = base.SignServers[0] // 没有获取到时使用第一个
 	}
 	if !strings.HasPrefix(url, signServer.URL) {
 		url = strings.TrimSuffix(signServer.URL, "/") + "/" + strings.TrimPrefix(url, "/")
@@ -456,7 +396,7 @@ func signStartRefreshToken(interval int64) {
 	qqstr := strconv.FormatInt(base.Account.Uin, 10)
 	defer t.Stop()
 	for range t.C {
-		cs, master := curSignServer.getServer(), allSignServers.getServers()[0]
+		cs, master := curSignServer.getServer(), base.SignServers[0]
 		if cs.URL != master.URL && isServerAvaliable(master.URL) {
 			curSignServer.setServer(&master, true)
 			log.Infof("主签名服务器可用，已切换至主签名服务器 %v", cs.URL)

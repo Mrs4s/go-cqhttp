@@ -19,7 +19,7 @@ account: # 账号相关
   # 数据包的签名服务器列表，第一个作为主签名服务器，后续作为备用
   # 兼容 https://github.com/fuqiuluo/unidbg-fetch-qsign
   # 如果遇到 登录 45 错误, 或者发送信息风控的话需要填入一个或多个服务器
-  # 不建议设置过多，最好不超过4个
+  # 不建议设置过多，设置主备各一个即可，超过 5 个只会取前五个
   # 示例:
   # sign-servers: 
   #   - url: 'http://127.0.0.1:8080' # 本地签名服务器
@@ -39,11 +39,8 @@ account: # 账号相关
       key: '114514'  
       authorization: '-' 
 
-  # 是否以同步顺序方式查找签名服务器，找不到时可能会比较慢，默认并发查找 
-  sync-check-servers: false
-
   # 判断签名服务不可用（需要切换）的额外规则
-  # 0: 不设置
+  # 0: 不设置 （此时仅在请求无法返回结果时判定为不可用）
   # 1: 在获取到的 sign 为空 （若选此建议关闭 auto-register，一般为实例未注册但是请求签名的情况）
   # 2: 在获取到的 sign 或 token 为空（若选此建议关闭 auto-refresh-token ）
   rule-change-sign-server: 1
