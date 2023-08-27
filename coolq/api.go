@@ -1388,33 +1388,42 @@ func (bot *CQBot) CQGetGroupHonorInfo(groupID int64, t string) global.MSG {
 				}
 			}
 			msg["talkative_list"] = convertMem(honor.TalkativeList)
+		} else {
+			log.Infof("获取群龙王出错：%v", err)
 		}
 	}
 
 	if t == "performer" || t == "all" {
 		if honor, err := bot.Client.GetGroupHonorInfo(groupID, client.Performer); err == nil {
 			msg["performer_list"] = convertMem(honor.ActorList)
+		} else {
+			log.Infof("获取群聊之火出错：%v", err)
 		}
 	}
 
 	if t == "legend" || t == "all" {
 		if honor, err := bot.Client.GetGroupHonorInfo(groupID, client.Legend); err == nil {
 			msg["legend_list"] = convertMem(honor.LegendList)
+		} else {
+			log.Infof("获取群聊炽焰出错：%v", err)
 		}
 	}
 
 	if t == "strong_newbie" || t == "all" {
 		if honor, err := bot.Client.GetGroupHonorInfo(groupID, client.StrongNewbie); err == nil {
 			msg["strong_newbie_list"] = convertMem(honor.StrongNewbieList)
+		} else {
+			log.Infof("获取冒尖小春笋出错：%v", err)
 		}
 	}
 
 	if t == "emotion" || t == "all" {
 		if honor, err := bot.Client.GetGroupHonorInfo(groupID, client.Emotion); err == nil {
 			msg["emotion_list"] = convertMem(honor.EmotionList)
+		} else {
+			log.Infof("获取快乐之源出错：%v", err)
 		}
 	}
-
 	return OK(msg)
 }
 
