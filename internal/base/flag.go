@@ -93,7 +93,7 @@ func Init() {
 		SignServers = conf.Account.SignServers
 		IsBelow110 = conf.Account.IsBelow110
 		HTTPTimeout = conf.Message.HTTPTimeout
-		SignServerTimeout = conf.Account.SignServerTimeout
+		SignServerTimeout = int(conf.Account.SignServerTimeout)
 	}
 	{ // others
 		Proxy = conf.Message.ProxyRewrite

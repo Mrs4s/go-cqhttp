@@ -37,8 +37,8 @@ type Account struct {
 	AllowTempSession     bool         `yaml:"allow-temp-session"`
 	SignServers          []SignServer `yaml:"sign-servers"`
 	RuleChangeSignServer int          `yaml:"rule-change-sign-server"`
-	MaxCheckCount        int          `yaml:"max-check-count"`
-	SignServerTimeout    int          `yaml:"sign-server-timeout"`
+	MaxCheckCount        uint         `yaml:"max-check-count"`
+	SignServerTimeout    uint         `yaml:"sign-server-timeout"`
 	IsBelow110           bool         `yaml:"is-below-110"`
 	AutoRegister         bool         `yaml:"auto-register"`
 	AutoRefreshToken     bool         `yaml:"auto-refresh-token"`

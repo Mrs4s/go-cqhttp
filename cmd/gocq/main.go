@@ -163,7 +163,6 @@ func LoginInteract() {
 			log.Fatalf("加载设备信息失败: %v", err)
 		}
 	}
-	initSignServersConfig()
 	signServer, err := getAvaliableSignServer() // 获取可用签名服务器
 	if err != nil {
 		log.Warn(err)
