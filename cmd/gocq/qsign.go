@@ -288,6 +288,10 @@ func sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []b
 	i := 0
 	for {
 		cs := ss.get()
+		if cs == nil {
+			err = errors.New("nil signserver")
+			return
+		}
 		sign, extra, token, err = signRequset(seq, uin, cmd, qua, buff)
 		if err != nil {
 			log.Warnf("获取sso sign时出现错误: %v. server: %v", err, cs.URL)
@@ -345,9 +349,13 @@ func signServerDestroy(uin string) error {
 	if global.VersionNameCompare("v"+signVersion, "v1.1.6") {
 		return errors.Errorf("当前签名服务器版本 %v 低于 1.1.6，无法使用 destroy 接口", signVersion)
 	}
+	cs := ss.get()
+	if cs == nil {
+		return errors.New("nil signserver")
+	}
 	signServer, resp, err := requestSignServer(
 		http.MethodGet,
-		"destroy"+fmt.Sprintf("?uin=%v&key=%v", uin, ss.get().Key),
+		"destroy"+fmt.Sprintf("?uin=%v&key=%v", uin, cs.Key),
 		nil, nil,
 	)
 	if err != nil || gjson.GetBytes(resp, "code").Int() != 0 {
@@ -385,10 +393,15 @@ func signStartRefreshToken(interval int64) {
 	qqstr := strconv.FormatInt(base.Account.Uin, 10)
 	defer t.Stop()
 	for range t.C {
-		cs, master := ss.get(), base.SignServers[0]
-		if cs.URL != master.URL && isServerAvaliable(master.URL) {
-			ss.set(&master)
+		cs, master := ss.get(), &base.SignServers[0]
+		if (cs == nil || cs.URL != master.URL) && isServerAvaliable(master.URL) {
+			ss.set(master)
 			log.Infof("主签名服务器可用，已切换至主签名服务器 %v", cs.URL)
+		}
+		cs = ss.get()
+		if cs == nil {
+			log.Warn("无法获得可用签名服务器，停止 token 定时刷新")
+			return
 		}
 		err := signRefreshToken(qqstr)
 		if err != nil {
