@@ -115,6 +115,7 @@ func asyncCheckServer(servers []config.SignServer) *config.SignServer {
 			}
 		}(i, s)
 	}
+	wg.Wait()
 	return ss.get()
 }
 
