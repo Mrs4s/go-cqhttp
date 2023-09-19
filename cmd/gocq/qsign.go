@@ -59,6 +59,9 @@ func getAvaliableSignServer() (*config.SignServer, error) {
 	if len(base.SignServers) == 0 {
 		return nil, errors.New("no sign server configured")
 	}
+	if len(base.SignServers) == 1 { // 只配置了一个签名服务时不检查以及切换
+		return &base.SignServers[0], nil
+	}
 	maxCount := base.Account.MaxCheckCount
 	if maxCount == 0 {
 		if errn.hasOver(3) {
