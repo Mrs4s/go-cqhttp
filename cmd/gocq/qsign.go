@@ -168,7 +168,7 @@ func energy(uin uint64, id string, _ string, salt []byte) ([]byte, error) {
 	}
 	data, err := hex.DecodeString(gjson.GetBytes(response, "data").String())
 	if err != nil {
-		log.Warnf("获取T544 sign时出现错误: %v", err)
+		log.Warnf("获取T544 sign时出现错误: %v (data: %v)", err, gjson.GetBytes(response, "data").String())
 		return nil, err
 	}
 	if len(data) == 0 {
@@ -397,7 +397,7 @@ func signStartRefreshToken(interval int64) {
 		cs, master := ss.get(), &base.SignServers[0]
 		if (cs == nil || cs.URL != master.URL) && isServerAvaliable(master.URL) {
 			ss.set(master)
-			log.Infof("主签名服务器可用，已切换至主签名服务器 %v", cs.URL)
+			log.Infof("主签名服务器可用，已切换至主签名服务器 %v", master.URL)
 		}
 		cs = ss.get()
 		if cs == nil {
