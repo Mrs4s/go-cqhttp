@@ -292,8 +292,9 @@ var lastToken = ""
 func sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []byte, extra []byte, token []byte, err error) {
 	i := 0
 	for {
-		cs := ss.get()
+
 		sign, extra, token, err = signRequset(seq, uin, cmd, qua, buff)
+		cs := ss.get()
 		if cs == nil {
 			// 最好在请求后判断，否则若被设置为nil后不会再请求签名，
 			// 导致在下一次有请求签名服务操作之前，ss无法更新
