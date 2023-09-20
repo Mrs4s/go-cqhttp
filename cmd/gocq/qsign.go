@@ -27,6 +27,10 @@ import (
 type currentSignServer atomic.Pointer[config.SignServer]
 
 func (c *currentSignServer) get() *config.SignServer {
+	if len(base.SignServers) == 1 {
+		// 只配置了一个签名服务时不检查以及切换, 在get阶段返回，防止返回nil导致其他bug（可能）
+		return &base.SignServers[0]
+	}
 	return (*atomic.Pointer[config.SignServer])(c).Load()
 }
 
@@ -58,9 +62,6 @@ func getAvaliableSignServer() (*config.SignServer, error) {
 	}
 	if len(base.SignServers) == 0 {
 		return nil, errors.New("no sign server configured")
-	}
-	if len(base.SignServers) == 1 { // 只配置了一个签名服务时不检查以及切换
-		return &base.SignServers[0], nil
 	}
 	maxCount := base.Account.MaxCheckCount
 	if maxCount == 0 {
@@ -213,7 +214,7 @@ func signCallback(uin string, results []gjson.Result, t string) {
 		body, _ := hex.DecodeString(result.Get("body").String())
 		ret, err := cli.SendSsoPacket(cmd, body)
 		if err != nil || len(ret) == 0 {
-			log.Warnf("Callback error: %v, Or response data is empty", err)
+			log.Warnf("Callback error: %v, or response data is empty", err)
 			continue // 发送 SsoPacket 出错或返回数据为空时跳过
 		}
 		signSubmit(uin, cmd, callbackID, ret, t)
@@ -292,11 +293,14 @@ func sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []b
 	i := 0
 	for {
 		cs := ss.get()
+		sign, extra, token, err = signRequset(seq, uin, cmd, qua, buff)
 		if cs == nil {
+			// 最好在请求后判断，否则若被设置为nil后不会再请求签名，
+			// 导致在下一次有请求签名服务操作之前，ss无法更新
 			err = errors.New("nil signserver")
+			log.Warn("nil sign-server") // 返回的err并不会log出来，加条日志
 			return
 		}
-		sign, extra, token, err = signRequset(seq, uin, cmd, qua, buff)
 		if err != nil {
 			log.Warnf("获取sso sign时出现错误: %v. server: %v", err, cs.URL)
 		}
