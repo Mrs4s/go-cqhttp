@@ -27,6 +27,10 @@ import (
 type currentSignServer atomic.Pointer[config.SignServer]
 
 func (c *currentSignServer) get() *config.SignServer {
+	if len(base.SignServers) == 1 {
+		// 只配置了一个签名服务时不检查以及切换, 在get阶段返回，防止返回nil导致其他bug（可能）
+		return &base.SignServers[0]
+	}
 	return (*atomic.Pointer[config.SignServer])(c).Load()
 }
 
@@ -168,7 +172,7 @@ func energy(uin uint64, id string, _ string, salt []byte) ([]byte, error) {
 	}
 	data, err := hex.DecodeString(gjson.GetBytes(response, "data").String())
 	if err != nil {
-		log.Warnf("获取T544 sign时出现错误: %v", err)
+		log.Warnf("获取T544 sign时出现错误: %v (data: %v)", err, gjson.GetBytes(response, "data").String())
 		return nil, err
 	}
 	if len(data) == 0 {
@@ -210,7 +214,7 @@ func signCallback(uin string, results []gjson.Result, t string) {
 		body, _ := hex.DecodeString(result.Get("body").String())
 		ret, err := cli.SendSsoPacket(cmd, body)
 		if err != nil || len(ret) == 0 {
-			log.Warnf("Callback error: %v, Or response data is empty", err)
+			log.Warnf("Callback error: %v, or response data is empty", err)
 			continue // 发送 SsoPacket 出错或返回数据为空时跳过
 		}
 		signSubmit(uin, cmd, callbackID, ret, t)
@@ -288,12 +292,16 @@ var lastToken = ""
 func sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []byte, extra []byte, token []byte, err error) {
 	i := 0
 	for {
+
+		sign, extra, token, err = signRequset(seq, uin, cmd, qua, buff)
 		cs := ss.get()
 		if cs == nil {
+			// 最好在请求后判断，否则若被设置为nil后不会再请求签名，
+			// 导致在下一次有请求签名服务操作之前，ss无法更新
 			err = errors.New("nil signserver")
+			log.Warn("nil sign-server") // 返回的err并不会log出来，加条日志
 			return
 		}
-		sign, extra, token, err = signRequset(seq, uin, cmd, qua, buff)
 		if err != nil {
 			log.Warnf("获取sso sign时出现错误: %v. server: %v", err, cs.URL)
 		}
@@ -397,7 +405,7 @@ func signStartRefreshToken(interval int64) {
 		cs, master := ss.get(), &base.SignServers[0]
 		if (cs == nil || cs.URL != master.URL) && isServerAvaliable(master.URL) {
 			ss.set(master)
-			log.Infof("主签名服务器可用，已切换至主签名服务器 %v", cs.URL)
+			log.Infof("主签名服务器可用，已切换至主签名服务器 %v", master.URL)
 		}
 		cs = ss.get()
 		if cs == nil {
