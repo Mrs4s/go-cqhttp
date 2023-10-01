@@ -292,7 +292,6 @@ var lastToken = ""
 func sign(seq uint64, uin string, cmd string, qua string, buff []byte) (sign []byte, extra []byte, token []byte, err error) {
 	i := 0
 	for {
-
 		sign, extra, token, err = signRequset(seq, uin, cmd, qua, buff)
 		cs := ss.get()
 		if cs == nil {
