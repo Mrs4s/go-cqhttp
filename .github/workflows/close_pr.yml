@@ -1,0 +1,21 @@
+name: Check and Close Invalid PR
+
+on:
+  pull_request_target:
+    types: [opened, reopened]
+
+jobs:
+  # This workflow closes invalid PR
+  close_pr:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    permissions: write-all
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - name: Close PR if it is not pointed to dev branch
+        if: github.event.pull_request.base.ref != 'dev'
+        uses: superbrothers/close-pull-request@v3
+        with:
+          # Optional. Post a issue comment just before closing a pull request.
+          comment: "Invalid PR to `non-dev` branch `${{ github.event.pull_request.base.ref }}`."
