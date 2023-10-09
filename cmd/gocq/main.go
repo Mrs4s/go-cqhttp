@@ -315,7 +315,11 @@ func LoginInteract() {
 					log.Infof("如果登录时出现版本过低错误, 可尝试使用 -update-protocol 参数启动")
 				case !isTokenLogin:
 					_ = device.Protocol.Version().UpdateFromJson(remoteVersion)
+					err := os.WriteFile(versionFile, remoteVersion, 0644)
 					log.Infof("协议版本已更新: %s -> %s", currentVersionName, remoteVersionName)
+					if err != nil {
+						log.Warnln("更新协议版本缓存文件", versionFile, "失败:", err)
+					}
 				default:
 					log.Infof("检测到协议更新: %s -> %s", currentVersionName, remoteVersionName)
 					log.Infof("由于使用了会话缓存, 无法自动更新协议, 请删除缓存后重试")
