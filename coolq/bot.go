@@ -297,14 +297,14 @@ func (bot *CQBot) SendGroupMessage(groupID int64, m *message.SendingMessage) (in
 		newElem = append(newElem, e)
 	}
 	if len(newElem) == 0 {
-		log.Warnf("群消息发送失败: 消息为空.")
+		log.Warnf("群 %v 消息发送失败: 消息为空.", groupID)
 		return -1, errors.New("empty message")
 	}
 	m.Elements = newElem
 	bot.checkMedia(newElem, groupID)
 	ret := bot.Client.SendGroupMessage(groupID, m)
 	if ret == nil || ret.Id == -1 {
-		log.Warnf("群消息发送失败: 账号可能被风控.")
+		log.Warnf("群 %v 发送消息失败: 账号可能被风控.", groupID)
 		return -1, errors.New("send group message failed: blocked by server")
 	}
 	return bot.InsertGroupMessage(ret, source), nil

@@ -118,7 +118,7 @@ func (bot *CQBot) groupMessageEvent(c *client.QQClient, m *message.GroupMessage)
 					"url":   c.GetGroupFileUrl(m.GroupCode, file.Path, file.Busid),
 				},
 			})
-			return
+			// return
 		}
 	}
 	source := message.Source{

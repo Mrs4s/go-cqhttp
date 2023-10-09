@@ -243,6 +243,16 @@ func toElements(e []message.IMessageElement, source message.Source) (r []msg.Ele
 					{K: "type", V: "sticker"},
 				},
 			}
+		case *message.GroupFileElement:
+			m = msg.Element{
+				Type: "file",
+				Data: pairs{
+					{K: "path", V: o.Path},
+					{K: "name", V: o.Name},
+					{K: "size", V: strconv.FormatInt(o.Size, 10)},
+					{K: "busid", V: strconv.FormatInt(int64(o.Busid), 10)},
+				},
+			}
 		case *msg.LocalImage:
 			data := pairs{
 				{K: "file", V: o.File},
@@ -377,6 +387,11 @@ func ToMessageContent(e []message.IMessageElement, source message.Source) (r []g
 			m = global.MSG{
 				"type": "face",
 				"data": global.MSG{"id": o.ID, "type": "sticker"},
+			}
+		case *message.GroupFileElement:
+			m = global.MSG{
+				"type": "file",
+				"data": global.MSG{"path": o.Path, "name": o.Name, "size": strconv.FormatInt(o.Size, 10), "busid": strconv.FormatInt(int64(o.Busid), 10)},
 			}
 		default:
 			continue
@@ -849,6 +864,17 @@ func (bot *CQBot) ConvertElement(spec *onebot.Spec, elem msg.Element, sourceType
 			v.File = cacheFile
 		}
 		return v, nil
+	case "file":
+		path := elem.Get("path")
+		name := elem.Get("name")
+		size, _ := strconv.ParseInt(elem.Get("size"), 10, 64)
+		busid, _ := strconv.ParseInt(elem.Get("busid"), 10, 64)
+		return &message.GroupFileElement{
+			Name:  name,
+			Size:  size,
+			Path:  path,
+			Busid: int32(busid),
+		}, nil
 	default:
 		return nil, errors.New("unsupported message type: " + elem.Type)
 	}

@@ -28,20 +28,28 @@ type Reconnect struct {
 
 // Account 账号配置
 type Account struct {
-	Uin              int64      `yaml:"uin"`
-	Password         string     `yaml:"password"`
-	Encrypt          bool       `yaml:"encrypt"`
-	Status           int        `yaml:"status"`
-	ReLogin          *Reconnect `yaml:"relogin"`
-	UseSSOAddress    bool       `yaml:"use-sso-address"`
-	AllowTempSession bool       `yaml:"allow-temp-session"`
-	SignServer       string     `yaml:"sign-server"`
-	SignServerBearer string     `yaml:"sign-server-bearer"`
-	Key              string     `yaml:"key"`
-	IsBelow110       bool       `yaml:"is-below-110"`
-	AutoRegister     bool       `yaml:"auto-register"`
-	AutoRefreshToken bool       `yaml:"auto-refresh-token"`
-	RefreshInterval  int64      `yaml:"refresh-interval"`
+	Uin                  int64        `yaml:"uin"`
+	Password             string       `yaml:"password"`
+	Encrypt              bool         `yaml:"encrypt"`
+	Status               int          `yaml:"status"`
+	ReLogin              *Reconnect   `yaml:"relogin"`
+	UseSSOAddress        bool         `yaml:"use-sso-address"`
+	AllowTempSession     bool         `yaml:"allow-temp-session"`
+	SignServers          []SignServer `yaml:"sign-servers"`
+	RuleChangeSignServer int          `yaml:"rule-change-sign-server"`
+	MaxCheckCount        uint         `yaml:"max-check-count"`
+	SignServerTimeout    uint         `yaml:"sign-server-timeout"`
+	IsBelow110           bool         `yaml:"is-below-110"`
+	AutoRegister         bool         `yaml:"auto-register"`
+	AutoRefreshToken     bool         `yaml:"auto-refresh-token"`
+	RefreshInterval      int64        `yaml:"refresh-interval"`
+}
+
+// SignServer 签名服务器
+type SignServer struct {
+	URL           string `yaml:"url"`
+	Key           string `yaml:"key"`
+	Authorization string `yaml:"authorization"`
 }
 
 // Config 总配置文件
@@ -64,7 +72,6 @@ type Config struct {
 		SkipMimeScan        bool   `yaml:"skip-mime-scan"`
 		ConvertWebpImage    bool   `yaml:"convert-webp-image"`
 		HTTPTimeout         int    `yaml:"http-timeout"`
-		SignServerTimeout   int    `yaml:"sign-server-timeout"`
 	} `yaml:"message"`
 
 	Output struct {

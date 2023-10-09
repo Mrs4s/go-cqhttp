@@ -23,27 +23,25 @@ var (
 
 // config file flags
 var (
-	Debug               bool   // 是否开启 debug 模式
-	RemoveReplyAt       bool   // 是否删除reply后的at
-	ExtraReplyData      bool   // 是否上报额外reply信息
-	IgnoreInvalidCQCode bool   // 是否忽略无效CQ码
-	SplitURL            bool   // 是否分割URL
-	ForceFragmented     bool   // 是否启用强制分片
-	SkipMimeScan        bool   // 是否跳过Mime扫描
-	ConvertWebpImage    bool   // 是否转换Webp图片
-	ReportSelfMessage   bool   // 是否上报自身消息
-	UseSSOAddress       bool   // 是否使用服务器下发的新地址进行重连
-	LogForceNew         bool   // 是否在每次启动时强制创建全新的文件储存日志
-	LogColorful         bool   // 是否启用日志颜色
-	FastStart           bool   // 是否为快速启动
-	AllowTempSession    bool   // 是否允许发送临时会话信息
-	UpdateProtocol      bool   // 是否更新协议
-	SignServer          string // 使用特定的服务器进行签名
-	SignServerBearer    string // 认证签名服务器的 Bearer Token
-	Key                 string // 签名服务器密钥
-	IsBelow110          bool   // 签名服务器版本是否低于1.1.0及以下
-	HTTPTimeout         int    // download 超时时间
-	SignServerTimeout   int    // 签名服务器超时时间
+	Debug               bool                // 是否开启 debug 模式
+	RemoveReplyAt       bool                // 是否删除reply后的at
+	ExtraReplyData      bool                // 是否上报额外reply信息
+	IgnoreInvalidCQCode bool                // 是否忽略无效CQ码
+	SplitURL            bool                // 是否分割URL
+	ForceFragmented     bool                // 是否启用强制分片
+	SkipMimeScan        bool                // 是否跳过Mime扫描
+	ConvertWebpImage    bool                // 是否转换Webp图片
+	ReportSelfMessage   bool                // 是否上报自身消息
+	UseSSOAddress       bool                // 是否使用服务器下发的新地址进行重连
+	LogForceNew         bool                // 是否在每次启动时强制创建全新的文件储存日志
+	LogColorful         bool                // 是否启用日志颜色
+	FastStart           bool                // 是否为快速启动
+	AllowTempSession    bool                // 是否允许发送临时会话信息
+	UpdateProtocol      bool                // 是否更新协议
+	SignServers         []config.SignServer // 使用特定的服务器进行签名
+	IsBelow110          bool                // 签名服务器版本是否低于1.1.0及以下
+	HTTPTimeout         int                 // download 超时时间
+	SignServerTimeout   int                 // 签名服务器超时时间
 
 	PostFormat        string                 // 上报格式 string or array
 	Proxy             string                 // 存储 proxy_rewrite,用于设置代理
@@ -92,12 +90,10 @@ func Init() {
 		ReportSelfMessage = conf.Message.ReportSelfMessage
 		UseSSOAddress = conf.Account.UseSSOAddress
 		AllowTempSession = conf.Account.AllowTempSession
-		SignServer = conf.Account.SignServer
-		SignServerBearer = conf.Account.SignServerBearer
-		Key = conf.Account.Key
+		SignServers = conf.Account.SignServers
 		IsBelow110 = conf.Account.IsBelow110
 		HTTPTimeout = conf.Message.HTTPTimeout
-		SignServerTimeout = conf.Message.SignServerTimeout
+		SignServerTimeout = int(conf.Account.SignServerTimeout)
 	}
 	{ // others
 		Proxy = conf.Message.ProxyRewrite

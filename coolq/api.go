@@ -759,7 +759,7 @@ func (bot *CQBot) CQSendGroupMessage(groupID int64, m gjson.Result, autoEscape b
 	} else {
 		str := m.String()
 		if str == "" {
-			log.Warn("群消息发送失败: 信息为空.")
+			log.Warnf("群 %v 消息发送失败: 信息为空.", groupID)
 			return Failed(100, "EMPTY_MSG_ERROR", "消息为空")
 		}
 		if autoEscape {
@@ -981,7 +981,7 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) globa
 	}
 	ret := bot.Client.SendGroupForwardMessage(groupID, fe)
 	if ret == nil || ret.Id == -1 {
-		log.Warnf("合并转发(群)消息发送失败: 账号可能被风控.")
+		log.Warnf("合并转发(群 %v)消息发送失败: 账号可能被风控.", groupID)
 		return Failed(100, "SEND_MSG_API_ERROR", "请参考 go-cqhttp 端输出")
 	}
 	mid := bot.InsertGroupMessage(ret, source)
@@ -1007,7 +1007,7 @@ func (bot *CQBot) CQSendPrivateForwardMessage(userID int64, m gjson.Result) glob
 	}
 	mid := bot.SendPrivateMessage(userID, 0, &message.SendingMessage{Elements: []message.IMessageElement{fe}})
 	if mid == -1 {
-		log.Warnf("合并转发(好友)消息发送失败: 账号可能被风控.")
+		log.Warnf("合并转发(好友 %v)消息发送失败: 账号可能被风控.", userID)
 		return Failed(100, "SEND_MSG_API_ERROR", "请参考 go-cqhttp 端输出")
 	}
 	log.Infof("发送好友 %v(%v)  的合并转发消息: %v (%v)", userID, userID, limitedString(m.String()), mid)
@@ -1388,33 +1388,42 @@ func (bot *CQBot) CQGetGroupHonorInfo(groupID int64, t string) global.MSG {
 				}
 			}
 			msg["talkative_list"] = convertMem(honor.TalkativeList)
+		} else {
+			log.Infof("获取群龙王出错：%v", err)
 		}
 	}
 
 	if t == "performer" || t == "all" {
 		if honor, err := bot.Client.GetGroupHonorInfo(groupID, client.Performer); err == nil {
 			msg["performer_list"] = convertMem(honor.ActorList)
+		} else {
+			log.Infof("获取群聊之火出错：%v", err)
 		}
 	}
 
 	if t == "legend" || t == "all" {
 		if honor, err := bot.Client.GetGroupHonorInfo(groupID, client.Legend); err == nil {
 			msg["legend_list"] = convertMem(honor.LegendList)
+		} else {
+			log.Infof("获取群聊炽焰出错：%v", err)
 		}
 	}
 
 	if t == "strong_newbie" || t == "all" {
 		if honor, err := bot.Client.GetGroupHonorInfo(groupID, client.StrongNewbie); err == nil {
 			msg["strong_newbie_list"] = convertMem(honor.StrongNewbieList)
+		} else {
+			log.Infof("获取冒尖小春笋出错：%v", err)
 		}
 	}
 
 	if t == "emotion" || t == "all" {
 		if honor, err := bot.Client.GetGroupHonorInfo(groupID, client.Emotion); err == nil {
 			msg["emotion_list"] = convertMem(honor.EmotionList)
+		} else {
+			log.Infof("获取快乐之源出错：%v", err)
 		}
 	}
-
 	return OK(msg)
 }
 
@@ -1689,26 +1698,8 @@ func (bot *CQBot) CQGetMessage(messageID int32) global.MSG {
 	switch o := msg.(type) {
 	case *db.StoredGroupMessage:
 		m["group_id"] = o.GroupCode
-		if o.QuotedInfo != nil {
-			elem := global.MSG{
-				"type": "reply",
-				"data": global.MSG{
-					"id": strconv.FormatInt(int64(o.QuotedInfo.PrevGlobalID), 10),
-				},
-			}
-			o.Content = append(o.Content, elem)
-		}
 		m["message"] = ToFormattedMessage(bot.ConvertContentMessage(o.Content, message.SourceGroup, false), message.Source{SourceType: message.SourceGroup, PrimaryID: o.GroupCode})
 	case *db.StoredPrivateMessage:
-		if o.QuotedInfo != nil {
-			elem := global.MSG{
-				"type": "reply",
-				"data": global.MSG{
-					"id": strconv.FormatInt(int64(o.QuotedInfo.PrevGlobalID), 10),
-				},
-			}
-			o.Content = append(o.Content, elem)
-		}
 		m["message"] = ToFormattedMessage(bot.ConvertContentMessage(o.Content, message.SourcePrivate, false), message.Source{SourceType: message.SourcePrivate})
 	}
 	return OK(m)

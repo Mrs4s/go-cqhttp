@@ -16,26 +16,49 @@ account: # 账号相关
   # 是否允许发送临时会话消息
   allow-temp-session: false
 
-  # 数据包的签名服务器
+  # 数据包的签名服务器列表，第一个作为主签名服务器，后续作为备用
   # 兼容 https://github.com/fuqiuluo/unidbg-fetch-qsign
-  # 如果遇到 登录 45 错误, 或者发送信息风控的话需要填入一个服务器
+  # 如果遇到 登录 45 错误, 或者发送信息风控的话需要填入一个或多个服务器
+  # 不建议设置过多，设置主备各一个即可，超过 5 个只会取前五个
   # 示例:
-  # sign-server: 'http://127.0.0.1:8080' # 本地签名服务器
-  # sign-server: 'https://signserver.example.com' # 线上签名服务器
+  # sign-servers: 
+  #   - url: 'http://127.0.0.1:8080' # 本地签名服务器
+  #     key: "114514"  # 相应 key
+  #     authorization: "-"   # authorization 内容, 依服务端设置
+  #   - url: 'https://signserver.example.com' # 线上签名服务器
+  #     key: "114514"  
+  #     authorization: "-"   
+  #   ...
+  # 
   # 服务器可使用docker在本地搭建或者使用他人开放的服务
-  sign-server: '-'
-  # 签名服务器认证 Bearer Token
-  # 使用开放的服务可能需要提供此 Token 进行认证
-  sign-server-bearer: '-'
+  sign-servers: 
+    - url: '-'  # 主签名服务器地址， 必填
+      key: '114514'  # 签名服务器所需要的apikey, 如果签名服务器的版本在1.1.0及以下则此项无效
+      authorization: '-'   # authorization 内容, 依服务端设置，如 'Bearer xxxx'
+    - url: '-'  # 备用
+      key: '114514'  
+      authorization: '-' 
+
+  # 判断签名服务不可用（需要切换）的额外规则
+  # 0: 不设置 （此时仅在请求无法返回结果时判定为不可用）
+  # 1: 在获取到的 sign 为空 （若选此建议关闭 auto-register，一般为实例未注册但是请求签名的情况）
+  # 2: 在获取到的 sign 或 token 为空（若选此建议关闭 auto-refresh-token ）
+  rule-change-sign-server: 1
+
+  # 连续寻找可用签名服务器最大尝试次数
+  # 为 0 时会在连续 3 次没有找到可用签名服务器后保持使用主签名服务器，不再尝试进行切换备用
+  # 否则会在达到指定次数后 **退出** 主程序
+  max-check-count: 0
+  # 签名服务请求超时时间(s)
+  sign-server-timeout: 60
   # 如果签名服务器的版本在1.1.0及以下, 请将下面的参数改成true
+  # 建议使用 1.1.6 以上版本，低版本普遍半个月冻结一次
   is-below-110: false
-  # 签名服务器所需要的apikey, 如果签名服务器的版本在1.1.0及以下则此项无效
-  # 本地部署的默认为114514
-  key: '114514'
   # 在实例可能丢失（获取到的签名为空）时是否尝试重新注册
   # 为 true 时，在签名服务不可用时可能每次发消息都会尝试重新注册并签名。
   # 为 false 时，将不会自动注册实例，在签名服务器重启或实例被销毁后需要重启 go-cqhttp 以获取实例
   # 否则后续消息将不会正常签名。关闭此项后可以考虑开启签名服务器端 auto_register 避免需要重启
+  # 由于实现问题，当前建议关闭此项，推荐开启签名服务器的自动注册实例
   auto-register: false
   # 是否在 token 过期后立即自动刷新签名 token（在需要签名时才会检测到，主要防止 token 意外丢失）
   # 独立于定时刷新
@@ -75,8 +98,6 @@ message:
   convert-webp-image: false
   # download 超时时间(s)
   http-timeout: 15
-  # 签名服务超时时间(s)
-  sign-server-timeout: 60
 
 output:
   # 日志等级 trace,debug,info,warn,error
