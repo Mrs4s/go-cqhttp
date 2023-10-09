@@ -186,13 +186,15 @@ func energy(uin uint64, id string, _ string, salt []byte) ([]byte, error) {
 // 提交回调 buffer
 func signSubmit(uin string, cmd string, callbackID int64, buffer []byte, t string) {
 	buffStr := hex.EncodeToString(buffer)
-	tail := 64
-	endl := "..."
-	if len(buffStr) < tail {
-		tail = len(buffStr)
-		endl = "."
+	if base.Debug {
+		tail := 64
+		endl := "..."
+		if len(buffStr) < tail {
+			tail = len(buffStr)
+			endl = "."
+		}
+		log.Debugf("submit (%v): uin=%v, cmd=%v, callbackID=%v, buffer=%v%s", t, uin, cmd, callbackID, buffStr[:tail], endl)
 	}
-	log.Infof("submit (%v): uin=%v, cmd=%v, callbackID=%v, buffer=%v%s", t, uin, cmd, callbackID, buffStr[:tail], endl)
 
 	signServer, _, err := requestSignServer(
 		http.MethodGet,
@@ -208,6 +210,12 @@ func signSubmit(uin string, cmd string, callbackID int64, buffer []byte, t strin
 // signCallback
 // 刷新 token 和签名的回调
 func signCallback(uin string, results []gjson.Result, t string) {
+	for { // 等待至在线
+		if cli.Online.Load() {
+			break
+		}
+		time.Sleep(1 * time.Second)
+	}
 	for _, result := range results {
 		cmd := result.Get("cmd").String()
 		callbackID := result.Get("callbackId").Int()

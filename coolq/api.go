@@ -759,7 +759,7 @@ func (bot *CQBot) CQSendGroupMessage(groupID int64, m gjson.Result, autoEscape b
 	} else {
 		str := m.String()
 		if str == "" {
-			log.Warn("群消息发送失败: 信息为空.")
+			log.Warnf("群 %v 消息发送失败: 信息为空.", groupID)
 			return Failed(100, "EMPTY_MSG_ERROR", "消息为空")
 		}
 		if autoEscape {
@@ -981,7 +981,7 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) globa
 	}
 	ret := bot.Client.SendGroupForwardMessage(groupID, fe)
 	if ret == nil || ret.Id == -1 {
-		log.Warnf("合并转发(群)消息发送失败: 账号可能被风控.")
+		log.Warnf("合并转发(群 %v)消息发送失败: 账号可能被风控.", groupID)
 		return Failed(100, "SEND_MSG_API_ERROR", "请参考 go-cqhttp 端输出")
 	}
 	mid := bot.InsertGroupMessage(ret, source)
@@ -1007,7 +1007,7 @@ func (bot *CQBot) CQSendPrivateForwardMessage(userID int64, m gjson.Result) glob
 	}
 	mid := bot.SendPrivateMessage(userID, 0, &message.SendingMessage{Elements: []message.IMessageElement{fe}})
 	if mid == -1 {
-		log.Warnf("合并转发(好友)消息发送失败: 账号可能被风控.")
+		log.Warnf("合并转发(好友 %v)消息发送失败: 账号可能被风控.", userID)
 		return Failed(100, "SEND_MSG_API_ERROR", "请参考 go-cqhttp 端输出")
 	}
 	log.Infof("发送好友 %v(%v)  的合并转发消息: %v (%v)", userID, userID, limitedString(m.String()), mid)
