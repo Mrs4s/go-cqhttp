@@ -23,3 +23,4 @@ func main() {
 	gocq.WaitSignal()
 	_ = terminal.RestoreInputMode()
 }
+
