@@ -21,7 +21,7 @@ require (
 	github.com/wdvxdr1123/go-silk v0.0.0-20210316130616-d47b553def60
 	go.mongodb.org/mongo-driver v1.12.0
 	golang.org/x/crypto v0.11.0
-	golang.org/x/image v0.9.0
+	golang.org/x/image v0.10.0
 	golang.org/x/sys v0.10.0
 	golang.org/x/term v0.10.0
 	golang.org/x/time v0.3.0
