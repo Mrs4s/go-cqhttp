@@ -255,8 +255,14 @@ func LoginInteract() {
 	versionFile := path.Join(global.VersionsPath, fmt.Sprint(int(cli.Device().Protocol))+".json")
 	if global.PathExists(versionFile) {
 		b, err := os.ReadFile(versionFile)
-		if err == nil {
-			_ = cli.Device().Protocol.Version().UpdateFromJson(b)
+		if err != nil {
+			log.Warnf("从文件 %s 读取本地版本信息文件出错.", versionFile)
+			os.Exit(0)
+		}
+		err = cli.Device().Protocol.Version().UpdateFromJson(b)
+		if err != nil {
+			log.Warnf("从文件 %s 解析本地版本信息出错: %v", versionFile, err)
+			os.Exit(0)
 		}
 		log.Infof("从文件 %s 读取协议版本 %v.", versionFile, cli.Device().Protocol.Version())
 	}
