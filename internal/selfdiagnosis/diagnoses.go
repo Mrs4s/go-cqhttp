@@ -10,12 +10,12 @@ import (
 func NetworkDiagnosis(c *client.QQClient) {
 	log.Infof("开始诊断网络情况")
 	qualityInfo := c.ConnectionQualityTest()
-	log.Debugf("聊天服务器连接延迟: %vms", qualityInfo.ChatServerLatency)
-	log.Debugf("聊天服务器丢包率: %v%%", qualityInfo.ChatServerPacketLoss*10)
-	log.Debugf("长消息服务器连接延迟: %vms", qualityInfo.LongMessageServerLatency)
-	log.Debugf("长消息服务器响应延迟: %vms", qualityInfo.LongMessageServerResponseLatency)
-	log.Debugf("媒体服务器连接延迟: %vms", qualityInfo.SrvServerLatency)
-	log.Debugf("媒体服务器丢包率: %v%%", qualityInfo.SrvServerPacketLoss*10)
+	log.Infof("聊天服务器连接延迟: %vms", qualityInfo.ChatServerLatency)
+	log.Infof("聊天服务器丢包率: %v%%", qualityInfo.ChatServerPacketLoss*10)
+	log.Infof("长消息服务器连接延迟: %vms", qualityInfo.LongMessageServerLatency)
+	log.Infof("长消息服务器响应延迟: %vms", qualityInfo.LongMessageServerResponseLatency)
+	log.Infof("媒体服务器连接延迟: %vms", qualityInfo.SrvServerLatency)
+	log.Infof("媒体服务器丢包率: %v%%", qualityInfo.SrvServerPacketLoss*10)
 
 	const (
 		chatServerErrorMessage        = "可能出现消息丢失/延迟或频繁掉线等情况, 请检查本地网络状态."
@@ -61,6 +61,8 @@ func NetworkDiagnosis(c *client.QQClient) {
 
 	if qualityInfo.SrvServerPacketLoss > 0 {
 		log.Warnf("警告: 本地连接媒体服务器丢包率为 %v%%, %v", qualityInfo.SrvServerPacketLoss*10, mediaServerErrorMessage)
+	} else if qualityInfo.SrvServerPacketLoss == -1 {
+		log.Warnf("警告: 没有找到可用的媒体服务器，%v", mediaServerErrorMessage)
 	}
 
 	if qualityInfo.ChatServerLatency > 1000 || qualityInfo.ChatServerPacketLoss > 0 || qualityInfo.LongMessageServerLatency > 1000 || qualityInfo.SrvServerLatency > 1000 || qualityInfo.SrvServerPacketLoss > 0 {
