@@ -461,7 +461,7 @@ func PasswordHashDecrypt(encryptedPasswordHash string, key []byte) ([]byte, erro
 func newClient() *client.QQClient {
 	c := client.NewClientEmpty()
 	c.UseFragmentMessage = base.ForceFragmented
-	c.OnServerUpdated(func(_ *client.QQClient, e *client.ServerUpdatedEvent) bool {
+	c.OnServerUpdated(func(_ *client.QQClient, _ *client.ServerUpdatedEvent) bool {
 		if !base.UseSSOAddress {
 			log.Infof("收到服务器地址更新通知, 根据配置文件已忽略.")
 			return false
