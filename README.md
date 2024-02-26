@@ -42,6 +42,9 @@ _✨ 基于 [Mirai](https://github.com/mamoe/mirai) 以及 [MiraiGo](https://git
   <a href="https://github.com/Mrs4s/go-cqhttp/blob/master/CONTRIBUTING.md">参与贡献</a>
 </p>
 
+## 重要信息
+由于QQ官方针对协议库的围追堵截, 不断更新加密方案, 我们已无力继续维护此项目.
+建议Bot开发者尽快迁移至无头NTQQ项目 -> https://github.com/Mrs4s/go-cqhttp/issues/2471
 
 ## 兼容性
 go-cqhttp 兼容 [OneBot-v11](https://github.com/botuniverse/onebot-11) 绝大多数内容，并在其基础上做了一些扩展，详情请看 go-cqhttp 的文档。
