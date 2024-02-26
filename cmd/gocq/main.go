@@ -348,7 +348,7 @@ func LoginInteract() {
 	}
 	var times uint = 1 // 重试次数
 	var reLoginLock sync.Mutex
-	cli.DisconnectedEvent.Subscribe(func(q *client.QQClient, e *client.ClientDisconnectedEvent) {
+	cli.DisconnectedEvent.Subscribe(func(_ *client.QQClient, e *client.ClientDisconnectedEvent) {
 		reLoginLock.Lock()
 		defer reLoginLock.Unlock()
 		times = 1
@@ -461,7 +461,7 @@ func PasswordHashDecrypt(encryptedPasswordHash string, key []byte) ([]byte, erro
 func newClient() *client.QQClient {
 	c := client.NewClientEmpty()
 	c.UseFragmentMessage = base.ForceFragmented
-	c.OnServerUpdated(func(bot *client.QQClient, e *client.ServerUpdatedEvent) bool {
+	c.OnServerUpdated(func(_ *client.QQClient, e *client.ServerUpdatedEvent) bool {
 		if !base.UseSSOAddress {
 			log.Infof("收到服务器地址更新通知, 根据配置文件已忽略.")
 			return false
