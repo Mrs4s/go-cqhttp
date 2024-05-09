@@ -404,7 +404,7 @@ func ToMessageContent(e []message.IMessageElement, source message.Source) (r []g
 // ConvertStringMessage 将消息字符串转为消息元素数组
 func (bot *CQBot) ConvertStringMessage(spec *onebot.Spec, raw string, sourceType message.SourceType) (r []message.IMessageElement) {
 	elems := msg.ParseString(raw)
-	return bot.ConvertElements(spec, elems, sourceType, true)
+	return bot.ConvertElements(spec, elems, sourceType, false)
 }
 
 // ConvertObjectMessage 将消息JSON对象转为消息元素数组
