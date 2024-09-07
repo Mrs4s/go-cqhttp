@@ -761,11 +761,11 @@ func (bot *CQBot) ConvertElement(spec *onebot.Spec, elem msg.Element, sourceType
 					Summary:    elem.Get("content"),
 					Url:        elem.Get("url"),
 					PictureUrl: elem.Get("image"),
-					MusicUrl:   elem.Get("voice"),
+					MusicUrl:   elem.Get("audio"),
 				}, nil
 			}
 			xml := fmt.Sprintf(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="2" templateID="1" action="web" brief="[分享] %s" sourceMsgId="0" url="%s" flag="0" adverSign="0" multiMsgFlag="0"><item layout="2"><voice cover="%s" src="%s"/><title>%s</title><summary>%s</summary></item><source name="音乐" icon="https://i.gtimg.cn/open/app_icon/01/07/98/56/1101079856_100_m.png" url="http://web.p.qq.com/qqmpmobile/aio/app.html?id=1101079856" action="app" a_actionData="com.tencent.qqmusic" i_actionData="tencent1101079856://" appid="1101079856" /></msg>`,
-				utils.XmlEscape(elem.Get("title")), elem.Get("url"), elem.Get("image"), elem.Get("voice"), utils.XmlEscape(elem.Get("title")), utils.XmlEscape(elem.Get("content")))
+				utils.XmlEscape(elem.Get("title")), elem.Get("url"), elem.Get("image"), elem.Get("audio"), utils.XmlEscape(elem.Get("title")), utils.XmlEscape(elem.Get("content")))
 			return &message.ServiceElement{
 				Id:      60,
 				Content: xml,
