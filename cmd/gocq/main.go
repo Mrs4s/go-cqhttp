@@ -12,9 +12,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Mrs4s/MiraiGo/binary"
-	"github.com/Mrs4s/MiraiGo/client"
-	"github.com/Mrs4s/MiraiGo/wrapper"
+	"github.com/hwmoe/MiraiGo/binary"
+	"github.com/hwmoe/MiraiGo/client"
+	"github.com/hwmoe/MiraiGo/wrapper"
 	para "github.com/fumiama/go-hide-param"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"github.com/pkg/errors"

@@ -4,9 +4,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Mrs4s/MiraiGo/client"
-	"github.com/Mrs4s/MiraiGo/message"
-	"github.com/Mrs4s/MiraiGo/topic"
+	"github.com/hwmoe/MiraiGo/client"
+	"github.com/hwmoe/MiraiGo/message"
+	"github.com/hwmoe/MiraiGo/topic"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/Mrs4s/go-cqhttp/global"

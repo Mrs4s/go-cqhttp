@@ -11,7 +11,7 @@ import (
 	"runtime/debug"
 	"strings"
 
-	"github.com/Mrs4s/MiraiGo/utils"
+	"github.com/hwmoe/MiraiGo/utils"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 

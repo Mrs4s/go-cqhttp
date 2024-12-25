@@ -14,7 +14,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Mrs4s/MiraiGo/utils"
+	"github.com/hwmoe/MiraiGo/utils"
 	"github.com/RomiChan/websocket"
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"

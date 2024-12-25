@@ -1,7 +1,7 @@
 package coolq
 
 import (
-	"github.com/Mrs4s/MiraiGo/topic"
+	"github.com/hwmoe/MiraiGo/topic"
 
 	"github.com/Mrs4s/go-cqhttp/global"
 )

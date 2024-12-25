@@ -16,7 +16,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 
-	"github.com/Mrs4s/MiraiGo/utils"
+	"github.com/hwmoe/MiraiGo/utils"
 
 	"github.com/Mrs4s/go-cqhttp/global"
 	"github.com/Mrs4s/go-cqhttp/internal/base"

@@ -3,7 +3,7 @@ package global
 import (
 	"bytes"
 
-	"github.com/Mrs4s/MiraiGo/binary" // 和 MiraiGo 共用同一 buffer 池
+	"github.com/hwmoe/MiraiGo/binary" // 和 MiraiGo 共用同一 buffer 池
 )
 
 // NewBuffer 从池中获取新 bytes.Buffer
