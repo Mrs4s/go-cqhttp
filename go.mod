@@ -1,6 +1,6 @@
 module github.com/Mrs4s/go-cqhttp
 
-go 1.20
+go 1.24
 
 require (
 	github.com/FloatTech/sqlite v1.6.3
@@ -38,7 +38,7 @@ require (
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/jonboulle/clockwork v0.3.0 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
-	github.com/klauspost/compress v1.13.6 // indirect
+	github.com/klauspost/compress v1.18.7 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/lestrrat-go/strftime v1.0.6 // indirect
 	github.com/mattn/go-isatty v0.0.16 // indirect
